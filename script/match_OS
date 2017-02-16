@@ -1,0 +1,89 @@
+#!/bin/sh
+
+# 
+# $Id: machos,v 1.8 1992/10/22 18:21:35 kgora Exp $ 
+#
+# Figure out machine os
+#
+
+PATH=/bin:/usr/bin:/usr/ucb:/etc:/usr/convex:${PATH} export PATH
+
+#
+# First try to find a standard command
+#
+a=arch
+u=uname
+
+if [ -f /etc/$u -o -f /bin/$u -o -f /usr/bin/$u ]; then
+  OS="`uname`"
+  case "$OS" in
+    AIX*)  ver="`uname -v`";rel="`uname -r`";echo "$OS$ver.$rel"; exit 0;;
+    SunOS) ver="`uname -r`";echo "$OS$ver"; exit 0;;
+    IRIX)  ver="`uname -r`";echo "$OS$ver"; exit 0;;
+    OSF1)  ver="`uname -r`";echo "$OS$ver"; exit 0;;
+    Linux)  ver="`uname -r`";echo "$OS$ver"; exit 0;;
+    dgux)  ver="`uname -r`";echo "$OS$ver"; exit 0;;
+    sn[0-9]*)  OS="`uname -m | sed 's/ .*//'`"
+               case "$OS" in
+                 CRAY) ver="`uname -r`";echo "Unicos$ver"; exit 0;
+               esac
+  esac
+fi
+
+#
+# Well, that didn't work so apply some heuristics
+# to the filesystem name space...
+#
+if [ -d /usr/convex ]; then
+  OS=convexos
+elif [ -f /etc/comply ]; then
+  OS=utek
+elif [ -f /etc/elcsd ]; then
+#  echo "# ... Ultrix - assuming U4.0 ..."\ >&2
+  OS=u4_0
+elif [ -f /hp-ux ]; then
+  OS=hpux
+elif [ -f /etc/ttylocal ]; then
+  OS=xinu43
+elif [ -f /etc/minidisk ]; then
+  OS=acis43
+elif [ -f /etc/toolboxdaemon ]; then
+  OS=aux
+elif [ -f /sbin/nfsiod ]; then
+  OS=bsd44
+elif [ -d /vrm ]; then
+  OS=aix2
+elif [ -f /bin/pyr ] && /bin/pyr; then
+  OS=pyrOSx
+elif [ -d /NextApps ]; then
+  OS=next
+elif [ -f /stellix ]; then
+  OS=stellix
+else
+  case "`exec 2>/dev/null; head -2 /etc/motd`" in
+    *"OS/MP 4.1"*)	OS=sol41;;
+    *"OS/MP 4.0"*)	OS=sol40;;
+    *"OS/MP 4."*)	OS=sol4;;
+    *"FPX 4."*)		OS=fpx4;;
+    *)			OS=unknown;;
+  esac
+fi
+
+echo $OS
+exit 0
+# 
+# $Log: machos,v $
+# Revision 1.8  1992/10/22  18:21:35  kgora
+# Added Cray definitions.
+#
+# Revision 1.7  1992/10/15  17:43:57  gwong
+# Convex bug fix: change [ -f /usr/convex ] to [ -d /usr/convex ]
+#
+# Revision 1.6  1992/06/01  23:16:25  tpaquett
+# removed xtra ;;
+#
+# Revision 1.5  1992/06/01  23:09:26  tpaquett
+# new versions that use uname for determining arch/os.
+# more portable, and easier to change
+# 
+# 

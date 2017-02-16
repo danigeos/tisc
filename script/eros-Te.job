@@ -1,0 +1,86 @@
+#!/bin/csh
+
+echo "If calculations are performed this will take hours\!\!"
+
+set name	= $1
+set prj 	= $name.eros-Te
+set ps  	= $prj.ps
+set Size	= 7/9
+set timeini	= `awk '{if ($1=="Timeini")   print $2}' $name.PRM`
+set timefinal	= `awk '{if ($1=="Timefinal") print $2}' $name.PRM`
+set maxvol 	= 200
+set timeendtecto = 12
+
+
+set N		= 14
+set Te		= `echo 0  1  5 10 15 20 25 30 40 55 75 100 150 300`
+set plate	= `echo 1  1  1  1  1  1  1  1  1  1  1   1   1   0`
+#CALCULATIONS:
+set i = 1
+while ($i <= $N)
+	echo Te = $Te[$i]
+	printf "#      time[Ma} dteros[km3] teros  dtsed[km3] tsed  dtsed1[km3] tsed1  maxalt[m] minalt" > $prj.time.Te=$Te[$i].results
+	tisc $name -Pc -T$Te[$i]\e3 -M$plate[$i] | \
+		awk '{\
+			if ($1=="elevation") {maxalt=$5; minalt=$9;}; \
+			if ($1=="noSed") {eros=$3/9.81; teros+=eros; sed=$6/9.81; tsed+=sed;}; \
+			if ($3=="1st")   {sed1=$5-tsed1; tsed1=$5;}; \
+			if ($1=="T=")    {dt=$2-time; time = $2; \
+			                  printf "\n\t%.2f\t%.0f\t%.0f\t%.0f\t%.0f\t%.0f\t%.0f\t%.0f\t%.0f", time,    eros/2.85e12, teros/2.85e12, sed/2.2e12, tsed/2.2e12, sed1, tsed1, maxalt, minalt;} \
+			if ($1=="Final")  printf "\n\t%.2f\t%.0f\t%.0f\t%.0f\t%.0f\t%.0f\t%.0f\t%.0f\t%.0f", time+dt, eros/2.85e12, teros/2.85e12, sed/2.2e12, tsed/2.2e12, sed1, tsed1, maxalt, minalt;  \
+			if ($1=="Final") {printf "\nFinal eros.: %.0f km3;   Final seds.: (%.0f) %.0f km3, in 1st region: %.0f km3\n", teros/2.85e12, $5*1e3, tsed/2.2e12, tsed1}\
+		}' >> $prj.time.Te=$Te[$i].results
+	set i = `echo $i + 1 | bc`
+end
+
+
+
+
+
+#TIME CURVES:
+set Region	= $timeini/$timefinal/0/$maxvol
+echo time curves region: $Region
+set N_curv	= 5
+set Te_curv	= `echo 0 10 20 40 160`
+set linepen	= `echo 1/0/0/255  2/70/0/160  4/140/0/120  8/190/0/60  11/255/0/0     14/255/0/0 17/255/0/0 20/255/0/0`
+psbasemap -JX$Size -R$Region -X3 -K -P \
+	-Ba5f1:"time (Ma)":/:"eroded/deposited (10@+3@+ km@+3@+)":a50f10nSeW > $ps
+set i = 1
+while ($i <= $N_curv)
+	awk '{if (1*$1) print $1, $3/1e3}' $prj.time.Te=$Te_curv[$i].results | \
+		psxy -JX$Size -R$Region -W$linepen[$i]\t20_10:0 -O -K >> $ps
+	awk '{if (1*$1) print $1, $7/1e3}' $prj.time.Te=$Te_curv[$i].results | \
+		psxy -JX$Size -R$Region -W$linepen[$i] -O -K >> $ps
+	set i = `echo $i + 1 | bc`
+end
+
+
+
+
+
+#Te CURVES:
+echo "#Te erosFin[km3] sedFin1 eros"$timeendtecto sed$timeendtecto > $prj.results
+set i = 1
+while ($i <= $N)
+	awk -v te=$Te[$i] -v timeendtecto=$timeendtecto '{\
+		if ($1<=timeendtecto) \
+			{eros_timeendtecto=$3; sed1_timeendtecto=$7;}\
+		else if ($1!="Final") \
+			{eros_final=$3; sed1_final=$7;};\
+		if ($1=="Final") printf("%.2f\t%.0f\t%.0f\t%.0f\t%.0f\n", te, eros_final, sed1_final, eros_timeendtecto, sed1_timeendtecto); \
+	}' $prj.time.Te=$Te[$i].results >> $prj.results
+	set i = `echo $i + 1 | bc`
+end
+
+
+
+psbasemap -JX$Size -R0/180/0/$maxvol -X9.5 -O -K \
+	-Ba20f10:"Te (km)":/:"eroded/deposited (10@+3@+ km@+3@+)":a50f10nSeW >> $ps
+awk '{if (NR>1) print $1, $2/1e3}' $prj.results | \
+	psxy -JX -R -W6t20_10:0 -O -K >> $ps
+awk '{if (NR>1) print $1, $3/1e3}' $prj.results | \
+	psxy -JX -R -W6 -O -K >> $ps
+awk '{if (NR>1) print $1, $4/1e3}' $prj.results | \
+	psxy -JX -R -W2t20_10:0 -O -K >> $ps
+awk '{if (NR>1) print $1, $5/1e3}' $prj.results | \
+	psxy -JX -R -W2 -O >> $ps

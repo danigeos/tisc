@@ -1,0 +1,80 @@
+***  tisc parameters file  ***
+#tisc Iberia_present -l -Pc
+#grep "#" Iberia_present.bas | sort -n +7
+#sort -n +2 Iberia_present.xyw
+
+#SOME DISCHARGE CONSTRAINTS:
+./Spain/Jucar/data.txt				En 47 anyos: 156.232 m3/s
+./Spain/Ebro-Zaragoza/data.txt			En 47 anyos: 725.172 m3/s.   After 1960 in 21 years : 395.441 m3/s.
+./Spain/Ebro-Tortosa/data.txt			En 47 anyos: 1526.7 m3/s.   After 1960 in 21 years : 663.442 m3/s.
+./Spain/Duero-Villachica/data.txt		En 39 anyos: 139.609 m3/s
+./Portugal/Douro-Regua/data.txt			En 27 anyos: 503.757 m3/s.   After 1960 in 9 years : 664.907 m3/s.
+./Portugal/Tejo-Rodao/data.txt			En 47 anyos: 300.623 m3/s.   After 1960 in 9 years : 354.296 m3/s.
+./Spain/Guadalquivir-AlcalaRio/data.txt		En 47 anyos: 550.309 m3/s.   After 1960 in 23 years : 198.46 m3/s.
+ONLY POST 1960:
+./Portugal/Guadiana-PulodoLobo/data.txt		En  anyos: 0 m3/s.   After 1960 in 10 years : 118.953 m3/s.
+./Portugal/Douro-Pochino/data.txt		En 2 anyos: 315 m3/s
+./Portugal/Tejo-Belver/data.txt			En 3 anyos: 172.167 m3/s
+./Portugal/Tejo-Almourol/data.txt		En 9 anyos: 370.889 m3/s
+./Portugal/Minho/data.txt			En 9 anyos: 26.7593 m3/s
+
+
+version		TISC_2016-08-30
+
+Modeled region:
+xmin	-617794 	Western model limit coordinate [m]
+xmax	+712915.812500	Eastern model limit coordinate [m]
+ymin	-570370.562500	Southern model limit coordinate [m]
+ymax	+466666 	Northern model limit coordinate [m]
+zmax	+2000
+zmin	-500
+
+
+Gridding:
+Nx		159	E-W direction grid points
+Ny		141	N-S direction grid points
+
+Time variables [Ma]:
+Timeini		0	Initial time
+Timefinal	.1	Final time
+dt 		.02	Time interval
+dt_eros		.0005	Approximate dt for surface processes
+dtmemounit	.02	Time between horizon record
+
+Flexure:
+isost_model	0	Isostasy mechanism
+Te		10e3	Default EET [m] when no *.EET file is given. Te=0 => local isostasy.
+boundary_conds	5	Boundary Conditions:
+
+switch_sea	1	To take into account sea load.
+switch_topoest	0	To keep loads vertically fixed, filling the deflection with densinfill material.
+
+Interpolation:
+mode_interp	0	Interpolation mode for *.H0 and other input files
+
+Densities [kg/m3]:
+densasthen	3250	Density beneath the plate, at the compensation level: mantle or asthenosphere
+denssedim	2100	Sediment density
+densenv		0	Enviromental material density
+
+Surface water I/O:
+hydro_model	1
+rain 		200	Background runoff [l/m2/a]=[mm/a] (water going to the drainage system.
+Krain		300	Proportionality of runoff with altitude [l/m2/a/km]
+CXrain		-2000e3	Proportionality of runoff with x [m]. 0 means no variations in x.
+CYrain		800e3	Proportionality of runoff with y [m]. 0 means no variations in y.
+evaporation	00	Evaporation rate at lakes [l/m2/a]=[mm/a].
+lost_rate	.0	Surface water lost per unit length [%/km]
+
+Erosion-Sedimentation:
+erosed_model	6	To switch erosion/sedimentation processes
+Kerosdif   	00	Diffusive transport erosion coefficient [m2/a]
+K_river_cap	1000	Constant of river transport capacity [kg/m3]
+erodability	5e-8	Length scale of fluvial erosion	[m] (this default value is overriden by the one in load files *.LOAD)
+erodability_sed	5e-8	Length scale of fluvial erosion	[m] (for sediments)
+l_fluv_sedim	25e3	Length scale of fluvial sedimentation [m]
+
+I/O:
+switch_files	1	For extra file output.
+switch_ps	1	For postscript output.
+switch_verbose	1	For more runtime information.

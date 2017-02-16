@@ -1,0 +1,31 @@
+#THIN SHEET VELOCITY FIELD & UNIT THICKNESS:
+awk '{ if (NR>2) print($1,$2,($4-$3)/1000);}' $prj.hrz | \
+	xyz2grd -G$tmp.unit_thick.grd.tmp -I$dx/$dy -R$Region -H0
+set thick_min = 14 #`grdinfo $tmp.unit_thick.grd.tmp | grep z_min | awk '{print $3}'`
+set thick_max = 22 #`grdinfo $tmp.unit_thick.grd.tmp | grep z_max | awk '{print $5}'`
+set vel_scale = 1e-1
+makecpt -T$thick_min/$thick_max/.5 > $tmp.unit_thick_cpt.tmp
+#grdview $tmp.unit_thick.grd.tmp -JX -R -C$tmp.unit_thick_cpt.tmp -Qs -O -K >> $ps
+
+#set dx2 = `echo $dx \* 5  | bc -l`
+#set dy2 = `echo $dy \* 5  | bc -l`
+set dx2	= `echo $Lx \/ 10 | bc -l`
+set dy2	= `echo $Ly \/ 10 | bc -l`
+awk '{if (NR>2) print $1,$2,$3}' $prj.vel | xyz2grd -G$tmp.vel_x.grd.tmp -I$dx2/$dy2 -R
+awk '{if (NR>2) print $1,$2,$4}' $prj.vel | xyz2grd -G$tmp.vel_y.grd.tmp -I$dx2/$dy2 -R
+awk '{if (NR>2) print $1,$2,log($5)/log(10)}' $prj.vel | xyz2grd -G$tmp.viscosity.grd.tmp -I$dx/$dy -R
+grd2xyz $tmp.vel_x.grd.tmp > $tmp.vel_x.xyz.tmp
+grd2xyz $tmp.vel_y.grd.tmp > $tmp.vel_y.xyz.tmp
+paste $tmp.vel_x.xyz.tmp $tmp.vel_y.xyz.tmp | awk '{print $1,$2, $3, $6}' | \
+	awk -v vel_scale=$vel_scale '{if ($3*1.!=0 || $4*1.!=0) print $1,$2,atan2($4,$3)*180/3.1415927, vel_scale*sqrt($3*$3+$4*$4); else print $1,$2,0,0;}' | \
+	psxy -JX -R -Sv0.03/0.1/0.09n.5 -G0 -O -K >> $ps 
+#grdcontour $tmp.unit_thick.grd.tmp -JX -R -Z.001 -C.25 -W2/0/155/0 -Af7 -G4 -T -O -K >> $ps
+grdcontour $tmp.viscosity.grd.tmp -JX -R -C.25 -W1/0/0/255 \
+	-Af7 \
+	-G4 -T -O -K >> $ps
+pstext	-JX -R$Region -O -G0 -K <<END >> $ps 
+	$xt	$yt	12 0 1 3	thin sheet thickness \& velocity
+END
+if (-r $prj.pfl) psxy $prj.pfl -JX -R -M -W$col_lin -H2 -O -K >> $ps 
+if (-r $prj.CMP) psxy $prj.CMP -JX -R -M -L -W4/0/0/0 -O -K >> $ps 
+

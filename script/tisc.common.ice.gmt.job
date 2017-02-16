@@ -1,0 +1,21 @@
+#ICE
+if (-r $prj.ice) then 
+ 	#awk '{if ($11>0) print $1, $2}' $prj.xyw | \
+ 	#	psxy -JX -R -Ss$size_ice_squares -G255 -O -K >> $ps
+ 	awk '{if ($4>2) print($1,$2,$4)}' $prj.ice |\
+ 		xyz2grd -G$tmp.ice.grd.tmp -I$dx/$dy -R -H2
+ 	awk '{if ($4>0) print($1,$2,$3+$4)}' $prj.ice |\
+ 		xyz2grd -G$tmp.icetop.grd.tmp -I$dx/$dy -R -H2
+ 	grdgradient $tmp.icetop.grd.tmp -A0 -G$tmp.intensity.icetop.grd.tmp  #-Nt1
+ 	#.0004 MUL is normal for large scale
+ 	grdmath $tmp.intensity.icetop.grd.tmp .0015 MUL = $tmp.intensity.icetop.grd.tmp
+ 	grdview $tmp.ice.grd.tmp -C$tmp.ice_cpt.tmp  -JX -R \
+ 		-I$tmp.intensity.icetop.grd.tmp -Ts -K -O >> $ps
+ 	awk '{print $1, $2, $4}' $prj.ice | \
+ 		xyz2grd -G$tmp.ice_thick.grd.tmp -I$dx/$dy -R -H2
+ 	grdcontour $tmp.ice_thick.grd.tmp -JX -R -C100 -A500 -Wa4/50/50/255 -Wc1/50/50/255 -O -K >> $ps
+ 	grdcontour $tmp.icetop.grd.tmp -JX -R -C$tmp.topo_palet.tmp -W1 -A -O -K >> $ps
+ 	awk '{if (NR>2 && $4>2) {a=$5+$7;b=$6+$8;l=sqrt(a*a+b*b); if (l>00) print $1,$2, atan2(b,a)*180/3.1415927, l/500}}'  $prj.ice | \
+ 		psxy -JX -R -Svb.01/.4/.2n2 -W1 -G0 -O -K >> $ps
+endif
+

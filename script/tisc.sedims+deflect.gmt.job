@@ -1,0 +1,50 @@
+#!/bin/csh
+##############################################################################
+#job file to produce postscript graphic files of TISC results with GMT 3.0
+#	Daniel Garcia-Castellanos, 1994-1996.
+##############################################################################
+#Syntax:   tisc.gmt.sedims.job 'model-root-prj' 
+##############################################################################
+#Note that:
+# -This script uses bc unix command as a calculator. 
+##############################################################################
+
+set prj 	= $1
+
+set width = 8
+
+source $tisc_dir/script/tisc.common.gmt.job
+
+
+#Deflection:
+psbasemap -JX$size -R$Region -B$ticklabels\:"x, longitude (km)":/$ticklabels\:"y, latitude (km)":NseW \
+	-Y10 -X2.5 -K -P > $ps
+source $tisc_dir/script/tisc.common.deflection.gmt.job
+
+psscale -C$tmp.subs_cpt.tmp -D4/-2/7/.2h \
+		-B:"Deflection (km)": \
+		-O -L -K	>> $ps
+
+
+#Sediment:
+psbasemap -JX$size -R$Region -B$ticklabels\:"x, longitude (km)":/$ticklabels\:"y, latitude (km)":Nsew \
+	-Y0 -X9.5 -K -O -P >> $ps
+source $tisc_dir/script/tisc.common.sediment_thickness.gmt.job
+
+awk '{if ($4>.4 && NR>2 && $5!="S" && $5!="L" && $6>=sea_level) {print $1, $2; print $7, $8; print ">"}}' $prj.xyw | \
+	psxy -JX -R$Region -M -W1/$col_masstr -H2 -O -K >> $ps 
+
+awk '{if ($4>2 && NR>2 && $5!="S" && $5!="L" && $6>=sea_level) {print $1, $2; print $7, $8; print ">"}}' $prj.xyw | \
+	psxy -JX -R$Region -M -W4/$col_masstr -H2 -O -K >> $ps 
+
+awk '{if ($4>10 && NR>2 && $5!="S" && $5!="L" && $6>=sea_level) {print $1, $2; print $7, $8; print ">"}}' $prj.xyw | \
+	psxy -JX -R$Region -M -W8/$col_masstr -H2 -O -K >> $ps 
+
+psscale -C$tmp.eros_cumul_cpt.tmp -D4/-2/7/.2h \
+		-B:"Sediment thickness (km)": \
+		-L -O -K >> $ps	
+
+pstext	-JX -R -O <<END>> $ps
+END
+
+rm -f  $tmp.*.tmp 

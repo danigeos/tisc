@@ -1,0 +1,25 @@
+density		2850
+mode_interp	4
+z_default	0
+#gradual		1
+time		1
+time_stop	4
+#topoest	1
+
+500	c
+190e3	170e3
+190e3	-170e3
+90e3	-170e3
+90e3	170e3
+
+500	c #try to remove this 'c' or change it to 'n'! 
+-150e3	130e3
+-150e3	-130e3
+-90e3	-130e3
+-90e3	130e3
+
+1500
+-110e3	30e3
+-110e3	-30e3
+-100e3	-30e3
+-100e3	30e3

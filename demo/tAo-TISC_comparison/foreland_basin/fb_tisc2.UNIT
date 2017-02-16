@@ -1,0 +1,21 @@
+time	5
+time_stop	10
+fault	1
+vel_x	10
+ride	1
+
+z_default	-1e6
+mode_interp	4
+
+000
+-300e3	300e3
+60e3	300e3
+60e3	-300e3
+-300e3	-300e3
+
+
+4000
+-300e3	300e3
+10e3	300e3
+10e3	-300e3
+-300e3	-300e3

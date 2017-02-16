@@ -1,0 +1,148 @@
+#!/bin/csh
+##############################################################################
+#job file to produce postscript graphic files of tisc results with GMT 3.0
+#	Daniel Garcia-Castellanos, 1994-2004.
+##############################################################################
+#Syntax: 	tisc.gmt.job 'model-root-name' 
+##############################################################################
+#Note that:
+# -This script uses bc unix command as a calculator. 
+##############################################################################
+
+set name 	= $1
+echo runnning COMMON...
+source $tisc_dir/script/tisc.common.gmt.job
+set ps		= $name.eros-sed.ps
+
+set width = 8
+set height = `echo $width \* $Ly \/ $Lx  | bc -l`
+set height_CS = 2.5
+set vert_shift_CS = `echo -$height_CS \- .5 | bc -l`
+set size = $width/$height
+set vert_shift = `echo -.5 - $height  | bc -l`
+set horz_shift  = `echo  .5 + $width   | bc -l`
+set width_CS = `echo  2 \* $width + .5  | bc -l`
+set xt = `echo $xf - 12  | bc -l`
+set yt = `echo $y0 + 12  | bc -l`
+
+
+echo Calculating...
+if (-r $name.st) then
+awk '{if (NR==2) for (i=3; i<=NF; i++) {dens[i]=$i;}\
+	if (NR>2) { \
+		sedthick=0; \
+		for (i=4; i<=NF; i++) {if (dens[i]<2400) sedthick+=($i-$(i-1)); }\
+		if (sedthick>100) print($1,$2,sedthick/1e3); \
+	} \
+}' $name.hrz |\
+	xyz2grd	-G$tmp.sed.grd.tmp -I$dx/$dy -R$Region -H0
+endif
+if (-r $name.st) then
+	awk '{if ($4>0) print $1,$2,-$4/1e3;}' $name.st | \
+		xyz2grd -G$tmp.eros.grd.tmp -I$dx/$dy -R$Region -H2
+endif
+grdclip $tmp.sed.grd.tmp -G$tmp.sed.grd.tmp -Sb0/NaN
+grdmath $tmp.sed.grd.tmp $tmp.eros.grd.tmp AND = $tmp.erosed.grd.tmp
+
+cat - <<END>  $tmp.erosed_cpt.tmp
+       -4.000   130     130     130      -3.000   130     130     130
+       -3.000   160     160     160      -2.000   160     160     160
+       -2.000   190     190     190      -1.000   190     190     190
+       -1.000   220     220     220           0   255     255     255
+	0	255	255	255	.500	170	255	170
+	.500	170	255	170	1.000	255	255	0
+	1.000	255	255	0	2.000	200	200	0
+	2.000	200	200	0	4.000	255	160	0
+	4.000	255	0	0	6.000	155	0	0
+#	0	255	255	255	.500	220	220	220
+#	.500	220	220	220	1.000	220	220	220
+#	1.000	170	170	170	2.000	170	170	170
+#	2.000	130	130	130	3.000	130	130	130
+#	3.000	100	100	100	5.000	100	100	100
+B	255 255 255
+F	255 255 255
+END
+cat - <<END>  $tmp.subs_cpt.tmp
+	-2	255	0	0	-.5	255	80	80
+	-.5	255	80	80	-.2	255	170	170
+	-.2	255	170	170	0	255	255	255
+	0	255	255	255	.2	170	170	255
+	.2	170	170	255	1	80	80	255
+	1	80	80	255	8	0	0	255
+B	255 255 255
+F	0 0 0
+END
+
+echo plotting SEDIMENTS / EROSION...
+grdview $tmp.erosed.grd.tmp -C$tmp.erosed_cpt.tmp -JX$width/$height -R -Ts \
+	-Ba200f50:"x (km)":/:"y (km)":nSeW -X2.5 -Y15 -K -P > $ps
+grdcontour $tmp.sed.grd.tmp -JX -R$Region -C.500 -O -K >> $ps
+
+
+if (-r $name.xyw) then 
+echo plotting drainage network:
+set col_masstr	= 0/0/0
+if (-r $name.RIV) awk '{if (substr($0,1,1)!=">" && substr($0,1,1)!="#") print $1/1000,$2/1000; else print $0}' \
+	$name.RIV | psxy -JX -R -M -W4/70/0/0 -O -K >> $ps 
+awk -v sea_level=$sea_level '{if ($4>.4 && NR>2 && $5!="S" && $5!="L" && $6>=sea_level) {print $1, $2; print $7, $8; print ">"}}' $name.xyw | \
+	psxy -JX -R$Region -M -W1/$col_masstr -H2 -O -K >> $ps 
+
+awk -v sea_level=$sea_level '{if ($4>4 && NR>2 && $5!="S" && $5!="L" && $6>=sea_level) {print $1, $2; print $7, $8; print ">"}}' $name.xyw | \
+	psxy -JX -R$Region -M -W3/$col_masstr -H2 -O -K >> $ps 
+
+awk -v sea_level=$sea_level '{if ($4>40 && NR>2 && $5!="S" && $5!="L" && $6>=sea_level) {print $1, $2; print $7, $8; print ">"}}' $name.xyw | \
+	psxy -JX -R$Region -M -W8/$col_masstr -H2 -O -K >> $ps 
+#grdimage $tmp.lakes.grd.tmp -JX -R -C$tmp.lakes_cpt.tmp -O -K >> $ps
+awk -v sea_level=$sea_level '{if ($5=="L") print $1, $2}' $name.xyw | \
+	psxy -JX -R$Region -Ss$size_lake_squares -W1/$col_masstr -G$col_masstr -O -K >> $ps 
+awk -v sea_level=$sea_level '{if ($5=="E") print $1, $2}' $name.xyw | \
+	psxy -JX -R$Region -St$size_lake_squares -W1/$col_masstr -G$col_masstr -O -K >> $ps 
+grdcontour $tmp.lakes.grd.tmp -JX -R -C$tmp.lakes_cpt.tmp -W3/$col_masstr -O -K >> $ps
+#psxy $tmp.lakes.xy.tmp -JX -R -M -L -G$col_masstr -O -K >> $ps
+endif
+
+#if (-r $name.pfl) psxy $name.pfl -JX -R$Region -M -W$col_lin -H2 -O -K >> $ps 
+if (-r $name.CMP) psxy $name.CMP -JX -R -M -W4/0/0/0 -O -K >> $ps 
+#if (-r $name.INT) psxy $name.INT -JX -R -M -W1/0/255/0 -L -O -K >> $ps 
+#if (-r $name.INT2) psxy $name.INT2 -JX -R -M -W1/0/255/0 -L -O -K >> $ps 
+pstext	-JX -R$Region -O -G255 -K <<END >> $ps 
+#	$xt	$yt	14 0 1 3	sediment thickness
+END
+
+
+if (-r $name.xyzt) then
+echo plotting VERTICAL UPLIFT RATE...
+	awk '{if (NR>0) print $1,$2,($(NF-1)-$(NF-9))/1e3;}' $name.xyzt | \
+		xyz2grd -G$tmp.subs.grd.tmp -I$dx/$dy -R$Region
+psbasemap -JX -R$Region -Ba200f50:"":/:"":nSEw \
+		-X$horz_shift -O -K >> $ps
+grdimage $tmp.subs.grd.tmp -C$tmp.subs_cpt.tmp  -JX -R -K -O >> $ps
+grdcontour $tmp.subs.grd.tmp -JX -R -C.2 -A1f7/255 -G5 -W1/0 \
+	-L0/10  -O -K -T+5c/0.1c:UD >> $ps
+grdcontour $tmp.subs.grd.tmp -JX -R -C1 -A1f7/255 -G5 -W3/0 \
+	-L0/100  -O -K -T+15c/0.1c:UD >> $ps
+grdcontour $tmp.subs.grd.tmp -JX -R -C.2 -A1f7/255 -G5 -W1/0/0/0ta \
+	-L-1/0 -O -K -T-15c/0.1c:UD >> $ps
+grdcontour $tmp.subs.grd.tmp -JX -R -C1 -A1f7/255 -G5 -W3/0/0/0ta \
+	-L-100/0 -O -K -T-15c/0.1c:UD >> $ps
+
+
+pstext	-JX -R$Region -O -K -G0 <<END >> $ps 
+#	$xt	$yt	13 0 1 3	erosion rate (shade) & subs. rate (m/Ma)
+END
+endif
+
+
+
+echo plotting the COLOR PALLETTES...
+psscale -C$tmp.erosed_cpt.tmp 	-D-2/-3.2/9/.3h -B/:"erosion / sediments (km)": -L -O -K >> $ps
+psscale -C$tmp.subs_cpt.tmp 	-D-2/-4.5/9/.3h -B/:"uplift / subsidence after 11 Ma (km)": -L -O -K >> $ps
+#psscale -C$tmp.eros_cpt.tmp     -D-2/-2.0/9/.3h -B/:"erosion (km)": -L -O -K >> $ps
+
+pstext -JX -R -O <<END>> $ps
+END
+endif
+
+
+
+rm -f  $tmp.*.tmp 

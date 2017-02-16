@@ -1,0 +1,69 @@
+#!/bin/csh
+##############################################################################
+#job file to produce postscript graphic files of tAo3D results with GMT 3.0
+#	Daniel Garcia-Castellanos, 1994-1996.
+##############################################################################
+# -This script uses bc unix command as a calculator. 
+##############################################################################
+
+#Setting up variables:
+
+set prj 	= $1
+
+set width = 11
+
+source $tisc_dir/script/tisc.common.gmt.job
+
+xyz2grd	$prj.hrz -G$tmp.bas.grd.tmp -I$dx/$dy -R$Region -H2
+awk '{print($1,$2,$NF)}' $prj.hrz |\
+	xyz2grd	-G$tmp.top.grd.tmp -I$dx/$dy -R$Region -H2
+grdgradient $tmp.top.grd.tmp -A0 -G$tmp.intensity.top.grd.tmp -Nt1
+if (-r $prj.xyw) then 
+	awk '{if ($6=="L") print $1,$2,1; else print $1,$2,0}' $prj.xyw | \
+		xyz2grd -G$tmp.lakes.grd.tmp -I$dx/$dy -R$Region -H2
+endif
+
+
+#TOPOGRAPHY:
+echo plotting TOPO...
+psbasemap -JX$size -R$Region -B$ticklabels\:"x, longitude (km)":/$ticklabels\:"y, latitude (km)":NseW \
+	-Y10 -X2 -K -P > $ps
+source $tisc_dir/script/tisc.common.topo+drainage.gmt.job
+
+pstext	-JX -R -G0 -W255/255/255 -O -K <<END >> $ps 
+	$xtime	$ytime	13 0 1 9	$Timenow My
+END
+
+
+
+#EET:
+if (-r $prj.eeth) then
+echo plotting EET...
+source $tisc_dir/script/tisc.common.EET.gmt.job
+else
+if (-r $prj.pfl) then
+#2D CROSS SECTION:
+	echo plotting cross section...
+	set height_CS = 3.5
+	set vert_shift_CS = 0
+	set width_CS = `echo  $width | bc -l`
+	set horz_shift_CS = `echo  $width + $separation  | bc -l`
+	psbasemap -JX$width_CS/$height_CS -R0/$dmax/$zmin/$zmax \
+		-B$ticklabels\:"distance (km)":/$zticklabels\:"z (km)":SeW \
+		-O -K -X$horz_shift_CS -Y$vert_shift_CS >> $ps
+	source $tisc_dir/script/tisc.common.cross_section.gmt.job
+endif
+endif
+
+
+#PALETAS DE COLORES:
+echo plotting scales...
+psscale -C$tmp.topo_palet.tmp 	-D$half_width/-1.5/$width/.3h -B/:"elevation (m)": -V -L -O -K >> $ps
+psscale -C$tmp.eet_cpt.tmp 	-D$half_width/-3/$width/.3h -B/:"EET (km)":      -V -L -O -K >> $ps
+
+endif
+
+pstext -JX -R  -O <<END>> $ps
+END
+
+rm $tmp.*.tmp 

@@ -1,0 +1,31 @@
+RESULTADOS:
+N=C/r^D
+log N = log C - D*log r = K - D*log r
+
+la dimension fractal D es la pendiente de regresion entre log N y log r
+
+Parece que las dimensiones fractales de las cuencas que quedan por encima de una cierta altura son: 
+sea_level	Delta(log10 N) / Delta(log10 r)  = D
+> 0 m   	3 / 4.0	= .75
+> 500 m  	3 / 3.5 = .86
+> 1000 m	3 / 2.5 = 1.2
+Gerardo obtiene D=.48 para las cuencas neogenas.
+
+
+METODO:
+Una vez corrido el modelo y obtenida la red fluvial con pocos 
+lagos en el fichero .bas, ejecutando esto:
+
+grep "END river basin" *.bas | awk '{print $7}' | \
+	pshistogram -W5 -Q -Io | awk '{print $1, 3691-$2}' | \
+	psxy -JX8l/8l -R2/150000/.2/1600 -Sc.15 -B10000:"area (km@+2@+)":/200:"frequency":nSeW > river-basin-size-log-log.ps
+
+se obtiene una distribucion logaritmica de tamanyos de las cuencas hidrograficas.
+
+Para separar las cuencas por encima de 1000 m: 
+
+awk '{if($2=="begin") surf=0; if($2=="END" && surf) {print surf*(660.04-656.52)*(466.67-462.96); nbas++} if($6>=00 && substr($0,1,1)!="#" && substr($0,1,1)!=">") surf++;}END{print "#", nbas}' *.bas > test.tmp
+pshistogram test.tmp -W5 -Q -Io | awk '{print $1, 4527-$2}' | \
+	psxy -JX8l/8l -R2/150000/.2/1600 -Sc.15 -B10000:"area (km@+2@+)":/200:"frecuency":nSeW > river-basin-size-log-log.ps
+
+

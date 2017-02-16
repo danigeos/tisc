@@ -1,0 +1,22 @@
+#TOPOGRAPHY:
+echo -n plotting TOPO... 
+grdimage $tmp.top.grd.tmp -C$tmp.topo_cpt.tmp  -JX -R \
+	-I$tmp.intensity.top.grd.tmp \
+	-O -K >> $ps
+#grdcontour $tmp.top.grd.tmp -T0.2/0.05:-+ -JX -R -C200  -W1/0 -O -K >> $ps
+grdcontour $tmp.top.grd.tmp -JX -R -C$tmp.topo_cpt.tmp -W1 -O -K >> $ps
+
+if (-r $prj.xyg) then
+	xyz2grd $prj.xyg -G$tmp.gravanom.grd.tmp -I$dx/$dy -R -H2
+	grdcontour $tmp.gravanom.grd.tmp -JX -R -C20 -L20/200000 -A20+s6+k255/0/0   -W3/255/0/0ta -O -K >> $ps
+	grdcontour $tmp.gravanom.grd.tmp -JX -R -C20 -L-200000/-20 -A20+s6+k255/0/0 -W3/255/0/0 -O -K >> $ps
+endif
+
+
+if (-r $prj.pfl) psxy $prj.pfl -JX -R -M -W$col_lin -H2 -O -K >> $ps 
+
+if (-r $prj.CMP) psxy $prj.CMP -JX -R -M -L -W4/0/0/0 -O -K >> $ps 
+pstext	-JX -R -O -G0 -K <<END >> $ps 
+#	$xtitle	$ytitle	11 0 1 3	Topography
+END
+psscale -C$tmp.topo_cpt.tmp -D$xscale/$yscale/$width/$scalewidth\h -B:"Elevation (m)": -L -O -K >> $ps

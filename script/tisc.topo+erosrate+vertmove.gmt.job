@@ -1,0 +1,157 @@
+#!/bin/csh
+##############################################################################
+#job file to produce postscript graphic files of tAo3D results with GMT 3.0
+#	Daniel Garcia-Castellanos, 1994-1996.
+##############################################################################
+#Syntax: 	tisc.gmt.job 'model-root-name' 
+##############################################################################
+#Note that:
+# -This script uses bc unix command as a calculator. 
+##############################################################################
+
+set prj 	= $1
+
+set width = 8
+
+source $tisc_dir/script/tisc.common.gmt.job
+
+
+set intens	= .2
+
+#grdgradient $tmp.top.grd.tmp -A0 -G$tmp.intensity.top.grd.tmp -Nt1
+
+set width = 8
+set height = `echo $width \* $Ly \/ $Lx  | bc -l`
+set size = $width/$height
+set vert_shift = `echo 1.8 + $height  | bc -l`
+set horz_shift = `echo .3 + $width   | bc -l`
+set xt = `echo $xf - 5  | bc -l`
+set yt = `echo $y0 + 10  | bc -l`
+
+
+
+#Erosion in regions INT:
+if (-r $prj.INT) then 
+cat $prj.hrz | outin $prj.INT | \
+	awk -v dx=$dx -v dy=$dy -v lakealt=1000 '{if ($1=="1") {\
+	if ($NF<lakealt) air_vol+=(lakealt-$NF)*dx*dy;}} \
+	END{printf("Air volume below %.0f m in 1st region: %.1f km3\n", lakealt, air_vol/1e3);}'
+endif
+if (-r $prj.INT3) then 
+cat $prj.hrz | outin $prj.INT3 | \
+	awk -v dx=$dx -v dy=$dy -v lakealt=1000 '{if ($1=="1") {\
+		if ($NF<lakealt) air_vol+=(lakealt-$NF)*dx*dy; \
+		if ($NF>maxalt) {maxalt=$NF; xm=$2; ym=$3} }} \
+	END{printf("Max. elevation in basin: %.1f m at %.1f,%.1f km\nAir volume below %.0f m within basin: %.1f km3\n", maxalt, xm,ym, lakealt, air_vol/1e3);}'
+endif
+
+if (-r $prj.INT) then 
+    awk '{if (NR==2) for (i=3; i<=NF; i++) {dens[i]=$i;}\
+	if (NR>2) { \
+		sedthick=0; \
+		for (i=4; i<=NF; i++) {if (dens[i]<2400) sedthick+=($i-$(i-1)); }\
+		print($1,$2,sedthick); \
+	} \
+    }' $prj.hrz | outin $prj.INT | \
+	awk -v dx=$dx -v dy=$dy '{if ($1=="1") {seds_in+=$4*dx*dy;}} \
+	END{printf("Sediments in 1st region: %.1f km3\n", seds_in/1e3);}'
+endif
+if (-r $prj.INT2) then 
+    awk '{if (NR==2) for (i=3; i<=NF; i++) {dens[i]=$i;}\
+	if (NR>2) { \
+		sedthick=0; \
+		for (i=4; i<=NF; i++) {if (dens[i]<2400) sedthick+=($i-$(i-1)); }\
+		print($1,$2,sedthick); \
+	} \
+    }' $prj.hrz | outin $prj.INT2 | \
+	awk -v dx=$dx -v dy=$dy '{if ($1=="1") {seds_in+=$4*dx*dy;}} \
+		END{printf("Sediments in 2nd region: %.1f km3\n", seds_in/1e3);}'
+endif
+grep "#" *.bas | sort -n -k 9 | tail -3
+
+
+#TOPOGRAPHY:
+echo plotting TOPO...
+set disch1 = .1
+#set disch2 = 500
+#set disch3 = 500
+psbasemap -JX$size -R$Region -B$ticklabels\:"":/$ticklabels\:"":nSeW \
+		-Y12 -X2.5 -K -P >! $ps
+source $tisc_dir/script/tisc.common.topo+drainage.gmt.job
+
+set slopel = .05 #.015  #slope limit to be plot in red
+awk '{if (substr($1,1,1)!="#" && substr($1,1,1)!=">" && $3>=dl && $5!="S" && $5!="L" && NR>2) {\
+	dist=1e3*sqrt(($8-$1)*($8-$1)+($9-$2)*($9-$2)); \
+	if (dist>0) {\
+		slope=-($10-$6)/dist; area=$NF*dx*dy; \
+		slopelaux=slopel/(1^(-.4))*($3^(-.4)); \
+		if (slope<slopel && $6>2000) {\
+			print $1, $2; print $8, $9; print ">",slope, area\
+		}\
+	}\
+	}}' \
+	dl=$disch1 slopel=$slopel dx=$dx dy=$dy $prj.bas | \
+	psxy -JX -R -M -W1/255 -O -K >> $ps 
+
+pstext	-JX -R$Region -O -G255 -K <<END >> $ps 
+	$xt	$yt	11 0 1 3	topography + drainage   t=$Timenow My
+END
+#if (-r $prj.pfl) psxy $prj.pfl -JX -R -M -W$col_lin -H2 -O -K >> $ps 
+if (-r $prj.CMP2) psxy $prj.CMP2 -JX -R -Sc.1 -W1/0 -G255/0/0 -O -K >> $ps 
+
+#if (-r $prj.INT)  psxy $prj.INT  -JX -R -M -W3/255/0/0   -O -K >> $ps 
+#if (-r $prj.INT2) psxy $prj.INT2 -JX -R -M -W3/255/0/0ta -O -K >> $ps 
+
+
+
+
+#EROSION & DEFLECTION:
+if (-r $prj.xyzt || -r $prj.st) then
+	psbasemap -JX -R$Region -B$ticklabels\nSew -X$horz_shift -O -K >> $ps
+endif
+if (-r $prj.st) then
+	source $tisc_dir/script/tisc.common.erosrate.gmt.job
+endif
+if (-r $prj.xyzt) then
+	source $tisc_dir/script/tisc.common.upliftrate.gmt.job
+endif
+
+
+
+#AREA-SLOPE LOG DIAGRAM
+if (-r $prj.bas) then
+echo AREA-SLOPE LOG DIAGRAM...
+psbasemap -JX$width\l/7l -R10000/100000000000/.0002/5 -O -K -X-$horz_shift -Y$vert_shift \
+		-Ba1f2g1:"drainage area (m@+2@+)":/a1f2g1:"slope":nSeW >> $ps
+awk '{if ($3>=dl) if (d=sqrt(($8-$1)*($8-$1)+($9-$2)*($9-$2))) printf ("%.1f\t%.4f\n", $14*dx*dy*1e6, -($10-$6)/d/1e3)}' \
+	dl=0 dx=$dx dy=$dy $prj.bas | \
+	tee $tmp.area-slope.xy.tmp |\
+	awk '{n++; if (!(n%m)) print $0}' m=1 |\
+	sort -u | sort -n |\
+	psxy -JX -R -W1 -Sp -O -K >> $ps
+awk '{if ($1>0 && $2>0) {print log($1) "\t" log($2)}}' $tmp.area-slope.xy.tmp > $tmp.inp_ajuste.tmp
+trend1d $tmp.inp_ajuste.tmp -Np2 -Fxm | sort -u | sort -n > $tmp.res_ajuste.log.tmp
+set coeff=`awk '{if (NR==2) {a1=$1; b1=$2;} if (NR==17) {a2=$1; b2=$2; exit} } END{printf("%.3f",(b2-b1)/(a2-a1));}' $tmp.res_ajuste.log.tmp`
+echo "Coefficient theta (curvature) =" $coeff
+echo basin_eros_rate = $basin_eros_rate "m/My"
+
+awk '{print exp($1) "\t" exp($2)}' $tmp.res_ajuste.log.tmp |\
+	awk '{n++; if (!(n%m)) print $0}' m=1 |\
+	sort -u | sort -n |\
+	psxy -JX -R -W6ta -O -K >> $ps
+pstext	-JX -R -O -G0 -K <<END >> $ps 
+	100000000000 .0002	9 0 1 BR	slope-area logarithmic profile; theta = $coeff
+END
+endif
+
+
+
+#PALETAS DE COLORES:
+psscale -C$tmp.topo_palet.tmp 	 -D-1/-2.5/11/.3h  -B/:"elevation (m)": -L -O -K >> $ps
+psscale -C$tmp.erosrate_cpt.tmp  -D-1/-4.5/11/.3h  -B/:"eros.-sedim. (m/My)": -L -O -K >> $ps
+
+psbasemap -JX -R -B:: -O >> $ps
+
+
+rm $tmp.*.tmp
+

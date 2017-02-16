@@ -1,0 +1,95 @@
+	   ***  tAo3D v3.1 PARAMETERS FILE  ***
+	         (default unities : I.S.)
+
+
+Comments on this project: --
+
+
+PARAMETER	CORRESPONDING 		USE
+ VALUES		  VARIABLES
+----------------------------------------------------------------------------
+
+Gridding:
+51		Nx		E-W direction grid points
+51		Ny		N-S direction grid points
+
+Modeled region:
+-500e3		x0		Western model limit coordinate
+500e3		xf		Eastern model limit coordinate
+-500e3		y0		Southern model limit coordinate
+500e3		yf		Northern model limit coordinate
+
+Vertical graphic output limits:
+-4000		zmin
+4000		zmax
+
+Plate geometry:
+15000		Te_default	Default EET when no *.EET file is given. Te=0 => local isostasy.
+0		alt0		Initial height of the plate over the sea level
+
+Interpolation:
+4		mode_interp_load Interpolation mode for load files
+4		mode_interp_eet	 Interpolation mode for EET file:
+				#0: no interpolation needed ('nx x ny' file)
+				#1: inverse distance  
+				#2: inv. square dist.  
+				#3: nearest given point
+				#4: poligons
+Densities:
+3300		densmantle	Mantle density
+0		densenv		Enviromental material density
+2300		denssedims	Sediment density
+2800		densinfill	Infill density used when switch_topoestable=1
+
+Boundary Conditions:
+5		boundary_conds	B. C. :
+				#0: mean fixed boundary with zero deflection   
+				#1,2,3,4,5: mean free end at N, E, S, W, all.
+
+Tectonic horizontal forces (N/m2):
+0e13		Px		Horizontal tectonic force in x (compressive => >0)
+0e13		Py		Horizontal tectonic force in y
+0e13		Pxy		Horizontal tectonic shear force xy
+
+Erosion-Sedimentation:
+00		Kerosdif   	Diffusive transport erosion coefficient [m2/a]
+100e3		leng_fluv_eros	Length scale of fluvial erosion	[m]
+25e3		leng_fluv_sedim	Length scale of fluvial sedimentation [m]
+
+Surface water I/O:
+3e2		rain 		Background rain [l/m2/a]. Actually this corresponds to the water that goes to the drainage system
+3e2		Krain		Proportionality of rain with altitude [l/m2/a/km]
+1		lost_rate	Surface water lost per unit length [%/km]
+
+Time variables (Ma):
+0		Timeini		Initial time
+10		Timefinal	Final time
+1		tau		Relaxation time
+1		dt 		Time interval
+5		dtmemohori	Time between horizon record
+
+Lithosphere flexural behaviour
+0		lith_type	Isostasy mechanism
+				#-1: No flexure
+				#0:  Pure elastic thin plate
+				#1:  Viscoelastic thin plate
+
+Switches:
+0		switch_erosed
+1		switch_write_file
+1		switch_ps
+1		switch_verbose
+0		switch_debug
+
+
+(END OF PARAMETERS FILE)
+
+Comments:
+    This is a tAo3D parameter file. 
+	--You can modify the format of this parameter files by adding more 
+  comment lines or changing comments in the existing lines after the values.
+  Comment lines cannot start with a numeric value.
+	--Default unities: I.S. (except indication).
+	--You can get more information about the meaning of each parameter in 
+  the tao3D.h file and tao3D.info files.
+

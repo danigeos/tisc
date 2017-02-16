@@ -1,0 +1,81 @@
+#!/bin/csh
+##############################################################################
+#THE PROGRAM CUTHRZ IS PREFERABLE TO THIS JOB!
+#This job makes a cross section of a tisc *.hrz file along the line defined 
+#in a tisc PFL file. 
+#Syntax:
+#	tisc.cuthrz.job hrz_file PFL_file > pfl.file
+##############################################################################
+
+unalias bc
+
+set hrzfile 	= $1
+set PFLfile 	= $2
+set tmp 	= cuthrz
+
+if (-r $hrzfile) then
+	awk '{\
+		if (NR==5) {numhrzs=NF-2; y0=$2; sigx=sigy=0;}\
+		if (NR>5) {\
+			if (sigx==1 && $2!=ya) sigx=0;\
+			if (sigx==1) {x=$1; countx++;}\
+			if ($2!=y0 && sigy==0) {countx = 1; county = 2; x0=$1; ya=$2; sigx=sigy=1;}\
+			if ($2!=ya) {ya=$2; county++;}\
+		}\
+	}\
+	END {\
+		print numhrzs, countx, county, x0, x, ya, y0\
+		ENVIRON [ "Nx" ] = countx;\
+	}' $hrzfile > $tmp.prop.tmp
+else
+	echo file $hrzfile does not exist
+	exit
+endif
+set props = `cat $tmp.prop.tmp` 
+set numhrzs = $props[1]
+set Nx = $props[2]
+set Ny = $props[3]
+set x0 = $props[4]
+set xf = $props[5]
+set y0 = $props[6]
+set yf = $props[7]
+set dx = `echo \( $xf - $x0 \) \/ \($Nx-1\) | bc -l`
+set dy = `echo \( $yf - $y0 \) \/ \($Ny-1\) | bc -l`
+set dq = `echo \($dx + $dy \) \/ 1.9 | bc -l`
+set Region = $x0/$xf/$y0/$yf
+#echo Region=$Region, dx=$dx, dy=$dy, dq=$dq, Nx=$dx, Ny=$dy >&2
+
+awk 'BEGIN{\
+	print "# x(km)  	 y(km)  	  long(km)	   z(m)-->"\
+}\
+{\
+	if (NR==2) printf("#\t\t%s\n", $0);\
+	if (NR>2) exit;\
+}' $hrzfile
+
+awk '{print $1*1000,$2*1000,$0}' $hrzfile | \
+	project2line -L$PFLfile -I | \
+	awk '{\
+		if ($3<dq*1000 && $3>-dq*1000) {\
+			printf("%9.1f\t%9.1f\t%9.1f\t%9.1f", $5/1000,$6/1000,$4/1000,$3/1000)\
+			for (i=1; i<=numhrzs; i++) printf("\t%9.1f", $(8+i));\
+			printf("\n");\
+		}\
+	}' dq=$dq numhrzs=$numhrzs | \
+	sort -n +2 > $tmp.pfl.tmp
+
+
+awk '{printf("%9.1f\t%9.1f\t%9.1f\n", $1,$2,$3)}' $tmp.pfl.tmp > $tmp.pfl2.tmp
+set pfl = 1
+while ($pfl <= $numhrzs)
+	awk '{printf("%9.1f\t%9.1f\t%9.3f\n", $3,$(pfl+4),1/($4*$4+.01))}' pfl=$pfl $tmp.pfl.tmp |\
+		trend1d -N25 -W -Fm > $tmp.col.tmp
+	paste $tmp.pfl2.tmp $tmp.col.tmp > $tmp.pfl3.tmp
+	mv -f $tmp.pfl3.tmp $tmp.pfl2.tmp
+	set pfl = `echo $pfl + 1 | bc`
+end
+
+cat $tmp.pfl2.tmp
+
+rm -f $tmp.*.tmp
+

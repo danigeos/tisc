@@ -1,0 +1,282 @@
+###  TISC parameters file  ###
+
+#TISC VERSION FOR THIS FILE:
+version	TISC_2014-03-25
+
+#MODELED REGION: 
+#Coordinates of the center of corner cells (i.e., netCDF's "node 
+#registration"). The left limit of the left-most cells is at xmin-dx/2. 
+xmin		-5e5	Western model limit coordinate [m]
+xmax		5e5	Eastern model limit coordinate [m]
+ymin		-5e5	Southern model limit coordinate [m]
+ymax		5e5	Northern model limit coordinate [m]
+
+zmin		-1000	Vertical range (for graphic purposes only)
+zmax		4000	Vertical range (for graphic purposes only)
+
+#GRIDDING:
+#dx is automalically defined as (xmax-xmin)/(Nx-1)
+Nx		51	E-W direction grid points. 
+Ny		51	N-S direction grid points
+
+#INITIAL RELIEF:
+zini		0	Initial altitude [m] above sea level (added to the 
+				initial topography in '*.ZINI').
+random_topo	20	Adds noise to initial topo between -random_topo/2 and 
+				+random_topo/2 [m].
+
+#DENSITIES [kg/m3]:
+densasthen	3250	Density beneath the lithospheric plate, at the isostatic
+				compensation level in the asthenosphere
+denscrust	2850	Mean density of crust (used for the basement).
+densinfill	2800	Used only if switch_topoest==1. Infill density used to
+				fill under topographic (fixed) loads.
+denssedim	2000	Sediment density (including pores and their water 
+				content).
+densenv		0	Environment density (air or water).
+sed_porosity	0.3	Mean porosity of sediments (pores are assumed to be 
+				filled by water). The final density is fixed 
+				through 'denssedim', this porosity is used 
+				just to convert eroded/deposited volumes into 
+				bulk rock mass.
+
+#TIME VARIABLES [My] (time goes from negative to positive: Timeini<Timefinal):
+Timeini		0	Initial time.
+Timefinal	0.5	Final time.
+dt 		0.05	Time step (>0, time increment or interval) for flexure
+				and deformation.
+dt_eros		0.01	Approximate dt for surface processes (will be adjusted 
+				to the closest entire fraction of dt). To avoid 
+				artifact knickpoints in rivers requires about 
+				0.0001 or less. 
+dt_record	0.05	Time lag between records of sedimentary horizons (time 
+				lines) and deflection evolution (written in 
+				'*.xyzt'). If =0, will be recorded only at the
+				times  of *.UNIT files, and at those times
+				specified in the  '*.REC' file. (>0)
+
+#FLEXURE:
+isost_model	1	Isostasy mechanism: 
+			#0: No isostasy.
+			#1: Pure elastic thin plate.
+			#2: Viscoelastic thin plate.
+Te		15e+03	Default EET [m] when no *.EET file is given. Te=0 => 
+				local isostasy. Usual values are between 0 and 
+				150 km.
+tau		1	Relaxation time in Myr (used only for the viscoelastic 
+				plate model: isost_model=2). 
+				tau=viscosity*(2*(1+nu))/E. 1 Myr implies a 
+				lithospheric viscosity of 1e24 Pa s.
+boundary_conds	5	Boundary conditions for flexure at N, S, E, W (4 
+			characters):
+			#0: means fixed boundary (zero deflection).
+			#5: means free boundary (null 1st and second derivates, 
+				i.e., null slope and moment).
+			#6: fixes local isostatic deflection at boundary.
+switch_sea	1	To take into account sea load and allow for temporal 
+				sea level variations read from '*.SLV'.
+switch_topoest	0	If 1 then the final topography (instead of load 
+				thickness) will be read from *.UNIT files. That
+				topography is vertically fixed, filling the
+				deflection with densinfill material.
+#Tectonic horizontal forces [Pa*m=N/m]:
+Px		0	Horizontal tectonic force in x (compressive => >0)
+Py		0	Horizontal tectonic force in y
+Pxy		0	Horizontal tectonic shear force xy
+
+#CLIMATE AND SURFACE WATER FLOW (params. used only if hydro_model=1):
+hydro_model	1	Defines the hydrological (climate&drainage) model. 
+			#0: no precipitation, no fluvial transport. The 
+				following parameters have no effect.
+			#1: runoff(x,y) = (rain + Krain*altitude[km]) * 
+				(1-DX/CXrain)  * (1-DY/CYrain)   
+				is used if no *.RAIN file is given or if the 
+				value in that file is negative. DX,DY is the 
+				distance to the centre of the model.
+			#2: orographic precipitation following Roer et al. 
+				(2003, JGR).
+			#3: orographic precipitation following Garcia-
+				Castellanos (2007, EPSL), water-conservative.
+rain		200	[l/m2/yr]=[mm/yr]=[1.58e-8 m3/m2/s].
+			If hydro_model=1: Background precipitation (or runoff, 
+				water going to the drainage system) if no 
+				*.RAIN file is given or if the file value is 
+				negative. 
+			If hydro_model=2: Precipitation at T=0 C at plains or 
+				in absence of wind.
+			If hydro_model=3: Precipitation in a saturated column 
+				(related to turbulence)
+				P = rain * Water_col / Water_sat
+Krain		0	If hydro_model=1: proportionality of runoff with 
+				altitude [l/m2/yr/km]
+			If hydro_model>=2: mean wind velocity [m/s] (Krain>0 
+				and usually Krain<10).
+windazimut	90	If hydro_model>=2: azimut of wind flow direction in 
+				degrees counted clockwise from north (i.e., 
+				from positive y axis).
+relhumid	1	If hydro_model==3: humidity factor of incomming wind 
+				(0 to 1).
+CXrain		0	If hydro_model=1: proportionality of runoff with x 
+				(distance [m] from domain center to where rain
+				becomes 0 and  double). Negative means rain
+				increases westwards. 0 means no variations along
+				x;
+			If hydro_model>=2: smoothing distance along upwind 
+				direction related to turbulence and finite 
+				time of condensation and precipitation (~1e4 m).
+				Typically a few km. Leave it as 0 if cell size is 
+				not smaller than that. 
+CYrain		0	If hydro_model=1: proportionality of runoff with y 
+				(distance [m] from domain center to where rain
+				becomes 0 and  double). Negative means rain
+				increases southwards. 0 means no variations 
+				along y;
+			If hydro_model==2: smoothing distance along y related 
+				to turbulence and finite time of condensation 
+				and precipitation (~1e4 m).
+			If hydro_model==3: unused parameter.
+evaporation	600	Evaporation rate at lakes [l/m2/yr]=[mm/yr]. 
+				evaporation>runoff can significantly slow down 
+				the hydrological calculations. 
+			If hydro_model=1,2: laterally constant evaporation.
+			If hydro_model=3: evaporation caused by dry air and 0 
+				wind speed. E is then calculated as:
+				E=evaporation * (1+beta*wind) * (Wmax-Wcol)/Wmax
+lost_rate	0	Water evapotranspirated per river unit length [%/km]
+temp_sea_level	8	If hydro_model>=2 or K_ice_eros>0: Temperature at sea 
+				level [C]. 
+
+#EROSION/SEDIMENTATION PARAMETERS (params. used only if erosed_model=1):
+erosed_model	2	Defines the erosion/sedimentation model.
+			#0: means no surface transport. The following 
+				parameters have no effect.
+			#1: only hillslope diffusion + landsliding.
+			#2: as #1 + rivers following undercapacity model 
+				(Beaumont et al., 1992): qeq=K_river_cap想惹 and 
+				dq/dl=1/erodability*(q-qeq) (reaction equation).
+			#3: as #1 + rivers following Tucker&Slingerland(1996) 
+				model. Incision rate under equilibrium capacity
+				(q<qeq):
+				dh/dt=erodibility想^(1/3)惹^(2/3)
+				with qeq=K_river_cap想惹 
+			#4: as #2 but m/n=1.5 in the eq. transport capacity: 
+				qeq=K想^m惹^n
+			#5: as #1 + rivers following undercapacity model (van 
+				der Beek & Bishop, 2003; also described in 
+				Cowie et al., 2006), implementing channel width 
+				in Beaumont's. qeq=K/W想^m惹^n
+			#6: as #1 + rivers following hybrid detachment+transport
+				limited model, based on basal shear stress law 
+				(Garcia-Castellanos & Villasenor, 2011), 
+				accounting for channel width: 
+				dh/dt=K'想^m惹^n  if q<qeq, qeq=K_river_cap想惹
+				where K' is a function of K in dh/dz = K*tau^1.5
+				and K is given through 'erodibility'. Erosion 
+				gradually
+			#7: as #1 + river incision following unit stream power
+				e=k_b*w^1; w=rho*g*Q*S/W, with w in [W/m^2], 
+				e in mm/yr (Ferrier et al., 2013, 
+				Nature).
+				
+Kerosdif   	0	Diffusive transport coefficient [m2/yr] (e.g., Ks in 
+				Kooi&Beaumont,1994,p12193). Tucker&Bras(1998,
+				WaterRes.); Tucker&Slingerland(1997,WaterRes) 
+				use 10e-2. Kooi&Beaumont(1994): 0.5-5.0.  
+				Flemings&Jordan (1989) list observations 
+				of 10e-4 - 10e-2 m2/yr. Braun&Sambridge(1997,
+				BasinRes.) use .3 m2/yr Hartley et al., (2013)
+				use 2e-4 - 7e-4 m2/yr. If diffusion is used 
+				to represent also fluvial transport, then 
+				Flemings&Jordan (1989) document up to 10e5 
+				in delta progradations). Avouac&Burov(1996) 
+				compile 1e3-1e4 m2/s for such large-scale 
+				modelling.
+critical_slope	0	Maximum surface slope (slope triggering landsliding, 
+				[m/m]), (0 means no landsliding). 
+K_river_cap	60	For erosed_model>=2: Constant for river transport 
+				capacity [kg/m3]: qeq = K_river_cap*Qw*Slope
+				Units are kg sedim. per m3 water for S=1,
+				different than in literature, e.g. T&S96 use 
+				.1 m3/m3, divide tAo values by denssedim to 
+				compare). For erosed_model>=3 it has influence 
+				only under ~1000. Use a higher value if you 
+				need a detachment-limited incision model.
+erodibility	1e+05	This default erodibility value is ignored for units  
+				with a value specified in their *.UNIT file.
+			If erosed_model=2,4,5: length scale of fluvial erosion 
+				[m] (~1e5 m); 
+			If erosed_model=3: erodibility in 
+				meters_rock/(s*(m3_water/s)^(1/3)) ; ~1e-7,1e-4 
+				m_rock^(1/3)/yr (Stock&Montgomery,1999; 
+				Sobel et al,2003). Divide by rain[m/yr]^1/3 
+				and by 1e5=(365*24*3600)^(2/3)  to convert 
+				the units of these authors to TISC's units.
+			If erosed_model=6: erodibility in the shear stress 
+				formula: erosion=K_b*tau^a. Is ~2e-6 for a=1.5, 
+				but 1e-7 seems needed at contin. scales.
+				Units:
+				meters_rock/yr / (kg/m3 * m/s2 * m)^a ==
+				meters_rock/yr / (Pa)^a
+			If erosed_model=7: k_b=2.3e-7 (m/yr)/(W/m2) (for 
+				volcanics, 90-day recurrence Qw; Ferrier et 
+				al., 2013, Nature).
+erodibility_sed	1e+04	Same as 'erodibility' but for sediments.
+l_fluv_sedim	2.5e+04	Length scale of fluvial sedimentation [m] (aggradation 
+				or delta sedimentation). For erosed_model=3,
+				this is only relevant for  delta sedimentation
+				at the sea and lakes. Larger values imply wider
+				deltas and a more gradual transition from river
+				incision to river aggradation.
+eros_bound_cond	0000	Boundary Conditions for surface processes at the 
+				N, S, E, W boundaries of the model (4 
+				characters):
+			#0: means river has 0 equilibrium capacity (q_eq in 
+				Garcia-Castellanos,2002) at boundary.
+			#1: means that the river keeps constant slope across 
+				the boundary.
+			#2: means zero river erosion or sedimentation.
+			#3: means half capacity.
+			#c: as 1 but under sea-level areas will not be 
+				connected to ocean at that boundary. 
+K_ice_eros	0	Constant of ice incission rate relating ice sliding 
+				velocity to erosion [(m/yr)/(m/yr)]. 0 means no 
+				ice computation. Observations by Boulton, 
+				1974, (cited in Glacial Geologic Processes, 
+				David Drewry, 1987), imply [.05e-3-.2e-3]. 
+				Tomkin's thesis and Braun et al., 2001, J. 
+				Climatology, use [2.5e-3 - .1e-3].
+
+#INPUT/OUTPUT:
+verbose_level	1	Specify the level of runtime prints in stdout.
+			#0: Only basic information is shown. 
+			#1: Statistics provided (default). 
+			#2: As '1' but further i/o info is provided.
+			#3: Prints debugging information. 
+			#4: Additional, high-level debug prints.
+switch_files	1	For extra file output: see files *.bas *.all 
+				*.lakes in doc/tisc.info.txt.
+mode_interp	2	Default interpolation mode for input files. 
+				See doc/template.UNIT.
+switch_ps	1	For postscript graphic output (uses GMT shell scripts).
+
+
+
+#(END OF PARAMETERS FILE)
+Comments:
+	The original copy of this file contains the TISC default parameters and 
+	is located at ./tisc/doc/.  Copy it to your project directory as 
+	'projectname.PRM' and then edit to use as the parameters file for your 
+	new project. Note that:
+	--The first column is interpreted as potential parameter names; the 
+	second contains the associated values.
+	--You can modify the format of this parameter file, either by adding
+	more comment lines or changing comments in the existing lines after 
+	the values. Order in the list of parameters is irrelevant except for 
+	the version, which must be first.
+	--You can modify most of these parameters from the command line (see 
+	option -q). Command line options are intepreted after reading this PRM 
+	file, so they overwrite these values.
+	--You only need to include the parameters which default value you 
+	want to change relative to the default ones in doc/template.PRM.
+	--Default units: I.S. (except where indicated).
+	--More information about the meaning of parameters in tisc/tisc.info.txt

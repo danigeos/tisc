@@ -1,0 +1,194 @@
+#!/bin/csh
+##############################################################################
+#job to produce postscript profile of the a RIVER BASIN of TISC with GMT
+#	Daniel Garcia-Castellanos, 2012.
+##############################################################################
+
+set prj 	= $1
+
+set width = 13
+set separation = .8
+
+source $tisc_dir/script/tisc.common.gmt.job
+
+echo "Syntax: 	$0 'prj-name' basin_number"
+echo "Syntax:   $0 'prj-name' x, y[km] (add 'i' to plot the whole basin)"
+
+
+source $tisc_dir/script/tisc.common.river_basin_chosen.gmt.job
+
+#set lmax = 400 #`sort $tmp.chosen_basin.bas.tmp -n -k 7 | tail -n 1 | awk '{print $7}'`
+#set zmin = -500
+#set zmax = 2000 #`echo $zmax | awk '{print $1*1e3}'`
+echo lmax= $lmax, $zmin, $zmax
+psbasemap -JX$width/6 -R000/$lmax/$zmin/$zmax \
+	-Ba500f100:"distance along river (km)":/a1000f200g10000:"elevation, z (m)":nSeW \
+	-Y4 -X3.5 -K -P > $ps
+
+source $tisc_dir/script/tisc.common.river_profile.gmt.job
+
+
+#Peaks: upper topography envelope profile:
+set peakradius = 10
+awk '(NR>2){print $1,$2, $NF}' $prj.hrz | blockxyz -R$x0/$xf/$y0/$yf -N$Nx/$Ny -MM$peakradius -d-1e9 >  $tmp.blockxyz.tmp
+awk '{if (FILENAME==file1) {topo[i,j]=$3; j++; if (j==Nx) {j=0;i++;}}   if (FILENAME==file2) {i=int((ymax-$2)/dy); j=int(($1-xmin)/dx); print $0, i, j, topo[i,j]}}' \
+	Nx=$Nx dx=$dx dy=$dy xmin=$x0 ymax=$yf file1=$tmp.blockxyz.tmp \
+	file2=$tmp.chosen_basin.bas.tmp $tmp.blockxyz.tmp $tmp.chosen_basin.bas.tmp \
+	> $tmp.peaktopo.bas.tmp
+#awk '{if ($3>=dl && $3<dh) printf ("%.1f\t%.1f\n%.1f\t%.1f\n>\n", $7, $6, $7, $NF)}' dl=$disch1 dh=$disch2 \
+#	$tmp.peaktopo.bas.tmp | psxy -JX -R -M -W1/200 -O -K >> $ps
+#awk '{if ($3>=dl && $3<dh) printf ("%.1f\t%.1f\n%.1f\t%.1f\n>\n", $7, $6, $7, $NF)}' dl=$disch2 dh=$disch3 \
+#	$tmp.peaktopo.bas.tmp | psxy -JX -R -M -W2/200 -O -K >> $ps
+#awk '{if ($3>=dl         ) printf ("%.1f\t%.1f\n%.1f\t%.1f\n>\n", $7, $6, $7, $NF)}' dl=$disch3 \
+#	$tmp.peaktopo.bas.tmp | psxy -JX -R -M -W8/200 -O -K >> $ps
+
+#Erosion accumulated:
+#awk '{if ($3>=dl && $3<dh) printf ("%.1f\t%.1f\n%.1f\t%.1f\n>\n", $7, $6, $7, $6+$13)}' dl=$disch1 dh=$disch2 \
+#	$tmp.peaktopo.bas.tmp | psxy -JX -R -M -W1/200/100/100 -O -K >> $ps
+#awk '{if ($3>=dl && $3<dh) printf ("%.1f\t%.1f\n%.1f\t%.1f\n>\n", $7, $6, $7, $6+$13)}' dl=$disch2 dh=$disch3 \
+#	$tmp.peaktopo.bas.tmp | psxy -JX -R -M -W2/200/100/100 -O -K >> $ps
+#awk '{if ($3>=dl         ) printf ("%.1f\t%.1f\n%.1f\t%.1f\n>\n", $7, $6, $7, $6+$13)}' dl=$disch3 \
+#	$tmp.peaktopo.bas.tmp | psxy -JX -R -M -W8/200/100/100 -O -K >> $ps
+
+#set disch1 = 0.2
+#awk '{if ($3>dl && ($5=="R" || $5=="E")) print $7, $6, $12/1e3, .003+.04*log($3/dl)}' dl=$disch1 \
+#	$tmp.chosen_basin.bas.tmp | sort -n -k3 -r | psxy -JX -R -Sc -C$tmp.erosrate_cpt.tmp -O -K >> $ps 
+
+#Lakes:
+#awk '{if ($5=="L") print $7, $6}' $tmp.chosen_basin.bas.tmp | \
+#	psxy -JX -R -Sc.06 -G230 -O -K >> $ps 
+#awk '{if ($5=="E") print $7, $6}' $tmp.chosen_basin.bas.tmp | \
+#	psxy -JX -R -St.06 -G230 -O -K >> $ps 
+
+#River profile:
+#longest river:
+
+
+psxy -JX -R -Sc -G160 -O -K <<END>> $ps 
+#	5  $zmaxt2 .15
+#	10 $zmaxt2 .15
+END
+pstext	-JX -R -O -G0 -K <<END >> $ps 
+#	$lmaxt $zmint	9 0 1 BR	Water discharge (size), erosion rate (color), and peaks in $peakradius km (grey bars)
+#	$lmint $zmaxt	9 0 1 1	River discharge (size) and sediment load (color); Lakes (grey) 
+END
+psscale -D11/6.8/5/.3h -L -C$tmp.erosrate_cpt.tmp -O -K -B:"sedimentation/erosion rate (km/My)": >> $ps 
+
+
+
+#INCISION / SEDIMENTATION RATE:
+echo -n INCISION \/ SEDIMENTATION RATE...
+set zmax = 1.2
+set zmin = -.8
+set zmint = `echo $zmax $zmin | awk '{print ($2+($1-$2)/50)}'`
+set zmaxt = `echo $zmax $zmin | awk '{print ($1-($1-$2)/50)}'`
+set zmaxt2 = `echo $zmax $zmin | awk '{print ($1-($1-$2)/14)}'`
+psbasemap -JX$width/3.5 -R0/$lmax/$zmin/$zmax \
+	-Ba200f50/a.5f.1g50:"sedimentation/erosion rate (km/Myr)":nSeW \
+	-Y8 -O -K >> $ps
+awk '{if ($3>dl && ($5=="R" || $5=="E")) print $7, $12/1e3, $4/$3, .002+.01*log($3/dl)}' dl=$disch1 \
+	$tmp.chosen_basin.bas.tmp | psxy -JX -R -Sc -C$tmp.sedload_cpt.tmp -O -K >> $ps 
+psxy -JX -R -Sc -C$tmp.sedload_cpt.tmp -O -K <<END>> $ps 
+#	5  $zmaxt2 .05 .08
+#	10 $zmaxt2 .10 .1
+#	15 $zmaxt2 .15 .13
+END
+set mean_basin_eros_rate = `awk '{n++; mber+=$12;}END{printf("%.1f",mber/n)}' $tmp.chosen_basin.bas.tmp`
+set Timenow = `awk '(NR==1) {printf("%.2f", substr($(NF-1),4,8)); exit;}' $prj.hrz`
+pstext	-JX -R -O -G0 -K <<END >> $ps 
+	$lmaxt $zmint	9 0 1 BR	River bed incission/aggradation, discharge (size), and sediment load (color)
+	$lmint $zmaxt	12 0 1 TL	t=$Timenow Ma,  mean erosion = $mean_basin_eros_rate m/Ma
+#	$lmint $zmaxt	10 0 1 1	River discharge (pen size) and sediment load (color)
+END
+
+psscale -D11/6.8/5/.3h -L -C$tmp.sedload_cpt.tmp -O -K -B:"sediment load (kg/m3)": >> $ps 
+
+
+
+#DRAINAGE NETWORK LOCATION
+set width = 3.5
+set height = `echo $width \* $Ly \/ $Lx  | bc -l`
+set size = $width/$height
+set vert_shift = `echo \- 0 \- $height \- 1.1  | bc -l`
+psbasemap -JX$size -R$Region -B:"":/:"":nsew \
+	-X0 -Y6 -O -K >> $ps
+set disch1 = 100
+set disch2 = 500
+set disch3 = 2000
+#source $tisc_dir/script/tisc.common.topo+drainage.gmt.job
+
+
+#TOPOGRAPHY:
+grdimage $tmp.top.grd.tmp -C$tmp.topo_palet.tmp  -JX -R \
+	-I$tmp.intensity.top.grd.tmp -O -K >> $ps
+echo plotting EROSION RATE...
+awk '{print $1,$2,$5/1e3;}' $prj.st | \
+	xyz2grd -G$tmp.erosrate.grd.tmp -I$dx/$dy -R$Region -H2
+#grdinfo $tmp.erosrate.grd.tmp
+grdimage $tmp.erosrate.grd.tmp -C$tmp.erosrate_cpt.tmp -JX -R -K -O >> $ps
+#grdcontour $tmp.top.grd.tmp -T0.2/0.05:-+ -JX -R -C200  -W1/0 -O -K >> $ps
+#grdcontour $tmp.top.grd.tmp -JX -R -C$tmp.topo_palet.tmp -W1 -O -K >> $ps
+
+#DRAINAGE:
+if (-r $prj.xyw) then 
+awk '{if ($3>=dl && $3<dh && $5!="S" && $5!="L" && NR>2) {print $1, $2; print $7, $8; print ">"}}' \
+	dl=$disch1 dh=$disch2 $prj.xyw | \
+	psxy -JX -R -M -W.2/$col_river -O -K >> $ps 
+awk '{if ($3>=dl && $3<dh && $5!="S" && $5!="L" && NR>2) {print $1, $2; print $7, $8; print ">"}}' \
+	dl=$disch2 dh=$disch3 $prj.xyw | \
+	psxy -JX -R -M -W1/$col_river -O -K >> $ps 
+awk '{if ($3>=dl && $3<dh && $5!="S" && $5!="L" && NR>2) {print $1, $2; print $7, $8; print ">"}}' \
+	dl=$disch3 dh=1e19    $prj.xyw | \
+	psxy -JX -R -M -W2/$col_river -O -K >> $ps 
+
+#awk '{if ($5=="L" && substr($1,1,1)!="#") print $1, $2}' $prj.xyw | \
+#	psxy  -JX -R -Ss$size_lake_squares -W1/$col_river -G$col_river -O -K >> $ps 
+#awk '{if ($5=="E" && substr($1,1,1)!="#") print $1, $2}' $prj.xyw | \
+#	psxy  -JX -R -Ss$size_lake_squares -W7/$col_river -G$col_river -O -K >> $ps 
+cat - <<END>  $tmp.lakes_cpt.tmp
+	0	0	0	0	.49	0	0	0
+	.49	0	0	255	1	0	0	255
+END
+cat - <<END>  $tmp.lakes_endorh_cpt.tmp
+	0	0	0	0	.49	0	0	0
+	.49	0	0	255	1	0	0	255
+END
+grdcontour $tmp.lakes.grd.tmp -JX -R -C$tmp.lakes_cpt.tmp -W3/$col_lake -O -K >> $ps
+if (-r $tmp.lakes.grd.tmp) then 
+	grdclip $tmp.lakes.grd.tmp         -G$tmp.lakes.grd.tmp        -Sb0.5/NaN
+	grdimage $tmp.lakes.grd.tmp        -JX -R -C$tmp.lakes_cpt.tmp        -Q -O -K >> $ps
+endif
+if (-r $tmp.lakes_endorh.grd.tmp) then 
+	grdclip $tmp.lakes_endorh.grd.tmp  -G$tmp.lakes_endorh.grd.tmp -Sb0.5/NaN
+	grdimage $tmp.lakes_endorh.grd.tmp -JX -R -C$tmp.lakes_endorh_cpt.tmp -Q -O -K >> $ps
+endif
+endif
+
+
+if (-r $prj.pfl) psxy $prj.pfl -JX -R -M -W$col_lin -H2 -O -K >> $ps 
+
+if (-r $prj.CMP) psxy $prj.CMP -JX -R -M -L -W4/0/0/0 -O -K >> $ps 
+pstext	-JX -R -O -G0 -K <<END >> $ps 
+#	$xtitle	$ytitle	12 0 1 3	topography & drainage
+END
+
+
+
+
+
+
+awk '{if ($3>=dl          && $5!="S" && $5!="L" && NR>2) {print $1, $2; print $9, $10; print ">"}}' \
+	dl=30 $tmp.chosen_basin.bas.tmp | \
+	psxy -JX -R -M -W.5/0/220/0 -O -K >> $ps 
+awk '{if ($3>=dl          && $5!="S" && $5!="L" && NR>2) {print $1, $2; print $9, $10; print ">"}}' \
+	dl=$disch2 $tmp.chosen_basin.bas.tmp | \
+	psxy -JX -R -M -W1.5/0/220/0 -O -K >> $ps 
+pstext	-JX -R -G0 -W255/255/255 -O -K <<END >> $ps 
+#	$xtitle	$ytitle	8 0 1 3	location
+END
+
+
+pstext	-JX -R -O <<END >> $ps 
+END
+exit
+rm -f $tmp.*.tmp

@@ -1,0 +1,38 @@
+#!/bin/csh -f
+
+set prj 	= $1
+
+#grav_anom_3D $prj -B -s0
+
+set width = 14
+set height_CS = 3.5
+
+source $tisc_dir/script/tisc.common.gmt.job
+
+
+#Topography:
+psbasemap -JX$size -R$Region -B$ticklabels\:"x (km)":/$ticklabels\:"y (km)":NseW \
+	-Y7 -X3.5 -K -P >! $ps
+source $tisc_dir/script/tisc.common.topo+drainage.gmt.job
+pstext	-JX -R -O -G0 -W255/255/255 -K <<END >> $ps 
+	$xtime	$ytime	13 0 1 9	$Timenow Ma
+END
+source $tisc_dir/script/tisc.common.deflection_cont.gmt.job
+if (-r $prj.pfl) psxy $prj.pfl -JX -R -M -W$col_lin -H2 -O -K >> $ps 
+
+psbasemap -JX -R -Bnsew -O -K >> $ps
+
+
+#2D CROSS SECTION:
+if (-r $prj.pfl) then
+	psbasemap -JX$width_CS/$height_CS -R0/$dmax/$zmin/$zmax \
+		-B$ticklabels\:"distance (km)":/$zticklabels\:"z (km)":SeW \
+		-O -K -X$horz_shift_CS -Y$vert_shift_CS >> $ps
+	source $tisc_dir/script/tisc.common.cross_section.gmt.job
+endif
+
+pstext	-JX -R -O <<END>> $ps
+END
+
+
+rm -f  $tmp.*.tmp 

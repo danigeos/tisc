@@ -1,0 +1,15 @@
+#DRAINAGE (proportional to sed. load):
+if (-r $prj.xyw) then 
+echo plotting SED. LOAD...
+if (-r $prj.RIV) awk '{if (substr($0,1,1)!=">" && substr($0,1,1)!="#") print $1/1000,$2/1000; else print $0}' \
+	$prj.RIV | psxy -JX -R -M -W4/70/0/0 -O -K >> $ps 
+awk -v sea_level=$sea_level '{if ($4>=ll && $4<lh && NR>2 && $5!="S" && $5!="L" && $6>=sea_level) {print $1, $2; print $7, $8; print ">"}}' \
+	ll=$sedld1 lh=$sedld2 $prj.xyw | \
+	psxy -JX -R -M -W1/$col_masstr -O -K >> $ps 
+awk -v sea_level=$sea_level '{if ($4>=ll && $4<lh && NR>2 && $5!="S" && $5!="L" && $6>=sea_level) {print $1, $2; print $7, $8; print ">"}}' \
+	ll=$sedld2 lh=$sedld3 $prj.xyw | \
+	psxy -JX -R -M -W3/$col_masstr -O -K >> $ps 
+awk -v sea_level=$sea_level '{if ($4>=ll          && NR>2 && $5!="S" && $5!="L" && $6>=sea_level) {print $1, $2; print $7, $8; print ">"}}' \
+	ll=$sedld3            $prj.xyw | \
+	psxy -JX -R -M -W8/$col_masstr -O -K >> $ps 
+endif

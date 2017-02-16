@@ -1,0 +1,85 @@
+if (-r $prj.bas) then
+echo -n plotting PIRACY INDEX...
+awk '(substr($0,1,1)!=">" && substr($0,1,1)!="#"){print $1,$2,$8;}' $prj.bas | \
+	xyz2grd -G$tmp.chi.grd.tmp -I$dx/$dy -R$Region 
+grdinfo $tmp.chi.grd.tmp
+
+set dxh = `awk -v dx=$dx 'BEGIN{print dx/4}'`
+set dyh = `awk -v dy=$dy 'BEGIN{print dy/4}'`
+
+
+
+#grdmath $tmp.chi.grd.tmp = $tmp.piracy.grd.tmp
+#grdsample $tmp.chi.grd.tmp -G$tmp.chi_finermesh.grd.tmp -I$dxh/$dyh 
+#grdclip $tmp.chi_finermesh.grd.tmp -G$tmp.chi_finermesh.grd.tmp -Sb$dxy/$dxy
+#grdinfo $tmp.chi_finermesh.grd.tmp
+#grd2xyz $tmp.chi_finermesh.grd.tmp | \
+#	blockmean -I$dx/$dy -R$Region -E | \
+#	awk '{print $1,$2,($6)-($5); }' | \
+#	xyz2grd -G$tmp.chi_contrast.grd.tmp -I$dx/$dy -R$Region
+grdgradient $tmp.chi.grd.tmp -S$tmp.chi_contrast.grd.tmp -D
+grdinfo $tmp.chi_contrast.grd.tmp
+grdmath $tmp.chi_contrast.grd.tmp = $tmp.piracy_index.grd.tmp
+
+
+if (1) then
+echo Calculating slope along rivers...
+set min_slope=.01
+set max_slope=1
+awk -v mins=$min_slope -v maxs=$max_slope -v dxh=$dxh -v dyh=$dyh \
+	'BEGIN{dxyh=dxh; if (dxyh>dyh) dxyh=dyh}\
+	{if (substr($0,1,1)!=">" && substr($0,1,1)!="#"){\
+		dist=1e3*sqrt(($7-$1)*($7-$1)+($8-$2)*($8-$2)); \
+		if (dist<dxyh) dist=dxyh; \
+		slope=($6-$9)/dist;\
+		if (slope>maxs) slope=maxs; \
+		if ($5=="R") print $1,$2,mins+slope; else print $1,$2,mins;\
+	}}' $prj.xyw | \
+	xyz2grd -G$tmp.slope.grd.tmp -I$dx/$dy -R$Region 
+grdinfo $tmp.slope.grd.tmp
+grdsample $tmp.slope.grd.tmp -G$tmp.slope_finermesh.grd.tmp -I$dxh/$dyh 
+grdclip $tmp.slope_finermesh.grd.tmp -G$tmp.slope_finermesh.grd.tmp -Sb$min_slope/$min_slope
+#grdinfo $tmp.slope_finermesh.grd.tmp
+grd2xyz $tmp.slope_finermesh.grd.tmp | \
+	blockmean -I$dx/$dy -R$Region -E | \
+	awk '{print $1,$2,$6/$5; }' | \
+	xyz2grd -G$tmp.maxoverminslope.grd.tmp -I$dx/$dy -R$Region
+grdinfo $tmp.maxoverminslope.grd.tmp
+grdmath $tmp.maxoverminslope.grd.tmp $tmp.chi_contrast.grd.tmp MUL = $tmp.piracy_index.grd.tmp
+grdinfo $tmp.piracy_index.grd.tmp
+
+else
+echo "Slope being ignored in piracy"
+endif
+
+
+
+#Find 1-significant-digit figures (30, 300, 3000) for the maximum and step cpt values
+set num  = `grdinfo $tmp.piracy_index.grd.tmp | awk '{if ($4=="z_max:") print $5/500}'`
+set max4cpt = `awk -v num=$num 'BEGIN{num*=1;  print (int(num/10^(int(log(num)/log(10)))*10)+1)*10^(int(log(num)/log(10)))/10}'`
+set inc4cpt = `awk -v num=$num 'BEGIN{num*=.1; print (int(num/10^(int(log(num)/log(10)))*10)+1)*10^(int(log(num)/log(10)))/10}'`
+
+#grdhisteq $tmp.piracy_contrast.grd.tmp -C10 -D | awk '{if (NR>1) if (x!=$1) print $0; x=$1}' > $tmp.piracy_contrast_levels.tmp 
+#awk 'BEGIN{print 0}{print $0; lastlevel=$2}END{print lastlevel}' $tmp.piracy_contrast_levels.tmp > $tmp.piracy_contrast_levels_plus.tmp 
+#makecpt -Crainbow -T$tmp.piracy_contrast_levels_plus.tmp -Z > $tmp.piracy_contrast_cpt.tmp
+#grd2cpt $tmp.piracy_contrast.grd.tmp -Crainbow -Z -E10 > $tmp.piracy_contrast_cpt.tmp
+
+set echo
+makecpt -Crainbow -T0/$max4cpt/$inc4cpt -Z > $tmp.piracy_index_cpt.tmp
+unset echo
+
+grdimage $tmp.piracy_index.grd.tmp -C$tmp.piracy_index_cpt.tmp  -JX -R -K -O >> $ps
+pstext	-JX -R$Region -O -K -G0 <<END >> $ps 
+#	$xtitle	$ytitle	11 0 1 3	Piracy Index (km)
+END
+
+lonlat2xy -L40.5 -x-3.6879167 -y40.5 -k <<END> $tmp.xy.tmp
+	  2.375139  42.261632
+END
+psxy $tmp.xy.tmp -JX -R$Region -O -K -W1/255/0/0 -Sc.3  >> $ps
+
+psscale -C$tmp.piracy_index_cpt.tmp -D$xscale/$yscale/$width/$scalewidth\h -B:"Piracy Index (km)": -L -O -K >> $ps
+
+endif
+
+

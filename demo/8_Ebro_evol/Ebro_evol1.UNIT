@@ -1,0 +1,28 @@
+#PYRENEES 1st thrust
+#should have 120? km shortening
+
+time_load	-60
+vel_x	0
+vel_y	-3.2
+time_stop	-28
+fault_load	1
+cut_all 	1
+z_default	-1e6
+
+-300	n
+700e3	380e3
+650e3	380e3
+100e3	450e3
+-50e3	450e3
+-200e3	450e3
+-200e3	700e3
+700e3	700e3
+
+10000	n
+700e3	480e3
+650e3	480e3
+150e3	495e3
+-50e3	515e3
+-200e3	515e3
+-200e3	700e3
+700e3	700e3

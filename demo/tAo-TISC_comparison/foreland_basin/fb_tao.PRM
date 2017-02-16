@@ -1,0 +1,241 @@
+###  tAo parameters file  ###
+
+#tAo VERSION FOR THIS FILE:
+version		tAo_2012-08-29
+
+#LIMITS OF THE OUTPUT WINDOW:
+xmin		-250e3	Left boundary. See also '-D' command line option.
+xmax		+250e3	Right boundary. See also '-D' command line option.
+zmin		-6000	Bottom
+zmax		+2000	Top
+
+#GRIDDING:
+Nx		101 	Number of x cells (distance axis).
+Nz		201	Number of z cells (depth axis, used for isost_model>3 
+				only).
+
+#CRUSTAL GEOMETRY:
+crust		32000	Default crustal geometry for gravity anomaly and 
+				rheological calculations when no *.CRUST and 
+				.UCRUST
+ucrust		11000	Id. for upper crust.
+zini		0	Initial altitude [m] above sea level (added to the 
+				initial topography in '*.ZINI').
+random_topo	0	Adds noise to initial topo between -random_topo/2 and 
+				+random_topo/2 [m].
+
+#DENSITIES [kg/m3]:
+densasthen	3200	Density beneath the lithospheric plate, at the isostatic
+				compensation level in the asthenosphere
+densmantle	3250	Density of the mantle (only relevant for gravity 
+				anomaly calculations).
+denscrust	2850	Mean density of crust (used for the basement).
+densinfill	2800	Used only if switch_topoest==1 in *.PRM or topoest==1 
+				in *.UNIT. Sets the infill density used to fill 
+				under topographic (fixed) loads. See example ?.
+denssedim	2200	Sediment density (including pores and their water 
+				content).
+densenv		0	Environment density (air or water).
+sed_porosity	.3	Mean porosity of sediments (pores are assumed to be 
+				filled by water). The final density is fixed 
+				through 'denssedim', this porosity is used 
+				just to convert eroded/deposited volumes into 
+				bulk rock mass.
+
+#TIME VARIABLES [My] (time goes from negative to positive: Timeini<Timefinal):
+Timeini		0	Initial time.
+Timefinal	15	Final time. Always Timefinal>Timeini.
+dt 		.5	Time step (time increment interval) for flexure and
+				deformation (must be >0).
+dt_eros		.01	Approximate dt for surface processes (will be adjusted 
+				to the closest entire fraction of dt). To avoid 
+				artifact knickpoints in rivers requires about 
+				0.0001. 
+dt_record	1	Time lag between records of sedimentary horizons (time 
+				lines) and deflection evolution (written in 
+				'*.xyzt'). If =0, will be recorded only at the
+				times  of *.UNIT files, and at those times
+				specified in the  '*.REC' file. (>0)
+
+#FLEXURE (used only if isost_model=1):
+isost_model	1	Sets thin plate isostatic model for the lithosphere:
+			#0: No isostatic calculations.
+			#1: Pure elastic plate model.
+			#2: Visco-elastic plate model.
+			#3: Elastic-plastic oceanic lithosphere.
+			#4: Elastic-plastic continental always decoupled.
+			#5: Elastic-plastic continental never decoupled.
+			#6: Elastic-plastic continental autocoupling.
+Te		25000	Default EET [m] when no *.EET file is given. Te=0 => 
+				local isostasy. Usual values are between 0 and 
+				150 km.
+tau		1	Relaxation time in Myr (used only for the viscoelastic 
+				plate model: isost_model=2). 
+				tau=viscosity*(2*(1+nu))/E. 1 Myr implies a 
+				lithospheric viscosity of 1e24 Pa s.
+boundary_conds	2	Boundary conditions for flexure
+			#0: Left edge is center of a symmetric model (slope=0;
+				vertical_shear=0). Right edge as in #3.
+			#1: Broken plate at left with external force 
+				'appshearforce' and moment 'appmoment' at the 
+				left edge. Right edge is free (zero values).
+			#2: 0 dip (slope) and 0 deflection at left and right 
+				edges.
+			#3: Free edges (0 moment and 0 vertical shear stress).
+			#4: Hunging plate with fixed edges and 0 moment.
+			#5: Broken plate at right with external force 
+				'appshearforce' and moment 'appmoment' at the 
+				right edge. Left edge is free (zero values).
+horz_force	0e12	Horizontal tectonic force (compressive if >0).
+vert_force	-0e12	Applied force as bound. cond. in cases 1 and 5. 
+				(downwards if <0).
+moment		-0e16	Torque as bound. cond. cases 1 and 5. (clockwise if >0).
+switch_topoest	0	To keep loads at their initial position, filling the 
+				deflection with densinfill material. Use 
+				example_C in tao/demo/ to understand this. 
+				Doesn't make  sense using this for moving or 
+				thrust loads, or with erosion.
+
+#CLIMATE AND SURFACE WATER FLOW (params. used only if hydro_model=1):
+hydro_model	0	Defines the hydrological (climate&drainage) model. 
+			#0: no precipitation, no fluvial transport. The 
+				following parameters have no effect.
+			#1: runoff(x) = (rain + Krain*altitude[km]) * 
+				(1-DX/CXrain)   is used if no *.RAIN file is 
+				given or if the value in that file is negative. 
+				DX,DY is the distance to the centre of the 
+				model.
+			#2: orographic precipitation following Roer et al. 
+				(2003, JGR).
+			#3: orographic precipitation following Garcia-
+				Castellanos (2007, EPSL), water-conservative.
+rain		300	[l/m2/yr]=[mm/yr]=[1.58e-8 m3/m2/s].
+			If hydro_model=1: Background precipitation (or runoff, 
+				water going to the drainage system) if no 
+				*.RAIN file is given or if the file value is 
+				negative. 
+			If hydro_model=2: Precipitation at T=0 C at plains or 
+				in absence of wind.
+			If hydro_model=3: Precipitation in a saturated column 
+				(related to turbulence)
+				P = rain * Water_col / Water_sat
+Krain		300	If hydro_model=1: proportionality of runoff with 
+				altitude [l/m2/yr/km]
+			If hydro_model>2: mean wind velocity [m/s] (Krain>0 
+				and usually Krain<10).
+relhumid	.9	If hydro_model==3: humidity factor of incomming wind 
+				(0 to 1).
+CXrain		00e3	If hydro_model=1: proportionality of runoff with x 
+				(distance of duplication [m]). 0 means no 
+				variations in x; 
+			If hydro_model>2: smoothing distance related to 
+				turbulence and finite time of condensation and 
+				precipitation (~1e4 m).
+evaporation	00	Evaporation rate at lakes [l/m2/yr]=[mm/yr].
+			If hydro_model=1,2: constant evap. along x.
+			If hydro_model=3: evaporation caused by dry air and 0 
+				wind speed.
+lost_rate	0	Water evapotranspirated per river unit length [%/km].
+temp_sea_level	8	If hydro_model>=2: Temperature at sea level [C].
+
+#EROSION/SEDIMENTATION PARAMETERS (params. used only if erosed_model=1):
+erosed_model	1	Sets the erosion/sedimentation model.
+			#0: means no surface transport. The following 
+				parameters have no effect.
+			#1: constant rate scheme (Keroseol+Ksedim+diffusion+
+				landsliding).
+			#2: as #1 + rivers following Beaumont et al. (1992) 
+				model: qeq=K·Q·S and dq/dl=1/erodability*(q-qeq)
+				(reaction equation). 
+			#3: as #1 + rivers following Tucker&Slingerland(1996) 
+				model. Incision rate under equilibrium capacity.
+			#6: as #1 + rivers following basal shear stress law 
+				(Garcia-Castellanos et al., 2009), accounting 
+				for channel width. Equivalent to 
+				dh/dt=K'·Q^m·S^n
+			#7: as #1 + river incision following unit stream power
+				e=k_b*w^1; w=rho*g*Q*S/W, with w in [W/m^2], 
+				e in mm/yr (Ferrier et al., 2013, 
+				Nature).
+Keroseol	.10	Continental background erosion rate in meters of 
+Ksedim  	1e2	Sedimentation rate below sea level [m/My].
+Kerosdif   	.200	Diffusive transport erosion coefficient [m2/a]
+critical_slope	0	Maximum surface slope (slope triggering landsliding, 
+				[m/m]), (0 means no landsliding). 
+K_river_cap	260	For erosed_model>=2: Constant for river transport 
+				capacity [kg/m3] in qeq = K_river_cap*Qw*Slope
+				Units are kg sedim. per m3 water for S=1,
+				different than in literature, eg. T&S96 use 
+				.1 m3/m3, divide tAo values by denssedim to 
+				compare). 
+erodibility	0	This default erodibility value is overwritten by the one 
+				in load files *.UNIT
+			For erosed_model=2: length scale of fluvial erosion 
+				[m] (~1e4); 
+			For erosed_model=3: erodibility in 
+				meters_rock/(s*(m3_water/s)^mm) ; 
+				~ 1e-7,1e-4 m_rock^(1-2m)/yr Stock&Montgomery,
+				1999; Sobel et al,2003. For m=1/3, divide by 
+				rain[m/yr]^1/3  and by  
+				1e5=(365.25*24*3600)^(2/3)  to convert the 
+				units of these authors to tAo's units.
+			If erosed_model=6: erodibility in the shear stress 
+				formula erosion=K_b*tau^a. Is ~2e-6 for a=1.5, 
+				in units:
+				meters_rock/yr / (kg/m3 * m/s2 * m)^a ==
+				meters_rock/yr / (Pa)^a				
+			If erosed_model=7: k_b=2.3e-7 (m/yr)/(W/m2) (Ferrier 
+				et al., 2013, Nature).
+erodibility_sed	0	Same as erodibility, but for sediments.
+l_fluv_sedim	25e3	Length scale of fluvial sedimentation [m] (aggradation 
+				or delta sedimentation). For erosed_model=3,
+				this is only relevant for  delta sedimentation
+				at the sea and lakes. Larger values imply wider
+				deltas and a more gradual transition from river
+				incision to river aggradation.
+deform_sed	1	1 means that sediment will be automatically deformed by 
+				the motion of units.
+eros_bound_cond	0	Boundary Conditions for surface processes:
+			#0: means that river keeps the same slope in the 
+				boundary.
+			#1: means river has 0 eq. capacity at boundary.
+			#2: means river has double capacity.
+			#3: means half capacity.
+
+#SWITCHES to turn on options of the model. Values are 1 (yes) or 0 (no):
+switch_sea	1	To account for the effect of sea in terms of load, 
+				gravity anomaly and sedimentation. Leave this 
+				as 0 only if you want tAo to impose an 
+				underwater environment in regards to flexure 
+				(e.g., if you define densenv=water density to 
+				model oceanic lithospheric flexure). 
+grav_anom	0	Gravity anomaly output type. #0: No gravity 
+				calculations; #1: Bouguer anomaly;  
+				#2:Free-Air
+
+#INPUT/OUTPUT:
+verbose_level	1	Specify the level of runtime prints in stdout.
+			#0: Only basic information is shown. 
+			#1: Statistics provided (default). 
+			#2: As '1' but further i/o info is provided.
+			#3: Prints debugging information. 
+			#4: Additional, high-level debug prints.
+switch_files	1	For extra file output.
+switch_ps	1	For postscript output.
+
+
+#(END OF PARAMETERS FILE)
+
+Comments:
+	This is a tAo parameters file. 
+	--tAo command line options are intepreted after reading this PRM file, 
+	so they overwrite these values.
+	--You can modify the format of this parameter files, either by adding 
+	more comment lines or changing comments in the existing lines after the 
+	values. Order in parameters is not important. 
+	--You only have to include the parameters which default value you want 
+	to change.
+	--Default units: I.S. (except where indicated).
+	--You can get more information about the meaning of each parameter in 
+	doc/tao.info.txt and doc/tao.h
+

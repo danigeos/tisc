@@ -1,0 +1,91 @@
+***  tisc parameters file  ***
+
+version		tisc v4.0
+
+Modeled region:
+xmin		-150e3	Western model limit coordinate [m]
+xmax		+350e3	Eastern model limit coordinate [m]
+ymin		-250e3	Southern model limit coordinate [m]
+ymax		+250e3	Northern model limit coordinate [m]
+zmin -3000
+zmax 1000
+
+Gridding:
+Nx		101	E-W direction grid points
+Ny		101	N-S direction grid points
+
+Initial relief:
+zini		100	Initial height [m] of the plate over the sea level (added to the initial topography in '*.H0').
+random_topo	10
+
+Time variables [Ma]:
+Timeini		0	Initial time
+Timefinal	15	Final time
+tau		1	Relaxation time
+dt 		1	Time interval
+dt_eros		.05	Approximate dt for surface processes
+dtmemounit	5	Time between horizon record (0 means no horizons apart from those specified in '*.REC' file) and deflection evolution.
+
+Flexure:
+Te		25000	Default EET [m] when no *.EET file is given. Te=0 => local isostasy.
+isost_model	1	Isostasy mechanism
+			#0: No flexure
+			#1: Pure elastic thin plate
+			#2: Viscoelastic thin plate
+boundary_conds	5	Boundary Conditions:
+			#0: means fixed boundary with zero deflection.
+			#1,2,3,4,5: mean free end at N, E, S, W, all.
+			#6: means fixed deflection (local isostatic) at boundary.
+switch_sea	1	To take into account sea load and allow for time sea level variations read from '*.SLV'.
+switch_topoest	0	To keep loads vertically fixed, filling the deflection with densinfill material.
+
+Tectonic horizontal forces [Pa=N/m2]:
+Px		0e12	Horizontal tectonic force in x (compressive => >0)
+Py		0e12	Horizontal tectonic force in y
+Pxy		0e12	Horizontal tectonic shear force xy
+
+Interpolation:
+mode_interp	4	Interpolation mode for *.H0 and other input files
+			Interpolation modes: 
+			#0: no interpolation needed ('nx x ny' rows with x,y,z. x,y are ignored)
+			#1: inverse distance  
+			#2: inv. square dist.  
+			#3: nearest given point
+			#4: poligons
+			#5: binary (short int) skyline
+			#6: no interpolation needed ('nx x ny' values in rows)
+
+Densities [kg/m3]:
+densmantle	3250	Density beneath the plate, at the compensation level: mantle or asthenosphere
+denscrust	2850	Mean density of crust
+densinfill	2850	Infill density used to fill under topographic loads.
+denssedim	2200	Sediment density
+densenv		0	Enviromental material density
+
+Surface water I/O:
+hydro_model	0	To switch erosion/sedimentation processes
+rain 		500	Background runoff [l/m2/a]=[mm/a] (water going to the drainage system.
+Krain		500	Proportionality of runoff with altitude [l/m2/a/km]
+CXrain		00e3	Proportionality of runoff with x [m]. 0 means no variations in x.
+CYrain		00e3	Proportionality of runoff with y [m]. 0 means no variations in y.
+evaporation	00	Evaporation rate at lakes [l/m2/a]=[mm/a].
+lost_rate	0	Surface water lost per unit length [%/km]
+
+Erosion-Sedimentation:
+erosed_model	1	To switch erosion/sedimentation processes
+Keroseol	.10	Continental background erosion rate in meters of 
+				sediment by meters altitude and My [m/(m·My)].
+Ksedim  	1e2	Sedimentation rate below sea level [m/My].
+Kerosdif   	.200	Diffusive transport erosion coefficient [m2/a]
+K_river_cap	60	Constant of river transport capacity [kg/m3]
+l_fluv_eros	120e3	Length scale of fluvial erosion	[m] (this default value is overriden by the one in load files *.LOAD)
+l_fluv_eros_sed	60e3	Length scale of fluvial erosion	[m] (for sediments)
+l_fluv_sedim	25e3	Length scale of fluvial sedimentation [m]
+deform_sed	1	1 means that sediment will be automatically deformed by 
+				the motion of units.
+
+I/O:
+switch_files	1	For extra file output.
+switch_ps	1	For postscript output.
+switch_verbose	1	For more runtime information.
+switch_debug	0	For more runtime debugging prints.

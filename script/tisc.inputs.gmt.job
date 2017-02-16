@@ -1,0 +1,54 @@
+#!/bin/csh
+
+set prj 	= $1
+
+set width = 12
+set separation = .8
+
+source $tisc_dir/script/tisc.common.gmt.job
+cat <<END > $tmp.awk.tmp
+BEGIN {numeric="[-+]?([0-9]+\.?|\.[0-9])[0-9]*([eE][-+]?[0-9]+)?"}
+{
+	if (\$1 ~ numeric) {
+		if (\$2 == "c" || \$2 == "n" || \$2 == "") 
+			{if (\$1 != "") print ">",\$0} 
+		else if (\$2 ~ numeric) 
+			print \$1/1e3, \$2/1e3, \$0;
+	}
+}
+END
+
+set ps 		= $prj.inputs.ps
+
+psbasemap -JX$width/$height -R$Region -Ba100f25nSeW -X3 -Y3 -K -P > $ps
+
+psxy $prj.INT $prj.INT[0-9] -JX -R -L -W1/0/255/0 -K -O >> $ps
+
+psxy $prj.INT_ROSE -JX -R -L -W9/0/0/255ta -K -O >> $ps
+
+if (-r $prj.RIV) awk '{if (substr($0,1,1)!=">" && substr($0,1,1)!="#" && NF>1) print $1/1000,$2/1000; else print $0}' \
+	$prj.RIV | psxy -JX -R -M -W4/70/0/0 -O -K >> $ps  
+if (-r $prj.CMP) psxy $prj.CMP* -JX -R -M -W4/0 -O -K >> $ps 
+
+
+awk -f $tmp.awk.tmp $prj\1.UNIT $prj\2.UNIT $prj\3.UNIT | \
+	psxy -JX -R -M -L -W7/240/120/0 -O -K >> $ps
+awk -f $tmp.awk.tmp $prj\4.UNIT $prj\5.UNIT $prj\6.UNIT $prj\7.UNIT $prj\8.UNIT | \
+	psxy -JX -R -M -L -W4/160/80/0 -O -K >> $ps
+awk -f $tmp.awk.tmp $prj\9.UNIT $prj\1[0-1].UNIT | \
+	psxy -JX -R -M -L -W1/80/40/0 -O -K >> $ps
+#awk -f $tmp.awk.tmp $prj\1[2-3].UNIT | \
+#	psxy -JX -R -M -L -W1/0 -O -K >> $ps
+
+awk -f $tmp.awk.tmp $prj.EET | \
+	psxy -JX -R -L -M -W20/200/200/0t45_75:0 -K -O >> $ps
+awk -f $tmp.awk.tmp  $prj.ZINI | \
+	psxy -JX -R -M -L -W2/0/0/255ta -O -K \
+		>> $ps
+
+awk -f $tmp.awk.tmp $prj.PRFL | \
+	psxy -JX -R -W1/255/0/0 -O \
+		>> $ps
+
+
+rm -f  $tmp.*.tmp 

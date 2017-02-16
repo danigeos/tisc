@@ -1,0 +1,62 @@
+#Model of the Ebro foreland basin incorporating orographic precipitation.
+
+#For 3D graphic output:
+tisc Ebro_evol -Pc"-page 1040x700-210-580 -density 180 -crop 1040x1000+0+0" | tee Ebro_evol.screen
+
+#Criteria to fit (sorted by importance):
+#-fixed parameters from present.
+#-opening between 12.5 Ma and 8.5 Ma
+#-volumes of sediments in EB and VT
+#-closure at 35 Ma, disconection from Athlantic.
+
+version		TISC_2016-08-30
+
+Nx             	104
+Ny             	55
+
+xmin           	-48160
+xmax           	660573
+ymin           	0
+ymax           	500000
+
+Timeini        	-60
+Timefinal      	-0
+dt             	.5
+dt_record      	0
+dt_eros        	.025
+
+random_topo    	5
+
+isost_model    	1
+
+boundary_conds 	5555
+
+mode_interp    	4
+
+densmantle     	3250
+denscrust      	2800
+densenv        	0
+denssedim      	2150
+
+hydro_model    	1
+windazimut     	135
+relhumid       	1
+rain           	200 
+Krain          	200 
+CXrain         	0 25e3
+evaporation    	1400
+lost_rate      	0
+
+erosed_model   	2
+Kerosdif       	.02
+K_river_cap    	60 1000
+erodability    	140e3 1e-8
+erodability_sed	60e3 1e-7
+l_fluv_sedim   	20e3
+eros_bound_cond	1111
+
+
+switch_sea     	1
+switch_files   	1
+switch_ps      	1
+verbose_level  	1

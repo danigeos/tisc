@@ -1,0 +1,17 @@
+if (-r $prj.xyzt) then
+echo -n plotting DEFLECTION... 
+awk '{print $1,$2,$(NF-1);}' $prj.xyzt | \
+	xyz2grd -G$tmp.subs.grd.tmp -I$dx/$dy -R$Region -H2
+awk -v dt=$dt '{if (NR==1) dtf=$(NF-1) - $(NF-4); else print $1,$2,($(NF-1)-$(NF-3))/dtf;}' $prj.xyzt | \
+	xyz2grd -G$tmp.subsrate.grd.tmp -I$dx/$dy -R$Region -H2
+grdimage $tmp.subs.grd.tmp -C$tmp.subs_cpt.tmp  -JX -R -K -O >> $ps
+
+if (-r $prj.pfl) psxy $prj.pfl -JX -R$Region -M -W$col_lin -H2 -O -K >> $ps 
+if (-r $prj.CMP) psxy $prj.CMP -JX -R -M -L -W4/0/0/0 -O -K >> $ps 
+if (-r $prj.RIV) awk '{if (substr($0,1,1)!=">" && substr($0,1,1)!="#") print $1/1000,$2/1000; else print $0}' \
+	$prj.RIV | psxy -JX -R -M -W2/70/0/0 -O -K >> $ps 
+
+pstext	-JX -R$Region -O -G0 -K <<END >> $ps 
+	$xt	$yt	12 0 1 3	Total subsidence  and rate (m/My)
+END
+endif

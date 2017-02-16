@@ -1,0 +1,13 @@
+#!/bin/csh
+#To change the name of files corresponding to a tAo/TISC project.
+
+echo Sintax: $0 old_name new_name
+echo newname must be in the same directory!
+
+unalias ls
+set filelist = `ls $1*`
+
+foreach file ($filelist)
+	set newfile = `echo $file | sed "s/$1/$2/g1"`
+	cp $file $newfile
+end

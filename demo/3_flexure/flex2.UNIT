@@ -1,0 +1,19 @@
+density		2851
+mode_interp	4
+z_default	0
+#gradual	1
+time		5
+time_stop	7
+
+
+300	c
+190e3	170e3
+190e3	-170e3
+90e3	-170e3
+90e3	170e3
+
+500	c
+-150e3	130e3
+-150e3	-130e3
+-90e3	-130e3
+-90e3	130e3

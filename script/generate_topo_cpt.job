@@ -1,0 +1,135 @@
+#!/bin/csh
+#Arguments: sea level
+#Needs an integer with sea level:
+set sea_level = `awk -v sl=$1 'BEGIN{printf("%.0f",sl);}'`
+if ($1 == "") set sea_level = 0
+
+
+set col_ocean_5  = "40 30   220"
+set col_ocean_4  = "20 70   255"
+set col_ocean_3  = "0  100  255"
+set col_ocean_2  = "0  150 255"
+set col_ocean_1  = "60 200 255"
+
+set col_conti_1  = "40	255 10"
+set col_conti_2  = "70	210 20"
+set col_conti_3  = "100	175 30"
+set col_conti_4  = "170	200 40"
+set col_conti_5  = "140	130 50"
+set col_conti_6  = "160 100 40"
+set col_conti_7  = "200 160 130"
+set col_conti_8  = "255 200 255"
+
+
+#ALTERNATIVE COLORS:
+set col_ocean_5  = "130   60  170"
+set col_ocean_4  = "90    90  180"
+set col_ocean_3  = "90   150  190"
+set col_ocean_2  = "150  215  225"
+set col_ocean_1  = "210  240  240"
+
+set col_conti_1  = "100  200  100"
+set col_conti_2  = "160  255  100"
+set col_conti_3  = "255  255  120"
+set col_conti_4  = "255  220   60"
+set col_conti_5  = "210  180  110"
+set col_conti_6  = "210  150   80"
+set col_conti_7  = "190  120   50"
+set col_conti_8  = "205  205  205"
+
+
+set z_ocean_5 = -5000
+set z_ocean_4 = -3000
+set z_ocean_3 = -1500
+set z_ocean_2 = -800
+set z_ocean_1 = -200
+
+set z_conti_1 = 200
+set z_conti_2 = 600
+set z_conti_3 = 1000
+set z_conti_4 = 1500
+set z_conti_5 = 2000
+set z_conti_6 = 3000
+set z_conti_7 = 5000
+set z_conti_8 = 7000
+
+cat - <<END
+	$z_ocean_5	$col_ocean_5	$z_ocean_4	$col_ocean_5
+	$z_ocean_4	$col_ocean_4	$z_ocean_3	$col_ocean_4
+END
+
+
+
+if ($sea_level < $z_ocean_2) then
+cat - <<END
+	$z_ocean_3	$col_ocean_3	$sea_level	$col_ocean_3
+	$sea_level  	$col_conti_1	$z_conti_1	$col_conti_1
+	$z_conti_1	$col_conti_2	$z_conti_2	$col_conti_2
+	$z_conti_2	$col_conti_3	$z_conti_3	$col_conti_3
+	$z_conti_3	$col_conti_4	$z_conti_4	$col_conti_4
+END
+endif
+
+if ($sea_level >= $z_ocean_2 && $sea_level <= $z_ocean_1) then
+cat - <<END
+	$z_ocean_3		$col_ocean_3	$z_ocean_2	$col_ocean_3
+	$z_ocean_2		$col_ocean_2	$sea_level	$col_ocean_2
+	$sea_level  	$col_conti_1	$z_conti_1	$col_conti_1
+	$z_conti_1		$col_conti_2	$z_conti_2	$col_conti_2
+	$z_conti_2		$col_conti_3	$z_conti_3	$col_conti_3
+	$z_conti_3		$col_conti_4	$z_conti_4	$col_conti_4
+END
+endif
+
+if ($sea_level > $z_ocean_1 && $sea_level < $z_conti_1) then
+cat - <<END
+	$z_ocean_3	$col_ocean_3	$z_ocean_2	$col_ocean_3
+	$z_ocean_2	$col_ocean_2	$z_ocean_1	$col_ocean_2
+	$z_ocean_1	$col_ocean_1	$sea_level	$col_ocean_1
+	$sea_level  	$col_conti_1	$z_conti_1	$col_conti_1
+	$z_conti_1	$col_conti_2	$z_conti_2	$col_conti_2
+	$z_conti_2	$col_conti_3	$z_conti_3	$col_conti_3
+	$z_conti_3	$col_conti_4	$z_conti_4	$col_conti_4
+END
+endif
+
+if ($sea_level >= $z_conti_1 && $sea_level < $z_conti_2) then
+cat - <<END
+	$z_ocean_3	$col_ocean_3	$z_ocean_2	$col_ocean_3
+	$z_ocean_2	$col_ocean_2	$z_ocean_1	$col_ocean_2
+	$z_ocean_1	$col_ocean_1	$sea_level	$col_ocean_1
+	$sea_level  	$col_conti_2	$z_conti_2	$col_conti_2
+	$z_conti_2	$col_conti_3	$z_conti_3	$col_conti_3
+	$z_conti_3	$col_conti_4	$z_conti_4	$col_conti_4
+END
+endif
+
+if ($sea_level >= $z_conti_2 && $sea_level < $z_conti_3) then
+cat - <<END
+	$z_ocean_3	$col_ocean_3	$z_ocean_2	$col_ocean_3
+	$z_ocean_2	$col_ocean_2	$z_ocean_1	$col_ocean_2
+	$z_ocean_1	$col_ocean_1	$sea_level	$col_ocean_1
+	$sea_level  	$col_conti_3	$z_conti_3	$col_conti_3
+	$z_conti_3	$col_conti_4	$z_conti_4	$col_conti_4
+END
+endif
+
+if ($sea_level >= $z_conti_3 && $sea_level < $z_conti_4) then
+cat - <<END
+	$z_ocean_3	$col_ocean_3	$z_ocean_2	$col_ocean_3
+	$z_ocean_2	$col_ocean_2	$z_ocean_1	$col_ocean_2
+	$z_ocean_1	$col_ocean_1	$sea_level	$col_ocean_1
+	$sea_level  	$col_conti_3	$z_conti_4	$col_conti_3
+END
+endif
+
+
+cat - <<END
+	$z_conti_4	$col_conti_5	$z_conti_5	$col_conti_5
+	$z_conti_5	$col_conti_6  	$z_conti_6	$col_conti_6
+	$z_conti_6  	$col_conti_7	$z_conti_7 	$col_conti_7
+	$z_conti_7 	$col_conti_8 	$z_conti_8 	$col_conti_8
+B	50  50  50 
+F	220 220 220 
+END
+

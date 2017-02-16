@@ -1,0 +1,3 @@
+source $tisc_dir/script/tisc.common.topo.gmt.job
+source $tisc_dir/script/tisc.common.drainage.gmt.job
+

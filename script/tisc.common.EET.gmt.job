@@ -1,0 +1,14 @@
+awk '{print($1,$2,$3/1000)}' $prj.eeth |\
+	xyz2grd  -G$tmp.eeth.grd.tmp -I$dx/$dy -R$Region
+#grd2cpt	$tmp.eeth.grd.tmp -C0/300 -S0/40/5 > $tmp.eet_cpt.tmp
+
+grdimage 	$tmp.eeth.grd.tmp -C$tmp.eet_cpt.tmp  -JX -R$Region \
+			-B$ticklabels\:"x (km)":/$ticklabels\:"y (km)":nSEw \
+			-X$horz_shift -K -O >> $ps
+grdcontour	$tmp.eeth.grd.tmp -JX -R$Region -C5 -A4 -O -K >> $ps
+if (-r $prj.pfl) psxy $prj.pfl -JX -R$Region -E$view_ang -M -W$col_lin -H2 -O -K >> $ps 
+if (-r $prj.CMP) psxy $prj.CMP -JX -R -M -W4/0 -O -K >> $ps 
+pstext	-JX -R$Region -O -G255 -K <<END >> $ps 
+	$xt	$yt	14 0 1 3	elastic thickness
+END
+

@@ -1,0 +1,67 @@
+set nbasins_show = 3
+
+if (-r $prj.bas) then 
+	;
+else
+	ls -l *.bas;
+	echo "No *.bas file to plot"
+	exit
+endif
+
+echo -n choosing RIVER BASIN... 
+
+set ibasin = 1; 
+if ($2 != "" && $5 == "") then 
+	if ($3 != "") then
+		set xriv = $2; set yriv = $3
+		set ibasin = `awk 'BEGIN{ddmin=1e20}\
+		    {if ($2=="begin") basin=$5;\
+			dd=($1-xriv)*($1-xriv)+($2-yriv)*($2-yriv);\
+			if (dd<ddmin) {basinmin=basin; ddmin=dd}} END{print basinmin}' xriv=$xriv yriv=$yriv $prj.bas`
+	else
+		set ibasin = $2
+	endif
+else
+	set ibasin = `grep "#" $prj.bas | sort -n -k 9 | tail -n 1 | awk '{print $5}'`
+endif
+
+awk '{  if ($2=="begin" && $5==basin) pp=1;\
+	else {if ($2=="END" && $5==basin) exit; if (pp) print $0; }\
+	}' basin=$ibasin $prj.bas > $tmp.chosen_basin.bas.tmp
+if ($2 != "" && $3 != "" && $4 != "i") then 
+	tac $tmp.chosen_basin.bas.tmp | awk -v xriv=$xriv -v yriv=$yriv \
+		'BEGIN{xr[0]=xriv; yr[0]=yriv; n=1;} \
+		{if ($1==xriv && $2==yriv) lengthini=$7;\
+		for (i=0;i<n;i++) {if ($9==xr[i] && $10==yr[i]) {xr[n]=$1; yr[n]=$2; n++; print $1"\t"$2"\t"$3"\t"$4"\t"$5"\t"$6"\t"$7-lengthini"\t"$8"\t"$9"\t"$10"\t"$11"\t"$12-lengthini"\t"$13"\t"$14"\t"$15"\t"$16; break;}}}' \
+		| tac > $tmp.chosen_basin2.bas.tmp
+	mv $tmp.chosen_basin2.bas.tmp $tmp.chosen_basin.bas.tmp
+endif
+sort -n -k 13 $tmp.chosen_basin.bas.tmp | tail -n 10 > $tmp.river_source.tmp
+set x_source = `awk 'END{print $1}' $tmp.river_source.tmp`
+set y_source = `awk 'END{print $2}' $tmp.river_source.tmp`
+echo "Largest basins in increasing order of discharge:"
+grep "#" $prj.bas | sort -n -k 9 | tail -n $nbasins_show 
+echo "Plotting basin #"$ibasin". "
+
+
+
+set lmax = `sort $tmp.chosen_basin.bas.tmp -n -k 7 | tail -n 1 | awk '{print $7}'`
+echo Max. basin length: lmax = $lmax km
+set zmint = `echo $zmax $zmin | awk '{print $2+($1-$2)/50}'`
+set zmaxt = `echo $zmax $zmin | awk '{print $1-($1-$2)/50}'`
+set zmaxt2 = `echo $zmax $zmin | awk '{print $1-($1-$2)/14}'`
+set lmint = `echo $lmax | awk '{print $1/80}'`
+set lmaxt = `echo $lmax | awk '{print $1*79/80}'`
+set chimax = `awk '{if (chimax<$8) chimax=$8}END{print chimax}' $tmp.chosen_basin.bas.tmp`
+echo Chimax = $chimax km
+
+
+#Peaks: upper topography envelope profile:
+set peakradius = 10
+awk '(NR>2){print $1,$2, $NF}' $prj.hrz | blockxyz -R$x0/$xf/$y0/$yf -N$Nx/$Ny -MM$peakradius -d-1e9 >  $tmp.blockxyz.tmp
+awk '{if (FILENAME==file1) {topo[i,j]=$3; j++; if (j==Nx) {j=0;i++;}}   if (FILENAME==file2) {i=int((ymax-$2)/dy); j=int(($1-xmin)/dx); print $0, i, j, topo[i,j]}}' \
+	Nx=$Nx dx=$dx dy=$dy xmin=$x0 ymax=$yf file1=$tmp.blockxyz.tmp \
+	file2=$tmp.chosen_basin.bas.tmp $tmp.blockxyz.tmp $tmp.chosen_basin.bas.tmp \
+	> $tmp.peaktopo.bas.tmp
+
+

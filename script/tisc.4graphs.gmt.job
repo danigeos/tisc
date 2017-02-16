@@ -1,0 +1,89 @@
+#!/bin/csh
+##############################################################################
+#job file to produce postscript graphic files of TISC results with GMT 3.0
+#	Daniel Garcia-Castellanos, 1994-2015.
+##############################################################################
+#Syntax: 	tisc.gmt.job 'project_name' 
+##############################################################################
+
+set prj = $1
+
+set width = 8
+
+source $tisc_dir/script/tisc.common.gmt.job
+
+
+#TOPOGRAPHY:
+psbasemap -JX$size -R$Region -B$ticklabels\:"x (km)":/$ticklabels\:"y (km)":Nsew \
+	-Y17 -X2 -K -P >! $ps
+
+source $tisc_dir/script/tisc.common.topo+drainage.gmt.job
+
+pstext	-JX -R -G0 -W255/255/255 -O -K <<END >> $ps 
+	$xtime	$ytime	13 0 1 9	$Timenow Ma
+END
+
+
+
+#GEOLOGY:
+psbasemap -JX$size -R$Region -B$ticklabels\:"x (km)":/$ticklabels\:"y (km)":NsEw \
+	-X$horz_shift -K -O >> $ps
+
+source $tisc_dir/script/tisc.common.lithology.gmt.job
+source $tisc_dir/script/tisc.common.sedload.gmt.job
+
+if (-r $prj.pfl) psxy $prj.pfl -JX -R -M -W$col_lin -H2 -O -K >> $ps 
+if (-r $prj.CMP) psxy $prj.CMP -JX -R -M -W4/0/0/0 -O -K >> $ps 
+
+
+
+#SEDIMENTS:
+source $tisc_dir/script/tisc.common.sed_budgets.gmt.job
+
+psbasemap -JX -R -B$ticklabels\:"x (km)":/$ticklabels\:"y (km)":nSew -X-$horz_shift -Y$vert_shift -O -K >> $ps
+
+source $tisc_dir/script/tisc.common.sediment_thickness.gmt.job
+
+
+#if (-r $prj.pfl) psxy $prj.pfl -JX -R$Region -M -W$col_lin -H2 -O -K >> $ps 
+if (-r $prj.CMP) psxy $prj.CMP -JX -R -M -W4/0/0/0 -O -K >> $ps 
+if (-r $prj\1.INT) psxy $prj*.INT -JX -R -M -W1/0/255/0 -L -O -K >> $ps 
+
+
+
+#2D CROSS SECTION:
+if (-r $prj.pfl) then
+	set height_CS = 3.5
+	set vert_shift_CS = 0
+	set width_CS = `echo  $width | bc -l`
+	set horz_shift_CS = `echo  $width + $separation  | bc -l`
+	psbasemap -JX$width_CS/$height_CS -R0/$dmax/$zmin/$zmax \
+		-B$ticklabels\:"distance (km)":/$zticklabels\:"z (km)":SeW \
+		-O -K -X$horz_shift_CS -Y$vert_shift_CS >> $ps
+	source $tisc_dir/script/tisc.common.cross_section.gmt.job
+else
+psbasemap -JX -R$Region -B$ticklabels\:"x (km)":/$ticklabels\:"y (km)":nsEw \
+		-X$horz_shift -O -K >> $ps
+#EET:
+if (-r $prj.eeth) then
+source $tisc_dir/script/tisc.common.EET.gmt.job
+else
+#DEFLECTION:
+if (-r $prj.xyzt) then
+source $tisc_dir/script/tisc.common.deflection.gmt.job
+
+if (-r $prj.pfl) psxy $prj.pfl -JX -R$Region -M -W$col_lin -H2 -O -K >> $ps 
+if (-r $prj.CMP) psxy $prj.CMP -JX -R -M -W4/0/0/0 -O -K >> $ps 
+if (-r $prj.RIV) awk '{if (substr($0,1,1)!=">" && substr($0,1,1)!="#") print $1/1000,$2/1000; else print $0}' \
+	$prj.RIV | psxy -JX -R -M -W2/70/0/0 -O -K >> $ps 
+
+endif
+endif
+endif
+
+
+pstext -JX -R -O <<END>> $ps
+END
+endif
+
+\rm $tmp.*.tmp 

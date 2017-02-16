@@ -1,0 +1,76 @@
+This file contains instructions to run some examples of using TISC. The
+aim of these examples is to show that TISC is able to solve different
+isostatic, tectonic and surface transport contexts. The examples are sorted 
+from the most simple scenarios to the most detailed and specific about 
+foreland basin formation.
+
+All Postscripts in these directories are the result of the tisc.gmt.job script,
+which contains GMT commands. It is automatically invoked when the parameter 
+switch_ps = 1.
+
+
+EXAMPLES: 
+
+1) In this first example, TISC can be used as an external calculator of
+lithospheric flexure.  Run this in the present directory and you will get the
+deflection in the standard output: 
+
+	tisc -Q1st_example_load.xyp -N11 -D-2.5e5/2.5e5/-2.5e5/2.5e5 -qmode_interp=0
+
+This reads x[m],y[m],pressure[Pa] from 'testload1.xyp' and writes the 
+deflection to the standard output. TISC will use the domain defined with -D and
+a 11x11 discretization grid. Add -T5000 to get the result for a 5km-thick flexural
+plate.
+
+2) Now do the same using testload2.xyp, which contains the same load as before but 
+in a more compact format using mode_interp=4 (see doc/tisc.info.txt, at the end of 
+section 'Inputs').
+
+	tisc -Q2nd_example_load.xyp -N11 -D-2.5e5/2.5e5/-2.5e5/2.5e5 -qmode_interp=4
+
+You will obtain exactly the same result as before. The deflection at the centre
+[0,0] is 675.1 m, whereas using -N51 yields 711.0 m, and with -N101 yields 
+712.2 m (as a result of changing resolution and precision).
+
+The comming examples are in subdirectories.  Once you go to the directory
+corresponding to each of the following examples, you can check and modify the
+inputs (files with an upppercase name extension).
+
+
+3) ../demo/3_flexure/
+Now let's run a model by defining a project with input an output files. Let the 
+project's name be 'flex'. 
+Suppose you need to calculate the deflection of a 20 km-thick plate under a
+square load of 1000 m thickness and 2850 kg/m3 in its central area, where no
+moment is supported. This plate will be assumed to rest on a fuid asthenosphere 
+for which the default density specified in flex.PRM will be used. 
+The next command solves this problem using 51x51 nodes of discretization:
+	tisc flex -Pc
+The 20km thickness is also specified in the flex.PRM file, but try adding 
+-T5000 to the command to override that value and obtain the results for a 
+different elastic thickness.  
+
+4) ../demo/4_river_transp/
+	Command:	tisc conic_island -tf10
+	(with -tf10, tisc will ignore the final time in the PRM file and set
+	it to 10 Myr). 
+
+5) ../demo/5_lakes/
+	Command:	tisc 2lakes 
+
+6) ../demo/6_deformation/
+	Command:	tisc deformation
+
+7) ../demo/7_climate/
+	Command: 	tisc climate -Pc | tee climate.outputscreen.txt
+
+8) ../demo/8_Ebro_evol/
+	This is the Ebro Basin model published in G-C et al., JGR, 2003.
+	Command: 	tisc Ebro_evol -Pc"-page 1040x700-210-580 -density 180 -crop 1040x1000+0+0" | tee Ebro_evol.screen
+
+	Try inhibiting the surface processes with this:
+			tisc Ebro_evol -qerosed_model=0 -qhydro_model=0
+
+9) ../demo/9_Iberian_drainage/
+	This calculates the present drainage of the Iberian peninsula.
+	Command: 	tisc Iberia_present

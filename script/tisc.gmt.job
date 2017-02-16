@@ -1,0 +1,98 @@
+#!/bin/csh -f
+##############################################################################
+#	Script to make postscript graphic output of TISC results with GMT 4.0
+#	Daniel Garcia-Castellanos
+##############################################################################
+#Syntax: 	tisc.gmt.job 'model-root-prj' 
+##############################################################################
+
+set prj 	= $1
+
+set width = 8
+
+source $tisc_dir/script/tisc.common.gmt.job
+
+set Region=$Region_plot
+
+#UPPER LEFT: TOPOGRAPHY
+psbasemap -JX$size -R$Region -B$ticklabels\:"x (km)":/$ticklabels\:"y (km)":NseW \
+	-Y17 -X2 -K -P >! $ps
+source $tisc_dir/script/tisc.common.topo+drainage.gmt.job
+pstext	-JX -R -O -G0 -W255/255/255 -K <<END >> $ps 
+	$xtime	$ytime	13 0 1 9	$Timenow Ma
+END
+
+
+#UPPER RIGHT: GEOLOGY or THIN SHEET VELOCITY FIELD & UNIT THICKNESS
+psbasemap -JX$size -R$Region -B$ticklabels\:"x (km)":/$ticklabels\:"y (km)":Nsew \
+	-X$horz_shift -K -O >> $ps
+if (-r $prj.vel) then 
+	#THIN SHEET
+	source $tisc_dir/script/tisc.common.thinsheet.gmt.job
+else
+	if (-r $prj.st) then
+		#EROSION RATE
+		source $tisc_dir/script/tisc.common.erosrate.gmt.job
+	endif
+	#GEOLOGY:
+	#source $tisc_dir/script/tisc.common.geol+sedload.gmt.job
+endif
+
+
+#LOWER LEFT: 
+psbasemap -JX -R$Region -B$ticklabels\:"x (km)":/$ticklabels\:"y (km)":nseW \
+	-X-$horz_shift -Y$vert_shift -O -K >> $ps
+if (-r $prj.st) then
+	#SEDIMENTS
+	source $tisc_dir/script/tisc.common.sediment_thickness.gmt.job
+	if (-r $prj.xyzt) then
+	    awk '{print $1,$2,$(NF-1);}' $prj.xyzt | \
+		xyz2grd -G$tmp.subs.grd.tmp -I$dx/$dy -R$Region -H2
+	    grdcontour $tmp.subs.grd.tmp -JX -R -C.1  -A1f7/255/255/255 -Z.001 -G5 -W1/0/0/0 \
+		-L0/1  -O -K -T+0.5c/0.1c:UD >> $ps
+	    grdcontour $tmp.subs.grd.tmp -JX -R -C1 -A1f7/255/255/255 -Z.001 -G5 -W3/0/0/0 \
+		-L0/100  -O -K -T+0.5c/0.1c:UD >> $ps
+	    grdcontour $tmp.subs.grd.tmp -JX -R -C.1  -A1f7/255/255/255 -Z.001 -G5 -W1/0/0/0ta \
+		-L-1/0 -O -K -T-0.5c/0.1c:UD >> $ps
+	    grdcontour $tmp.subs.grd.tmp -JX -R -C1 -A1f7/255/255/255 -Z.001 -G5 -W3/0/0/0ta \
+		-L-100/0 -O -K -T-0.5c/0.1c:UD >> $ps
+	    pstext	-JX -R$Region -O -G0 -K <<END >> $ps 
+#		$xtitle	$ytitle	14 0 1 3	Elastic thickness
+END
+	endif
+else
+if (-r $prj.xyzt) then
+	#DEFLECTION:
+	source $tisc_dir/script/tisc.common.deflection.gmt.job
+endif
+endif
+
+
+
+#LOWER RIGHT:
+set dx_scale = `echo \-1.5 | bc -l`
+if (-r $prj.pfl) then
+#2D CROSS SECTION:
+	set height_CS = 3.5
+	set vert_shift_CS = `echo 0 | bc -l`
+	set width_CS = `echo  $width  | bc -l`
+	set horz_shift_CS = `echo  $width + $separation  | bc -l`
+
+	psbasemap -JX$width_CS/$height_CS -R0/$dmax/$zmin/$zmax \
+		-B$ticklabels\:"distance (km)":/$zticklabels\:"z (km)":NsEw \
+		-O -K -X$horz_shift_CS -Y$vert_shift_CS >> $ps
+
+	source $tisc_dir/script/tisc.common.cross_section.gmt.job
+else
+if (-r $prj.eeth) then
+#EET:
+	source $tisc_dir/script/tisc.common.EET.gmt.job
+else
+set dx_scale = `echo $width - 1.5 | bc -l`
+endif
+endif
+
+pstext -JX -R -O <<END>> $ps
+END
+
+rm $tmp.*.tmp 

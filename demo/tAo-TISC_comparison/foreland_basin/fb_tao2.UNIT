@@ -1,0 +1,9 @@
+time 	5
+time_stop	10
+fault	1
+vel	10
+ride	1
+
+10e3	4e3
+60e3	0
+
