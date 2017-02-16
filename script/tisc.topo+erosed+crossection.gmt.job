@@ -1,0 +1,94 @@
+#!/bin/csh
+##############################################################################
+#job file to produce postscript graphic files of TISC results with GMT 4.0
+#	Daniel Garcia-Castellanos, 2007.
+##############################################################################
+#Syntax: 	tisc.gmt.job 'model-root-name' 
+##############################################################################
+#Note that:
+# -This script uses bc unix command as a calculator. 
+##############################################################################
+
+set prj 	= $1
+
+set width = 8
+
+source $tisc_dir/script/tisc.common.gmt.job
+
+awk '{if (($1>=zmin*1e3 && $5<=zmax*1e3) || $1=="B" || $1=="F" ) print $0 }' zmin=$zmin zmax=$zmax \
+	$tmp.topo_palet.tmp > $tmp.topo_palet2.tmp
+mv $tmp.topo_palet2.tmp $tmp.topo_palet.tmp
+
+#TOPOGRAPHY & DRAINAGE:
+psbasemap -JX$size -R$Region -Ba100f10:"x, longitude (km)":/a100f10:"y, latitude (km)":NseW \
+	-Y10 -X2 -K -P > $ps
+source $tisc_dir/script/tisc.common.topo+drainage.gmt.job
+
+pstext	-JX -R -G0 -W255/255/255 -O -K <<END >> $ps 
+	$xtime	$ytime	13 0 1 9	$Timenow Ma
+END
+
+#if (-r $prj.INT_ROSE) psxy $prj.INT_ROSE -JX -R -L -W9/255/0/0ta -K -O >> $ps
+#if (-r $prj.pfl) psxy $prj.pfl -JX -R -M -W$col_lin -H2 -O -K >> $ps 
+if (-r $prj.CMP) psxy $prj.CMP -JX -R -M -W4/0 -O -K >> $ps 
+#if (-r $prj.CMP.grd) grdcontour $prj.CMP.grd -JX -R -C$tmp.topo_palet.tmp -W1/200/0/0 -O -K >> $ps 
+if (-r $prj.CMP.grd) grdcontour $prj.CMP.grd -JX -R -C2000 -W3/200/0/0 -L0/6000 -O -K >> $ps 
+if (-r $prj.CMP.grd) grdcontour $prj.CMP.grd -JX -R -C10000 -W5/200/0/0 -O -K >> $ps 
+
+
+#GEOLOGY/LITHOLOGY:
+psbasemap -JX$size -R -Ba100f10:"x, longitude (km)":/a100f10:"y, latitude (km)":Nsew \
+	-X$horz_shift -K -O >> $ps
+source $tisc_dir/script/tisc.common.geol+sedload.gmt.job
+
+if (-r $prj.pfl) psxy $prj.pfl -JX -R -M -W$col_lin -H2 -O -K >> $ps 
+if (-r $prj.CMP) psxy $prj.CMP -JX -R -M -W4/0/0/0 -O -K >> $ps
+#if (-r $prj.INT) psxy $prj.INT -JX -R -M -W1/0/255/0 -L -O -K >> $ps
+#if (-r $prj.INT2) psxy $prj.INT2 -JX -R -M -W1/0/255/0 -L -O -K >> $ps
+#if (-r $prj.INT3) psxy $prj.INT3 -JX -R -M -W1/0/255/0 -L -O -K >> $ps
+#if (-r $prj.INT4) psxy $prj.INT4 -JX -R -M -W1/0/255/0 -L -O -K >> $ps
+pstext	-JX -R -O -G0 -K <<END >> $ps
+	$xtitle	$ytitle	12 0 1 3	cummulative sedimentation-erosion
+END
+
+
+#2D CROSS SECTION:
+if (-r $prj.pfl) then
+	set height_CS = 3.5
+	set vert_shift_CS = `echo -$height_CS \- $separation | bc -l`
+	set width_CS = `echo  2 \* $width + $separation  | bc -l`
+	set horz_shift_CS = `echo - $width - $separation  | bc -l`
+
+	psbasemap -JX$width_CS/$height_CS -R0/$dmax/$zmin/$zmax \
+		-B$ticklabels\:"distance (km)":/$zticklabels\:"z (km)":SeW \
+		-O -K -X$horz_shift_CS -Y$vert_shift_CS >> $ps
+
+	source $tisc_dir/script/tisc.common.cross_section.gmt.job
+endif
+
+
+#PALETAS DE COLORES:
+psscale -C$tmp.topo_palet.tmp 	-D6.5/-2./13/.35h -B/:"Elevation (m)": -L -O -K >> $ps
+#psscale -C$tmp.eet_cpt.tmp 	-D6.5/-3.1/13/.35h -B/:"EET": -O -L -K	>> $ps
+psscale -C$tmp.eros_cumul_cpt.tmp 	-D6.5/-3.1/13/.35h -B/:"Cumul. Sed./Eros. (km)": -L -O -K >> $ps
+#psscale -C$tmp.subs_cpt.tmp 	-D6.5/-6.5/13/.35h -B/:"Subsidence (m)": -L -O -K >> $ps
+
+pstext	-JX -R -O -G0 -K -N -Y-1.2 <<END >> $ps 
+END
+
+#ROSE DIAGRAM:
+if (-r $prj.INT_ROSE) then
+    if ($ndrain > 8) then
+	set vert_shift = `echo \-\($vert_shift_CS\) + $separation + $height + 3 \* $separation | bc -l`
+	cat $prj.xyw | outin $prj.INT_ROSE | \
+		awk '($6!="L" && !($8==$2 && $9==$3) && $1==1 && $4>dl){print $4, 90-atan2($9-$3,$8-$2)*180/3.1415927}' dl=$disch1 | \
+		psrose -S1.5n -R0/1/0/360 -A45 -D -X$width -Y$vert_shift -Ba.5g.5/a45g45NE:."river orientation": -O -K -G220 >> $ps
+    endif
+endif
+
+
+pstext -JX -R -O <<END>> $ps
+END
+
+rm -f  $tmp.*.tmp
+

@@ -1,0 +1,125 @@
+#!/bin/csh
+set prj = $1
+set ps = $1.time-graphs.ps
+set tmp = tmp.tisc.time-graphs
+set timeini    = `awk '{if ($1=="Timeini") print $2}' $prj.PRM`
+set timefinal  = `awk '{if ($1=="Timefinal") print $2}' $prj.PRM`
+set dt         = `awk '{if ($1=="dt") print $2}' $prj.PRM`
+
+echo Timeini = $timeini, dt = $dt, ps= $ps
+
+
+
+#SEDS EVOL:
+awk '{if ($1=="T=") time = $2; if (substr($0,1,21)=="Sediments in region 1") printf "%.2f\t%.2f\n", time, $5/1e3; }' $prj.screen > $tmp.1.tmp
+grep "Sediments in region 2" $prj.screen | awk '{printf "\t%.2f\n", $5/1e3}' > $tmp.2.tmp
+grep "Sediments in region 3" $prj.screen | awk '{printf "\t%.2f\n", $5/1e3}' > $tmp.3.tmp
+grep "Sediments in region 4" $prj.screen | awk '{printf "\t%.2f\n", $5/1e3}' > $tmp.4.tmp
+grep "Sediments in region 5" $prj.screen | awk '{printf "\t%.2f\n", $5/1e3}' > $tmp.5.tmp
+grep "eros_nosd"             $prj.screen | awk '{printf "%.2f\t%.2f\n", time+=dt, eros+=$2/9.81/2800/1e9/1e3}' time=$timeini dt=$dt > $tmp.time-eros.tmp
+
+echo "#Time  Reg1  Reg2  Reg3  Reg4  Reg5  erosion [10e3km3]" > $tmp.time-seds.tmp
+paste $tmp.[1-5].tmp >> $tmp.time-seds.tmp
+
+set sedsmax = `awk 'BEGIN{sedsmax=100} {if (sedsmax<1.*$2) sedsmax=1.*$2; if (sedsmax<1.*$3) sedsmax=1.*$3; if (sedsmax<1.*$4) sedsmax=1.*$4; if (sedsmax<1.*$5) sedsmax=1.*$5; }END{print sedsmax}' $tmp.time-seds.tmp`
+echo sedsmax = $sedsmax
+
+#EROSED. volume:
+psbasemap -JX7 -R$timeini/$timefinal/0/$sedsmax -Ba10f5:"time (Ma)":/a20:"sediment volume 10@+3@+km@+3@+":nSeW -K -P -X2 -Y21 > $ps
+awk '{print $1, $2}' $tmp.time-seds.tmp | psxy -JX -R -W1/0t2_6:0 -K -O >> $ps
+awk '{print $1, $3}' $tmp.time-seds.tmp | psxy -JX  -R -W2/0t15_5:0 -K -O >> $ps
+awk '{print $1, $4}' $tmp.time-seds.tmp | psxy -JX  -R -W4/0t3_15:0 -K -O >> $ps
+awk '{print $1, $5}' $tmp.time-seds.tmp | psxy -JX  -R -W1/0t5_5:0 -K -O >> $ps
+awk '{print $1, $6}' $tmp.time-seds.tmp | psxy -JX  -R -W4/0t2_6:0 -K -O >> $ps
+awk '{print $1, $2}' $tmp.time-eros.tmp | psxy -JX  -R -W7/0t2_6:0 -K -O >> $ps
+
+#EROSED. rate:
+psbasemap -JX -R$timeini/$timefinal/-2/8 -Ba10f5:"time (Ma)":/a2g100:"rate eros/sed. 10@+3@+km@+3@+/Ma":nSeW -O -K -X10 >> $ps
+awk '{print $1, ($2-a)/dt; a=$2;}' dt=$dt $tmp.time-seds.tmp | psxy -JX -R -W4 -O -K >> $ps
+awk '{print $1, ($3-a)/dt; a=$3;}' dt=$dt $tmp.time-seds.tmp | psxy -JX -R -W2/0t15_5:0 -K -O >> $ps
+awk '{print $1, ($4-a)/dt; a=$4;}' dt=$dt $tmp.time-seds.tmp | psxy -JX -R -W4/0t3_15:0 -K -O >> $ps
+awk '{print $1, ($5-a)/dt; a=$5;}' dt=$dt $tmp.time-seds.tmp | psxy -JX -R -W4/0t5_5:0 -K -O >> $ps
+awk '{print $1, ($6-a)/dt; a=$6;}' dt=$dt $tmp.time-seds.tmp | psxy -JX -R -W4/0t2_6:0 -K -O >> $ps
+awk '{print $1, ($2-a)/dt; a=$2;}' dt=$dt $tmp.time-eros.tmp | psxy -JX -R -W7/0t2_6:0 -K -O >> $ps
+
+
+#LAKES EVOL:
+grep "lake" $prj.screen | grep "m3/s" | awk '{printf("%.1f\t %s\n", time+=dt, $0)}' time=$timeini dt=$dt > $tmp.biggest_lake.tmp
+
+set heightmax = `awk 'BEGIN{heightmax=1000} {if (heightmax<1.*$9) heightmax=1.*$9}END{print heightmax}' $tmp.biggest_lake.tmp`
+set volmax = `echo $heightmax \/ 10 | bc -l`
+echo heightmax = $heightmax
+
+awk '{print $1, $6}' $tmp.biggest_lake.tmp | \
+	psxy -JX7 -R$timeini/$timefinal/0/$heightmax -W4 -Ba10f5g10:"time (Ma)":/a200f100g200:"lake elevation (m)":nSeW -N -O -K -X-10 -Y-9 >> $ps
+psxy $prj.SLV -JX -R -W4/0/0/200 -O -N -K >> $ps
+awk '{print $1, $2/1000}' $tmp.biggest_lake.tmp | \
+	psxy -JX -R$timeini/$timefinal/0/$volmax -W2/255/0/0 -B/a10f5:"lake volume (10@+3@+ km@+3@+)":nsEw -O -K >> $ps
+
+awk '{print $1, $10/1000}' $tmp.biggest_lake.tmp | \
+	psxy -JX -R$timeini/$timefinal/0/4 -W4 -Ba10f5g10:"time (Ma)":/a1f1g1:"lake discharge (10@+3@+ m@+3@+/s)":nSeW -O -K -X10 >> $ps
+awk '{print $1, $4/1000}' $tmp.biggest_lake.tmp | \
+	psxy -JX -R$timeini/$timefinal/0/110 -W4/255/0/0 -B/a20f10:"lake surface (10@+3@+ km@+2@+)":nsEw -O -K >> $ps
+
+
+
+
+#SUBSIDENCE EVOLUTION:
+
+set point1x = 364.69 
+set point1y = 250.00 
+
+set point2x = 350.93
+set point2y = 314.81
+
+set point3x = 75.70
+set point3y = 333.33
+
+awk '{if (NR==1) {\
+		for(i=j=0;i<NF;i++) if (i%3==0) {t[j]=$i; j++}; nt=j\
+	}; \
+	if ($1==x && $2==y) {\
+		j=0;\
+		for(i=2;i<NF;i++) if (i%2==0) {w[j]=$i; p[j]=$(i+1); j++}\
+	}\
+	}\
+	END {\
+		print timeini, 0, 0;\
+		for(i=0;i<nt;i++) print t[i], w[i]/1e3, p[i]/1e3;\
+	}' x=$point1x y=$point1y timeini=$timeini $prj.xyzt > $tmp.subs1.tz.tmp
+
+awk '{if (NR==1) {\
+		for(i=j=0;i<NF;i++) if (i%3==0) {t[j]=$i; j++}; nt=j\
+	}; \
+	if ($1==x && $2==y) {\
+		j=0;\
+		for(i=2;i<NF;i++) if (i%2==0) {w[j]=$i; p[j]=$(i+1); j++}\
+	}\
+	}\
+	END {\
+		print timeini, 0, 0;\
+		for(i=0;i<nt;i++) print t[i], w[i]/1e3, p[i]/1e3;\
+	}' x=$point2x y=$point2y timeini=$timeini $prj.xyzt > $tmp.subs2.tz.tmp
+
+awk '{if (NR==1) {\
+		for(i=j=0;i<NF;i++) if (i%3==0) {t[j]=$i; j++}; nt=j\
+	}; \
+	if ($1==x && $2==y) {\
+		j=0;\
+		for(i=2;i<NF;i++) if (i%2==0) {w[j]=$i; p[j]=$(i+1); j++}\
+	}\
+	}\
+	END {\
+		print timeini, 0, 0;\
+		for(i=0;i<nt;i++) print t[i], w[i]/1e3, p[i]/1e3;\
+	}' x=$point3x y=$point3y timeini=$timeini $prj.xyzt > $tmp.subs3.tz.tmp
+
+awk '{print $1, -$2}' $tmp.subs1.tz.tmp | psxy -JX7/-7 -R$timeini/$timefinal/-2/5 -W4 -Ba10f5:"time (Ma)":/a1f.5:"subs/topo (km)":nSeW -O -K -X-10 -Y-9 >> $ps
+awk '{print $1, $3}'  $tmp.subs1.tz.tmp | psxy -JX  -R -W2/0t15_5:0       -K -O >> $ps
+awk '{print $1, -$2}' $tmp.subs2.tz.tmp | psxy -JX  -R -W4/255/0/0        -K -O >> $ps
+awk '{print $1, $3}'  $tmp.subs2.tz.tmp | psxy -JX  -R -W2/255/0/0t15_5:0 -K -O >> $ps
+awk '{print $1, -$2}' $tmp.subs3.tz.tmp | psxy -JX  -R -W4/0/0/255        -K -O >> $ps
+awk '{print $1, $3}'  $tmp.subs3.tz.tmp | psxy -JX  -R -W2/0/0/255t15_5:0    -O >> $ps
+
+
+rm $tmp.*.tmp

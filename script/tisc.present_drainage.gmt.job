@@ -1,0 +1,77 @@
+#!/bin/csh -f
+##############################################################################
+#	Script to make postscript graphic output of TISC results with GMT 4.0
+#	Daniel Garcia-Castellanos
+##############################################################################
+#Syntax: 	tisc.gmt.job 'model-root-prj' 
+
+set prj 	= $1
+
+source $tisc_dir/script/tisc.common.gmt.job
+
+
+set width = 8
+
+
+psbasemap -JX$size -R$Region -B$ticklabels\:"x (km)":/$ticklabels\:"y (km)":NseW \
+	-Y20.5 -X2.5 -K -P >! $ps
+source $tisc_dir/script/tisc.common.topo.gmt.job
+source $tisc_dir/script/tisc.common.drainage.gmt.job
+pstext	-JX -R -O -G0 -W255/255/255 -K <<END >> $ps 
+	$xtime	$ytime	13 0 1 9	$Timenow Ma
+END
+
+
+
+#UPPER-RIGHT: EROSION & DEFLECTION:
+if (-r $prj.xyzt || -r $prj.st) then
+	psbasemap -JX -R$Region -B$ticklabels\:"x (km)":/$ticklabels\:"y (km)":Nsew -X$horz_shift -O -K >> $ps
+if (-r $prj.st) then
+source $tisc_dir/script/tisc.common.erosrate.gmt.job
+endif
+
+if (-r $prj.xyzt) then
+source $tisc_dir/script/tisc.common.upliftrate.gmt.job
+endif
+if (-r $prj.CMP) psxy $prj.CMP* -JX -R -M -W4/0/0/0 -O -K >> $ps 
+pstext	-JX -R$Region -O -K -G0 <<END >> $ps 
+#	$xt	$yt	11 0 1 3	erosion/deposition rate 
+#(shade) & subs. rate (m/Ma)
+END
+endif
+endif
+
+
+#LOWER-LEFT:  CHI / PIRACY INDEX:
+psbasemap -JX -R$Region -B$ticklabels\:"x (km)":/$ticklabels\:"y (km)":nseW -X-$horz_shift -Y$vert_shift -O -K >> $ps
+#source $tisc_dir/script/tisc.common.piracy.gmt.job
+source $tisc_dir/script/tisc.common.divides.gmt.job
+set disch1 = 10
+
+
+
+#RIVER PROFILE:
+if (-r $prj.bas) then 
+source $tisc_dir/script/tisc.common.river_basin_chosen.gmt.job
+#set lmax = `awk -v Lxy=$Lxy 'BEGIN{print Lxy*.5}'`
+psbasemap -JX-6.8/2.3 -R0/$lmax/$zmin/$zmax \
+	-B$ticklabels\:"Distance (km)":/a.5f.1g1:"elevation, z (km)":nSEw \
+	-X$horz_shift -Y3.5 -K -O >> $ps
+source $tisc_dir/script/tisc.common.river_profile.gmt.job
+#psscale -D-.3/1.25/2.1/.2 -L -C$tmp.erosrate_cpt.tmp -O -K -B:"@+sed./eros. (mm/yr)":s >> $ps 
+
+
+#CHI PROFILE:
+psbasemap -JX-6.8/2.3 -R0/$chimax/$zmin/$zmax \
+	-B$ticklabels\:"Chi (km)":/a.5f.1g1:"elevation, z (km)":nSEw \
+	-Y-3.5 -K -O >> $ps
+source $tisc_dir/script/tisc.common.chi_profile.gmt.job
+
+endif
+
+
+psbasemap -JX -R -Ba0s -O >> $ps
+
+
+\rm $tmp.*.tmp
+

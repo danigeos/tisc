@@ -1,0 +1,31 @@
+#DRAINAGE:
+if (-r $prj.xyw) then 
+echo -n plotting DRAINAGE... 
+awk '{if ($3>=dl && $3<dh && $5!="S" && $5!="L" && NR>2) {print $1, $2; print $7, $8; print ">"}}' \
+	dl=$disch1 dh=$disch2 $prj.xyw | \
+	psxy -JX -R -M -W1/$col_river -O -K >> $ps 
+awk '{if ($3>=dl && $3<dh && $5!="S" && $5!="L" && NR>2) {print $1, $2; print $7, $8; print ">"}}' \
+	dl=$disch2 dh=$disch3 $prj.xyw | \
+	psxy -JX -R -M -W3/$col_river -O -K >> $ps 
+awk '{if ($3>=dl && $3<dh && $5!="S" && $5!="L" && NR>2) {print $1, $2; print $7, $8; print ">"}}' \
+	dl=$disch3 dh=1e19    $prj.xyw | \
+	psxy -JX -R -M -W7/$col_river -O -K >> $ps 
+
+#awk '{if ($5=="L" && substr($1,1,1)!="#") print $1, $2}' $prj.xyw | \
+#	psxy  -JX -R -Ss$size_lake_squares -W1/$col_river -G$col_river -O -K >> $ps 
+#awk '{if ($5=="E" && substr($1,1,1)!="#") print $1, $2}' $prj.xyw | \
+#	psxy  -JX -R -Ss$size_lake_squares -W7/$col_river -G$col_river -O -K >> $ps 
+if (-r $tmp.lakes.grd.tmp) then 
+	grdclip $tmp.lakes.grd.tmp         -G$tmp.lakesimg.grd.tmp        -Sb0.5/NaN
+	grdimage $tmp.lakesimg.grd.tmp        -JX -R -C$tmp.lakes_cpt.tmp        -Q -O -K >> $ps
+endif
+if (-r $tmp.lakes_endorh.grd.tmp) then 
+	grdclip $tmp.lakes_endorh.grd.tmp  -G$tmp.lakesimg_endorh.grd.tmp -Sb0.5/NaN >& $tmp.errorlog.tmp
+	grdimage $tmp.lakesimg_endorh.grd.tmp -JX -R -C$tmp.lakes_endorh_cpt.tmp -Q -O -K >> $ps
+endif
+if (-r $tmp.lakes.grd.tmp)        grdcontour $tmp.lakes.grd.tmp        -JX -R -C$tmp.lakes_cpt.tmp -W3/$col_lake -O -K >> $ps
+if (-r $tmp.lakes_endorh.grd.tmp) grdcontour $tmp.lakes_endorh.grd.tmp -JX -R -C$tmp.lakes_cpt.tmp -W3/$col_lake -O -K >> $ps
+endif
+
+
+

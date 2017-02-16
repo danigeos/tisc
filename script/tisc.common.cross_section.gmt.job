@@ -1,0 +1,95 @@
+if (-f $prj.pfl) then
+echo -n plotting CROSS SECTION... 
+set dens 	= `awk '(NR==2) {print $0; exit;}' $prj.pfl`
+set numcols 	= `awk '(NR==4) {print NF; exit;}' $prj.pfl`
+set vert_shift_CS = 2.5
+
+awk '{if (NR>2) print $0}' $prj.pfl | awk '{print NR,$0}' | sort -nr | sed 's/^[0-9]* //' > $tmp.2.tmp
+cat <<END>  $tmp.sea.tmp
+	$dmax 	-15e3
+	0     	-15e3
+	0 	$sea_level
+	$dmax 	$sea_level
+END
+cat <<END>  $tmp.basement.xz.tmp
+	$dmax $zmin 
+	0     $zmin 
+END
+awk '{if (NR>2) print $3, $4/1000}' $prj.pfl >> $tmp.basement.xz.tmp
+
+awk '{print $1, $2/1000}' $tmp.sea.tmp | psxy -JX -B/g1000 -R -O -K -L -G$color_sea	>> $ps
+
+
+foreach x ($x_corner)
+    if ($x != "") then
+    	psxy -JX -R -O -K -W2ta <<END>> $ps
+    	    $x    $zmin
+    	    $x    $zmax
+END
+endif
+end
+
+psxy $tmp.basement.xz.tmp -JX -R -O -K -L -G$color_basement -W3 >> $ps
+set col = 4
+while ($col < $numcols)
+	awk '{if (NR>2) print $3, $(col+1)/1000}' col=$col $prj.pfl  >  $tmp.0.tmp
+	awk '{          print $3, $(col  )/1000}' col=$col $tmp.2.tmp >> $tmp.0.tmp
+
+	if ($dens[$col] > 2895) then
+		set color = $color_heavy_basement
+	else
+		if ($dens[$col] > 2550) then
+			set color = $color_basement
+		else
+			if ($dens[$col] > 2350) then
+				set color = $color_heavy_sediment
+			else
+				if ($dens[$col] > 2310) then
+					set color = $color_salt
+				else
+					if ($dens[$col] > 1100) then
+						set colant = `echo $col - 1 | bc`
+						set age_cond = `awk -v a=$age[$col] -v agelimit=$sedim_age_limit 'BEGIN{age=a*1.0; agelimit*=1.; if (age>=agelimit) print 1; else print 0.0}' `
+						#echo $colant, $age[$col], $age_cond, $sedim_age_limit, $age[$colant]
+						if ($age_cond) then
+							set color = $color_sediment
+						else
+							set color = $color_old_sediment
+						endif
+					else
+						if ($dens[$col] > 970) then
+							set color = $color_sea
+						else
+							set color = $color_ice
+						endif
+					endif
+				endif
+			endif
+		endif
+	endif
+
+	psxy $tmp.0.tmp -JX -R -O -K -L -M -G$color -W1/0 	>> $ps
+	set col = `echo $col + 1 | bc`
+end
+
+if (-r $prj.CMP.grd && -r $prj.pfl) then 
+grd2xyz $prj.CMP.grd | project2line -I -L$prj.pfl | \
+	awk 'BEGIN{maxdist=50} {if ($3>-maxdist && $3<maxdist) print $4, $7/1e3}' | \
+	sort -n > $tmp.proj.1.tmp
+projbanda <<END
+$tmp.proj.1.tmp
+$tmp.proj.2.tmp
+20
+10
+END
+psxy $tmp.proj.2.tmp -JX -R  -Ss.15 -Ey -O -K >> $prj.ps
+endif
+
+set dtitle  = `echo $dmax \* .99  | bc -l`
+set ztitle  = `echo $zmin + .2  | bc -l`
+pstext	-JX -R -O -G0 -K <<END >> $ps 
+	$dtitle	$ztitle	12 0 1 3	Cross section
+END
+endif
+
+

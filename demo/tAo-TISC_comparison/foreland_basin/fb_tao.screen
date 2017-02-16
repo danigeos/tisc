@@ -1,0 +1,623 @@
+
+**** tAo: 2D LITHOSPHERIC FLEXURE, EROSION/SEDIMENTATION, AND FORELAND BASIN MODELING ****
+Version: tAo_2012-08-29
+Parameters at 'fb_tao.PRM'.
+T= 0.0000 Myregion = -250.00/250.00/-6000.00/2000.00
+
+  topogr.:	max= 0.0 m @x= -250.0 km	min= 0.0 m @x= -250.0 km	integr= 0.00e+00 m2 lFM
+  load_incrm:	max= 0.0 kN/m2 @x= -250.0 km	min= 0.0 kN/m2 @x= -250.0 km	integr= 0.00e+00 N/m
+  water:	max= 0.0 m @x= -250.0 km	min= 0.0 m @x= -250.0 km	integr= 0.00e+00 m2
+  erosion.nosd   =  +0.00e+00 N/m  sedim.inc=  +0.00e+00 N/m  outp.seds=  +0.00e+00 N/m  
+  total_cumul_eros-sed=      0.0 km2	vol.sediment=      0.0 km2
+T= 0.5000 Myregion = -250.00/250.00/-6000.00/2000.00
+
+  topogr.:	max= 0.0 m @x= -250.0 km	min= 0.0 m @x= -250.0 km	integr= 0.00e+00 m2 e
+  moment_max.    =  5.336e+15 N  	@x= -25.0 km
+  moment_min.    = -1.687e+15 N  	@x= -120.0 km
+  shear_max.     =  1.741e+11 N/m	@x= -47.5 km
+  shear_min.     = -1.690e+11 N/m	@x=   2.5 km
+  deflection_max.=    143.0 m   	@x= -25.0 km
+  deflection_min.=     -4.8 m   	@x= 160.0 km
+  defl.vel.max.  =    286.1 m/My	@x= -25.0 km
+  defl.vel.min.  =     -9.5 m/My	@x= 160.0 km
+  first zero @x=   -245.0 km 
+  deflectn.area  =     18.6 km2 	mean_rigid.= 9.72e+22 N m/m
+  load_incrm:	max= 11463.0 kN/m2 @x= -45.0 km	min= 0.0 kN/m2 @x= -250.0 km	integr= 5.59e+11 N/m d
+  water:	max= 73.1 m @x= -50.0 km	min= 0.0 m @x= -250.0 km	integr= 4.12e+06 m2
+  erosion.nosd   =  +1.28e+10 N/m  sedim.inc=  +1.49e+11 N/m  outp.seds=  +0.00e+00 N/m  
+  total_cumul_eros-sed=      7.3 km2	vol.sediment=      8.0 km2
+  erosion_max.   =     15.5 m  	@x= -45.0 km
+  sediment.max.  =     51.6 m  	@x= -50.0 km
+  max.altit.sed. =      0.0 m  	@x= -135.0 km
+T= 1.0000 Myregion = -250.00/250.00/-6000.00/2000.00
+
+  topogr.:	max= 269.2 m @x= -45.0 km	min= -73.1 m @x= -50.0 km	integr= 8.92e+06 m2 e
+  moment_max.    =  5.110e+15 N  	@x= -20.0 km
+  moment_min.    = -1.610e+15 N  	@x=  95.0 km
+  shear_max.     =  3.049e+11 N/m	@x= -47.5 km
+  shear_min.     = -2.929e+11 N/m	@x=   7.5 km
+  deflection_max.=    312.4 m   	@x= -20.0 km
+  deflection_min.=     -7.5 m   	@x= 170.0 km
+  defl.vel.max.  =    339.1 m/My	@x= -20.0 km
+  defl.vel.min.  =     -6.4 m/My	@x= 180.0 km
+  first zero @x=   -245.0 km 
+  deflectn.area  =     43.8 km2 	mean_rigid.= 9.72e+22 N m/m
+  load_incrm:	max= 11215.1 kN/m2 @x= -20.0 km	min= -4.4 kN/m2 @x= 160.0 km	integr= 7.60e+11 N/m d
+  water:	max= 168.6 m @x= -50.0 km	min= 0.0 m @x= -250.0 km	integr= 1.04e+07 m2
+  erosion.nosd   =  +2.15e+10 N/m  sedim.inc=  +1.79e+11 N/m  outp.seds=  +0.00e+00 N/m  
+  total_cumul_eros-sed=     15.8 km2	vol.sediment=     17.7 km2
+  erosion_max.   =     40.8 m  	@x= -40.0 km
+  sediment.max.  =    103.3 m  	@x= -50.0 km
+  max.altit.sed. =    169.9 m  	@x= -45.0 km
+T= 1.5000 Myregion = -250.00/250.00/-6000.00/2000.00
+
+  topogr.:	max= 498.6 m @x= -40.0 km	min= -168.6 m @x= -50.0 km	integr= 1.26e+07 m2 e
+  moment_max.    =  4.829e+15 N  	@x= -15.0 km
+  moment_min.    = -1.454e+15 N  	@x= 105.0 km
+  shear_max.     =  4.115e+11 N/m	@x= -47.5 km
+  shear_min.     = -4.064e+11 N/m	@x=   7.5 km
+  deflection_max.=    481.6 m   	@x= -20.0 km
+  deflection_min.=     -8.6 m   	@x= 180.0 km
+  defl.vel.max.  =    340.5 m/My	@x= -15.0 km
+  defl.vel.min.  =     -3.5 m/My	@x= 190.0 km
+  first zero @x=   -245.0 km 
+  deflectn.area  =     70.6 km2 	mean_rigid.= 9.72e+22 N m/m
+  load_incrm:	max= 11000.0 kN/m2 @x= -15.0 km	min= -6.9 kN/m2 @x= 170.0 km	integr= 8.09e+11 N/m d
+  water:	max= 259.5 m @x= -50.0 km	min= 0.0 m @x= -250.0 km	integr= 1.65e+07 m2
+  erosion.nosd   =  +2.86e+10 N/m  sedim.inc=  +1.95e+11 N/m  outp.seds=  +0.00e+00 N/m  
+  total_cumul_eros-sed=     24.8 km2	vol.sediment=     28.2 km2
+  erosion_max.   =     77.3 m  	@x= -35.0 km
+  sediment.max.  =    154.9 m  	@x= -50.0 km
+  max.altit.sed. =    395.0 m  	@x= -40.0 km
+T= 2.0000 Myregion = -250.00/250.00/-6000.00/2000.00
+
+  topogr.:	max= 715.7 m @x= -35.0 km	min= -259.5 m @x= -50.0 km	integr= 1.53e+07 m2 e
+  moment_max.    =  4.669e+15 N  	@x= -10.0 km
+  moment_min.    = -1.374e+15 N  	@x= 110.0 km
+  shear_max.     =  5.167e+11 N/m	@x= -42.5 km
+  shear_min.     = -4.979e+11 N/m	@x=  12.5 km
+  deflection_max.=    647.8 m   	@x= -15.0 km
+  deflection_min.=     -8.8 m   	@x= 185.0 km
+  defl.vel.max.  =    336.0 m/My	@x= -10.0 km
+  defl.vel.min.  =     -1.9 m/My	@x= 205.0 km
+  first zero @x=   -245.0 km 
+  deflectn.area  =     97.6 km2 	mean_rigid.= 9.72e+22 N m/m
+  load_incrm:	max= 10792.7 kN/m2 @x= -10.0 km	min= -2597.5 kN/m2 @x= 20.0 km	integr= 8.18e+11 N/m d
+  water:	max= 341.6 m @x= -50.0 km	min= 0.0 m @x= -250.0 km	integr= 2.16e+07 m2
+  erosion.nosd   =  +3.47e+10 N/m  sedim.inc=  +2.00e+11 N/m  outp.seds=  +0.00e+00 N/m  
+  total_cumul_eros-sed=     33.7 km2	vol.sediment=     38.9 km2
+  erosion_max.   =    125.3 m  	@x=  -5.0 km
+  sediment.max.  =    206.6 m  	@x= -50.0 km
+  max.altit.sed. =    309.0 m  	@x= -40.0 km
+T= 2.5000 Myregion = -250.00/250.00/-6000.00/2000.00
+
+  topogr.:	max= 925.8 m @x= -30.0 km	min= -341.6 m @x= -50.0 km	integr= 1.79e+07 m2 e
+  moment_max.    =  4.492e+15 N  	@x=  -5.0 km
+  moment_min.    = -1.302e+15 N  	@x= 115.0 km
+  shear_max.     =  6.062e+11 N/m	@x= -42.5 km
+  shear_min.     = -5.796e+11 N/m	@x=  12.5 km
+  deflection_max.=    807.9 m   	@x= -15.0 km
+  deflection_min.=     -8.3 m   	@x= 190.0 km
+  defl.vel.max.  =    327.1 m/My	@x=   0.0 km
+  defl.vel.min.  =     -0.9 m/My	@x= 210.0 km
+  first zero @x=   -245.0 km 
+  deflectn.area  =    124.2 km2 	mean_rigid.= 9.72e+22 N m/m
+  load_incrm:	max= 12703.9 kN/m2 @x= 30.0 km	min= -7265.8 kN/m2 @x= 25.0 km	integr= 8.08e+11 N/m d
+  water:	max= 413.3 m @x= -50.0 km	min= 0.0 m @x= -250.0 km	integr= 2.62e+07 m2
+  erosion.nosd   =  +4.13e+10 N/m  sedim.inc=  +2.04e+11 N/m  outp.seds=  +0.00e+00 N/m  
+  total_cumul_eros-sed=     42.4 km2	vol.sediment=     49.9 km2
+  erosion_max.   =    184.1 m  	@x=  -5.0 km
+  sediment.max.  =    258.2 m  	@x= -50.0 km
+  max.altit.sed. =    529.8 m  	@x= -35.0 km
+T= 3.0000 Myregion = -250.00/250.00/-6000.00/2000.00
+
+  topogr.:	max= 1132.3 m @x= -25.0 km	min= -413.3 m @x= -50.0 km	integr= 2.08e+07 m2 e
+  moment_max.    =  4.362e+15 N  	@x=   0.0 km
+  moment_min.    = -1.264e+15 N  	@x= 120.0 km
+  shear_max.     =  6.826e+11 N/m	@x= -42.5 km
+  shear_min.     = -6.484e+11 N/m	@x=  17.5 km
+  deflection_max.=    964.3 m   	@x= -10.0 km
+  deflection_min.=     -7.3 m   	@x= 195.0 km
+  defl.vel.max.  =    321.5 m/My	@x=   5.0 km
+  defl.vel.min.  =     -0.4 m/My	@x= 220.0 km
+  first zero @x=   -245.0 km 
+  deflectn.area  =    150.5 km2 	mean_rigid.= 9.72e+22 N m/m
+  load_incrm:	max= 16865.6 kN/m2 @x= 35.0 km	min= -12252.3 kN/m2 @x= 30.0 km	integr= 8.00e+11 N/m d
+  water:	max= 476.5 m @x= -50.0 km	min= 0.0 m @x= -250.0 km	integr= 3.05e+07 m2
+  erosion.nosd   =  +4.46e+10 N/m  sedim.inc=  +2.03e+11 N/m  outp.seds=  +0.00e+00 N/m  
+  total_cumul_eros-sed=     51.0 km2	vol.sediment=     60.8 km2
+  erosion_max.   =    253.5 m  	@x=  -5.0 km
+  sediment.max.  =    309.9 m  	@x= -50.0 km
+  max.altit.sed. =    739.9 m  	@x= -30.0 km
+T= 3.5000 Myregion = -250.00/250.00/-6000.00/2000.00
+
+  topogr.:	max= 1334.9 m @x= -5.0 km	min= -476.5 m @x= -50.0 km	integr= 2.38e+07 m2 e
+  moment_max.    =  4.230e+15 N  	@x=   5.0 km
+  moment_min.    = -1.240e+15 N  	@x= 125.0 km
+  shear_max.     =  7.502e+11 N/m	@x= -37.5 km
+  shear_min.     = -7.061e+11 N/m	@x=  17.5 km
+  deflection_max.=   1115.8 m   	@x= -10.0 km
+  deflection_min.=     -6.1 m   	@x= 205.0 km
+  defl.vel.max.  =    316.5 m/My	@x=  10.0 km
+  defl.vel.min.  =     -0.2 m/My	@x= -225.0 km
+  first zero @x=   -245.0 km 
+  deflectn.area  =    176.6 km2 	mean_rigid.= 9.72e+22 N m/m
+  load_incrm:	max= 19732.7 kN/m2 @x= 40.0 km	min= -16922.9 kN/m2 @x= 35.0 km	integr= 7.93e+11 N/m d
+  water:	max= 530.8 m @x= -50.0 km	min= 0.0 m @x= -250.0 km	integr= 3.34e+07 m2
+  erosion.nosd   =  +4.94e+10 N/m  sedim.inc=  +2.03e+11 N/m  outp.seds=  +0.00e+00 N/m  
+  total_cumul_eros-sed=     59.2 km2	vol.sediment=     71.8 km2
+  erosion_max.   =    333.3 m  	@x=  -5.0 km
+  sediment.max.  =    361.5 m  	@x= -50.0 km
+  max.altit.sed. =    681.1 m  	@x= -30.0 km
+T= 4.0000 Myregion = -250.00/250.00/-6000.00/2000.00
+
+  topogr.:	max= 1537.3 m @x= -5.0 km	min= -530.8 m @x= -50.0 km	integr= 2.68e+07 m2 e
+  moment_max.    =  4.046e+15 N  	@x=  10.0 km
+  moment_min.    = -1.184e+15 N  	@x= 135.0 km
+  shear_max.     =  8.126e+11 N/m	@x= -37.5 km
+  shear_min.     = -7.573e+11 N/m	@x=  22.5 km
+  deflection_max.=   1260.9 m   	@x=  -5.0 km
+  deflection_min.=     -4.7 m   	@x= 210.0 km
+  defl.vel.max.  =    306.7 m/My	@x=  15.0 km
+  defl.vel.min.  =     -0.3 m/My	@x= -220.0 km
+  first zero @x=   -245.0 km 
+  deflectn.area  =    202.1 km2 	mean_rigid.= 9.72e+22 N m/m
+  load_incrm:	max= 19265.9 kN/m2 @x= 45.0 km	min= -20189.1 kN/m2 @x= 40.0 km	integr= 7.75e+11 N/m d
+  water:	max= 575.3 m @x= -50.0 km	min= 0.0 m @x= -250.0 km	integr= 3.53e+07 m2
+  erosion.nosd   =  +5.20e+10 N/m  sedim.inc=  +2.05e+11 N/m  outp.seds=  +0.00e+00 N/m  
+  total_cumul_eros-sed=     67.5 km2	vol.sediment=     82.8 km2
+  erosion_max.   =    423.7 m  	@x=  -5.0 km
+  sediment.max.  =    413.2 m  	@x= -50.0 km
+  max.altit.sed. =    889.4 m  	@x= -25.0 km
+T= 4.5000 Myregion = -250.00/250.00/-6000.00/2000.00
+
+  topogr.:	max= 1739.9 m @x= -5.0 km	min= -575.3 m @x= -50.0 km	integr= 3.05e+07 m2 e
+  moment_max.    =  3.927e+15 N  	@x=  15.0 km
+  moment_min.    = -1.157e+15 N  	@x= 140.0 km
+  shear_max.     =  8.646e+11 N/m	@x= -37.5 km
+  shear_min.     = -7.927e+11 N/m	@x=  22.5 km
+  deflection_max.=   1400.5 m   	@x=  -5.0 km
+  deflection_min.=     -3.2 m   	@x= 215.0 km
+  defl.vel.max.  =    301.1 m/My	@x=  20.0 km
+  defl.vel.min.  =     -0.6 m/My	@x= -210.0 km
+  first zero @x=   -245.0 km 
+  deflectn.area  =    227.2 km2 	mean_rigid.= 9.72e+22 N m/m
+  load_incrm:	max= 17091.5 kN/m2 @x= 50.0 km	min= -22241.8 kN/m2 @x= 45.0 km	integr= 7.64e+11 N/m d
+  water:	max= 611.1 m @x= -50.0 km	min= 0.0 m @x= -250.0 km	integr= 3.65e+07 m2
+  erosion.nosd   =  +5.35e+10 N/m  sedim.inc=  +2.02e+11 N/m  outp.seds=  +0.00e+00 N/m  
+  total_cumul_eros-sed=     75.4 km2	vol.sediment=     93.7 km2
+  erosion_max.   =    525.2 m  	@x=  -5.0 km
+  sediment.max.  =    464.8 m  	@x= -50.0 km
+  max.altit.sed. =    868.7 m  	@x= -25.0 km
+T= 5.0000 Myregion = -250.00/250.00/-6000.00/2000.00
+
+  topogr.:	max= 1935.5 m @x= -5.0 km	min= -611.1 m @x= -50.0 km	integr= 3.44e+07 m2 lFMR e
+  moment_max.    =  8.286e+14 N  	@x=  95.0 km
+  moment_min.    = -1.220e+15 N  	@x=  -5.0 km
+  shear_max.     =  8.244e+11 N/m	@x= -37.5 km
+  shear_min.     = -7.631e+11 N/m	@x=  22.5 km
+  deflection_max.=   1400.0 m   	@x=  -5.0 km
+  deflection_min.=     -1.1 m   	@x= 225.0 km
+  defl.vel.max.  =     49.0 m/My	@x= 105.0 km
+  defl.vel.min.  =     -1.1 m/My	@x=  -5.0 km
+  first zero @x=   -245.0 km 
+  deflectn.area  =    232.9 km2 	mean_rigid.= 9.72e+22 N m/m
+  load_incrm:	max= 6851.0 kN/m2 @x= 45.0 km	min= -2708.7 kN/m2 @x= 55.0 km	integr= 1.93e+11 N/m d
+  water:	max= 569.8 m @x= -50.0 km	min= 0.0 m @x= -250.0 km	integr= 3.16e+07 m2
+  erosion.nosd   =  +5.51e+10 N/m  sedim.inc=  +1.81e+11 N/m  outp.seds=  +0.00e+00 N/m  
+  total_cumul_eros-sed=     82.2 km2	vol.sediment=    103.4 km2
+  erosion_max.   =    623.3 m  	@x=  -5.0 km
+  sediment.max.  =    516.4 m  	@x= -50.0 km
+  max.altit.sed. =    822.9 m  	@x= -25.0 km
+T= 5.5000 Myregion = -250.00/250.00/-6000.00/2000.00
+
+  topogr.:	max= 1870.8 m @x= -5.0 km	min= -569.8 m @x= -50.0 km	integr= 3.64e+07 m2 e
+  moment_max.    =  9.061e+15 N  	@x=  35.0 km
+  moment_min.    = -6.039e+15 N  	@x= -35.0 km
+  shear_max.     =  8.389e+11 N/m	@x= -32.5 km
+  shear_min.     = -6.982e+11 N/m	@x=  37.5 km
+  deflection_max.=   1514.0 m   	@x=   5.0 km
+  deflection_min.=     -0.5 m   	@x= 230.0 km
+  defl.vel.max.  =    416.2 m/My	@x=  50.0 km
+  defl.vel.min.  =    -64.6 m/My	@x= -85.0 km
+  first zero @x=   -245.0 km 
+  deflectn.area  =    254.8 km2 	mean_rigid.= 9.72e+22 N m/m
+  load_incrm:	max= 22123.8 kN/m2 @x= 55.0 km	min= -10760.9 kN/m2 @x= -45.0 km	integr= 6.66e+11 N/m d
+  water:	max= 566.6 m @x= -45.0 km	min= 0.0 m @x= -250.0 km	integr= 2.86e+07 m2
+  erosion.nosd   =  +5.52e+10 N/m  sedim.inc=  +1.70e+11 N/m  outp.seds=  +0.00e+00 N/m  
+  total_cumul_eros-sed=     88.4 km2	vol.sediment=    112.5 km2
+  erosion_max.   =    698.8 m  	@x=  -5.0 km
+  sediment.max.  =    566.5 m  	@x= -50.0 km
+  max.altit.sed. =    707.5 m  	@x= -20.0 km
+T= 6.0000 Myregion = -250.00/250.00/-6000.00/2000.00
+
+  topogr.:	max= 1702.9 m @x= 0.0 km	min= -566.6 m @x= -45.0 km	integr= 4.17e+07 m2 e
+  moment_max.    =  7.896e+15 N  	@x=  40.0 km
+  moment_min.    = -5.428e+15 N  	@x= -30.0 km
+  shear_max.     =  8.609e+11 N/m	@x= -22.5 km
+  shear_min.     = -7.361e+11 N/m	@x=  62.5 km
+  deflection_max.=   1633.9 m   	@x=  15.0 km
+  deflection_min.=     -1.6 m   	@x= -220.0 km
+  defl.vel.max.  =    404.7 m/My	@x=  55.0 km
+  defl.vel.min.  =    -70.0 m/My	@x= -85.0 km
+  first zero @x=   -245.0 km 
+  deflectn.area  =    276.7 km2 	mean_rigid.= 9.72e+22 N m/m
+  load_incrm:	max= 21610.9 kN/m2 @x= 65.0 km	min= -11748.4 kN/m2 @x= 70.0 km	integr= 6.71e+11 N/m d
+  water:	max= 569.0 m @x= -40.0 km	min= 0.0 m @x= -250.0 km	integr= 2.97e+07 m2
+  erosion.nosd   =  +5.72e+10 N/m  sedim.inc=  +1.57e+11 N/m  outp.seds=  +0.00e+00 N/m  
+  total_cumul_eros-sed=     93.7 km2	vol.sediment=    121.0 km2
+  erosion_max.   =    754.1 m  	@x=  -5.0 km
+  sediment.max.  =    616.4 m  	@x= -50.0 km
+  max.altit.sed. =    852.1 m  	@x=  60.0 km
+T= 6.5000 Myregion = -250.00/250.00/-6000.00/2000.00
+
+  topogr.:	max= 1538.3 m @x= 5.0 km	min= -569.0 m @x= -40.0 km	integr= 4.61e+07 m2 e
+  moment_max.    =  7.892e+15 N  	@x=  45.0 km
+  moment_min.    = -5.186e+15 N  	@x= -25.0 km
+  shear_max.     =  8.967e+11 N/m	@x= -17.5 km
+  shear_min.     = -8.281e+11 N/m	@x=  67.5 km
+  deflection_max.=   1767.2 m   	@x=  20.0 km
+  deflection_min.=     -3.7 m   	@x= -210.0 km
+  defl.vel.max.  =    410.5 m/My	@x=  60.0 km
+  defl.vel.min.  =    -71.3 m/My	@x= -90.0 km
+  first zero @x=   -245.0 km 
+  deflectn.area  =    299.2 km2 	mean_rigid.= 9.72e+22 N m/m
+  load_incrm:	max= 24309.4 kN/m2 @x= 70.0 km	min= -19365.6 kN/m2 @x= 75.0 km	integr= 6.95e+11 N/m d
+  water:	max= 603.8 m @x= 75.0 km	min= 0.0 m @x= -250.0 km	integr= 3.20e+07 m2
+  erosion.nosd   =  +6.06e+10 N/m  sedim.inc=  +1.55e+11 N/m  outp.seds=  +0.00e+00 N/m  
+  total_cumul_eros-sed=     98.8 km2	vol.sediment=    129.3 km2
+  erosion_max.   =    790.1 m  	@x=  -5.0 km
+  sediment.max.  =    666.4 m  	@x= -50.0 km
+  max.altit.sed. =    674.7 m  	@x=  65.0 km
+T= 7.0000 Myregion = -250.00/250.00/-6000.00/2000.00
+
+  topogr.:	max= 1713.2 m @x= 25.0 km	min= -603.8 m @x= 75.0 km	integr= 4.98e+07 m2 e
+  moment_max.    =  7.835e+15 N  	@x=  50.0 km
+  moment_min.    = -4.966e+15 N  	@x= -20.0 km
+  shear_max.     =  9.546e+11 N/m	@x=  -7.5 km
+  shear_min.     = -9.250e+11 N/m	@x=  62.5 km
+  deflection_max.=   1907.2 m   	@x=  30.0 km
+  deflection_min.=     -7.0 m   	@x= -205.0 km
+  defl.vel.max.  =    409.7 m/My	@x=  65.0 km
+  defl.vel.min.  =    -70.9 m/My	@x= -85.0 km
+  first zero @x=   -245.0 km 
+  deflectn.area  =    321.8 km2 	mean_rigid.= 9.72e+22 N m/m
+  load_incrm:	max= 24447.7 kN/m2 @x= 75.0 km	min= -22803.5 kN/m2 @x= 80.0 km	integr= 7.01e+11 N/m d
+  water:	max= 668.6 m @x= 80.0 km	min= 0.0 m @x= -250.0 km	integr= 3.56e+07 m2
+  erosion.nosd   =  +6.71e+10 N/m  sedim.inc=  +1.53e+11 N/m  outp.seds=  +0.00e+00 N/m  
+  total_cumul_eros-sed=    103.4 km2	vol.sediment=    137.5 km2
+  erosion_max.   =    817.9 m  	@x=   0.0 km
+  sediment.max.  =    716.4 m  	@x= -50.0 km
+  max.altit.sed. =    882.0 m  	@x=  50.0 km
+T= 7.5000 Myregion = -250.00/250.00/-6000.00/2000.00
+
+  topogr.:	max= 1904.1 m @x= 30.0 km	min= -668.6 m @x= 80.0 km	integr= 5.31e+07 m2 e
+  moment_max.    =  7.615e+15 N  	@x=  55.0 km
+  moment_min.    = -4.720e+15 N  	@x= -15.0 km
+  shear_max.     =  1.034e+12 N/m	@x=  -2.5 km
+  shear_min.     = -1.024e+12 N/m	@x=  67.5 km
+  deflection_max.=   2052.1 m   	@x=  35.0 km
+  deflection_min.=    -11.1 m   	@x= -195.0 km
+  defl.vel.max.  =    406.8 m/My	@x=  70.0 km
+  defl.vel.min.  =    -68.6 m/My	@x= -85.0 km
+  first zero @x=   -245.0 km 
+  deflectn.area  =    344.3 km2 	mean_rigid.= 9.72e+22 N m/m
+  load_incrm:	max= 29319.9 kN/m2 @x= 95.0 km	min= -24361.3 kN/m2 @x= 85.0 km	integr= 7.06e+11 N/m d
+  water:	max= 726.2 m @x= 85.0 km	min= 0.0 m @x= -250.0 km	integr= 3.97e+07 m2
+  erosion.nosd   =  +7.52e+10 N/m  sedim.inc=  +1.57e+11 N/m  outp.seds=  +0.00e+00 N/m  
+  total_cumul_eros-sed=    107.8 km2	vol.sediment=    146.0 km2
+  erosion_max.   =    830.1 m  	@x=   0.0 km
+  sediment.max.  =    766.4 m  	@x= -50.0 km
+  max.altit.sed. =    946.2 m  	@x=  60.0 km
+T= 8.0000 Myregion = -250.00/250.00/-6000.00/2000.00
+
+  topogr.:	max= 2086.7 m @x= 35.0 km	min= -726.2 m @x= 85.0 km	integr= 5.64e+07 m2 e
+  moment_max.    =  7.345e+15 N  	@x=  60.0 km
+  moment_min.    = -4.431e+15 N  	@x= -10.0 km
+  shear_max.     =  1.144e+12 N/m	@x=   7.5 km
+  shear_min.     = -1.104e+12 N/m	@x=  72.5 km
+  deflection_max.=   2196.8 m   	@x=  40.0 km
+  deflection_min.=    -16.0 m   	@x= -190.0 km
+  defl.vel.max.  =    400.5 m/My	@x=  75.0 km
+  defl.vel.min.  =    -64.9 m/My	@x= -80.0 km
+  first zero @x=   -245.0 km 
+  deflectn.area  =    366.6 km2 	mean_rigid.= 9.72e+22 N m/m
+  load_incrm:	max= 36157.9 kN/m2 @x= 100.0 km	min= -25062.3 kN/m2 @x= 90.0 km	integr= 7.08e+11 N/m d
+  water:	max= 774.6 m @x= 90.0 km	min= 0.0 m @x= -250.0 km	integr= 4.33e+07 m2
+  erosion.nosd   =  +8.68e+10 N/m  sedim.inc=  +1.74e+11 N/m  outp.seds=  +0.00e+00 N/m  
+  total_cumul_eros-sed=    112.5 km2	vol.sediment=    155.4 km2
+  erosion_max.   =    779.8 m  	@x=   0.0 km
+  sediment.max.  =    816.4 m  	@x= -50.0 km
+  max.altit.sed. =    772.9 m  	@x=  65.0 km
+T= 8.5000 Myregion = -250.00/250.00/-6000.00/2000.00
+
+  topogr.:	max= 2263.4 m @x= 40.0 km	min= -774.6 m @x= 90.0 km	integr= 6.03e+07 m2 e
+  moment_max.    =  7.153e+15 N  	@x=  65.0 km
+  moment_min.    = -4.154e+15 N  	@x=  -5.0 km
+  shear_max.     =  1.272e+12 N/m	@x=  12.5 km
+  shear_min.     = -1.184e+12 N/m	@x=  72.5 km
+  deflection_max.=   2340.8 m   	@x=  45.0 km
+  deflection_min.=    -21.4 m   	@x= -185.0 km
+  defl.vel.max.  =    394.4 m/My	@x=  80.0 km
+  defl.vel.min.  =    -60.4 m/My	@x= -80.0 km
+  first zero @x=   -245.0 km 
+  deflectn.area  =    388.9 km2 	mean_rigid.= 9.72e+22 N m/m
+  load_incrm:	max= 37767.3 kN/m2 @x= 105.0 km	min= -25958.2 kN/m2 @x= 95.0 km	integr= 7.11e+11 N/m d
+  water:	max= 813.5 m @x= 95.0 km	min= 0.0 m @x= -250.0 km	integr= 4.71e+07 m2
+  erosion.nosd   =  +9.52e+10 N/m  sedim.inc=  +1.80e+11 N/m  outp.seds=  +0.00e+00 N/m  
+  total_cumul_eros-sed=    117.1 km2	vol.sediment=    165.0 km2
+  erosion_max.   =    729.6 m  	@x=   0.0 km
+  sediment.max.  =    866.4 m  	@x= -50.0 km
+  max.altit.sed. =    989.7 m  	@x= 105.0 km
+T= 9.0000 Myregion = -250.00/250.00/-6000.00/2000.00
+
+  topogr.:	max= 2435.0 m @x= 45.0 km	min= -813.5 m @x= 95.0 km	integr= 6.43e+07 m2 e
+  moment_max.    =  6.891e+15 N  	@x=  70.0 km
+  moment_min.    = -3.886e+15 N  	@x=   0.0 km
+  shear_max.     =  1.357e+12 N/m	@x=  17.5 km
+  shear_min.     = -1.246e+12 N/m	@x=  77.5 km
+  deflection_max.=   2481.8 m   	@x=  45.0 km
+  deflection_min.=    -27.1 m   	@x= -180.0 km
+  defl.vel.max.  =    386.4 m/My	@x=  85.0 km
+  defl.vel.min.  =    -55.8 m/My	@x= -80.0 km
+  first zero @x=   -245.0 km 
+  deflectn.area  =    411.0 km2 	mean_rigid.= 9.72e+22 N m/m
+  load_incrm:	max= 35182.9 kN/m2 @x= 110.0 km	min= -26478.4 kN/m2 @x= 100.0 km	integr= 7.11e+11 N/m d
+  water:	max= 842.2 m @x= 100.0 km	min= 0.0 m @x= -250.0 km	integr= 5.00e+07 m2
+  erosion.nosd   =  +1.02e+11 N/m  sedim.inc=  +1.82e+11 N/m  outp.seds=  +0.00e+00 N/m  
+  total_cumul_eros-sed=    121.4 km2	vol.sediment=    174.9 km2
+  erosion_max.   =    680.1 m  	@x=   0.0 km
+  sediment.max.  =    916.2 m  	@x= -50.0 km
+  max.altit.sed. =   1104.8 m  	@x= 110.0 km
+T= 9.5000 Myregion = -250.00/250.00/-6000.00/2000.00
+
+  topogr.:	max= 2604.2 m @x= 50.0 km	min= -842.2 m @x= 100.0 km	integr= 6.84e+07 m2 e
+  moment_max.    =  6.652e+15 N  	@x=  75.0 km
+  moment_min.    = -3.701e+15 N  	@x=   0.0 km
+  shear_max.     =  1.438e+12 N/m	@x=  17.5 km
+  shear_min.     = -1.291e+12 N/m	@x=  82.5 km
+  deflection_max.=   2619.6 m   	@x=  50.0 km
+  deflection_min.=    -32.8 m   	@x= -175.0 km
+  defl.vel.max.  =    374.7 m/My	@x=  90.0 km
+  defl.vel.min.  =    -52.0 m/My	@x= -75.0 km
+  first zero @x=   -245.0 km 
+  deflectn.area  =    432.4 km2 	mean_rigid.= 9.72e+22 N m/m
+  load_incrm:	max= 27263.6 kN/m2 @x= 115.0 km	min= -26665.9 kN/m2 @x= 105.0 km	integr= 6.99e+11 N/m d
+  water:	max= 858.8 m @x= 105.0 km	min= 0.0 m @x= -250.0 km	integr= 5.30e+07 m2
+  erosion.nosd   =  +1.09e+11 N/m  sedim.inc=  +1.84e+11 N/m  outp.seds=  +0.00e+00 N/m  
+  total_cumul_eros-sed=    125.5 km2	vol.sediment=    184.8 km2
+  erosion_max.   =    630.6 m  	@x=   0.0 km
+  sediment.max.  =    966.1 m  	@x= -50.0 km
+  max.altit.sed. =   1202.7 m  	@x= 115.0 km
+T= 10.0000 Myregion = -250.00/250.00/-6000.00/2000.00
+
+  topogr.:	max= 2774.5 m @x= 55.0 km	min= -858.8 m @x= 105.0 km	integr= 7.29e+07 m2 e
+  moment_max.    =  6.576e+15 N  	@x=  80.0 km
+  moment_min.    = -3.748e+15 N  	@x=  10.0 km
+  shear_max.     =  1.492e+12 N/m	@x=  22.5 km
+  shear_min.     = -1.325e+12 N/m	@x=  82.5 km
+  deflection_max.=   2751.4 m   	@x=  55.0 km
+  deflection_min.=    -38.4 m   	@x= -175.0 km
+  defl.vel.max.  =    372.3 m/My	@x=  95.0 km
+  defl.vel.min.  =    -51.3 m/My	@x= -70.0 km
+  first zero @x=   -245.0 km 
+  deflectn.area  =    453.5 km2 	mean_rigid.= 9.72e+22 N m/m
+  load_incrm:	max= 34760.8 kN/m2 @x= 125.0 km	min= -26551.3 kN/m2 @x= 110.0 km	integr= 6.94e+11 N/m d
+  water:	max= 918.3 m @x= 0.0 km	min= 0.0 m @x= -250.0 km	integr= 5.52e+07 m2
+  erosion.nosd   =  +1.14e+11 N/m  sedim.inc=  +1.86e+11 N/m  outp.seds=  +0.00e+00 N/m  
+  total_cumul_eros-sed=    129.3 km2	vol.sediment=    194.7 km2
+  erosion_max.   =    579.1 m  	@x=   0.0 km
+  sediment.max.  =   1016.1 m  	@x= -50.0 km
+  max.altit.sed. =   1280.6 m  	@x= 120.0 km
+T= 10.5000 Myregion = -250.00/250.00/-6000.00/2000.00
+
+  topogr.:	max= 2944.6 m @x= 60.0 km	min= -918.3 m @x= 0.0 km	integr= 7.78e+07 m2 e
+  moment_max.    =  1.060e+15 N  	@x= 160.0 km
+  moment_min.    = -1.516e+15 N  	@x=  55.0 km
+  shear_max.     =  1.434e+12 N/m	@x=  22.5 km
+  shear_min.     = -1.288e+12 N/m	@x=  82.5 km
+  deflection_max.=   2739.6 m   	@x=  55.0 km
+  deflection_min.=    -36.2 m   	@x= -175.0 km
+  defl.vel.max.  =     40.5 m/My	@x= -55.0 km
+  defl.vel.min.  =    -24.2 m/My	@x=  60.0 km
+  first zero @x=   -245.0 km 
+  deflectn.area  =    456.3 km2 	mean_rigid.= 9.72e+22 N m/m
+  load_incrm:	max= 9934.9 kN/m2 @x= 110.0 km	min= -7939.9 kN/m2 @x= 125.0 km	integr= 1.24e+11 N/m d
+  water:	max= 875.9 m @x= 0.0 km	min= 0.0 m @x= -250.0 km	integr= 4.93e+07 m2
+  erosion.nosd   =  +1.10e+11 N/m  sedim.inc=  +1.52e+11 N/m  outp.seds=  +0.00e+00 N/m  
+  total_cumul_eros-sed=    131.6 km2	vol.sediment=    202.9 km2
+  erosion_max.   =    527.6 m  	@x=   0.0 km
+  sediment.max.  =   1056.7 m  	@x= -50.0 km
+  max.altit.sed. =   1207.7 m  	@x= 120.0 km
+T= 11.0000 Myregion = -250.00/250.00/-6000.00/2000.00
+
+  topogr.:	max= 2856.9 m @x= 60.0 km	min= -875.9 m @x= 0.0 km	integr= 7.93e+07 m2 e
+  moment_max.    =  6.572e+14 N  	@x= -40.0 km
+  moment_min.    = -1.314e+15 N  	@x=  55.0 km
+  shear_max.     =  1.396e+12 N/m	@x=  22.5 km
+  shear_min.     = -1.253e+12 N/m	@x=  82.5 km
+  deflection_max.=   2718.7 m   	@x=  55.0 km
+  deflection_min.=    -34.0 m   	@x= -175.0 km
+  defl.vel.max.  =     23.8 m/My	@x= -75.0 km
+  defl.vel.min.  =    -41.8 m/My	@x=  60.0 km
+  first zero @x=   -245.0 km 
+  deflectn.area  =    456.0 km2 	mean_rigid.= 9.72e+22 N m/m
+  load_incrm:	max= 776.0 kN/m2 @x= -45.0 km	min= -2790.0 kN/m2 @x= 60.0 km	integr= 7.16e+09 N/m d
+  water:	max= 820.5 m @x= 0.0 km	min= 0.0 m @x= -250.0 km	integr= 4.32e+07 m2
+  erosion.nosd   =  +1.08e+11 N/m  sedim.inc=  +1.19e+11 N/m  outp.seds=  +0.00e+00 N/m  
+  total_cumul_eros-sed=    132.2 km2	vol.sediment=    209.3 km2
+  erosion_max.   =    667.0 m  	@x=  50.0 km
+  sediment.max.  =   1067.2 m  	@x= -50.0 km
+  max.altit.sed. =   1147.6 m  	@x= 120.0 km
+T= 11.5000 Myregion = -250.00/250.00/-6000.00/2000.00
+
+  topogr.:	max= 2780.7 m @x= 60.0 km	min= -820.5 m @x= 0.0 km	integr= 8.20e+07 m2 e
+  moment_max.    =  5.650e+14 N  	@x= 155.0 km
+  moment_min.    = -1.223e+15 N  	@x=  55.0 km
+  shear_max.     =  1.360e+12 N/m	@x=  22.5 km
+  shear_min.     = -1.222e+12 N/m	@x=  82.5 km
+  deflection_max.=   2695.7 m   	@x=  55.0 km
+  deflection_min.=    -32.4 m   	@x= -180.0 km
+  defl.vel.max.  =     15.7 m/My	@x= -80.0 km
+  defl.vel.min.  =    -46.1 m/My	@x=  60.0 km
+  first zero @x=   -245.0 km 
+  deflectn.area  =    454.7 km2 	mean_rigid.= 9.72e+22 N m/m
+  load_incrm:	max= 665.2 kN/m2 @x= -40.0 km	min= -2715.1 kN/m2 @x= 60.0 km	integr= -3.13e+10 N/m d
+  water:	max= 761.5 m @x= 0.0 km	min= 0.0 m @x= -250.0 km	integr= 3.72e+07 m2
+  erosion.nosd   =  +1.06e+11 N/m  sedim.inc=  +1.05e+11 N/m  outp.seds=  +0.00e+00 N/m  
+  total_cumul_eros-sed=    132.1 km2	vol.sediment=    215.0 km2
+  erosion_max.   =    805.7 m  	@x=  50.0 km
+  sediment.max.  =   1073.1 m  	@x= -50.0 km
+  max.altit.sed. =   1093.3 m  	@x= 120.0 km
+T= 12.0000 Myregion = -250.00/250.00/-6000.00/2000.00
+
+  topogr.:	max= 2709.2 m @x= 60.0 km	min= -761.5 m @x= 0.0 km	integr= 8.52e+07 m2 e
+  moment_max.    =  5.237e+14 N  	@x= 155.0 km
+  moment_min.    = -1.161e+15 N  	@x=  55.0 km
+  shear_max.     =  1.327e+12 N/m	@x=  22.5 km
+  shear_min.     = -1.192e+12 N/m	@x=  82.5 km
+  deflection_max.=   2672.7 m   	@x=  55.0 km
+  deflection_min.=    -31.2 m   	@x= -180.0 km
+  defl.vel.max.  =     11.3 m/My	@x= -85.0 km
+  defl.vel.min.  =    -45.9 m/My	@x=  55.0 km
+  first zero @x=   -245.0 km 
+  deflectn.area  =    453.0 km2 	mean_rigid.= 9.72e+22 N m/m
+  load_incrm:	max= 611.4 kN/m2 @x= -35.0 km	min= -2644.8 kN/m2 @x= 60.0 km	integr= -4.49e+10 N/m d
+  water:	max= 701.3 m @x= 0.0 km	min= 0.0 m @x= -250.0 km	integr= 3.14e+07 m2
+  erosion.nosd   =  +1.04e+11 N/m  sedim.inc=  +9.50e+10 N/m  outp.seds=  +0.00e+00 N/m  
+  total_cumul_eros-sed=    131.6 km2	vol.sediment=    220.1 km2
+  erosion_max.   =    940.9 m  	@x=  50.0 km
+  sediment.max.  =   1076.7 m  	@x= -50.0 km
+  max.altit.sed. =   1042.2 m  	@x= 120.0 km
+T= 12.5000 Myregion = -250.00/250.00/-6000.00/2000.00
+
+  topogr.:	max= 2640.0 m @x= 60.0 km	min= -701.3 m @x= 0.0 km	integr= 8.83e+07 m2 e
+  moment_max.    =  4.949e+14 N  	@x= 155.0 km
+  moment_min.    = -1.122e+15 N  	@x=  55.0 km
+  shear_max.     =  1.293e+12 N/m	@x=  22.5 km
+  shear_min.     = -1.163e+12 N/m	@x=  82.5 km
+  deflection_max.=   2649.9 m   	@x=  55.0 km
+  deflection_min.=    -30.2 m   	@x= -180.0 km
+  defl.vel.max.  =      9.2 m/My	@x= -90.0 km
+  defl.vel.min.  =    -45.6 m/My	@x=  55.0 km
+  first zero @x=   -245.0 km 
+  deflectn.area  =    451.1 km2 	mean_rigid.= 9.72e+22 N m/m
+  load_incrm:	max= 589.4 kN/m2 @x= -35.0 km	min= -2576.7 kN/m2 @x= 60.0 km	integr= -5.15e+10 N/m d
+  water:	max= 640.7 m @x= 0.0 km	min= 0.0 m @x= -250.0 km	integr= 2.64e+07 m2
+  erosion.nosd   =  +1.02e+11 N/m  sedim.inc=  +8.08e+10 N/m  outp.seds=  +0.00e+00 N/m  
+  total_cumul_eros-sed=    130.5 km2	vol.sediment=    224.4 km2
+  erosion_max.   =   1072.7 m  	@x=  50.0 km
+  sediment.max.  =   1079.2 m  	@x= -50.0 km
+  max.altit.sed. =    994.2 m  	@x= 120.0 km
+T= 13.0000 Myregion = -250.00/250.00/-6000.00/2000.00
+
+  topogr.:	max= 2572.9 m @x= 60.0 km	min= -640.7 m @x= 0.0 km	integr= 9.09e+07 m2 e
+  moment_max.    =  4.623e+14 N  	@x= 150.0 km
+  moment_min.    = -1.080e+15 N  	@x=  55.0 km
+  shear_max.     =  1.261e+12 N/m	@x=  17.5 km
+  shear_min.     = -1.137e+12 N/m	@x=  87.5 km
+  deflection_max.=   2627.2 m   	@x=  55.0 km
+  deflection_min.=    -29.3 m   	@x= -180.0 km
+  defl.vel.max.  =      7.5 m/My	@x= -95.0 km
+  defl.vel.min.  =    -45.6 m/My	@x=  55.0 km
+  first zero @x=   -245.0 km 
+  deflectn.area  =    449.0 km2 	mean_rigid.= 9.72e+22 N m/m
+  load_incrm:	max= 573.3 kN/m2 @x= 160.0 km	min= -2510.7 kN/m2 @x= 60.0 km	integr= -5.87e+10 N/m d
+  water:	max= 579.6 m @x= 0.0 km	min= 0.0 m @x= -250.0 km	integr= 2.14e+07 m2
+  erosion.nosd   =  +9.96e+10 N/m  sedim.inc=  +7.50e+10 N/m  outp.seds=  +0.00e+00 N/m  
+  total_cumul_eros-sed=    129.1 km2	vol.sediment=    228.5 km2
+  erosion_max.   =   1201.2 m  	@x=  50.0 km
+  sediment.max.  =   1080.6 m  	@x= -50.0 km
+  max.altit.sed. =    949.3 m  	@x= 120.0 km
+T= 13.5000 Myregion = -250.00/250.00/-6000.00/2000.00
+
+  topogr.:	max= 2508.1 m @x= 60.0 km	min= -579.6 m @x= 0.0 km	integr= 9.34e+07 m2 e
+  moment_max.    =  4.318e+14 N  	@x= 150.0 km
+  moment_min.    = -1.047e+15 N  	@x=  55.0 km
+  shear_max.     =  1.231e+12 N/m	@x=  17.5 km
+  shear_min.     = -1.112e+12 N/m	@x=  87.5 km
+  deflection_max.=   2604.7 m   	@x=  55.0 km
+  deflection_min.=    -28.5 m   	@x= -180.0 km
+  defl.vel.max.  =      6.6 m/My	@x= -95.0 km
+  defl.vel.min.  =    -44.9 m/My	@x=  55.0 km
+  first zero @x=   -245.0 km 
+  deflectn.area  =    446.9 km2 	mean_rigid.= 9.72e+22 N m/m
+  load_incrm:	max= 560.3 kN/m2 @x= 155.0 km	min= -2447.0 kN/m2 @x= 60.0 km	integr= -6.16e+10 N/m d
+  water:	max= 518.5 m @x= 0.0 km	min= 0.0 m @x= -250.0 km	integr= 1.72e+07 m2
+  erosion.nosd   =  +9.75e+10 N/m  sedim.inc=  +6.26e+10 N/m  outp.seds=  +0.00e+00 N/m  
+  total_cumul_eros-sed=    127.3 km2	vol.sediment=    231.8 km2
+  erosion_max.   =   1326.6 m  	@x=  50.0 km
+  sediment.max.  =   1096.3 m  	@x= 130.0 km
+  max.altit.sed. =    907.0 m  	@x= 120.0 km
+T= 14.0000 Myregion = -250.00/250.00/-6000.00/2000.00
+
+  topogr.:	max= 2445.2 m @x= 60.0 km	min= -518.5 m @x= 0.0 km	integr= 9.55e+07 m2 e
+  moment_max.    =  4.057e+14 N  	@x= 150.0 km
+  moment_min.    = -1.011e+15 N  	@x=  55.0 km
+  shear_max.     =  1.202e+12 N/m	@x=  17.5 km
+  shear_min.     = -1.088e+12 N/m	@x=  87.5 km
+  deflection_max.=   2582.1 m   	@x=  55.0 km
+  deflection_min.=    -27.6 m   	@x= -180.0 km
+  defl.vel.max.  =      5.8 m/My	@x= -100.0 km
+  defl.vel.min.  =    -45.2 m/My	@x=  55.0 km
+  first zero @x=   -245.0 km 
+  deflectn.area  =    444.6 km2 	mean_rigid.= 9.72e+22 N m/m
+  load_incrm:	max= 549.6 kN/m2 @x= 130.0 km	min= -2385.2 kN/m2 @x= 60.0 km	integr= -6.72e+10 N/m d
+  water:	max= 457.0 m @x= 0.0 km	min= 0.0 m @x= -250.0 km	integr= 1.33e+07 m2
+  erosion.nosd   =  +9.55e+10 N/m  sedim.inc=  +5.61e+10 N/m  outp.seds=  +0.00e+00 N/m  
+  total_cumul_eros-sed=    125.1 km2	vol.sediment=    234.8 km2
+  erosion_max.   =   1448.9 m  	@x=  50.0 km
+  sediment.max.  =   1149.5 m  	@x= 130.0 km
+  max.altit.sed. =    867.7 m  	@x= 120.0 km
+T= 14.5000 Myregion = -250.00/250.00/-6000.00/2000.00
+
+  topogr.:	max= 2384.6 m @x= 60.0 km	min= -457.0 m @x= 0.0 km	integr= 9.74e+07 m2 e
+  moment_max.    =  3.793e+14 N  	@x= -20.0 km
+  moment_min.    = -9.811e+14 N  	@x=  55.0 km
+  shear_max.     =  1.173e+12 N/m	@x=  17.5 km
+  shear_min.     = -1.066e+12 N/m	@x=  87.5 km
+  deflection_max.=   2559.8 m   	@x=  55.0 km
+  deflection_min.=    -26.9 m   	@x= -180.0 km
+  defl.vel.max.  =      5.2 m/My	@x= -105.0 km
+  defl.vel.min.  =    -44.7 m/My	@x=  55.0 km
+  first zero @x=   -245.0 km 
+  deflectn.area  =    442.2 km2 	mean_rigid.= 9.72e+22 N m/m
+  load_incrm:	max= 541.2 kN/m2 @x= 150.0 km	min= -2325.6 kN/m2 @x= 60.0 km	integr= -6.98e+10 N/m d
+  water:	max= 395.4 m @x= 0.0 km	min= 0.0 m @x= -250.0 km	integr= 1.00e+07 m2
+  erosion.nosd   =  +9.35e+10 N/m  sedim.inc=  +4.38e+10 N/m  outp.seds=  +0.00e+00 N/m  
+  total_cumul_eros-sed=    122.5 km2	vol.sediment=    237.2 km2
+  erosion_max.   =   1568.2 m  	@x=  50.0 km
+  sediment.max.  =   1202.4 m  	@x= 130.0 km
+  max.altit.sed. =    830.7 m  	@x= 120.0 km
+T= 15.0000 Myregion = -250.00/250.00/-6000.00/2000.00
+
+
+Final statistics:
+	Total_load_weight =  1.365e+13 N/m
+	Total_rest._force =  1.375e+13 N/m
+	Total_units_mass  =  4.620e+12 kg/m
+	Total_sedim_mass  =  5.167e+11 kg/m (4.45e+11 kg/m of grain)
+
+17 units:
+No.	Density	Age 	Volume 	Vel   	Shift 	From x	To x 	Stop	type	Erodabil.
+   	(kg/m3)	(My)	(km2) 	(km/My)	(km)  	(km)  	(km) 	 (My)	(-)	         
+16:	2200 	14.5	3.0	0.0	0.0	-155.0	150.0	9999.0	S 	0.00e+00
+15:	2200 	13.5	7.6	0.0	0.0	-150.0	160.0	9999.0	S 	0.00e+00
+14:	2200 	12.5	9.5	0.0	0.0	-150.0	220.0	9999.0	S 	0.00e+00
+13:	2200 	11.5	11.9	0.0	0.0	-145.0	230.0	9999.0	S 	0.00e+00
+12:	2200 	10.5	15.6	0.0	0.0	-135.0	235.0	9999.0	S 	0.00e+00
+11:	2200 	9.5	21.0	0.0	0.0	-125.0	240.0	9999.0	S 	0.00e+00
+10:	2200 	8.5	19.0	0.0	0.0	-115.0	240.0	9999.0	S 	0.00e+00
+ 9:	2200 	7.5	19.2	0.0	0.0	-110.0	240.0	9999.0	S 	0.00e+00
+ 8:	2200 	6.5	17.4	0.0	0.0	-105.0	240.0	9999.0	S 	0.00e+00
+ 7:	2200 	5.5	15.4	0.0	0.0	-125.0	230.0	9999.0	S 	0.00e+00
+ 6:	2200 	4.5	19.2	10.0	0.0	-150.0	215.0	10.0	S 	0.00e+00
+ 5:	2200 	3.5	20.7	10.0	0.0	-155.0	195.0	10.0	S 	0.00e+00
+ 4:	2200 	2.5	20.9	10.0	0.0	-145.0	175.0	10.0	S 	0.00e+00
+ 3:	2200 	1.5	18.8	10.0	0.0	-135.0	160.0	10.0	S 	0.00e+00
+ 2:	2200 	0.5	15.8	10.0	0.0	-105.0	135.0	10.0	S 	0.00e+00
+ 1:	2850 	0.0	1199.7	10.0	95.0	-250.0	95.0	10.0	- 	0.00e+00
+ 0:	2850 	5.0	239.9	10.0	50.0	0.0	110.0	10.0	- 	0.00e+00
+ -:	2850	0.0	-	0	-	-	-	-		basement
+
+

@@ -1,0 +1,64 @@
+#For planform view use the options:
+#tisc Ebro_evol -Pc"-crop 0x0 -density 180 -crop 801x428+0+54" > Ebro_evol.screen &
+#For 3D graphic output:
+#tisc Ebro_evol -Pc"-density 180 -crop 1075x650+178+780" 
+tisc Ebro_evol -Pc"-page 1100x700-210-380 -density 180 -crop 1100x700+0+0"
+
+#Criteria to fit (sorted by importance):
+#-fixed parameters from present.
+#-opening between 12.5 Ma and 8.5 Ma
+#-volumes of sediments in EB and VT
+#-closure at 35 Ma, disconection from Athlantic.
+
+
+version		tisc v4.2
+
+Nx		 104 207 310 207 104	E-W direction grid points
+Ny		 55 109 163 109 55 	N-S direction grid points
+
+xmin		-48160	Western model limit coordinate
+xmax		660573	Eastern model limit coordinate
+ymin		0	Southern model limit coordinate
+ymax		500000	Northern model limit coordinate
+
+Timeini		-60	Initial time
+Timefinal	-0	Final time
+dt 		.5	Time interval
+dt_record	0	Time between horizon record
+dt_eros		.025	Approximate dt for surface processes.
+
+random_topo	5 #0
+
+isost_model	1
+
+boundary_conds	5555	B. C. :
+
+mode_interp	4	Interpolation mode for input files
+
+densmantle	3250	Density of the fluid material beneath the plate (at the compensation level: either mantle or asthenosphere). Also used for gravity calculations as mantle density.
+denscrust	2800	
+densenv		0	Enviromental material density
+denssedim	2150	Sediment density
+
+hydro_model	3	To switch erosion/sedimentation processes.
+rain 		40	Background rain [l/m2/a]. Actually this corresponds to the water that goes to the drainage system
+Krain		1.1	Proportionality of rain with altitude [l/m2/a/km]
+CXrain		10e3	Proportionality of runoff with y [m]
+evaporation	2300
+lost_rate	0 #.1	Surface water lost per unit length [%/km]
+windazimut	160
+relhumid	.8
+
+erosed_model	2	To switch erosion/sedimentation processes.
+Kerosdif   	.05	Diffusive transport erosion coefficient [m2/a]
+K_river_cap	60	Constant of river transport capacity [kg/m3]
+erodability	140e3	Default length scale of fluvial erosion	[m]
+erodability_sed	60e3	Default length scale of fluvial erosion	[m]
+l_fluv_sedim	30e3	Length scale of fluvial sedimentation [m]
+eros_bound_cond	2222	Boundary Conditions for surface processes at N, S, E, W (4 characters):
+
+
+switch_sea	1	To take into account sea load
+switch_files	1	For extra file output.
+switch_ps	1	For postscript output.
+switch_verbose	1	For more runtime information.

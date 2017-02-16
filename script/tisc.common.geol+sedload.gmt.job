@@ -1,0 +1,16 @@
+grdclip $tmp.geol.grd.tmp -G$tmp.geol.grd.tmp -Sb1200/NaN
+grdimage $tmp.geol.grd.tmp -C$tmp.geol_palet.tmp -Q -JX -R \
+	-I$tmp.intensity.top.grd.tmp \
+	-K -O >> $ps
+grdcontour $tmp.top.grd.tmp -JX -R -C10000 -W2/0 -O -K >> $ps
+
+#grdcontour $tmp.lakes.grd.tmp -JX -R -C$tmp.lakes_cpt.tmp -W3/$col_river -O -K >> $ps
+#grdclip $tmp.lakes.grd.tmp -G$tmp.lakes.grd.tmp -Sb0.5/NaN
+#grdimage $tmp.lakes.grd.tmp -JX -R -C$tmp.lakes_cpt.tmp -Q -O -K >> $ps
+endif
+pstext	-JX -R$Region -O -G0 -K <<END >> $ps 
+#	$xtitle	$ytitle	14 0 1 3	surface lithology
+END
+if (-r $prj.pfl) psxy $prj.pfl -JX -R -M -W$col_lin -H2 -O -K >> $ps 
+if (-r $prj.CMP) psxy $prj.CMP -JX -R -M -L -W4/0/0/0 -O -K >> $ps 
+

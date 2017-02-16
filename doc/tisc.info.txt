@@ -1,0 +1,861 @@
+********************************************************************************
+*************   DOCUMENTATION OF  TISC  (file tisc.info.txt)   *****************
+********************************************************************************
+
+	INDEX
+1.- Syntax and use of TISC
+2.- Introduction
+3.- Program structure and compilation
+4.- User Guide - How to setup your own project
+5.- Inputs
+6.- Outputs
+7.- Graphic output
+8.- The conceptual model
+9.- The algorithms and numerical methods
+10.- Improvements in successive versions
+11.- Model limitations
+12.- FAQ - Frequently Asked Questions
+13.- Glossary
+14.- Credits
+15.- Acknowledgements
+16.- References
+
+
+1.- SYNTAX AND USE OF TISC
+  tisc  project  -B<bound_type> -D[xmin/xmax/ymin/ymax] -d<dx>[/<dy>]
+	-e<Kriv>[/<Kdif>] -F[<file>] -h[i|u|p|c] -l -M<lith_type>
+	-N<Nx>[/<Ny>] -o -P[c[geom]] -p<rain>[/<Krain>] -Q<file>
+	-q<param>=<value> -R<random_topo>[/<seed>] -r<e|c|i|m|a><dens>
+	-s<solver> -T<eet> -t<i|f|d|e|v|r><time> -V[<level>]
+
+  Options:
+	'project' is the root name of model files (i.e., if modelname='test'
+		then the parameters file will be 'test.PRM' and the first
+		load/fault 'test1.UNIT'. 
+	'-B' Sets boundary conditions (see doc/template.PRM file).
+	'-D' Set the model region (domain) [m].
+	'-d' To set dx and dy grid cell dimensions.
+	'-e' To set the constants of fluvial transport capacity [kg/m3] and
+		diffusive transport [m2/a]. -e0 suppresses surface transport
+		calculations.
+	'-F' To continue (resume) a previous run by reading <file>. Default
+		file_name is 'project.all'. If specified, <file> must be a
+		binary file originally written by TISC in 'project.all' after
+		completing a run. Put this option always *after* the project
+		name in the command.
+	'-f' Reformats the parameters file 'project.PRM' according to the
+		present version (based on 'template.PRM').
+	'-h' To show this information file. Append 'p' to print the default
+		parameters file in stdout; 'c' to print a clean version of it.
+		'u' to print an example of load file; 'i' (default) to print
+		this help file.
+	'-l' To artificially fill with sediment all lakes except sea.
+	'-M' Sets the plate model: 0 means no isostasy; 1 elastic plate (with
+		-T0 produces local isostasy); 2 for viscoelastic plate.
+	'-N' To set Nx and Ny of gridding. Ny<Nx optimises computation time.
+	'-o' Redirects standard output to file projectname.out.
+	'-P' To produce a postscript graphic display using GMT. Append c to
+		make it every time step and convert the PS files into GIF (uses
+		the ImageMagick 'convert utility'). Append PS geometry (default
+		is: -Pc"-trim -density 120", which crops the rectangle used and
+		then saves it into GIF format with 120dpi.
+	'-p' Sets the amount of runoff [l/m2/a]=[mm/a] and its pro-
+		portionality with height [mm/a/km]. -p0 suppresses the
+		hydrological calculations.
+	'-Q' With this option TISC will just calculate the elastic deflection
+		of <file> (3 columns: x[m],y[m],pressure[Pa]). Will write
+		deflection to the standard output and exit the program.
+	'-q' Sets any othe parameters value listed in ./tisc/doc/template.PRM
+		file. <value> must be given in internal program units (usually
+		IS).
+	'-R' Add random noise to the initial topography between -random_topo/2
+		and +random_topo/2. seed is an integer.
+	'-r' Sets density of environment (e), crust (c), infill (i), mantle (m)
+		or asthenosphere (a).
+	'-s' Add 'm' to use 'mathlib' to solve the flexural equations.
+	'-T' Sets elastic thickness to <eet_value>. 0 means local isostasy
+		(faster calculation).
+	'-t' Sets initial (i), final (f), increment (d), surface 	
+		processes (e), viscous relaxation (v) or sediment-unit-record
+		(r) times.
+	'-V' Means verbose mode with additional run-time prints. Add '<level>'
+		for additional i/o information. See doc/template.PRM file for
+		level specification.
+
+	See also the default parameter file: tisc/doc/template.PRM
+
+	Examples:
+		See examples in tisc/demo/README file and subdirectories 
+		therein.
+	
+
+2.- INTRODUCTION
+  Visit also the website https://sites.google.com/site/daniggcc/software/tisc/
+  TISC is a program simulating 4 processes related to orogenesis and
+  sedimentary basin formation: 
+  1) crustal tectonic fault deformation (approached by vertical shear, i.e.,
+  preserving the vertical thickness of moving tectonic bodies),
+  2) lithospheric vertical movements (assuming the lithosphere behaves as an
+  elastic or viscoelastic  flexural plate), 
+  3) climate (assuming a certain set of climatic parameters such as
+  precipitation, evaporation or humidity), and 
+  4) erosion/sediment transport carried out by surface processes including the
+  river network (transport  capacity proportional to water discharge and
+  slope). 
+  The most complex among these is the surface transport, which incorporates the
+  calculation of the  river network, a steady-flow hydrological balance, and the
+  formation of lakes in topographic minima. TISC is a pseudo-3D (planform) 
+  version of the code tAo, which works in cross-section.
+  Look at the bibliography (in particular the papers by Garcia-Castellanos & 
+  Jimenez-Munt [PLOSONE, 2015]) referred in the documentation attached to learn 
+  more about the fundamentals and formulation of the calculations.
+
+  THIS PROGRAM IS PARTICULARLY DESIGNED TO:
+  .To calculate lithospheric flexural isostasy. It can be used externally
+  (from a unix script) as a flexure  calculator, as part of a shell
+  script (see option -Q).
+  .To calculate erosion, fluvial transport, and sedimentation.
+  .To parameterise drainage changes.
+  .To model foreland basin formation and large-scale sedimentary
+  infill geometries.
+  See more details in section 'CONCEPTUAL MODEL'.
+
+
+3.- PROGRAM STRUCTURE AND COMPILATION
+  TISC is written in C under Linux.
+  Check the file ./tisc/README for details on compilation.
+  Check the FAQ section below in this document.
+  TISC requires GMT4 to generate graphic output. Also install either
+  graphicsmagick or imagemagick for -Pc option. Other recommended
+  software is: bc, xv (xview), gv (ghostview).
+
+
+4.- USER GUIDE - HOW TO SETUP YOUR OWN PROJECT
+  See the examples in tisc/demo!
+  Experiment with the shell scripts in tisc/scripts to see what plots can
+  be made from the output files.
+  tisc can be used as a quick flexural calculator using option -Q.
+  Otherwise, TISC normally reads a set of input files that form a
+  'project'. Input files start with a common project name and have an
+  uppercase extension and are explained below, in section 'INPUTS'.  The
+  main input file is the *.PRM file, which contains the main parameters
+  of the project.  
+  The program then enters a time loop. At each time step the tectonic motion,
+  hydrology, erosion, and isostasy, are calculated. 
+  Signal meaning during execution:
+	l    calculating new load.
+	u    defining new unit.
+	e/s  calculating erosion/sedimentation.
+	ft   calculating fluvial transport.
+	e    calculating elastic deflection.
+	v    calculating viscoelastic deflection.
+  By the end of the run TISC invoques a shell script to produce the 
+  postscript image of the results, using the system call
+  'tisc.gmt.job projectname'.
+  This script tisc.gmt.job is searched in your path, so if you prefer any
+  other of the figure scripts available in tisc/script,  just link it or
+  copy it to your project directory as 'tisc.gmt.job'.
+
+
+5.- INPUTS
+    Input parameter values are taken from: (a) parameters file 'project.PRM',
+  (b) command line  options, (c) other input files named 'project.*' (with an
+  uppercase  extension), and (d) from the 'project.all' file if -F option is
+  used.  (b) values override (a); (c) overrides (a) and (b); (d) overrides (a)
+  and (c). Default units are I.S. 
+    All the following input files accept comment lines to be inserted
+  everywhere. These lines  will simply be ignored if a parameter name and a 
+  numerical value cannot be read at the  beginning.
+    All input files are read in the begining of the execution, at the initial 
+  time, except for *.UNIT (which are read at their respective specified times)
+  and for *.NDEF (read at every time step dt_eros). 
+
+  'project.PRM' 
+	Parameters file:
+	This file is compulsory unless using the -Q option. The parameter values
+	defined  in it can be also changed with the command line options listed
+	above. 'tisc/doc/template.PRM' file is an explained example containing
+	the default parameter values. The internal use of each parameter is
+	also somewhat explained in the incude file 'tisc.h'.
+	--xmin, xmax, ymin, ymax give the coordinates of the center of the 
+	boundary cells or pixels (i.e., the location of their associated nodes).
+	The conceptual limit of the model is at xmin-dx/2, ymax+dx/2, ... 
+	For example, if the resolution of a model is needed to be reduced to 
+	dx/2,dy/2 keeping the same domain parameters, then the new Nx,Ny should 
+	not be Nx*2,Ny*2, but (Nx-1)*2+1,(Ny-1)*2+1.
+	--If  (switch_topoest != 0) then the load will rest at zero level 
+	and plate subsidence will be filled with 'densinfill' material. Do 
+	not use it with erosion model.
+
+  'projectN.UNIT' 
+	File modifying the geometry/architecture of the model (i.e, introducing
+	new bodies, moving blocks, or faults). 
+	'N' is the number of this load;	first load file should be: 
+	'project1.UNIT'; 'doc/template.UNIT' file is an explained example. 
+	Or type 'tisc -hu' to get that file in the screen.
+	TISC deformation consists of moving predefined blocks of prescribed 
+	velocity and geometry by an entire number of cells at each time step. 
+	The minimum shift is either 0 or 1 cells. If your time step dt is 0.5 
+	Myr, velocity is 5 km/Myr and cell size is 10 km, the block will move 
+	only once every 4 time steps. So, depending on the grid cell size, the 
+	motion will become more or less abrupt. 
+	See about 'Interpolation' at the end of this section.
+
+  'project.EET'
+	Equivalent Elastic Thickness file (optional, if not present EET will 
+	be taken from the *.PRM file). Note that abrupt EET lateral changes can
+	lead to instabilities in the calculation of flexural deflection.
+	The file format is:
+	[z_default --]		#Default value of the elastic thickness.
+	[mode_interp  -]	#See explanation in doc/template.UNIT.
+	x1  y1	thickness1
+	x2  y2	thickness2
+	x3  y3	thickness3
+	...
+	Or:
+	[mode_interp  4]
+	thickness1
+	x1  y1
+	x2  y2
+	x3  y3
+	thickness2
+	x2  y2
+	x1  y1
+	...
+
+  'project.PRFL' 
+	This file (optional) defines a x-y polygon corresponding to the cross 
+	section that will be written in a '*.pfl' file. Default is no cross
+	section.
+ 	The file format is: 
+ 	
+	x1  y1
+	x2  y2
+	x3  y3
+	...
+
+  'project.ZINI'
+	Initial topography (optional). Similar format to 'project.EET'.
+
+  'project.WINI'
+	Initial deflection file (optional):	
+	Similar format to 'project.EET'. Positive deflection downwards.
+
+  'project.RAIN'
+	Runoff distribution (optional):
+	Similar format to 'project.EET'. Units: mm/a. Negative values and
+	undefined cells are interpreted as no-data and substituted by the
+	automatic calculation from the parameters in *.PRM. The values in
+	*.RAIN are kept constant through the entire model evolution. 
+	
+  'project.NDEF'
+	Allows to change properties of specific nodes:
+	Format:
+
+	x	y	param 	value
+	...	...     ...	...
+	
+	the closest node to x,y will be changed: 'param' determines what
+	parameter is changed at that node:   1: to add water discharge at x,y
+	(m3/s, max. is Amazon at 120e3).  2: to add sediment discharge (kg/s,
+	max. is Ganges at 52e3). This file, in contrast  to all others, is read
+	not once at startup but once for every surface  process iteration.
+
+  'project.SLV'
+	Evolution of the sea level and the level separating erosion and 
+	sedimentation levels (optional):
+	Format:
+
+	time1	s_level1	[eroslevel1]
+	time2	s_level2
+	time3	s_level3	[eroslevel2]
+	...	...     	[...]
+
+  'project.REC'
+	Horizon recording times file (optional, defaults to dt_record 
+	parameter, see *.PRM file):
+	Format:
+
+	time1
+	time2
+	time3
+	...
+
+  'project.RIV'
+	Initial river paths that must be respected by the initial topography.
+	When introducing a Digital Elevation Model through the *.ZINI file, the
+	grid may not respect the path of the rivers because of its limited
+	resolution, which generates unrealistic barriers. This file must be 
+	introduced in order to allow the program to modify the topographic grid
+	and fit it to the drainage network. Introduce river in x-y format
+	starting from the highest point.  Different segments can be separated
+	by lines starting with '>'. 
+
+  'projectN.VISC'
+	Only required if a thin sheet unit has been defined. Contains the
+	viscosity x,y distribution for unit 'N', but only its thermal component
+	(~ .1e7). The total viscosity will be calculated as 
+	viscosity[Pa*s] = viscTer/str.rate.
+	Format is equivalent to file 'project.EET'. 
+
+  'project.TSBC' 
+	Only required if defining a thin_sheet unit. Boundary conditions of
+	the thin sheet velocity or stress field for the units is defined to
+	undergo a  thin-sheet-like deformation. Format is:
+	N'type'
+	x1	vx1	vy1
+	x2	vx2	vy2
+	x3	vx3	vy3
+	S'type'
+	...
+	E'type'
+	y1	vx1	vy1
+	y2	vx2	vy2
+	y3	vx3	vy3
+	W'type'
+	...
+	N, S, E, and W indicate the boundary.  vx,vy depend on 'type': type=1
+	means vx,vy are the components of  the velocity [km/My] at the
+	boundary; type=12 fixes stress TAUxx and  TAUxy; type=13  fixes
+	TAUxx,TAUyy; type=23 fixes TAUxy,TAUyy; type=4 means free slip
+	(nomal_vel=0 and TAUxy=0).
+
+  'project.CMP' 
+  	This file defines x-y polygons (in km) separated with a '>', used 
+	only to be plotted in the postscript image, called from graphic script
+	like script/tao.gmt.job, just for comparison with model results.
+
+  'project.INT' 
+	This file defines a x-y polygon (in km) of interest where certain 
+	statistics should be performed during the execution of graphic scripts. 
+	Used only to be plotted in the postscript image, called from graphic
+	script like script/tao.gmt.job, just for comparison with model
+	results.No effect on model results. 
+
+
+  Interpolation:
+  Most TISC input files define 3D surfaces or 2D planform distributions of a 
+  variable. To facilitate this, TISC accepts different ways of interpolation 
+  between given points. For example, interpolation mode 0 indicates that Nx*Ny
+  values of <x,y,variable> will be read from the file (useful to pass a surface
+  generated externally with SURFER, for example).  Read the specifications for
+  each mode in tisc/doc/template.UNIT. 
+  If the mode_interp is set to 4 or 7 then x-y polygons are read with  an
+  associated z-value. In this case the format is:
+
+	mode_interp  4
+	z_value_pol_1	[n|c]
+	x_pol1_1      y_pol1_1
+	x_pol1_2      y_pol1_2
+	x_pol1_3      y_pol1_3
+	...
+	z_value_pol_2	[n|c]
+	x_pol2_1      y_pol2_1
+	x_pol2_2      y_pol2_2
+	x_pol2_3      y_pol2_3
+	...
+
+  For mode_interp=4 or 7, if 'c' is specified for a polygon, the z value inside
+  that polygon will be constant. If 'n' is specified (default), the z value
+  interpolated for all nodes falling inside that polygon but outside the next
+  polygon will vary linearly with the distance to both polygons. So, tricky as 
+  it seems, the order of the polygons matters!
+
+
+
+6.- OUTPUTS
+  The screen output while TISC runs shows a number of statistics
+  including the balance  of water, sediment and vertical force over the entire
+  model domain. Total rain in the  model must equal total evaporation plus water
+  exiting the model through the boundaries. Except for the effect of the
+  boundary condiditions, the flexural restitutive force must equal the total
+  load. This can be checked in the screen output at each time step, for example:
+<<--
+T= 9.5000 My
+  2D prof. :  max =     799.8 m     min =    -531.8 m
+  topogr.  :  max= 2179.1 m	min= 0.0 m	vol=1.18e+12 m3
+  load: -2.28e+17 N   restit_force: -9.68e+15 N
+  deflect. :  max= 114.8 m	min= -18800.3 m	vol=-7.25e+12 m3
+  precipit :  max= 0.3 m/yr	min= 0.1 m/yr	integr=5.40e+10 m/yr*m2
+  evaporat.:  max= 0.0 m/yr	min= 0.0 m/yr	integr=0.00e+00 m/yr*m2
+  rain_now : +2.75e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +2.75e+02 m3/s
+  lake 1/3 : 1.68e-04 km3 3.24e+00 km2   10 m  -22,20  1 out @ -23,20 40.5 m3/s
+  river max:    54.72 m3/s     9.46 kg/s @  -26.0,-20.8 km, 0.1 m
+  topo_diff_eros_max=    -1.10 mm/yr    sedim_max:     0.53 mm/yr
+  eros_nosd: +9.44e+15 N     sedim_inc: -2.91e+13 N   outp_seds:   +9.47e+15 N  
+  eros-sed.:  max= 1.62 mm/yr	min= -0.53 mm/yr	difference=1.67e+06 m3/yr
+  sediment vol: 4.09e+03 km3
+-->>
+
+  At the final time step, a list of the generated units is shown including 
+  their properties:  
+<<--
+2 units:
+No. Density Age Volume Surf.  Vel_x Vel_y Shft_x Shft_y erosL
+     kg/m3  My  1e3km3 1e3km2 km/My km/My   km     km    [m] 
+ 1:  2200   5.0    0.0   0.6   0.0   0.0    0.0    0.0 6.0e+04  S
+ 0:  2200   0.0    0.0   0.8   0.0   0.0    0.0    0.0 6.0e+04  S  1st unit
+ -:  2850   0.0    -     -     0     0      0      0   1.2e+05  -  basement
+-->>
+
+  Output files contain the information required for graphic output, and have a
+  lowercase extension:
+  'project.hrz'	Final geometry of all units (elevat./depth of all the horizons).
+  'project.xyzt' Isostatic (flexural) subsidence (deflection w) along  time.
+  'project.all'	Binary file with all the information to resume the model (see
+		  -F option). Valid for checkpointing purposes.
+  'project.xyw'	Drainage network. Mass transport rate. Type of node ('R'=river;
+		  'L' for lake; 'E' for lake outlet; 'S'
+		  for sea).
+		Column #1 x(km) 
+		Column #2 y(km) 
+		Column #3 water(m3/s) 
+		Column #4 sed[kg/s] 
+		Column #5 type 
+		Column #6 topo[m] 
+		Column #7 x-to 
+		Column #8 y-to 
+		Column #9 topo-to 
+		Column #10 preciptation (runooff) [mm/y] 
+		Column #11 lake/sea evaporation[mm/y] 
+		Column #12 ice thickness[m] 
+		Column #13 ice sediment load[m]
+		Column #14 maximum swimming distance between neigbor cells [km]
+  'project.bas'	Similar to the previous, but sorting the nodes hierarchically 
+		  according to hydrographic (sub)basins. Within each basin,
+		  nodes are sorted downstream (every entry drains to another
+		  entry listed later in the file. 
+		Column #1 x[km] 
+		Column #2 y[km]
+		Column #3 dischg[m3/s]
+		Column #4 masstr[kg/s] 
+		Column #5 type
+		Column #6 topo[m]
+		Column #7 length[km] Length along channel from river mouth.
+		Column #8 x-to
+		Column #9 y-to
+		Column #10 topo-to[m]
+		Column #11 length-to[km]
+		Column #12 eros[m/My]
+		Column #13 level
+		Column #14 nodes_above
+  'project.lak'	Lake information.
+  'project.st'	Total erosion/sedimentation and present rate (in equivalent
+		  meters of denscrust).
+  'project.eeth' interpolated values for elastic thickness entered via '*.EET'
+  'project.vel' Velocity and viscosity distribution from the thin-sheet unit.
+  'project.pfl'	Cross section along path defined in *.PRFL
+  'project.ps'	Postscript file produced using GMT software. TISC runs the
+		  shell  script tisc.gmt.job at the end of the run in order to
+		  produce  this postscript. See next section in this document.
+  
+
+7.- GRAPHIC OUTPUT
+  'project.ps' 
+  A postscript produced with GMT 4.0 software (Wessel & Smith, 1995,
+  http://www.soest.hawaii.edu/soest/gmt.html) (using unix scripts:
+  './tisc/script/tisc.*.gmt.job'), with graphics of results of TISC:
+  	  .Topography
+  	  .Lithospheric deflection
+  	  .River drainage network
+  	  .Sediment thickness
+  	  .Uplift rate
+  	  .Cross section
+  The GMT and shell commands generating this image are always searched by TISC
+  in a file named tisc.gmt.job in the user's path. The original is located at
+  tisc/script, so put that directory in your path. If you want to change the
+  graphic output then make a copy of it in your current project directory and
+  TISC will find it first there (if '.' is placed before tisc/script in your
+  path. You can also use a symbolic link to any of the other scripts in the
+  tisc/script directory. Experiment.
+
+
+8.- THE CONCEPTUAL MODEL
+  The conceptual model implicit in TISC assumes that a thin, flat lithospheric
+  plate floating on the asthenosphere supports isostatically the mass movements
+  at the surface. These are related to erosion/deposition and tectonic
+  movements. Erosion/deposition can be calculated as related to diffusion
+  (hill-slope), river transport and landsliding. Tectonic deformation is
+  calculated by defining faults and shortening/thinning velocities and assuming
+  a vertical shear model.
+
+  *Tectonics:
+  Vertical shear approach for the deformation of user-defined moving blocks 
+  (see *.UNIT input files). Sediment is automatically deformed in the same way, 
+  assuming the sediment layer deforms at the same speed as the closer lower 
+  user-defined body and propagating the deformation forward with an angle of 
+  30 degrees. 
+
+  *Isostasy:
+  The flexural deflection of the lithosphere allows for lateral variations of
+  elastic thickness using the input file '*.EET' and accounts for a horizontal 
+  force P (defined in the '*.PRM' file. To rotate the force tensor P an angle 
+  beta to obtain P':
+    Px' = Px*c2 + Py*s2 + Pxy * 2*sc;
+    Py' = Px*s2 + Py*c2 - Pxy * 2*sc;
+    Pxy'= (Py-Px)*sc + Pxy*(c2-s2);
+  Where c2 = cos(beta)*cos(beta);  s2 = sin(beta)*sin(beta);  sc = sin(beta)*cos(beta);
+  Use this command #nawk 'BEGIN{beta=-22.5/180*3.1415927; Px=0;Py=25e12;Pxy=0; c2 = cos(beta)*cos(beta);  s2 = sin(beta)*sin(beta);  sc = sin(beta)*cos(beta); print "Px= " Px*c2 + Py*s2 + Pxy * 2*sc, "Py= " Px*s2 + Py*c2 - Pxy * 2*sc, "Pxy= " (Py-Px)*sc + Pxy*(c2-s2);}'
+
+  *Surface processes:
+  See different available models in the template.PRM file. 
+  Main surface processes modify the topography in this model:
+  1.- Diffusive (flux proportional to slope) for short range scale.
+  2.- Fluvial (sediment carrying capacity proportional to slope and water
+  discharge) for large scale erosion in channels. Sea&lake sedimentation
+  are included.
+  3.- Landsliding: imposing a maximum slope to the topography.
+  Fluvial transport can be calcualted following a number of authors.   
+  Use this command to convert from shear stress erodability (model 6) to K 
+  in model 3
+  awk 'BEGIN{print 1.3e-4*exp(1.5*log(10*1000))*exp(3*1.5/5*log(.05/1.1))}'
+
+  *Climate:
+  Climate can be treated via preimposed rates of precipitation/evaporation 
+  (dependent on elevation, latitude, longitude) or via an orographic 
+  precipitation model (check the 'hydro_model' parameter in template.PRM).
+
+9.- THE ALGORITHMS AND NUMERICAL METHODS
+    Finite differences are used to solve the spatial partial differential
+  equations as well as the time-dependent processes. The grid is fixed and
+  rectangular.
+    LES matrices arising from the flexural diferential equations are solved
+  using a classical band solver (matrix triangularisation).
+    Memory use: The largest array uses this ammount of memory =
+    Nx*Ny*(4*Ny+1)*8 [bits].
+
+  Orientative execution time of a one-step elastic flexure:
+
+  PURCHASE      OS PLATFORM     [GRID-RUNTIME] PRICE  ADDRESS CLOCKSPEED
+  -----------------------------------------------------------------
+  1995		PC pentium III + Linux 		nikolai.ija
+  				81x81 ->  23s
+  				141x141-> 270s
+  1996		RISC6000 			africa.ija
+  				21x21 ->   3s
+				41x41 ->  30s
+				81x81 -> 375s
+  1996		RISC6000 optimised compilation
+				121x61 ->  40s	1996
+  1996		              "         " and genspd
+				121x61 ->   4s
+  1997		SUN OS	SUN Ultra 5		drift.geo.vu
+				141x141-> 300s
+  1997		SUN OS	SUN Ultra 10		coral.geo.vu
+				141x141-> 120s
+  1999		SUN OS	SUN Ultra2SparcCreator 	magma.ija
+				81x81 ->  32s       
+				141x141-> 252s
+  2002-02	SUN OS	SUN Sparc3	26.4kEur erebus.geo.vu	750 MHz
+				141x141->  60s
+  2003-09	Linux 			1.5kEur	cuba.ija	
+				 81x81 ->    2s
+			        141x141->   23s
+				301x301->  440s
+  2007-06	Linux	Dell Precision	3.5kEur	cuba.ija	3.2 GHz
+				141x141 ->   4s
+				301x301 -> 116s
+				401x401 -> 585s
+  2009-03	Linux	Dell Precision	6.3kEur	ausangate.ictja	2.6 GHz	
+				141x141 ->   4s
+				301x301 ->  72s
+				401x401 -> 481s
+  2012-10	OSX10	MacBook Core i7	3kEur			2.5 GHz	
+				141x141 -> 2.8s
+				301x301 -> 60s
+				401x401 -> 209s
+				751x501 -> 11m
+
+    The CPU consumed for surface processes increases also with N^3, but when
+  random_topo is added or lakes become endorheic the computing time is much 
+  larger (N^4?).
+    
+
+10.- IMPROVEMENTS IN SUCCESSIVE VERSIONS
+  v1.0 (1994) Proto-model or numerical algorithm to calculate thin plate
+    elastic and viscoelastic flexure in 3D.
+  v2.0 (1995) Moving tectonic loads implemented.
+  v3.0 (1995) Thrust loading, surface processes and sediment deformation
+    implemented.
+  v3.1 (1996,97) Improvement on surface transport accounting for lakes and
+    river power law. Arbitrary cross sections of model are now possible.
+    Comments allowed in  files interpolated with modes other than 4.
+  v3.2 (Sept.1999) Completely trustful river transport including lake
+    deposition. '*.RIV' input file is now read to  determine the rivers that
+    are required to exit at initial time  (initial topo is changed to fit to
+    this rivers). Change in param. file keeping compatibility with 3.1.
+    Parameters are now read in any order and non of them is required in the
+    '.PRM'  file. This will allow to keep compatibility easily in future
+    versions. Moreover, now is possible to resume a model that was stopped,
+    which  will allow more freedom to change parameters during execution
+    avoiding new input files (option -F);
+  v3.3 (Feb.2000) Inclusion of evaporation in lakes and occurrence of
+    underburden (non overflown) lakes. New output files for lake '*.lak'
+    and river basin information '*.bas'.
+  v4.0 (Jul.2000) Time dependence of sea level (*.SLV) and  definition of the
+    horizons to be marked (*.REC). Change in load input files
+    (*.CRG-->*.LOAD-->*.UNIT): Faults  cut sediments; Each unit can  have
+    different erodibility. Drainage  including lake evaporation WORKS!!! Thin
+    sheet units with dynamic  deformation.  Different BCs available for
+    erosion. (Jan.2002) A constant porosity P is assumed for  the sediments, so
+    that denssedim is the total mean density: densedim =
+    P*1020+(1-P)*bulkdensity (water contributes as load, but not as detritic
+    mass). Tracking of new users.
+  v4.1 (Sept. 2002) Node edition through file  '*.NDEF'. Isostatic effect of
+    the weight of lake water. Landsliding. Willgoose's fluvial incision model.
+    Files *.H0 and *.W0 are now called *.ZINI and *.WINI, respectively.
+    Orographic precipitation following Roe et al. 2003. (Feb. 2004) Glaciar ice
+    flow and glaciar erosion and transport (Knap et al., ; Braun et al., 2001).
+  v4.2 (Nov.2004) Change of name to TISC (the command is 'tisc').
+  TISC_2007-07-24 Change in version nomenclature. Debug of drainage network
+    calculation, now very robust even with evaporation. Parameters
+    switch_debug and switch_verbose now joint into verbose_level.
+  TISC_2012-08-29
+    Corrected bug in file tisc.c, line 108, it now reads
+  	dy=(ymax-ymin)/(Ny-1).
+    New river erosion models added. Channel width explicitly accounted.
+    Change in output extensions that differ only in case from inputs,
+    auch as '*.eet' -> '*.eeth' and '*.PFL' -> '*.PRFL'. This is to avoid
+    conflict in Mac computers.
+    Successfully compiled for Mac IOS 10.7.5
+    (2013) Orographic precipitation implemented following a conservative
+    scheme  (runoff=precipitation-evaporation).
+  TISC_2014-03-25
+    Erosion boundary conditions 0 and 1 are swapped.
+    Erosion model #6 now smoothly transits through eq_transport_capacity=0.
+  TISC_2014-05-24
+    Corrected bug in calculation of lake-water weight. 
+    Corrected bug in lake splitting during evaporation.
+    Corrected bug in smoothing orographic precipitation.
+    Graphic scripts now distiguish old sediment in cross section.
+    Constant-rate scheme for erosion/sedimentation (see Ksedim & Keroseol 
+    in '*PRM').
+    Improved sediment deformation. 'deform_sed' parameter added.
+  TISC_2014-06-13
+    cuthrz accepts now hrz files with up to 120 horizons.
+  TISC_2016-08-30
+    An average erodibility is now calculated for the shallowest meters of 
+    bedrock.
+    Chi is written in column 8 of *.bas. A script is available to plot chi. 
+    GitHub used for version upload. GitHub wiki.
+    Water divides: TISC now writes the swimming distance between neigbouring 
+    cells in column #14 of drainage file *.xyw.
+
+11.- MODEL LIMITATIONS
+  Units move only an entire number of nodes at each time step. Unit deformation
+    during motion follows a vertical shear approach (preserving vertical
+    thickness). Rotation of units is not allowed.
+  TISC doesn't account for deformation in lower crust or mantle, and the
+    deformation in the upper crust (by shortening) is kinematically introduced
+    in the model. Subduction is not considered either. Different velocities of
+    shortening for each detachment fault are (still) not implemented.
+  Gradual sediment compaction is not considered, but this shouldn't affect the 
+    sediment onlap/offlap geometry in the external side of the foreland basin,
+    but only the thickness of the units.
+  Grain size or sediment facies distribution of the deposits are not
+    differentiated.
+  Sharp changes of EET produce numerical instabilities that can be detected by
+    increasing the number of discretisation nodes in the model (Nx,Ny) (no
+    significant differences in the predicted deflection should then be
+    introduced). Similarly, making EET changes more gradual should not change
+    significantly the results.
+
+
+12.- FAQ - Frequently Asked Questions
+  Q1. How can I manage to learn to use this code on my own?
+  A1. After download, follow instructions in tisc/doc/README file in order  to
+	compile. Then go to tisc/demo and try the examples there to ensure
+	that the code is working properly. Then read carefully
+	tisc/doc/tisc.info.txt (this file) and tisc/doc/template.PRM and try
+	to experiment modifying the *.PRM files of the demos. Then learn how
+	to build *.UNIT input files from the examples and using the
+	explanations in tisc/doc/tisc.info.txt. Make sure you did all this
+	before contacting the author!
+  Q2. I have compilation errors, is there a problem in the program?
+  A2. I tested TISC only in some UNIX operative systems such as Linux (Ubuntu),
+	Mac OSX 10, and Solaris (from SUN). Most probably you have a problem
+	with the  compilation options or with the libraries. Try to ask help
+	among your colleagues to succeed in the compilation.
+  Q3. I compiled the program, but I never managed to run it, and  I
+  	always get 'segmentation fault' errors.
+  A3. This probably means you have some incompatibility between some of the
+	functions called in TISC and the ones available in the libraries of
+	your operative  system. You have to edit the code and search for those
+	problems. You will need the help of someone around you who has
+	experience in programing or compiling C programs.
+  Q4. Can you help me to solve the problems I have to run TISC?
+  A4. In general, I try to answer the questions you send by email, but usually
+	i cannot say much more than what you just read in this file. Technical
+	support on the compilation process is not provided. . Because my
+	interests are in the scientific use of TISC and its application to
+	geological scenarios, I will be pleased to help you
+	with any problem you have during the  development of a model and will
+	be pleased to stablish a scientific colaboration.
+  ON THE DEFINITION OF TECTONIC UNITS:
+  Q5. Is it possible to stop a fault and then reactivate it again?
+  A5. You can stop a fault at a given time by using the time_stop parameter in
+	the *.UNIT file.  To reactivate it, repeate the same fault geometry in
+	another *.UNIT file with the velocity you wish. See doc/template.UNIT
+	to get the possible parameters in every *.UNIT file.
+
+
+
+13.- GLOSSARY
+  Hidden load
+	Flexural models in foreland basins have assumed that subsidence is due
+	only to the weight of the topographic load (i.e., load is proportional
+	to height). This assumption ignores other processes (subduction,
+	lithospheric mantle thickening, plate interaction forces, etc.) leading
+	to the need of additional loads to fit the observed deflection. These
+	are refered in the literature as hidden loads. Stockmal & Beaumont
+	(1986) suggested that one of the reasons for this could be the existence
+	of a depth bathymetry before plate colission, which would produce
+	important deflections even when topography was still not produced. TISC
+	includes the posibility of introducing initial bathimetry/topography and
+	therefore allows to avoid these source of hidden loads. If you still
+	need an extra load to explain the deflection, then you have to define it
+	as a file load with the 'hidden' label ('H') so that it will not
+	increase topography.
+
+  Project
+	Group of input files corresponding to a work project. All files must
+	begin with same single word stored in the char variable 'project'.
+
+  Switch
+	Variables names starting with 'switch_' correspond to Boolean type
+	switches with values true or false (1 or 0) and are used to turn on and
+	off options of the model.
+
+  switch_topoestable
+	This is a variable/parameter switch that strongly affects the conceptual
+	model: When its value is 0 the load read from file will lay on the
+	basement and will subside (deflect) with it. When its value is 1 the
+	read load will stay at zero level and the space between the deflected
+	basement and the zero will be filled up with a constant density
+	'densinfill'. This second way is often used in the literature and
+	strongly simplifies the modeling, but it avoids to consider the internal
+	geometry of the orogen.
+
+  Topographic load
+	This is a type of load (see load input file format) that, when loaded,
+	remains on the top of the profile and neither it nor the whole profile
+	subsides: only the basement, and the space created is filled with a
+	'densinfill' density material. See 'switch_topoestable' entry.
+
+  Unit
+ 	The word 'unit' is used for two similar concepts: Input units are 
+	the input files described above to provide the geometry of faults 
+	or loads; 'output units' (written in *.hrz and in the screen output) 
+	are generally more numerous because they include the sediemntary 
+	units calculated by tAo. The numbering of the input and output 
+	units does not match.
+	A unit corresponds in the code with a 2D body (a sediment unit,
+ 	thrusting unit, an instantaneous load or whatever), with a density, 
+	velocity, age and thickness profile associated. Internally, this is 
+	stored in the structure 'Units' and a summary of these units is
+	written to the standard output.
+	
+  Open/Endorheic lake
+	A lake that has larger water input discharge than the evaporation at its
+	surface and viceversa, respectively.
+
+
+14.- CREDITS
+  TISC is a program developed between Sept. 1994 and Sept. 2008 by Daniel
+  Garcia-Castellanos.
+  
+  Details on copyright are in the tisc/doc/ directory.
+
+  Please, contact the author if you will use the program.
+
+  When showing results of this program please cite at least one of the following
+  articles:
+  
+  Garcia-Castellanos, D., 2002. Interplay between lithospheric flexure and river
+  transport in foreland basins. Basin Res. 14, 89-104.
+
+  Garcia-Castellanos, D., J. Verges, J.M. Gaspar-Escribano & S. Cloetingh, 2003.
+  Interplay between tectonics, climate and fluvial transport during the Cenozoic
+  evolution of the Ebro Basin (NE Iberia). J. Geophys. Res., 108 (B7), 2347,
+  10.1029/2002JB002073.
+
+
+15.- ACKNOWLEDGEMENTS
+  TISC has been developed mainly in the Instituto de Ciencias de la Tierra Jaume
+  Almera (Barcelona) and the Vrije Universiteit (Amsterdam), but stages at the
+  Dalhousie University (Halifax, Canada) and the Australia National University
+  (Canberra) have also been helpful. Most funding comes from public research
+  institutions. Feedback with users has been essential and special mention must
+  be made to:
+  Mihai Tarapoanca, Jorge Gaspar-Escribano, Juan Alvarez, Chiara
+  Barbieri, Jeroen Bartol, Karen Leever, Javier Fullea, Gradmann Sofie, 
+  Ronald van Balen, Charlotte Fillon.
+
+
+16.- REFERENCES
+  Works and people referred in this document and the source code (incomplete):
+  (*) indicates works where TISC has been used.
+  (**) indicates works with a detailed formulation. 
+  Beaumont, C., P. Fullsack & J. Hamilton, 1992. Erosional control of active
+	  compressional orogens. In: McClay, K. R., ed., Thrust Tectonics,
+	  Chapman & Hall, London, p. 1-18.
+  Braun, J. & M. Sambridge, 1997. Modelling landscape evolution on geological
+	  time scales: a new method based on irregular spatial discretization.
+	  Basin Research, 9, 27-52.
+  (*)Cloetingh, S., P.A. Ziegler, F. Beekman, P.A.M. Andriessen, L. Matenco, G.
+	  Bada, D. Garcia-Castellanos, N. Hardebol, P. Dèzes & D. Sokoutis,
+	  2005. Lithospheric memory, state of stress and rheology: Neo-Tectonic
+	  controls on Europe's intraplate continental topography. Quaternary Sc.
+	  Rev., 24, 241-304. doi:10.1016/j.quascirev.2004.06.015
+  (**)Garcia-Castellanos, D., Jiménez-Munt, I., 2015. Topographic evolution and
+	  climate aridification during continental collision: insights from computer
+	  simulations. PLOSONE, doi:10.1371/journal.pone.0132252 [pdf] [pdf]
+  (*)Garcia-Castellanos, D., 2002. Interplay between lithospheric flexure and
+	  river transport in foreland basins. Basin Res. 14, 89-104.
+  (*)Garcia-Castellanos, D., J. Verges, J.M. Gaspar-Escribano & S. Cloetingh,
+	  2003. Interplay between tectonics, climate and fluvial transport
+	  during the Cenozoic evolution of the Ebro Basin (NE Iberia). J.
+	  Geophys. Res., 108 (B7), 2347, 10.1029/2002JB002073.
+  (*)Jimenez-Munt, I., D. Garcia-Castellanos, A. Negredo & J. Platt, 2005,
+	  Gravitational and tectonic forces controlling the post-collisional
+	  deformation and present-day stress of the Alps. Insights from
+	  numerical modelling. Tectonics, 24, doi:10.1029/2004TC001754
+  (*)Jimenez-Munt, I., D. Garcia-Castellanos and M. Fernàndez, 2005, Thin sheet
+	  numerical modelling of continental collision. Tectonophysics, 407,
+	  239-255. doi:10.1016/j.tecto.2005.08.015
+  Kooi, H. & C. Beaumont, 1996. Large-scale geomorphology; classical concepts
+	  reconciled and integrated with contemporary ideas via a surface
+	  processes model. J. Geophys. Res. B, 101; 2, 3361-3386.
+  Nadai, A., 1963. Theory of flow and fracture of solids, vol 2, 705 pp.,
+	  McGraw-Hill, New York.
+  (*)Persson, K.S., D. Garcia-Castellanos & D. Sokoutis, 2004. River transport
+	  effects on compressional belts: first results from an integrated
+	  analogue-numerical model. J. Geophys. Res., 109, B1, B01409,
+	  doi:10.1029/2002JB002274
+  (*)Tarapoanca, M., D. Garcia-Castellanos, G. Bertotti & S. Cloetingh, 2004.
+	  Subsidence mechanisms for the South-eastern Carpathians bend foreland.
+	  Earth and Planetary Science Letters, 221, 163-180.
+	  doi:10.1016/S0012-821X(04)00068-8
+  Tucker, G.E. & Slingerland, R.L., 1996, Predicting sediment flux from fold and
+	  thrust belts, Basin Res., 8, 329-349.
+  Turcotte, D.L. & G. Schubert, 1982. Geodynamics. John Wiley, 450 pp., New
+	  York, 1982.
+  van der Beek & Bishop, 2003. Cenozoic river profile development in the Upper
+	  Lachlan catchment (SE Australia) as a test of quantitative fluvial
+	  incision models. JGR 108.
+  van Wees, J.D. & Cloetingh, 1994. G.J.I., 117, 179-195.
+  Watts, A. B., 2001. Isostasy and Flexure of the Lithosphere. Publisher :
+	  Cambridge University Press. Pages : 458, Figures : 304, Tables : 19.
+  Wessel, P., & W. H. F. Smith, 1995. New version of the Generic Mapping Tools
+	  released. EOS Trans. Amer. Geophys. U., 76, pp. 329.
+  Willgoose, G., R.L. Bras, & I. Rodriguez-Iturbe, 1991. A physically based
+	  coupled channel network growth and hillslope evolution model (3
+	  sections), Water Resourc. Res., 27, 1671-1702.
+
+
+More information in the header of the main source code file 'tisc.c', descrip-
+tion of variables use in file tisc.h. Visit also the website 
+https://sites.google.com/site/daniggcc/software/tisc/
+
+
+END OF TISC INFORMATION FILE

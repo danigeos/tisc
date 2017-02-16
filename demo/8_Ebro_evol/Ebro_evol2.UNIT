@@ -1,0 +1,36 @@
+#CATALAN COASTAL RANGES
+#should have > 8? km shortening
+
+time_load	-58
+vel_x	0
+vel_y	.60
+time_stop	-26
+fault_load	1
+cut_all 	1
+#erodability	4e-8	Default length scale of fluvial erosion	[m]
+z_default	-1e6
+
+-500	n
+900e3	335e3
+570e3	335e3
+390e3	250e3
+300e3	90e3
+235e3	0e3
+235e3	-100e3
+900e3	-100e3
+
+11000	c
+900e3	300e3
+560e3	305e3
+400e3	230e3
+300e3	50e3
+300e3	-300e3
+900e3	-300e3
+
+   
+
+-1e6	c
+300e3	110e3
+300e3	-300e3
+200e3	-300e3
+200e3	110e3

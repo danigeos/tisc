@@ -1,0 +1,8 @@
+if (-r $prj.xyw) then 
+echo -n plotting RAIN... 
+awk '{print($1,$2,$10/1e3)}' $prj.xyw |\
+	xyz2grd	-G$tmp.rain.grd.tmp -I$dx/$dy -R -H2
+grdclip $tmp.rain.grd.tmp -G$tmp.rain.grd.tmp -Sb$min_rain/NaN
+grdimage $tmp.rain.grd.tmp -C$tmp.rain_cpt.tmp -JX -R -Q -O -K >> $ps
+grdcontour $tmp.top.grd.tmp -JX -R -C$tmp.topo_palet.tmp -W1 -O -K >> $ps
+endif

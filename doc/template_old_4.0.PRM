@@ -1,0 +1,126 @@
+###  tao3D parameters file  ###
+
+version		tao3D v4.0
+
+#Modeled region:
+xmin		-500e3	Western model limit coordinate [m]	This is the x coordinate of the center of the leftmost cells or pixels (i.e., "node registration"). The conceptual limit of the model is at xmin-dx/2. 
+xmax		+500e3	Eastern model limit coordinate [m]
+ymin		-500e3	Southern model limit coordinate [m]
+ymax		+500e3	Northern model limit coordinate [m]
+
+#Gridding:
+Nx		51	E-W direction grid points
+Ny		51	N-S direction grid points
+
+#Initial relief:
+alt0		0	Initial height [m] of the plate over the sea level (added to the initial topography in '*.H0').
+random_topo	0	Add noise to initial topo between -random_topo/2 and +random_topo/2 [m]
+
+
+#Time variables [My]:
+Timeini		0	Initial time
+Timefinal	10	Final time
+tau		1	Relaxation time
+dt 		1	Time interval
+dt_eros		.05	Approximate dt for surface processes
+dtmemounit	5	Time between horizon record (0 means no horizons apart from those specified in '*.REC' file) and deflection evolution.
+
+#Flexure:
+lith_type	1	Isostasy mechanism: #0: No isostasy; #1: Pure elastic thin plate; #2: Viscoelastic thin plate
+Te		15000	Default EET [m] when no *.EET file is given. Te=0 => local isostasy.
+boundary_conds	5555	Boundary conditions for flexure at N, S, E, W (4 characters):
+			#0: means fixed boundary (zero deflection).
+			#5: means free boundary (null derivative and moment).
+			#6: means fixed deflection (local isostatic).
+switch_sea	1	To take into account sea load and allow for time sea level variations read from '*.SLV'.
+switch_topoest	0	To keep loads vertically fixed, filling the deflection with densinfill material.
+
+#Tectonic horizontal forces [Pa*m=N/m]:
+Px		0e12	Horizontal tectonic force in x (compressive => >0)
+Py		0e12	Horizontal tectonic force in y
+Pxy		0e12	Horizontal tectonic shear force xy
+
+#Densities [kg/m3]:
+densasthen	3200	Density beneath the lithospheric plate, at the compensation level in the asthenosphere
+densmantle	3250	Density beneath the crust
+denscrust	2800	Mean density of crust
+densinfill	2800	Infill density used to fill under topographic loads.
+denssedim	2200	Sediment density (including pores).
+densenv		0	Enviromental material density
+
+#Surface water drainage:
+switch_hydro	0	To switch fluvial network calculation
+rain 		500	Background runoff (water going to the drainage system) if no *.RAIN file is given or if ths file value is negative [l/m2/yr]=[mm/yr].
+Krain		00	Proportionality of runoff with altitude [l/m2/yr/km]
+CXrain		00e3	Proportionality of runoff with x (distance of duplication [m]). 0 means no variations in x.
+CYrain		00e3	Proportionality of runoff with y (distance of duplication [m]). 0 means no variations in y.
+evaporation	00	Evaporation rate at lakes [l/m2/yr]=[mm/yr].
+lost_rate	0	Surface water lost per unit length [%/km]
+
+#Surface transport:
+erosed_type	0	Defines the erosion/sedimentation model.
+			#0: means no surface transport.
+			#1: rivers follow Beumont et al. (1992) model.
+			#2: rivers follow Tucker&Slingerland (1996) model.
+Kerosdif   	.0	Diffusive transport erosion coefficient [m2/yr]. Tucker&Bras (1998, Water Res.) use 10e-2. See also Flemings&Jordan (1989) list observations between 10e-3 and 10e-2 m2/yr. Braun&Sambridge (1997, Basin res.) use .3 m2/yr.
+critical_slope	1	For landsliding processes [m/m].
+K_river_cap	60	Constant of river transport capacity or efficiency [kg/m3] (kg sed per m3 water, note units are different than in literature, eg. T&S96 use .1 m3/m3).
+l_fluv_eros	120e3	For erosed_type=1: Length scale of fluvial erosion [m]; For erosed_type=2: Erodability.  (this default value is overriden by the one in load files *.UNIT)
+l_fluv_eros_sed	60e3	Same as l_fluv_eros but for sediments.
+l_fluv_sedim	25e3	Length scale of fluvial sedimentation [m]. Only relevant at sea and lakes for erosed_type=2.
+eros_bound_cond	0000	Boundary Conditions for surface processes at N, S, E, W (4 characters):
+			#0: means that river keeps the same slope in the boundary.
+			#1: means river has 0 eq. capacity at boundary.
+			#2: means river has double capacity.
+			#3: means half capacity.
+
+#Interpolation:
+mode_interp 	4	Default interpolation mode for input files (if not specified in the files):
+			#0: no interpolation needed ('Nx x Ny' rows with x,y,z. x,y are ignored)
+			#1: inverse distance  
+			#2: inv. square dist.  
+			#3: nearest given point
+			#4: poligons
+			#5: binary (short int) skyline
+			#6: no interpolation needed ('Nx x Ny' z-values in one column)
+			#7: same as 4 but nodes out of all poligons are interpolated with the distance to each poligon (no defauklt value assigned)
+
+#I/O:
+switch_files	1	For extra file output.
+switch_ps	1	For postscript output.
+switch_verbose	1	For more runtime information.
+switch_debug	0	For more runtime debugging prints.
+
+
+
+
+#(END OF PARAMETERS FILE)
+
+Comments:
+	This is the tao3D default parameters file, originally located at doc/.
+	This may be copied to be used as a sample parameters file in order to 
+	create a new project. Note that:
+	--Order in the list of parameters is irrelevant except for the version, 
+	which must be the first.
+	--You can modify all these parameters from the command line (see 
+	option -q).
+	--Command line options are intepreted after reading this PRM  file, so
+	they override these values.
+	--You can modify the format of this parameter file, either by adding
+	more comment lines or changing comments in the existing lines after 
+	the values. Order in parameters is not relevant. 
+	--You only need to include the parameters which default value you 
+	want to change respect to the default ones in doc/template.PRM.
+	--Default units: I.S.  (except where indicated).
+	--xmin, xmax, ymin, ymax give the coordinates of the center of the 
+	boundary cells or pixels (i.e., the location of their associated nodes). 
+	The conceptual limit of the model is at xmin-dx/2, ymax+dx/2, ... 
+	For example, if the resolution of a model is needed to be reduced to 
+	dx/2,dy/2 keeping the same domain parameters, then the new Nx,Ny should 
+	not be Nx*2,Ny*2, but (Nx-1)*2+1,(Ny-1)*2+1.
+	--If  (switch_topoest != 0) then the load will rest at zero level 
+	and plate subsidence will be filled with 'densinfill' material. Do 
+	not use it with erosion model.
+	--You can get more information about the meaning of each parameter 
+	in tao3D.info.txt 
+	

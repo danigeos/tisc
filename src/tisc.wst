@@ -1,0 +1,127 @@
+WORKSET VERSION 1
+
+#
+# Workshop WorkSet File
+#
+
+%%File
+
+[FileData
+  (processDirectory "/home/tecto/pdoc/gard/soft/tisc/demo/ice")
+  (currentDirectory "/home/tecto/pdoc/gard/soft/tisc/demo/ice")
+  (files 
+    { 
+      "tisc.c"
+      "/home/tecto/pdoc/gard/lib/surf_proc.c"
+      "/home/tecto/pdoc/gard/lib/libreria.c"
+      "tiscio.c"
+      "tisclib.c"
+      "cuthrz.c"
+      "tisceros.c"
+      "/home/tecto/pdoc/gard/soft/tisc_last_try/src/tisc.c"
+      "/home/tecto/pdoc/gard/soft/tisc_last_try/src/tisceros.c"
+      "/home/tecto/pdoc/gard/src/interpol2D.c"
+      "/local/users/localgard/lib/libreria.c"
+      "/local/users/localgard/soft/tisc/include/tisc.h"
+    })
+]
+
+%%Build
+
+[BuildData
+  (currentDirectory "/home/tecto/pdoc/gard/soft/tisc/demo/ice")
+  (targets 
+    { 
+      [BuildTarget
+        (makefile "<Default>")
+        (target "tisc")
+        (options "")
+        (command "make")
+        (buildDirectory ".")
+      ]
+      [BuildTarget
+        (makefile "<Default>")
+        (target "cuthrz")
+        (options "")
+        (command "make")
+        (buildDirectory ".")
+      ]
+      [BuildTarget
+        (makefile "<Default>")
+        (target "tisc")
+        (options " -m serial ")
+        (command "dmake")
+        (buildDirectory "/home/tecto/pdoc/gard/soft/tisc_last_try/src")
+      ]
+    })
+]
+
+%%Debug
+
+[DebugData
+  (currentDirectory "/home/tecto/pdoc/gard/soft/tisc/demo/ice")
+  (programs 
+    { 
+      [Program
+        (name "/home/tecto/pdoc/gard/soft/tisc/bin/tisc")
+        (args "ice")
+        (runDirectory ".")
+      ]
+    })
+]
+
+%%Browse
+
+[BrowseData
+  (AccuBrowseDirectory "/home/tecto/pdoc/gard/soft/tisc/demo/ice")
+  (PatternSearchDirectory "/home/tecto/pdoc/gard/soft/tisc/demo/ice")
+  (mode "PatternSearch")
+  (directories 
+    { 
+      "/home/tecto/pdoc/gard/soft/tisc/demo/ice"
+      "/home/tecto/pdoc/gard/soft/tisc/demo/river_transp"
+      "/home/tecto/pdoc/gard/soft/tisc/src"
+      "/home/tecto/pdoc/gard/job/DeadSea/buckling"
+      "/home/tecto/pdoc/gard/soft/tao/job/TEST"
+      "/home/tecto/pdoc/gard/job/taohuru"
+      "/home/tecto/pdoc/gard/job/Ebro/RUN"
+      "/home/tecto/pdoc/gard/soft/tisc/job/PARAMETRIZACION/eros_dif-adv"
+      "/home/tecto/pdoc/gard/job/EBRO/RUN"
+      "/home/tecto/pdoc/gard/soft/tisc/job/PARAMETRIZACION/eros_margin"
+      "/home/tecto/pdoc/gard/soft/tisc/job/TEST/lakes"
+      "/home/tecto/pdoc/gard/soft/tisc/job/FORELANDS/EBRO"
+      "/home/tecto/pdoc/gard/soft/tisc_last_try/src"
+      "/home/tecto/pdoc/gard"
+      "/home/tecto/pdoc/gard/soft/tisc/demo/lakes"
+      "/home/tecto/pdoc/gard/data/Topo"
+      "/home/tecto/pdoc/gard/soft/tisc/job/TEST/random_topo"
+      "/home/tecto/pdoc/gard/job/NEESDI/3D/real_topo"
+      "/home/tecto/pdoc/gard/job/NEESDI/3D/EXTENSION"
+      "/local/users/localgard/src"
+    })
+]
+
+%%SUNW_Analyzer
+
+
+
+%%f90browse
+
+
+
+%%SUNW_Looptool
+
+
+
+%%SUNW_Codemgrtool
+
+
+
+%%tha
+
+
+
+%%SUNW_Visual
+
+
+

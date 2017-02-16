@@ -1,0 +1,38 @@
+set i_zone = 1
+while (-r $prj$i_zone.INT)
+    awk '{if (NR==2) for (i=3; i<=NF; i++) {dens[i]=$i;}\
+	if (NR>2) { \
+		sedthick=0; \
+		for (i=4; i<=NF; i++) {if (dens[i]<2500) sedthick+=($i-$(i-1)); }\
+		print($1,$2,sedthick); \
+	} \
+    }' $prj.hrz | outin $prj$i_zone.INT | \
+	awk -v dx=$dx -v dy=$dy -v iz=$i_zone \
+	    '{if ($1=="1") {seds_in+=$4*dx*dy;}} END{printf("Sediments in region %d: %.2f km3\n", iz, seds_in/1e3);}'
+	set i_zone = `echo $i_zone + 1 | bc`
+end
+awk '{if (NR==2) for (i=3; i<=NF; i++) {dens[i]=$i;}\
+	if (NR>2) { \
+		sedthick=0; \
+		for (i=4; i<=NF; i++) {if (dens[i]<2500) sedthick+=($i-$(i-1)); }\
+		print($1,$2,sedthick/1e3); \
+	} \
+}' $prj.hrz |\
+	xyz2grd	-G$tmp.sed.grd.tmp -I$dx/$dy -R$Region -H0
+
+grdimage $tmp.sed.grd.tmp -C$tmp.sed_cpt.tmp -JX -R -O -K >> $ps
+grdcontour $tmp.sed.grd.tmp -JX -R$Region -C.5 -O -K >> $ps
+
+#grdinfo $tmp.sed.grd.tmp
+
+#if (-r $prj.pfl) psxy $prj.pfl -JX -R$Region -M -W$col_lin -H2 -O -K >> $ps 
+if (-r $prj.CMP) psxy $prj.CMP -JX -R -M -W4/0/0/0 -O -K >> $ps 
+if (-r $prj\1.INT) psxy $prj*.INT -JX -R -M -W1/0/255/0 -L -O -K >> $ps 
+pstext	-JX -R$Region -O -G0 -K <<END >> $ps 
+	$xt	$yt	12 0 1 3	sediment thickness
+END
+if (-r $prj.pfl) psxy $prj.pfl -JX -R -M -W$col_lin -H2 -O -K >> $ps 
+if (-r $prj.CMP) psxy $prj.CMP -JX -R -M -L -W4/0/0/0 -O -K >> $ps 
+
+psscale -C$tmp.sed_cpt.tmp  -D$xscale/$yscale/$width/$scalewidth\h -B:"Sediment thickness (m)": -L -O -K >> $ps
+

@@ -1,0 +1,18 @@
+if (-r $prj.bas) then
+echo -n plotting CHI...
+grdinfo $tmp.chi.grd.tmp
+set chimax = `grdinfo $tmp.chi.grd.tmp | grep z_max | awk '{print $5}'`
+set max4cpt = `awk -v number=$Lxy 'BEGIN{number*=2.; print (int(number/10^(int(log(number)/log(10)))*10)+1)*10^(int(log(number)/log(10)))/10}'`
+set inc4cpt = `awk -v number=$Lxy 'BEGIN{number*=.2; print (int(number/10^(int(log(number)/log(10)))*10)+1)*10^(int(log(number)/log(10)))/10}'`
+
+makecpt -Crainbow -T0/$max4cpt/$inc4cpt -Z > $tmp.chi_cpt.tmp
+grdimage $tmp.chi.grd.tmp -C$tmp.chi_cpt.tmp  -JX -R -K -O >> $ps
+pstext	-JX -R$Region -O -K -G0 <<END >> $ps 
+#	$xtitle	$ytitle	11 0 1 3	Chi (km)
+END
+
+psscale -C$tmp.chi_cpt.tmp -D$xscale/$yscale/$width/$scalewidth\h -B:"Chi (km)": -L -O -K >> $ps
+
+endif
+
+

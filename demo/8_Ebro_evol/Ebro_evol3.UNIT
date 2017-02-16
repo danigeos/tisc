@@ -1,0 +1,51 @@
+#IBERIAN CHAIN
+#should have 25-55 km shortening (Munoz-Jimenez & Casa-Sainz, 1997; Salas et al., 2001)
+
+time_load	-48
+vel_x	0
+vel_y	1.2
+time_stop	-19
+fault_load	1
+cut_all 	1
+z_default	-1e6
+
+-500	n
+-50e3	350e3
+50e3	300e3
+300e3	100e3
+425e3	0e3
+425e3	-300e3
+-200e3	-300e3
+-200e3	480e3
+
+5000	n
+-50e3	330e3
+300e3	50e3
+420e3	-70e3
+420e3	-300e3
+-200e3	-300e3
+-200e3	400e3
+
+10000	n
+-50e3	280e3
+280e3	0e3
+300e3	0e3
+300e3	-300e3
+-200e3	-300e3
+-200e3	290e3
+
+11000	c
+-50e3	260e3
+260e3	0e3
+300e3	0e3
+300e3	-300e3
+-200e3	-300e3
+-200e3	290e3
+
+
+
+-1e6	c
+300e3	110e3
+300e3	-300e3
+500e3	-300e3
+500e3	110e3

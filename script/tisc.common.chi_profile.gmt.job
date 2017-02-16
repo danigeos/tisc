@@ -1,0 +1,20 @@
+if (-r $prj.bas) then 
+echo -n plotting CHI PROFILE... 
+awk '{if ($3>=dl && $3<dh) printf ("> -Z%f\n%.1f\t%.3f\n%.1f\t%.3f\n", $14/1e3, $8, $6/1e3, $13, $11/1e3)}' dl=$disch1 dh=$disch2 \
+	$tmp.chosen_basin.bas.tmp | psxy -JX -R -m -C$tmp.erosrate_cpt.tmp -W1 -O -K >> $ps
+awk '{if ($3>=dl && $3<dh) printf ("> -Z%f\n%.1f\t%.3f\n%.1f\t%.3f\n", $14/1e3, $8, $6/1e3, $13, $11/1e3)}' dl=$disch2 dh=$disch3 \
+	$tmp.chosen_basin.bas.tmp | psxy -JX -R -m -C$tmp.erosrate_cpt.tmp -W4 -O -K >> $ps 
+awk '{if ($3>=dl)          printf ("> -Z%f\n%.1f\t%.3f\n%.1f\t%.3f\n", $14/1e3, $8, $6/1e3, $13, $11/1e3)}' dl=$disch3 \
+	$tmp.chosen_basin.bas.tmp | psxy -JX -R -m -C$tmp.erosrate_cpt.tmp -W9 -O -K >> $ps 
+
+
+psxy -JX -R -Sc -G160 -O -K <<END>> $ps 
+#	5  $zmaxt2 .15
+#	10 $zmaxt2 .15
+END
+pstext	-JX -R -O -G0 -K <<END >> $ps 
+	0 $zmint	9 0 1 BR	Water discharge (size), erosion rate (color)\ 
+#	$lmint $zmaxt	9 0 1 1	River discharge (size) and sediment load (color); Lakes (grey) 
+END
+
+endif

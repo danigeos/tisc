@@ -1,0 +1,29 @@
+#PYRENEES 2nd (southern) thrust
+
+
+time_load	-45
+vel_x	0
+vel_y	-3.5
+time_stop	-28
+fault_load	1
+cut_all 	1
+z_default	-1e6
+
+-1000	n
+700e3	325e3
+650e3	325e3
+100e3	380e3
+-50e3	390e3
+-200e3	380e3
+-200e3	700e3
+700e3	700e3
+
+10000	n
+700e3	425e3
+650e3	425e3
+150e3	455e3
+-50e3	465e3
+-200e3	465e3
+-200e3	700e3
+700e3	700e3
+

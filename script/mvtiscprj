@@ -1,0 +1,15 @@
+#!/bin/csh
+#To change the baginning of the name of files.
+#arguments:  old_name new_name
+
+unalias ls
+set filelist = `ls $1*`
+
+echo Modifying name beginning of these files:  $filelist
+echo Press Ctrl-D to proceed...
+cat 
+
+foreach file ($filelist)
+	set newfile = `echo $file | sed "s/$1/$2/1"`
+	mv $file $newfile
+end

@@ -1,0 +1,38 @@
+#VALENCIA TROUGH EXTENSION
+#
+
+time_load	-23.5
+vel_x	9
+vel_y	-9
+time_stop	-8
+dens_load	2700
+fault_load	1
+cut_all 	1
+top_load	1
+z_default	-1e6
+
+-1000	n
+690e3	750e3
+580e3	300e3
+400e3	225e3
+320e3	100e3
+270e3	0e3
+255e3	-100e3
+900e3	-100e3
+900e3	700e3
+
+4000	n
+710e3	750e3
+600e3	285e3
+425e3	195e3
+320e3	0e3
+320e3	-100e3
+900e3	-100e3
+
+11000	c
+750e3	750e3
+660e3	280e3
+460e3	150e3
+400e3	0e3
+400e3	-100e3
+900e3	-100e3

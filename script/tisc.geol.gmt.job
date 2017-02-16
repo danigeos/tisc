@@ -1,0 +1,38 @@
+#!/bin/csh
+##############################################################################
+#job file to produce postscript graphic files of TISC results with GMT 3.0
+#	Daniel Garcia-Castellanos, 1997.
+##############################################################################
+#Syntax: 	tisc.gmt_geol.job 'model-root-prj' 
+##############################################################################
+#Note that:
+# -This script uses bc unix command as a calculator. 
+##############################################################################
+
+
+set prj 	= $1
+
+set width = 14
+
+source $tisc_dir/script/tisc.common.gmt.job
+
+#Geology:
+psbasemap -JX$size -R$Region -B$ticklabels\:"x, longitude (km)":/$ticklabels\:"y, latitude (km)":NseW \
+	-Y10 -X2.5 -K -P > $ps
+source $tisc_dir/script/tisc.common.geol+sedload.gmt.job
+
+
+#Cross Section:
+if (-r $prj.pfl) then
+	psbasemap -JX$width_CS/$height_CS -R0/$dmax/$zmin/$zmax \
+		-B$ticklabels\:"distance (km)":/$zticklabels\:"z (km)":SeW \
+		-O -K -X$horz_shift_CS -Y$vert_shift_CS >> $ps
+	source $tisc_dir/script/tisc.common.cross_section.gmt.job
+endif 
+
+pstext	-JX -R -O <<END>> $ps
+END
+
+
+
+rm $tmp.*.tmp 

@@ -1,0 +1,36 @@
+if (-r $prj.bas) then 
+echo -n plotting RIVER PROFILE... 
+
+#Peaks: upper topography envelope profile:
+set peakradius = 10
+awk '(NR>2){print $1,$2, $NF}' $prj.hrz | blockxyz -R$x0/$xf/$y0/$yf -N$Nx/$Ny -MM$peakradius -d-1e9 >  $tmp.blockxyz.tmp
+awk '{if (FILENAME==file1) {topo[i,j]=$3; j++; if (j==Nx) {j=0;i++;}}   if (FILENAME==file2) {i=int((ymax-$2)/dy); j=int(($1-xmin)/dx); print $0, i, j, topo[i,j]}}' \
+	Nx=$Nx dx=$dx dy=$dy xmin=$x0 ymax=$yf file1=$tmp.blockxyz.tmp \
+	file2=$tmp.chosen_basin.bas.tmp $tmp.blockxyz.tmp $tmp.chosen_basin.bas.tmp \
+	> $tmp.peaktopo.bas.tmp
+
+
+#River profile:
+#longest river:
+
+#set zmax = `sort $tmp.chosen_basin.bas.tmp -n -k 6 | tail -n 1 | awk '{print $6}'`
+#set zmax = `sort $prj.xyw -n -k 6 | tail -n 1 | awk '{print $6}'`
+
+awk '{if ($3>=dl && $3<dh) printf ("> -Z%f\n%.1f\t%.3f\n%.1f\t%.3f\n", $14/1e3, $7, $6/1e3, $12, $11/1e3)}' dl=$disch1 dh=$disch2 \
+	$tmp.chosen_basin.bas.tmp | psxy -JX -R -m -C$tmp.erosrate_cpt.tmp -W1 -O -K >> $ps
+awk '{if ($3>=dl && $3<dh) printf ("> -Z%f\n%.1f\t%.3f\n%.1f\t%.3f\n", $14/1e3, $7, $6/1e3, $12, $11/1e3)}' dl=$disch2 dh=$disch3 \
+	$tmp.chosen_basin.bas.tmp | psxy -JX -R -m -C$tmp.erosrate_cpt.tmp -W4 -O -K >> $ps 
+awk '{if ($3>=dl)          printf ("> -Z%f\n%.1f\t%.3f\n%.1f\t%.3f\n", $14/1e3, $7, $6/1e3, $12, $11/1e3)}' dl=$disch3 \
+	$tmp.chosen_basin.bas.tmp | psxy -JX -R -m -C$tmp.erosrate_cpt.tmp -W9 -O -K >> $ps 
+
+
+psxy -JX -R -Sc -G160 -O -K <<END>> $ps 
+#	5  $zmaxt2 .15
+#	10 $zmaxt2 .15
+END
+pstext	-JX -R -O -G0 -K <<END >> $ps 
+	0 $zmint	9 0 1 BR	Water discharge (size), erosion rate (color)\ 
+#	$lmint $zmaxt	9 0 1 1	River discharge (size) and sediment load (color); Lakes (grey) 
+END
+
+endif

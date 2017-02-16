@@ -1,0 +1,29 @@
+#!/bin/csh -f
+echo Copying tAo and TISC outputs from project \'$1\' to project \'$2\'...
+alias cptaoout 'set ext=\!* ; if (-r $1.$ext) cp $1.$ext $2.$ext '
+
+cptaoout all
+cptaoout out
+cptaoout eet
+cptaoout strs
+cptaoout grd
+cptaoout temp
+cptaoout temp0
+cptaoout tempini
+cptaoout temp.grd
+cptaoout pfl
+cptaoout eros
+cptaoout yld
+cptaoout yse
+cptaoout ps
+cptaoout xzt
+
+cptaoout hrz
+cptaoout xyzt
+cptaoout xyw
+cptaoout lak
+cptaoout bas
+cptaoout st
+cptaoout screen
+
+echo Done

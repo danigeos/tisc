@@ -1,0 +1,19 @@
+# GMT common arguments shelf
+-Ba200f100:         longitude (km):/200f100:latitude (km):/a8000f2000:        elevation (m):nWESZ
+-JX11/7
+-JZ5
+-R-48.16/660.57/0.00/500.00/-14999/8000
+-X+4
+-x5
+-Y10
+-y0
+-jX11/7
+EOF
+
+F
+OF
+F
+.44647169305071102763
+EOF
+763
+EOF

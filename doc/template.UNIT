@@ -1,0 +1,117 @@
+###  Sample *.UNIT file for tisc  ###
+#The unit parameters and thickness contained in these *.UNIT files 
+#is read from the routine 'read_file_unit()' in tisc.c. 
+#Have a look at that one to better understand how this input works.
+
+#PARAMETER	VALUE	UNITS
+#----------------------------
+#Input options:
+z_default	0	[m] Default z-value (unit thickness/fault depth) in the
+				nodes where it is not  specified. z<0 downwards
+				except if fault=1 (see below). 
+mode_interp	4	Default interpolation mode for input files (will be 
+				applied if this parameter is not specified in 
+				the files themselves):
+			#0: 3-column file containing x,y,z in 'Nx x Ny' skyline-
+				sorted rows.  x,y are ignored. (no
+				interpolation  performed).
+			#1: 3-column file containing x,y,z. Inverse distance
+				interpolation with the points supplied.
+			#2: 3-column file containing x,y,z. Inv. square dist. 
+				interpolation with the points supplied.
+			#3: 3-column file containing x,y,z. The nearest given 
+				point is assigned each cell.
+			#4: polygon interpolation mode. See explanation in file 
+				'tisc.info.txt', end of 'inputs' section.
+			#5: binary (short int) skyline array of z values (no 
+				interpolation performed).
+			#6: 1-column file containing z-values in 'Nx x Ny' 
+				skyline-sorted rows (no interpolation 
+				performed).
+			#7: same as 4 but also those nodes falling out of all 
+				polygons are interpolated with the distance to 
+				each polygon (no default value assigned).
+			#8: 3-column file containing x,y,z. Each cell gets a 
+				value if some point is given inside, otherwise 
+				it gets the default value. If more than one 
+				value is given then they will be averaged.
+add_random	0	[z-units] Add random number to z between +- that value.
+z_absol		0	[0/1]	For faults, 0 means z values are relative to
+				initial zero (current deflection will be added
+				to z values);  1 means they will be used as
+				absolute values.
+
+
+#Parameters of the new unit:
+time		0	[Ma]	Time when this load/unit must be applied. Note 
+					that 'time' in each unit file must be 
+					larger than in the previous unit file 
+					(projectname'N-1'.UNIT).
+vel_x		0	[km/Ma]	Velocity in x. Units move by an entire number of 
+					nodes at each time step.
+vel_y		0	[km/Ma]	Velocity in y. Units move by an entire number of 
+					nodes at each time step.
+time_stop	9999	[Ma]	Time to stop the load/unit.
+density		2800	[kg/m3]	Density of this load/unit.
+erodibility	100e3	[m]	erodibility of the unit.
+
+#Unit properties [0=NO, 1=YES]:
+gradual 	0	[0/1]	To distribute loading until the next load time.
+hidden		0	[0/1]	To hide the load.
+move		0	[0/1]	To move the load with 'vel_x,vel_y' (km/Ma) 
+					till 'Time_stop' (Ma). 
+fault		0	[0/1]	Means that x-y points refer to the base of a 
+					fault moving at a constant velocity 
+					vel_x,vel_y (km/Ma) until 'Time_stop'. 
+					'z_value' is here the depth of the 
+					fault in absence of isostatic 
+					movements (depth the fault would have 
+					at the initial time).
+ride		0	[0/1]	To let the previous overlaying units be dragged 
+					by the present one. Both their velocity 
+					and time_stop will be reset. 
+cut_units	0	[0/1]	Existing units (except sediments) will be cut 
+					by this new fault. By default it cuts 
+					only undeformed basement.
+#cut_unit	0		Only the indicated unit (in the internal 
+					registry, as shown at the end of the 
+					run, not the user-specified units) 
+					will be cut by this new fault. 
+					If negative, it will take the 
+					absolute value as a density and cut 
+					the largest unit with that density.  
+cut_all		0	[0/1]	All units (also sediments) should be cut by 
+					this new fault.
+thin_sheet	0	[0/1]	Calculate the deformation of this unit with a 
+					thin viscous sheet (Bird, 1991). 
+					Assumes local isostasy.
+insert		0	[0/1]	Do not put this load on the top of the units, 
+					but insert it as the lowest load.
+top		0	[0/1]	Put this load on the top of the units, but as 
+					the highest load.
+topoest		0	[0/1]	1 means topographic load, i.e., the load is 
+					vertically fixed and does not subside 
+					but the deflection is filled with a 
+					unit of 'densinfill' density. This is 
+					equivalent to switch_topoest=1 in the 
+					parameters file.
+#fill_up_to	0	[m]	If present, TISC fills with constant density 
+					up to the given height [m]. 
+					Distribution will not be read.
+
+#Now the detph/thickness z of the unit. When not a fault, z>0 means the 
+#thickness of load emplaced; z<0 means the rock thickness excavated and removed.
+#For mode_interp=4, pass the z_value (thickness/fault_depth) for next polygon:
+50	[n|c]		[m]	z_value at polygon;  'n' means that the 
+					value at points falling inside this 
+					polygon labelled but outside the next 
+					polygon are linearly interpolated with 
+					the distance to both polygons; 'c' 
+					means constant in this polygon;
+#Polygon where to apply previous z_value [for mode_interp 4 & 7]
+-100e3	-100e3		[m] [m]	X, Y
+-100e3	+100e3		[m] [m]	X, Y
++100e3	+100e3		[m] [m]	X, Y
++100e3	-100e3		[m] [m]	X, Y
+
+#For other mode_interp values, 3 columns (X,Y,Z) or 1 column (Z) are expected.

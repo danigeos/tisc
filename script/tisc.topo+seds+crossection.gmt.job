@@ -1,0 +1,215 @@
+#!/bin/csh
+##############################################################################
+#job file to produce postscript graphic files of TISC results with GMT 4.0
+#	Daniel Garcia-Castellanos, 2007.
+##############################################################################
+#Syntax: 	tisc.gmt.job 'model-root-name' 
+##############################################################################
+#Note that:
+# -This script uses bc unix command as a calculator. 
+##############################################################################
+
+set prj 	= $1
+
+set width = 8
+
+source $tisc_dir/script/tisc.common.gmt.job
+
+if (0) then 
+  #B/W pallette
+  set color_basement = 100/100/100
+  set color_thrust   = 120/120/120
+  set color_sediment = 200/200/200
+  set color_sea      = 255/255/255
+  set col_lin	  = 6/0
+  set col_river   = 0/0/0
+  set col_masstr  = 0/0/0
+  cat - <<END>  $tmp.geol_palet.tmp
+  	  500	  255	  255	  255	  1500    255	  255	  255
+  	  1500    200	  200	  200	  2500    200	  200	  200
+  	  2500    120	  120	  120	  2825    120	  120	  120
+  	  2825    100	  100	  100	  3500    100	  100	  100
+  B	  30 30 30
+  F	  255 0 0
+END
+endif
+
+
+#TOPOGRAPHY:
+#grdgradient $tmp.top.grd.tmp -A0 -G$tmp.intensity.top.grd.tmp  -Nt1
+psbasemap -JX$size -R$Region -Ba100f25:"x, longitude (km)":/a100f25:"y, latitude (km)":NseW \
+	-Y12 -X2 -K -P > $ps
+grdimage $tmp.top.grd.tmp -C$tmp.topo_palet.tmp  -JX$size -R \
+	-I$tmp.intensity.top.grd.tmp -O -K >> $ps
+#grdcontour $tmp.top.grd.tmp -T0.2/0.05:-+ -JX -R -C200  -W1/0 -O -K >> $ps
+grdcontour $tmp.top.grd.tmp -JX -R -C$tmp.topo_palet.tmp -W1 -O -K >> $ps
+
+if (-r $prj.xyg) then
+	xyz2grd $prj.xyg -G$tmp.gravanom.grd.tmp -I$dx/$dy -R -H2
+	grdcontour $tmp.gravanom.grd.tmp -JX -R -C20 -L20/200000 -A20+s6+k255/0/0   -W3/255/0/0ta -O -K >> $ps
+	grdcontour $tmp.gravanom.grd.tmp -JX -R -C20 -L-200000/-20 -A20+s6+k255/0/0 -W3/255/0/0 -O -K >> $ps
+endif
+
+
+#DRAINAGE:
+if (-r $prj.xyw) then 
+awk '{if ($3>=dl && $3<dh && $5!="S" && $5!="L" && NR>2) {print $1, $2; print $7, $8; print ">"}}' dl=$disch1 dh=$disch2 $prj.xyw | \
+	psxy -JX -R -M -W1/$col_river -O -K >> $ps 
+awk '{if ($3>=dl && $3<dh && $5!="S" && $5!="L" && NR>2) {print $1, $2; print $7, $8; print ">"}}' dl=$disch2 dh=$disch3 $prj.xyw | \
+	psxy -JX -R -M -W3/$col_river -O -K >> $ps 
+awk '{if ($3>=dl          && $5!="S" && $5!="L" && NR>2) {print $1, $2; print $7, $8; print ">"}}' dl=$disch3            $prj.xyw | \
+	psxy -JX -R -M -W9/$col_river -O -K >> $ps 
+
+#awk '{if ($5=="L" && substr($1,1,1)!="#") print $1, $2}' $prj.xyw | \
+#	psxy  -JX -R -Ss$size_lake_squares -W1/$col_river -G$col_river -O -K >> $ps 
+#awk '{if ($5=="E" && substr($1,1,1)!="#") print $1, $2}' $prj.xyw | \
+#	psxy  -JX -R -Ss$size_lake_squares -W7/$col_river -G$col_river -O -K >> $ps 
+grdcontour $tmp.lakes.grd.tmp -JX -R -C$tmp.lakes_cpt.tmp -W3/$col_lake -O -K >> $ps
+grdclip $tmp.lakes.grd.tmp -G$tmp.lakes.grd.tmp -Sb0.5/NaN
+grdimage $tmp.lakes.grd.tmp -JX -R -C$tmp.lakes_cpt.tmp -Q -O -K >> $ps
+
+endif
+
+if (-r $prj.ice) then 
+#Ice
+#awk '{if ($11>0) print $1, $2}' $prj.xyw | \
+#	psxy -JX -R -Ss$size_ice_squares -G255 -O -K >> $ps 
+awk '{if ($4>2) print($1,$2,$4)}' $prj.ice |\
+	xyz2grd	-G$tmp.ice.grd.tmp -I$dx/$dy -R -H2
+awk '{if ($4>0) print($1,$2,$3+$4)}' $prj.ice |\
+	xyz2grd	-G$tmp.icetop.grd.tmp -I$dx/$dy -R -H2
+grdgradient $tmp.icetop.grd.tmp -A0 -G$tmp.intensity.icetop.grd.tmp  #-Nt1
+#.0004 MUL is normal for large scale
+grdmath $tmp.intensity.icetop.grd.tmp .0015 MUL = $tmp.intensity.icetop.grd.tmp
+grdview $tmp.ice.grd.tmp -C$tmp.ice_cpt.tmp  -JX -R \
+	-I$tmp.intensity.icetop.grd.tmp -Ts -K -O >> $ps
+awk '{print $1, $2, $4}' $prj.ice | \
+	xyz2grd -G$tmp.ice_thick.grd.tmp -I$dx/$dy -R -H2
+grdcontour $tmp.ice_thick.grd.tmp -JX -R -C100 -A500 -Wa4/50/50/255 -Wc1/50/50/255 -O -K >> $ps
+grdcontour $tmp.icetop.grd.tmp -JX -R -C$tmp.topo_palet.tmp -W1 -A -O -K >> $ps
+awk '{if (NR>2 && $4>2) {a=$5+$7;b=$6+$8;l=sqrt(a*a+b*b); if (l>00) print $1,$2, atan2(b,a)*180/3.1415927, l/500}}'  $prj.ice | \
+	psxy -JX -R -Svb.01/.4/.2n2 -W1 -G0 -O -K >> $ps 
+endif
+
+pstext	-JX -R -O -G0 -K <<END >> $ps 
+	$xtitle	$ytitle	12 0 1 3	topography & drainage
+END
+pstext	-JX -R -G0 -W255/255/255 -O -K <<END >> $ps 
+	$xtime	$ytime	13 0 1 9	$Timenow Ma
+END
+#psscale -C$tmp.topo_palet.tmp -D6/-5/12/.3h \
+#	-B/:"elevation (m)": -L -O -K >> $ps	
+
+if (-r $prj.pfl) psxy $prj.pfl -JX -R -M -W$col_lin -H2 -O -K >> $ps 
+if (-r $prj.CMP) psxy $prj.CMP -JX -R -M -W4/0 -O -K >> $ps 
+#if (-r $prj.CMP.grd) grdcontour $prj.CMP.grd -JX -R -C500 -W1/200/0/0 -O -K >> $ps 
+
+
+#GEOLOGY/LITHOLOGY:
+awk '{if (NR==2) for (i=3; i<=NF; i++) dens[i]=$i; if (NR>2) {for (i=NF; i>3; i--) if ($i-$(i-1)>10) break; if ($NF>=0) print $1,$2,dens[i]; else print $1,$2,1000}}' $prj.hrz |\
+	xyz2grd	-G$tmp.geol.grd.tmp -I$dx/$dy -R
+psbasemap -JX$size -R -Ba100f25:"x, longitude (km)":/a100f25:"y, latitude (km)":Nsew \
+	-X$horz_shift -K -O >> $ps
+grdclip $tmp.geol.grd.tmp -G$tmp.geol.grd.tmp -Sb1200/NaN
+grdimage $tmp.geol.grd.tmp -C$tmp.geol_palet.tmp -Q -JX -R \
+	#-I$tmp.intensity.top.grd.tmp \
+	-K -O >> $ps
+grdcontour $tmp.top.grd.tmp -JX -R -C10000 -W2/0/0/255 -O -K >> $ps
+
+
+
+#SEDIMENTS:
+#volume in regions of interest:
+if (-r $prj.INT && -r $prj.st ) then 
+	grd2xyz $tmp.sed.grd.tmp | outin $prj.INT | \
+		awk -v dx=$dx -v dy=$dy '{if ($1=="1") {seds_in+=$4*dx*dy;}} END{printf("\nSediments in region 1: %.1f km3", seds_in);}'
+endif
+if (-r $prj.INT2 && -r $prj.st) then 
+	grd2xyz $tmp.sed.grd.tmp | outin $prj.INT2 | \
+		awk -v dx=$dx -v dy=$dy '{if ($1=="1") {seds_in+=$4*dx*dy;}} END{printf("\nSediments in region 2: %.1f km3", seds_in);}'
+endif
+if (-r $prj.INT3 && -r $prj.st) then 
+	grd2xyz $tmp.sed.grd.tmp | outin $prj.INT3 | \
+		awk -v dx=$dx -v dy=$dy '{if ($1=="1") {seds_in+=$4*dx*dy;}} END{printf("\nSediments in region 3: %.1f km3", seds_in);}'
+endif
+if (-r $prj.INT4 && -r $prj.st) then 
+	grd2xyz $tmp.sed.grd.tmp | outin $prj.INT4 | \
+		awk -v dx=$dx -v dy=$dy '{if ($1=="1") {seds_in+=$4*dx*dy;}} END{printf("\nSediments in region 4: %.1f km3", seds_in);}'
+endif
+if (-r $prj.INT_ROSE) then 
+	cat $prj.st | outin $prj.INT_ROSE | \
+		awk -v dx=$dx -v dy=$dy '{if ($1=="1") {eros_in+=$4;topo_in+=$5;n_in++}} END{printf("\nMean Erosion in region INT_ROSE: %.1f m; mean topo: %.1f m", eros_in/n_in, topo_in/n_in);}'
+endif
+
+
+#SEDIMENT THICKNESS:
+if (-r $prj.st ) then
+	grdclip $tmp.sed.grd.tmp -G$tmp.sed.grd.tmp -Sb.01/NaN
+	grdimage $tmp.sed.grd.tmp -C$tmp.eros_cumul_cpt.tmp -JX -R -Q -O -K >> $ps
+	#grdcontour $tmp.st.grd.tmp -JX -R -C2 -L-14/-2 -W1 -O -K >> $ps
+	grdcontour $tmp.sed.grd.tmp -JX -R -C1 -L1/14 -W1 -O -K >> $ps
+endif
+grdcontour $tmp.top.grd.tmp -JX -R -C10000 -W3/0 -O -K >> $ps
+
+#DRAINAGE (proportional to sed. load):
+if (-r $prj.xyw) then 
+if (-r $prj.RIV) awk '{if (substr($0,1,1)!=">" && substr($0,1,1)!="#") print $1/1000,$2/1000; else print $0}' \
+	$prj.RIV | psxy -JX -R -M -W4/70/0/0 -O -K >> $ps 
+awk -v sea_level=$sea_level '{if ($4>=ll && $4<lh && NR>2 && $5!="S" && $5!="L" && $6>=sea_level) {print $1, $2; print $7, $8; print ">"}}' ll=$sedld1 lh=$sedld2 $prj.xyw | \
+	psxy -JX -R -M -W1/$col_masstr -H2 -O -K >> $ps 
+awk -v sea_level=$sea_level '{if ($4>=ll && $4<lh && NR>2 && $5!="S" && $5!="L" && $6>=sea_level) {print $1, $2; print $7, $8; print ">"}}' ll=$sedld2 lh=$sedld3 $prj.xyw | \
+	psxy -JX -R -M -W3/$col_masstr -H2 -O -K >> $ps 
+awk -v sea_level=$sea_level '{if ($4>=ll          && NR>2 && $5!="S" && $5!="L" && $6>=sea_level) {print $1, $2; print $7, $8; print ">"}}' ll=$sedld3            $prj.xyw | \
+	psxy -JX -R -M -W8/$col_masstr -H2 -O -K >> $ps 
+
+#awk -v sea_level=$sea_level '{if ($5=="L" && $6>sea_level) print $1, $2}' $prj.xyw | \
+#	psxy -JX -R -Ss$size_lake_squares -W1/$col_river -G$col_river -O -K >> $ps
+#awk -v sea_level=$sea_level '{if ($5=="E" && $6>sea_level) print $1, $2}' $prj.xyw | \
+#	psxy -JX -R -St$size_lake_squares -W1/$col_river -G$col_river -O -K >> $ps
+#grdcontour $tmp.lakes.grd.tmp -JX -R -C$tmp.lakes_cpt.tmp -W3/$col_river -O -K >> $ps
+#grdclip $tmp.lakes.grd.tmp -G$tmp.lakes.grd.tmp -Sb0.5/NaN
+#grdimage $tmp.lakes.grd.tmp -JX -R -C$tmp.lakes_cpt.tmp -Q -O -K >> $ps
+endif
+
+if (-r $prj.pfl) psxy $prj.pfl -JX -R -M -W$col_lin -H2 -O -K >> $ps 
+if (-r $prj.CMP) psxy $prj.CMP -JX -R -M -W4/0/0/0 -O -K >> $ps
+#if (-r $prj.INT) psxy $prj.INT -JX -R -M -W1/0/255/0 -L -O -K >> $ps
+#if (-r $prj.INT2) psxy $prj.INT2 -JX -R -M -W1/0/255/0 -L -O -K >> $ps
+#if (-r $prj.INT3) psxy $prj.INT3 -JX -R -M -W1/0/255/0 -L -O -K >> $ps
+#if (-r $prj.INT4) psxy $prj.INT4 -JX -R -M -W1/0/255/0 -L -O -K >> $ps
+pstext	-JX -R -O -G0 -K <<END >> $ps
+	$xtitle	$ytitle	12 0 1 3	sediment thickness
+END
+
+
+
+
+#2D CROSS SECTION:
+if (-r $prj.pfl) then
+	set height_CS = 3.5
+	set vert_shift_CS = `echo -$height_CS \- $separation | bc -l`
+	set width_CS = `echo  2 \* $width + $separation  | bc -l`
+	set horz_shift_CS = `echo  $width + $separation  | bc -l`
+
+	psbasemap -JX$width_CS/$height_CS -R0/$dmax/$zmin/$zmax \
+		-B$ticklabels\:"distance (km)":/$zticklabels\:"z (km)":SeW \
+		-O -K -X$horz_shift_CS -Y$vert_shift_CS >> $ps
+
+	source $tisc_dir/script/tisc.common.cross_section.gmt.job
+endif
+
+endif
+
+
+#PALETAS DE COLORES:
+psscale -C$tmp.topo_palet.tmp 	-D$half_x/-2.0/$total_width/.35h -B/:"Elevation (m)": -L -O -K >> $ps
+psscale -C$tmp.eet_cpt.tmp 	-D$half_x/-3.5/$total_width/.35h -B/:"EET": -O -L -K	>> $ps
+psscale -C$tmp.eros_cumul_cpt.tmp -D$half_x/-5.0/$total_width/.35h -B/:"Sed. Thickness (m)": -L -O -K >> $ps
+psscale -C$tmp.subs_cpt.tmp 	-D$half_x/-6.5/$total_width/.35h -B/:"Subsidence (m)": -L -O -K >> $ps
+
+endif
+
+
+
+rm -f  $tmp.*.tmp
+

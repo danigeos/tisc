@@ -1,0 +1,23 @@
+rm -i $1.all 
+rm -i $1.out 
+rm -i $1.eet 
+rm -i $1.strs
+rm -i $1.strs.grd 
+rm -i $1.temp
+rm -i $1.temp0
+rm -i $1.tempini
+rm -i $1.temp.grd 
+rm -i $1.pfl 
+rm -i $1.eros
+rm -i $1.yld 
+rm -i $1.yse 
+rm -i $1.ps 
+rm -i $1.xzt
+
+rm -i $1.hrz
+rm -i $1.xyzt
+rm -i $1.xyw 
+rm -i $1.lak 
+rm -i $1.bas 
+rm -i $1.st
+rm -i $1.screen 

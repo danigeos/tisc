@@ -1,0 +1,60 @@
+tisc Iberia_present -l
+
+**** TECTONICS, ISOSTASY, SURFACE PROCESSES, AND CLIMATE PLANFORM MODELING ****
+Version: tisc v4.2
+Parameters at 'Iberia_present.PRM'. (42 parameters matched)
+Time start: Fri Feb 11 19:28:16 2005
+
+Initial topography at 'Iberia_present.ZINI'
+Initial rivers at 'Iberia_present.RIV'
+  topo_ini :  max= 3075.8 m     min= -5253.0 m  vol=-9.18e+14 m3
+T= 0.0000 My
+  topogr.  :  max= 3075.8 m     min= -5253.0 m  vol=-9.18e+14 m3
+Unit read from 'Iberia_present1.UNIT'. Vel= 0.00E,0.00N km/My till T=9999.00 My   lFM
+  rain_now : +1.36e+04 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +1.36e+04 m3/s
+  lake 134/164 : 0.00e+00 km3 2.50e+03 km2  735 m-104,93  7 out@-128,122 719.8 m3/s
+  river max:  1642.80 m3/s     0.00 kg/s @ -660.0,88.9 km, -3086.6 m
+  eros_nosd: +1.29e+16 N     sedim_inc: +6.07e+16 N   outp_seds:   +2.95e+14 N          Warning: seds._balance: 372.0% (>0 => sed>eros)
+T= 0.0200 My
+  topogr.  :  max= 3072.4 m     min= -5253.0 m  vol=-9.15e+14 m3
+  rain_now : +1.36e+04 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +1.36e+04 m3/s
+  lake 76/143 : 0.00e+00 km3 8.61e+02 km2  476 m-340,237  5 out@-332,296 67.1 m3/s
+  river max:  1649.09 m3/s     0.00 kg/s @ -660.0,29.6 km, -4927.2 m
+  eros_nosd: +1.09e+16 N     sedim_inc: +9.03e+15 N   outp_seds:   +3.59e+14 N          Warning: seds._balance: -13.6% (>0 => sed>eros)
+T= 0.0400 My
+  topogr.  :  max= 3069.0 m     min= -5253.0 m  vol=-9.15e+14 m3
+  rain_now : +1.36e+04 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +1.36e+04 m3/s
+  lake 89/102 : 0.00e+00 km3 3.78e+02 km2  735 m -68,144  3 out@-72,144 240.7 m3/s
+  river max:  1641.76 m3/s     0.00 kg/s @ -660.0,40.7 km, -4786.9 m
+  eros_nosd: +9.90e+15 N     sedim_inc: +8.35e+15 N   outp_seds:   +4.90e+14 N          Warning: seds._balance: -10.7% (>0 => sed>eros)
+T= 0.0600 My
+  topogr.  :  max= 3065.6 m     min= -5253.0 m  vol=-9.15e+14 m3
+  rain_now : +1.36e+04 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +1.36e+04 m3/s
+  lake 60/86 : 0.00e+00 km3 3.26e+02 km2  556 m-269,211  1 out@-273,211 94.7 m3/s
+  river max:  1675.37 m3/s     0.00 kg/s @ -660.0,18.5 km, -5021.9 m
+  eros_nosd: +9.44e+15 N     sedim_inc: +7.91e+15 N   outp_seds:   +5.82e+14 N          Warning: seds._balance: -10.1% (>0 => sed>eros)
+T= 0.0800 My
+  topogr.  :  max= 3062.1 m     min= -5253.0 m  vol=-9.15e+14 m3
+  rain_now : +1.36e+04 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +1.36e+04 m3/s
+  lake 53/74 : 0.00e+00 km3 3.26e+02 km2  556 m-269,211  1 out@-273,211 94.6 m3/s
+  river max:  1638.14 m3/s     0.00 kg/s @ -660.0,59.3 km, -4234.3 m
+  eros_nosd: +9.21e+15 N     sedim_inc: +7.86e+15 N   outp_seds:   +6.69e+14 N          Warning: seds._balance: -7.4% (>0 => sed>eros)
+
+6 units:
+No. Density Age Volume Surf.  Vel_x Vel_y Shft_x Shft_y erosL
+     kg/m3  My  1e3km3 1e3km2 km/My km/My   km     km    [m]
+ 5:  2100   0.1    0.9 153.0   0.0   0.0    0.0    0.0 4.0e+04  S
+ 4:  2100   0.1    0.8 144.5   0.0   0.0    0.0    0.0 4.0e+04  S
+ 3:  2100   0.0    0.8 143.9   0.0   0.0    0.0    0.0 4.0e+04  S
+ 2:  2100   0.0    0.9 137.5   0.0   0.0    0.0    0.0 4.0e+04  S
+ 1:  2100   0.0    3.5 170.4   0.0   0.0    0.0    0.0 4.0e+04  S
+ 0:  2100   0.0  325.8 216.2   0.0   0.0    0.0    0.0 4.0e+04  -  1st unit
+ -:  2850   0.0    -     -     0     0      0      0   1.2e+05  -  basement
+
+Final total sediment volume: 332.59 1e3 km3
+Region = -660.04/717.14/-566.67/466.67 Nx=392 Ny=280
+plotting TOPO...
+plotting DRAINAGE...
+psbasemap: ERROR: Interval missing from -B string component a
+
+Time end: Sat Feb 12 05:24:50 2005
