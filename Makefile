@@ -1,4 +1,4 @@
-#---------------------------- tisc makefile ----------------------------
+#---------------------------- TISC makefile ----------------------------
 #
 #First read and modify options in ./config.mk
 #
