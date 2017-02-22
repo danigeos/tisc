@@ -1,7 +1,7 @@
 #!/bin/csh -f
 ##############################################################################
 #	Script to make postscript graphic output of TISC results with GMT 4.0
-#	Daniel Garcia-Castellanos
+#	D. Garcia-Castellanos
 ##############################################################################
 #Syntax: 	tisc.gmt.job 'model-root-prj' 
 ##############################################################################
