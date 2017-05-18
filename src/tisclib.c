@@ -13,13 +13,13 @@ int Allocate_Memory_for_external_use()
 	PRINT_INFO("TISC memo initialisation.");
 
 	topo		= alloc_matrix(Ny, Nx);
-	Units_base	= alloc_matrix(Ny, Nx);
+	Blocks_base	= alloc_matrix(Ny, Nx);
 	q		= alloc_matrix(Ny, Nx);
 	D		= alloc_matrix(Ny, Nx);
 	Dq		= alloc_matrix(Ny, Nx);
 	w		= alloc_matrix(Ny, Nx);
 
-	Units =    	(struct UNIT *) calloc(NmaxUnits, sizeof(struct UNIT));
+	Blocks =    	(struct BLOCK *) calloc(NmaxBlocks, sizeof(struct BLOCK));
 
 
 	if (hydro_model) {
@@ -81,11 +81,11 @@ int Allocate_Memory()
 
 int calculate_topo(float **topo_new)
 {
-	int 	i, j, i_unit;
+	int 	i, j, i_Block;
 
 	for (i=0; i<Ny; i++) for (j=0; j<Nx; j++) {
-		for (i_unit=0, topo_new[i][j]=Units_base[i][j]-w[i][j]; i_unit<numUnits; i_unit++) {
-			topo_new[i][j] += Units[i_unit].thick[i][j];
+		for (i_Block=0, topo_new[i][j]=Blocks_base[i][j]-w[i][j]; i_Block<numBlocks; i_Block++) {
+			topo_new[i][j] += Blocks[i_Block].thick[i][j];
 		}
 	}
 	return (1);
@@ -94,115 +94,115 @@ int calculate_topo(float **topo_new)
 
 
 
-int Delete_Unit(int i_unit)
+int Delete_Block(int i_Block)
 {
 	int  	k;
 
-	/*Deallocates one unit*/
+	/*Deallocates one Block*/
 
-	PRINT_DEBUG("unit %d out of %d", i_unit, numUnits);
+	PRINT_DEBUG("Block %d out of %d", i_Block, numBlocks);
 
-	free_matrix (Units[i_unit].thick, Ny);
-	if (Units[i_unit].type == 'V') {
-		free_matrix (Units[i_unit].vel_x,    Ny);
-		free_matrix (Units[i_unit].vel_y,    Ny);
-		free_matrix (Units[i_unit].visc,     Ny);
-		free_matrix (Units[i_unit].viscTer,  Ny);
+	free_matrix (Blocks[i_Block].thick, Ny);
+	if (Blocks[i_Block].type == 'V') {
+		free_matrix (Blocks[i_Block].vel_x,    Ny);
+		free_matrix (Blocks[i_Block].vel_y,    Ny);
+		free_matrix (Blocks[i_Block].visc,     Ny);
+		free_matrix (Blocks[i_Block].viscTer,  Ny);
 	}
-	if (Units[i_unit].type == 'S') {
-		free_matrix (Units[i_unit].detr_ratio,  Ny);
-		free_matrix (Units[i_unit].detr_grsize, Ny);
+	if (Blocks[i_Block].type == 'S') {
+		free_matrix (Blocks[i_Block].detr_ratio,  Ny);
+		free_matrix (Blocks[i_Block].detr_grsize, Ny);
 	}
-	for (k=i_unit; k<numUnits-1; k++) Units[k] = Units[k+1];
-	numUnits--;
-	if (i_unit<i_unit_insert) i_unit_insert--;
+	for (k=i_Block; k<numBlocks-1; k++) Blocks[k] = Blocks[k+1];
+	numBlocks--;
+	if (i_Block<i_Block_insert) i_Block_insert--;
 	return(1);
 }
 
 
 
 
-int insert_new_unit(int num_new_unit)
+int insert_new_Block(int num_new_Block)
 {
-	struct UNIT	unit_aux;
+	struct BLOCK	Block_aux;
 
-	/*Creates a new unit and increments numUnits by 1.
-		num_new_unit ranges from 0 to numUnits-1
-		Units above num_new_unit (inclusive) are shifted upwards.
+	/*Creates a new Block and increments numBlocks by 1.
+		num_new_Block ranges from 0 to numBlocks-1
+		Blocks above num_new_Block (inclusive) are shifted upwards.
 	*/
 
 	if (verbose_level>=2) fprintf(stdout, "  u"); fflush(stdout);
-	PRINT_DEBUG("New unit being created: %d ; numUnits= %d ; i_first_unit_load = %d ; i_unit_insert = %d", num_new_unit, numUnits, i_first_unit_load, i_unit_insert);
-	if (numUnits>NmaxUnits-5) PRINT_WARNING("Lots of units! "); 
+	PRINT_DEBUG("New Block being created: %d ; numBlocks= %d ; i_first_Block_load = %d ; i_Block_insert = %d", num_new_Block, numBlocks, i_first_Block_load, i_Block_insert);
+	if (numBlocks>NmaxBlocks-5) PRINT_WARNING("Lots of Blocks! "); 
 
-	Units[numUnits].thick = 	alloc_matrix (Ny, Nx);
-	Units[numUnits].vel_x = 	alloc_matrix (1, 1);
-	Units[numUnits].vel_y = 	alloc_matrix (1, 1);
-	Units[numUnits].visc  = 	alloc_matrix (1, 1);
-	Units[numUnits].viscTer = 	alloc_matrix (1, 1);
+	Blocks[numBlocks].thick = 	alloc_matrix (Ny, Nx);
+	Blocks[numBlocks].vel_x = 	alloc_matrix (1, 1);
+	Blocks[numBlocks].vel_y = 	alloc_matrix (1, 1);
+	Blocks[numBlocks].visc  = 	alloc_matrix (1, 1);
+	Blocks[numBlocks].viscTer = 	alloc_matrix (1, 1);
 
-	unit_aux = Units[numUnits];
-	for (int j_unit=numUnits; j_unit>num_new_unit; j_unit--) {
-		Units[j_unit] = Units[j_unit-1];
+	Block_aux = Blocks[numBlocks];
+	for (int j_Block=numBlocks; j_Block>num_new_Block; j_Block--) {
+		Blocks[j_Block] = Blocks[j_Block-1];
 	}
-	Units[num_new_unit] = unit_aux;
+	Blocks[num_new_Block] = Block_aux;
 
 	/*Default properties*/
-	Units[num_new_unit].type = '-';
-	Units[num_new_unit].age = Time;
-	Units[num_new_unit].density = 0;
-	Units[num_new_unit].erodibility = erodibility;
-	Units[num_new_unit].vel_x[0][0] = 0;
-	Units[num_new_unit].vel_y[0][0] = 0;
-	Units[num_new_unit].last_vel_time = Time;
-	Units[num_new_unit].time_stop = 9999*Matosec;
-	Units[num_new_unit].shift_x = 0;
-	Units[num_new_unit].shift_y = 0;
-	Units[num_new_unit].last_shift_x = 0;
-	Units[num_new_unit].last_shift_y = 0;
+	Blocks[num_new_Block].type = '-';
+	Blocks[num_new_Block].age = Time;
+	Blocks[num_new_Block].density = 0;
+	Blocks[num_new_Block].erodibility = erodibility;
+	Blocks[num_new_Block].vel_x[0][0] = 0;
+	Blocks[num_new_Block].vel_y[0][0] = 0;
+	Blocks[num_new_Block].last_vel_time = Time;
+	Blocks[num_new_Block].time_stop = 9999*Matosec;
+	Blocks[num_new_Block].shift_x = 0;
+	Blocks[num_new_Block].shift_y = 0;
+	Blocks[num_new_Block].last_shift_x = 0;
+	Blocks[num_new_Block].last_shift_y = 0;
 
-	numUnits++;
+	numBlocks++;
 
 	return (1);
 }
 
 
 
-int gradual_unit()
+int gradual_Block()
 {
 	float 	Dhl;
 
 	/*Non-instantaneous loading of a file load (distributed along time).*/
 
 	/*interpolation can only last until next load because then the original load shape is lost*/
-	if (!switch_gradual || Time>Units[i_unit_insert].time_stop-dt*.1) return(0);
+	if (!switch_gradual || Time>Blocks[i_Block_insert].time_stop-dt*.1) return(0);
 
 	for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) { 
-		Dhl = h_last_unit[i][j]*dt/(Units[i_unit_insert].time_stop-Units[i_unit_insert].age);
+		Dhl = h_last_unit[i][j]*dt/(Blocks[i_Block_insert].time_stop-Blocks[i_Block_insert].age);
 		/*Increments the load for this time interval*/
-		if (Units[i_unit_insert].type == 'H') 
-			Units[i_unit_insert].thick[i][j] = 0;
+		if (Blocks[i_Block_insert].type == 'H') 
+			Blocks[i_Block_insert].thick[i][j] = 0;
 		else {
 			if (Dhl>=0) {
-				/*fprintf(stderr, "\nnumUnits=%d, i_unit_insert=%d, i=%d, j=%d, Dhl=%f, n_image=%d, time_stop=%f, age=%f", numUnits, i_unit_insert, i, j, Dhl, n_image, Units[i_unit_insert].time_stop/secsperyr, Units[i_unit_insert].age/secsperyr);*/
-				Units[i_unit_insert].thick[i][j] += Dhl;
+				/*fprintf(stderr, "\nnumBlocks=%d, i_Block_insert=%d, i=%d, j=%d, Dhl=%f, n_image=%d, time_stop=%f, age=%f", numBlocks, i_Block_insert, i, j, Dhl, n_image, Blocks[i_Block_insert].time_stop/secsperyr, Blocks[i_Block_insert].age/secsperyr);*/
+				Blocks[i_Block_insert].thick[i][j] += Dhl;
 			}
 			else {
 				float 	h_load_aux, h_load_aux2;
 				int	k;
 				h_load_aux = fabs((double) Dhl);
-				for (k=i_unit_insert-1; h_load_aux>0 && k>=0; k--) {
-					h_load_aux2 = MIN_2(Units[k].thick[i][j], h_load_aux);
+				for (k=i_Block_insert-1; h_load_aux>0 && k>=0; k--) {
+					h_load_aux2 = MIN_2(Blocks[k].thick[i][j], h_load_aux);
 					h_load_aux -= h_load_aux2;
-					Units[k].thick[i][j] -= h_load_aux2;
+					Blocks[k].thick[i][j] -= h_load_aux2;
 				}
-				/*k is the deepest eroded unit*/
+				/*k is the deepest eroded Block*/
 				if (k==-1) {
-					Units_base[i][j] -= h_load_aux;
+					Blocks_base[i][j] -= h_load_aux;
 				}
 			}
 		}
-		Dq[i][j] += (Units[i_unit_insert].density-densenv)*g*Dhl;
+		Dq[i][j] += (Blocks[i_Block_insert].density-densenv)*g*Dhl;
 	}
 
 	return(1);
@@ -759,28 +759,28 @@ int Perfil_info(float *perfil, int n, float *max, float *min)
 
 
 
-int RepareUnits()
+int Repare_Blocks()
 {
-	int  	unit_max_arrange;
+	int  	i_Block_max_arrange;
 
-	/*Avoids units to have negative thickness or 0 volume*/
+	/*Avoids Blocks to have negative thickness or 0 volume*/
 
 	PRINT_DEBUG("");
 
-	unit_max_arrange = (switch_topoest)? i_first_unit_load : numUnits;
-	for (int unit=1; unit < unit_max_arrange; unit++) {
+	i_Block_max_arrange = (switch_topoest)? i_first_Block_load : numBlocks;
+	for (int i_Block=1; i_Block < i_Block_max_arrange; i_Block++) {
 		for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) {
-			Units[unit-1].thick[i][j] = MAX_2(Units[unit-1].thick[i][j], 0);
+			Blocks[i_Block-1].thick[i][j] = MAX_2(Blocks[i_Block-1].thick[i][j], 0);
 		}
 	}
-	/*Delete empty units*/
-	for (int unit=0; unit<numUnits; unit++) {
-		float unit_volume=0;
-		for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++)  unit_volume += Units[unit].thick[i][j];
-		unit_volume *= dx*dy;
-		if (unit_volume<1e4 && Units[unit].type != 'H' && Units[unit].type != 'I') {
-			PRINT_DEBUG("will remove unit %d (type %c) out of %d", unit, Units[unit].type, numUnits);
-			Delete_Unit(unit); unit--;
+	/*Delete empty Blocks*/
+	for (int i_Block=0; i_Block<numBlocks; i_Block++) {
+		float Block_volume=0;
+		for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++)  Block_volume += Blocks[i_Block].thick[i][j];
+		Block_volume *= dx*dy;
+		if (Block_volume<1e4 && Blocks[i_Block].type != 'H' && Blocks[i_Block].type != 'I') {
+			PRINT_DEBUG("will remove Block %d (type %c) out of %d", i_Block, Blocks[i_Block].type, numBlocks);
+			Delete_Block(i_Block); i_Block--;
 		}
 	}
 	PRINT_DEBUG("Repare finished");

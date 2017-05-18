@@ -146,7 +146,7 @@ int read_file_horiz_record_time()
 		horiz_record_time[i] = aux1[i]*Matosec;
 	}
 	
-	/*desactivate automatic sediment units generation*/
+	/*desactivate automatic sediment Blocks generation*/
 	/*if (n_record_times) dt_record=0;*/
 	
 	free(aux1); 
@@ -408,7 +408,7 @@ int read_file_resume(char *filename)
 	  REQUIRED TO RESUME A PROJECT RUN
 	*/
 
-	int 	i, j, numUnits_aux, i_unit_insert_aux, run_type_aux, end_check;
+	int 	i, j, numBlocks_aux, i_Block_insert_aux, run_type_aux, end_check;
 	float 	**auxptr1;
 	FILE 	*file;
 	char  	version_aux[LENGTHVERS], projectname_aux[MAXLENFILE];
@@ -477,9 +477,9 @@ int read_file_resume(char *filename)
 	fread(&n_sea_level_input_points, sizeof(int),	1, 	file);
 	fread(&n_eros_level_input_points, sizeof(int),	1, 	file);
 	fread(&n_record_times, 	sizeof(int),		1, 	file);
-	fread(&i_first_unit_load, sizeof(int),	1, 	file);
-	fread(&i_unit_insert_aux, sizeof(int),		1, 	file);
-	fread(&numUnits_aux, 	sizeof(int),		1, 	file);
+	fread(&i_first_Block_load, sizeof(int),	1, 	file);
+	fread(&i_Block_insert_aux, sizeof(int),		1, 	file);
+	fread(&numBlocks_aux, 	sizeof(int),		1, 	file);
 	fread(&nwrotenfiles, 	sizeof(int),		1, 	file);
 	fread(&run_type_aux, 	sizeof(int),		1, 	file);
 
@@ -494,7 +494,7 @@ int read_file_resume(char *filename)
 	fread(&switch_file_out, 	sizeof(BOOL),		1, 	file);
 	fread(&switch_gradual, 	sizeof(BOOL),		1, 	file);
 	fread(&switch_topoest, 		sizeof(BOOL),		1, 	file);
-	fread(&switch_write_file_Units, sizeof(BOOL),		1, 	file);
+	fread(&switch_write_file_Blocks, sizeof(BOOL),		1, 	file);
 	fread(&deform_sed, sizeof(BOOL),		1, 	file);
 
 
@@ -551,7 +551,7 @@ int read_file_resume(char *filename)
 	for (i=0; i<Ny; i++) fread(h_last_unit[i], sizeof(float), Nx, file);
 	for (i=0; i<Ny; i++) fread(EET[i], sizeof(float), Nx, file);
 	for (i=0; i<Ny; i++) fread(topo[i], sizeof(float), Nx, file);
-	for (i=0; i<Ny; i++) fread(Units_base[i], sizeof(float), Nx, file);
+	for (i=0; i<Ny; i++) fread(Blocks_base[i], sizeof(float), Nx, file);
 
 	horiz_record_time = calloc(n_record_times, sizeof(float));
 	fread(horiz_record_time, sizeof(float), n_record_times, file);
@@ -581,43 +581,43 @@ int read_file_resume(char *filename)
 		}
 	}
 
-	/*numUnits and i_unit_insert are special*/
-	for (j=0; j<numUnits_aux; j++) {
-		insert_new_unit(numUnits);
-		auxptr1 = Units[numUnits-1].thick;
-		fread(&Units[numUnits-1], sizeof(struct UNIT), 1, file);
-		Units[numUnits-1].thick = 	auxptr1;
+	/*numBlocks and i_Block_insert are special*/
+	for (j=0; j<numBlocks_aux; j++) {
+		insert_new_Block(numBlocks);
+		auxptr1 = Blocks[numBlocks-1].thick;
+		fread(&Blocks[numBlocks-1], sizeof(struct BLOCK), 1, file);
+		Blocks[numBlocks-1].thick = 	auxptr1;
 	}
-	if (numUnits_aux != numUnits) PRINT_ERROR("%d units?!", numUnits_aux);
-	i_unit_insert=i_unit_insert_aux;
-	for (j=0; j<numUnits; j++) {
-		for (i=0; i<Ny; i++) 	fread(Units[j].thick[i], 	sizeof(float),	Nx, 	file);
+	if (numBlocks_aux != numBlocks) PRINT_ERROR("%d Blocks?!", numBlocks_aux);
+	i_Block_insert=i_Block_insert_aux;
+	for (j=0; j<numBlocks; j++) {
+		for (i=0; i<Ny; i++) 	fread(Blocks[j].thick[i], 	sizeof(float),	Nx, 	file);
 	}
-	for (j=0; j<numUnits; j++) {
-	    if (Units[j].type == 'V') {
-		Units[j].vel_x = alloc_matrix(Ny, Nx);
-		Units[j].vel_y = alloc_matrix(Ny, Nx);
-		Units[j].visc  = alloc_matrix(Ny, Nx);
-		Units[j].viscTer = alloc_matrix(Ny, Nx);
+	for (j=0; j<numBlocks; j++) {
+	    if (Blocks[j].type == 'V') {
+		Blocks[j].vel_x = alloc_matrix(Ny, Nx);
+		Blocks[j].vel_y = alloc_matrix(Ny, Nx);
+		Blocks[j].visc  = alloc_matrix(Ny, Nx);
+		Blocks[j].viscTer = alloc_matrix(Ny, Nx);
 		for (i=0; i<Ny; i++) {
-			fread(Units[j].vel_x[i], 	sizeof(float),	Nx, 	file);
-			fread(Units[j].vel_y[i], 	sizeof(float),	Nx, 	file);
-			fread(Units[j].visc[i], 	sizeof(float),	Nx, 	file);
-			fread(Units[j].viscTer[i], 	sizeof(float),	Nx, 	file);
+			fread(Blocks[j].vel_x[i], 	sizeof(float),	Nx, 	file);
+			fread(Blocks[j].vel_y[i], 	sizeof(float),	Nx, 	file);
+			fread(Blocks[j].visc[i], 	sizeof(float),	Nx, 	file);
+			fread(Blocks[j].viscTer[i], 	sizeof(float),	Nx, 	file);
 		}
 	    }
 	    else {
-		Units[j].vel_x = alloc_matrix(1, 1);
-		Units[j].vel_y = alloc_matrix(1, 1);
-		fread(&Units[j].vel_x[0][0], 	sizeof(float),	1, 	file);
-		fread(&Units[j].vel_y[0][0], 	sizeof(float),	1, 	file);
+		Blocks[j].vel_x = alloc_matrix(1, 1);
+		Blocks[j].vel_y = alloc_matrix(1, 1);
+		fread(&Blocks[j].vel_x[0][0], 	sizeof(float),	1, 	file);
+		fread(&Blocks[j].vel_y[0][0], 	sizeof(float),	1, 	file);
 	    }
-	    if (Units[j].type == 'S') {
-		Units[j].detr_ratio = alloc_matrix(Ny, Nx);
-		Units[j].detr_grsize = alloc_matrix(Ny, Nx);
+	    if (Blocks[j].type == 'S') {
+		Blocks[j].detr_ratio = alloc_matrix(Ny, Nx);
+		Blocks[j].detr_grsize = alloc_matrix(Ny, Nx);
 		for (i=0; i<Ny; i++) {
-			fread(Units[j].detr_ratio[i], 	sizeof(float),	Nx, 	file);
-			fread(Units[j].detr_grsize[i], 	sizeof(float),	Nx, 	file);
+			fread(Blocks[j].detr_ratio[i], 	sizeof(float),	Nx, 	file);
+			fread(Blocks[j].detr_grsize[i], 	sizeof(float),	Nx, 	file);
 		}
 	    }
 	}
@@ -811,7 +811,7 @@ int read_file_Te()
 	/*Writes Te output file*/
 	sprintf(filename, "%s.eeth", projectname); 
 	remove(filename);
-	if (switch_EET_file && switch_ps && switch_write_file_Units) {
+	if (switch_EET_file && switch_ps && switch_write_file_Blocks) {
 		Write_Open_Filename_Return (".eeth", "wt", 0);
 		for (i=0; i<Ny; i++) {
 			for (j=0; j<Nx; j++) {
@@ -827,7 +827,7 @@ int read_file_Te()
 
 
 
-int read_file_output_units ()
+int read_file_output_Blocks ()
 {
 	int 	i, j, k, num_fields;
 	FILE 	*file ;
@@ -837,16 +837,16 @@ int read_file_output_units ()
 	/*
 	  This routine is not used by tisc, but by related programs such 
 	  as cuthrz or gravanom_3D	  
-	  READS A FILE WITH UNIT HEIGHTS IN COLUMNS
+	  READS A FILE WITH ELEVATION OF HORIZONS IN COLUMNS
 	*/
 
 	/*Horizons file*/
-	Read_Open_Filename_Return(".hrz", "rt", "3D units")
+	Read_Open_Filename_Return(".hrz", "rt", "3D Blocks")
 
 	fgets(auxstr, MAXLENLINE-1, file);
 	fgets(auxstr, MAXLENLINE-1, file);
-	/*Counts number of units and Nx,Ny, and finds densities in line #2*/
-	numUnits = -3 + sscanf(auxstr, 
+	/*Counts number of Blocks and Nx,Ny, and finds densities in line #2*/
+	numBlocks = -3 + sscanf(auxstr, 
 		"%s %s %f "
 		"%f %f %f %f %f %f %f %f %f %f   %f %f %f %f %f %f %f %f %f %f   %f %f %f %f %f %f %f %f %f %f   %f %f %f %f %f %f %f %f %f %f   %f %f %f %f %f %f %f %f %f %f " 
 		"%f %f %f %f %f %f %f %f %f %f   %f %f %f %f %f %f %f %f %f %f   %f %f %f %f %f %f %f %f %f %f   %f %f %f %f %f %f %f %f %f %f   %f %f %f %f %f %f %f %f %f %f " 
@@ -884,22 +884,22 @@ int read_file_output_units ()
 	xmax=x*1e3; ymin=y*1e3;
 	dx = (xmax-xmin)/(Nx-1);
 	dy = (ymax-ymin)/(Ny-1);
-	Units_base = alloc_matrix(Ny, Nx);
+	Blocks_base = alloc_matrix(Ny, Nx);
 	topo = alloc_matrix(Ny, Nx);
-	Units =  (struct UNIT *) calloc(NmaxUnits, sizeof(struct UNIT));
-	for (k=0; k<numUnits; k++) {
-		Units[k].thick = alloc_matrix(Ny, Nx);
-		Units[k].density = dens[k];
+	Blocks =  (struct BLOCK *) calloc(NmaxBlocks, sizeof(struct BLOCK));
+	for (k=0; k<numBlocks; k++) {
+		Blocks[k].thick = alloc_matrix(Ny, Nx);
+		Blocks[k].density = dens[k];
 	}
 	if (verbose_level>=1) {
 		fprintf (stderr, 
-			"\nnumUnits=%d;"
+			"\nnumBlocks=%d;"
 			"\nxmin/xmax/ymin/ymax = %.1f/%.1f/%.1f/%.1f m"
 			"\nNx=%d, Ny=%d"
 			"\ndenscrust = %.1f kg/m3",
-			numUnits, xmin,xmax,ymin,ymax, Nx,Ny, denscrust);
-		for (i=0; i<numUnits; i++) 
-			fprintf (stderr, "\ndens[%d] = %.1f kg/m3", i, Units[i].density);
+			numBlocks, xmin,xmax,ymin,ymax, Nx,Ny, denscrust);
+		for (i=0; i<numBlocks; i++) 
+			fprintf (stderr, "\ndens[%d] = %.1f kg/m3", i, Blocks[i].density);
 	}
 
 	rewind(file);
@@ -907,11 +907,11 @@ int read_file_output_units ()
 	fgets(auxstr, MAXLENLINE-1, file);
 	fgets(auxstr, MAXLENLINE-1, file);
 	for (i=0; i<Ny; i++)  for (j=0; j<Nx; j++) {
-		fscanf(file, "%f %f %f", &x, &y, &Units_base[i][j]);
-		for (k=0,horiant=Units_base[i][j]; k<numUnits; k++) {
+		fscanf(file, "%f %f %f", &x, &y, &Blocks_base[i][j]);
+		for (k=0,horiant=Blocks_base[i][j]; k<numBlocks; k++) {
 			fscanf(file, "%f", &hori);
-			Units[k].thick[i][j] = hori-horiant;
-			if (Units[k].thick[i][j]<0) PRINT_WARNING("negative thickness in unit %d at %.1f,%.1f.", k, x, y) ;
+			Blocks[k].thick[i][j] = hori-horiant;
+			if (Blocks[k].thick[i][j]<0) PRINT_WARNING("negative thickness in Block %d at %.1f,%.1f.", k, x, y) ;
 			horiant=hori;
 		}
 		topo[i][j] = hori;
@@ -923,7 +923,7 @@ int read_file_output_units ()
 
 
 
-int read_file_2D_CS (struct UNIT *Units, struct CS2D *CrossSection, int Nx2D)
+int read_file_2D_CS (struct BLOCK *Blocks, struct CS2D *CrossSection, int Nx2D)
 {
 	/* 
 	  READ THE CROSS SECTION POLIGON FILE *.PRFL 
@@ -1002,28 +1002,28 @@ int read_file_2D_CS (struct UNIT *Units, struct CS2D *CrossSection, int Nx2D)
 /*******************************  OUTPUT  *************************************/
 
 
-int Calculate_2D_Cross_Section (struct UNIT *Units, struct CS2D *CrossSection, int Nx2D)
+int Calculate_2D_Cross_Section (struct BLOCK *Blocks, struct CS2D *CrossSection, int Nx2D)
 {
-	int	i, i2D, j, i_unit;
+	int	i, i2D, j, i_Block;
 	float	**hori_aux;
 
 	hori_aux = alloc_matrix(Ny, Nx);
 
-	/*Units_base horizon:*/
+	/*Blocks_base horizon:*/
 	for (i=0; i<Ny; i++)  for (j=0; j<Nx; j++) {
-		hori_aux[i][j] = Units_base[i][j] - w[i][j];
+		hori_aux[i][j] = Blocks_base[i][j] - w[i][j];
 	}
 	for (i2D=0; i2D<Nx2D; i2D++) {
 		CrossSection[i2D].horiz[0] =
 			interpol_point_in_mesh (hori_aux, Nx, Ny, xmin, dx, ymin, dy, CrossSection[i2D].x, CrossSection[i2D].y) ;
 	}
-	/*Unit horizons:*/
-	for (i_unit=0; i_unit<numUnits; i_unit++) {
+	/*Block horizons:*/
+	for (i_Block=0; i_Block<numBlocks; i_Block++) {
 		for (i=0; i<Ny; i++)  for (j=0; j<Nx; j++) {
-			hori_aux[i][j] += Units[i_unit].thick[i][j];
+			hori_aux[i][j] += Blocks[i_Block].thick[i][j];
 		}
 		for (i2D=0; i2D<Nx2D; i2D++) {
-			CrossSection[i2D].horiz[i_unit+1] =
+			CrossSection[i2D].horiz[i_Block+1] =
 				interpol_point_in_mesh (hori_aux, Nx, Ny, xmin, dx, ymin, dy, CrossSection[i2D].x, CrossSection[i2D].y) ;
 		}
 	}
@@ -1033,7 +1033,7 @@ int Calculate_2D_Cross_Section (struct UNIT *Units, struct CS2D *CrossSection, i
                         hori_aux[i][j] += h_water[i][j];
                 }
                 for (i2D=0; i2D<Nx2D; i2D++) {
-                        CrossSection[i2D].horiz[numUnits+1] =
+                        CrossSection[i2D].horiz[numBlocks+1] =
                                 interpol_point_in_mesh (hori_aux, Nx, Ny, xmin, dx, ymin, dy, CrossSection[i2D].x, CrossSection[i2D].y) ;
                 }
         }
@@ -1044,7 +1044,7 @@ int Calculate_2D_Cross_Section (struct UNIT *Units, struct CS2D *CrossSection, i
 			hori_aux[i][j] += ice_thickness[i][j];
 		}
 		for (i2D=0; i2D<Nx2D; i2D++) {
-			CrossSection[i2D].horiz[numUnits+2] =
+			CrossSection[i2D].horiz[numBlocks+2] =
 				interpol_point_in_mesh (hori_aux, Nx, Ny, xmin, dx, ymin, dy, CrossSection[i2D].x, CrossSection[i2D].y) ;
 		}
 	}
@@ -1068,17 +1068,17 @@ int write_file_cross_section ()
 	*/
 
 	CrossSection = (struct CS2D *) calloc(Nx2D, sizeof(struct CS2D));
-	for (i=0; i<Nx2D; i++)  CrossSection[i].horiz = (float *) calloc(numUnits+2, sizeof(float));
+	for (i=0; i<Nx2D; i++)  CrossSection[i].horiz = (float *) calloc(numBlocks+2, sizeof(float));
 
-	switch_CrossSection = read_file_2D_CS(Units, CrossSection, Nx2D);
+	switch_CrossSection = read_file_2D_CS(Blocks, CrossSection, Nx2D);
 
 	if (!switch_CrossSection) {for (i=0; i<Nx2D; i++)  free(CrossSection[i].horiz); free(CrossSection);}
 	Write_Open_Filename_Return (".pfl", "wt", !switch_CrossSection);
 
-	Calculate_2D_Cross_Section (Units, CrossSection, Nx2D);
+	Calculate_2D_Cross_Section (Blocks, CrossSection, Nx2D);
 
 	fprintf(file, "# x(km)  \t y(km)  \t  long(km)\t   z(m)-->\n#\t\t\t\t  Densities->\t%8.0f", denscrust) ;
-	for (i=0; i<numUnits; i++) fprintf(file, "\t%8.0f", Units[i].density);
+	for (i=0; i<numBlocks; i++) fprintf(file, "\t%8.0f", Blocks[i].density);
 
         /*====Added by Michael Berry====*/
         if (hydro_model) fprintf(file,"\t%8.0f", denswater);
@@ -1086,26 +1086,26 @@ int write_file_cross_section ()
 
 	if (K_ice_eros) fprintf(file, "\t%8.0f", densice);
 	fprintf(file, "\n#\t\t\t\t  Ages->\t%8.2f", Timeini/Matosec);
-	for (i=0; i<numUnits; i++) fprintf(file, "\t%8.2f", Units[i].age/Matosec);
+	for (i=0; i<numBlocks; i++) fprintf(file, "\t%8.2f", Blocks[i].age/Matosec);
 	for (i=0; i<Nx2D; i++) {
 		fprintf(file, "\n%8.1f\t%8.1f\t%8.1f  ",
 			CrossSection[i].x/1000,
 			CrossSection[i].y/1000,
 			CrossSection[i].l/1000) ;
-		for (j=0; j<numUnits+1; j++) fprintf(file, "\t%8.1f", CrossSection[i].horiz[j] );
+		for (j=0; j<numBlocks+1; j++) fprintf(file, "\t%8.1f", CrossSection[i].horiz[j] );
                 /*===========Added by Michael Berry====*/
 
-                if (hydro_model) fprintf(file,"\t%8.1f", CrossSection[i].horiz[numUnits+1]);
+                if (hydro_model) fprintf(file,"\t%8.1f", CrossSection[i].horiz[numBlocks+1]);
 
                 /*===========end of added===============*/
-		if (K_ice_eros) fprintf(file, "\t%8.1f", CrossSection[i].horiz[numUnits+2] );
+		if (K_ice_eros) fprintf(file, "\t%8.1f", CrossSection[i].horiz[numBlocks+2] );
 	}
 	fclose(file);
 
 	if (verbose_level>=1) {
 		float max2D=-1e9, min2D=1e9, *basam2D;
 		basam2D = alloc_array(Nx2D);
-		for(i=0; i<Nx2D; i++)  basam2D[i] = CrossSection[i].horiz[numUnits];
+		for(i=0; i<Nx2D; i++)  basam2D[i] = CrossSection[i].horiz[numBlocks];
 		Perfil_info(basam2D, Nx2D, &max2D, &min2D);
 		fprintf(stdout, "\n  2D prof. :  max = %9.1f m     min = %9.1f m   ", max2D, min2D);
 		free(basam2D);
@@ -1118,28 +1118,28 @@ int write_file_cross_section ()
 
 
 
-int Calculate_2D_Cross_Section_bk (struct UNIT *Units, struct CS2D *CrossSection, int Nx2D)
+int Calculate_2D_Cross_Section_bk (struct BLOCK *Blocks, struct CS2D *CrossSection, int Nx2D)
 {
-	int	i, i2D, j, i_unit;
+	int	i, i2D, j, i_Block;
 	float	**hori_aux;
 
 	hori_aux = alloc_matrix(Ny, Nx);
 
-	/*Units_base horizon:*/
+	/*Blocks_base horizon:*/
 	for (i=0; i<Ny; i++)  for (j=0; j<Nx; j++) {
-		hori_aux[i][j] = Units_base[i][j] - w[i][j];
+		hori_aux[i][j] = Blocks_base[i][j] - w[i][j];
 	}
 	for (i2D=0; i2D<Nx2D; i2D++) {
 		CrossSection[i2D].horiz[0] = 
 			interpol_point_in_mesh (hori_aux, Nx, Ny, xmin, dx, ymin, dy, CrossSection[i2D].x, CrossSection[i2D].y) ;
 	}
-	/*Unit horizons:*/
-	for (i_unit=0; i_unit<numUnits; i_unit++) {
+	/*Block horizons:*/
+	for (i_Block=0; i_Block<numBlocks; i_Block++) {
 		for (i=0; i<Ny; i++)  for (j=0; j<Nx; j++) {
-			hori_aux[i][j] += Units[i_unit].thick[i][j];
+			hori_aux[i][j] += Blocks[i_Block].thick[i][j];
 		}
 		for (i2D=0; i2D<Nx2D; i2D++) {
-			CrossSection[i2D].horiz[i_unit+1] = 
+			CrossSection[i2D].horiz[i_Block+1] = 
 				interpol_point_in_mesh (hori_aux, Nx, Ny, xmin, dx, ymin, dy, CrossSection[i2D].x, CrossSection[i2D].y) ;
 		}
 	}
@@ -1149,7 +1149,7 @@ int Calculate_2D_Cross_Section_bk (struct UNIT *Units, struct CS2D *CrossSection
 			hori_aux[i][j] += ice_thickness[i][j];
 		}
 		for (i2D=0; i2D<Nx2D; i2D++) {
-			CrossSection[i2D].horiz[numUnits+1] =
+			CrossSection[i2D].horiz[numBlocks+1] =
 				interpol_point_in_mesh (hori_aux, Nx, Ny, xmin, dx, ymin, dy, CrossSection[i2D].x, CrossSection[i2D].y) ;
 		}
 	}
@@ -1173,34 +1173,34 @@ int write_file_cross_section_bk ()
 	*/
 
 	CrossSection = (struct CS2D *) calloc(Nx2D, sizeof(struct CS2D));
-	for (i=0; i<Nx2D; i++)  CrossSection[i].horiz = (float *) calloc(numUnits+2, sizeof(float));
+	for (i=0; i<Nx2D; i++)  CrossSection[i].horiz = (float *) calloc(numBlocks+2, sizeof(float));
 
-	switch_CrossSection = read_file_2D_CS(Units, CrossSection, Nx2D);
+	switch_CrossSection = read_file_2D_CS(Blocks, CrossSection, Nx2D);
 
 	if (!switch_CrossSection) {for (i=0; i<Nx2D; i++)  free(CrossSection[i].horiz); free(CrossSection);}
 	Write_Open_Filename_Return (".pfl", "wt", !switch_CrossSection);
 
-	Calculate_2D_Cross_Section (Units, CrossSection, Nx2D);
+	Calculate_2D_Cross_Section (Blocks, CrossSection, Nx2D);
 
 	fprintf(file, "# x(km)  \t y(km)  \t  long(km)\t   z(m)-->\n#\t\t\t\t  Densities->\t%8.0f", denscrust) ;
-	for (i=0; i<numUnits; i++) fprintf(file, "\t%8.0f", Units[i].density);
+	for (i=0; i<numBlocks; i++) fprintf(file, "\t%8.0f", Blocks[i].density);
 	if (K_ice_eros) fprintf(file, "\t%8.0f", densice);
 	fprintf(file, "\n#\t\t\t\t  Ages->\t%8.2f", Timeini/Matosec);
-	for (i=0; i<numUnits; i++) fprintf(file, "\t%8.2f", Units[i].age/Matosec);
+	for (i=0; i<numBlocks; i++) fprintf(file, "\t%8.2f", Blocks[i].age/Matosec);
 	for (i=0; i<Nx2D; i++) {
 		fprintf(file, "\n%8.1f\t%8.1f\t%8.1f  ",
 			CrossSection[i].x/1000,
 			CrossSection[i].y/1000,
 			CrossSection[i].l/1000) ;
-		for (j=0; j<numUnits+1; j++) fprintf(file, "\t%8.1f", CrossSection[i].horiz[j] );
-		if (K_ice_eros) fprintf(file, "\t%8.1f", CrossSection[i].horiz[numUnits+1] );
+		for (j=0; j<numBlocks+1; j++) fprintf(file, "\t%8.1f", CrossSection[i].horiz[j] );
+		if (K_ice_eros) fprintf(file, "\t%8.1f", CrossSection[i].horiz[numBlocks+1] );
 	}
 	fclose(file);
 
 	if (verbose_level>=1) {
 		float max2D=-1e9, min2D=1e9, *basam2D;
 		basam2D = alloc_array(Nx2D);
-		for(i=0; i<Nx2D; i++)  basam2D[i] = CrossSection[i].horiz[numUnits];
+		for(i=0; i<Nx2D; i++)  basam2D[i] = CrossSection[i].horiz[numBlocks];
 		Perfil_info(basam2D, Nx2D, &max2D, &min2D);
 		fprintf(stdout, "\n  2D prof. :  max = %9.1f m     min = %9.1f m   ", max2D, min2D);
 		free(basam2D);
@@ -1213,27 +1213,27 @@ int write_file_cross_section_bk ()
 
 
 
-int write_file_Units ()
+int write_file_Blocks ()
 {
 	int 	i, j, k ;
 	FILE 	*file ;
 	float 	hori;
 
 	/*
-	  WRITES A FILE WITH UNIT HEIGHTS IN COLUMNS
+	  WRITES A FILE WITH ELEVATION OF ELEVATION OF SURFACES BETWEEN BLOCKS IN COLUMNS
 	*/
 
-	Write_Open_Filename_Return (".hrz", "wt", !switch_write_file_Units);
+	Write_Open_Filename_Return (".hrz", "wt", !switch_write_file_Blocks);
 
 	fprintf(file, "# x(km)\ty(km) \t z(m)-->  \t\t(t=%.2f My)\n#    \tDens:\t%.0f", Time/Matosec, denscrust) ;
-	for (k=0; k<numUnits; k++) {
-		fprintf(file, "\t%.0f", Units[k].density);
+	for (k=0; k<numBlocks; k++) {
+		fprintf(file, "\t%.0f", Blocks[k].density);
 	}
 	for (i=0; i<Ny; i++)  for (j=0; j<Nx; j++) {
-		hori = Units_base[i][j] - w[i][j];
+		hori = Blocks_base[i][j] - w[i][j];
 		fprintf(file, "\n%7.2f\t%7.2f\t%.1f", (xmin+j*dx)/1000, (ymax-i*dy)/1000, hori);
-		for (k=0; k<numUnits; k++) {
-			hori += Units[k].thick[i][j];
+		for (k=0; k<numBlocks; k++) {
+			hori += Blocks[k].thick[i][j];
 			fprintf(file, "\t%.1f",  hori);
 		}
 		topo[i][j]=hori;
@@ -1257,7 +1257,7 @@ int write_file_drainage ()
 	*/
 
 #ifdef SURFACE_TRANSPORT
-	Write_Open_Filename_Return (".xyw", "wt", !switch_write_file_Units || Time==Timeini || !hydro_model);
+	Write_Open_Filename_Return (".xyw", "wt", !switch_write_file_Blocks || Time==Timeini || !hydro_model);
 
 	fprintf(file, "#TISC output: drainage.  sea_level: %.1f m\n# x(km) y(km) water(m3/s) sed[kg/s] type topo[m] x-to y-to topo-to precipt[mm/y] evapora[mm/y] ice_thick[m] ice_sed_load[m] swim_dist[km]\n", sea_level);
 	for (i=0; i<Ny; i++) for (j=0; j<Nx; j++) {
@@ -1541,7 +1541,7 @@ int write_file_ice ()
 	*/
 
 #ifdef SURFACE_TRANSPORT
-	Write_Open_Filename_Return (".ice", "wt", !switch_write_file_Units || !hydro_model || !K_ice_eros || Time==Timeini);
+	Write_Open_Filename_Return (".ice", "wt", !switch_write_file_Blocks || !hydro_model || !K_ice_eros || Time==Timeini);
 
 	fprintf(file, "#TISC output: ice flow.  sea_level: %.1f m\n# x(km) y(km) topo[m] ice_thick[m]  vx_sl vy_sl  vx_df vy_df  sol_prec[mm/y] ice_sed_load[m]\n", sea_level);
 	for (i=0; i<Ny; i++) for (j=0; j<Nx; j++) {
@@ -1572,7 +1572,7 @@ int write_file_resume()
 	  REQUIRED TO RESUME A PROJECT RUN
 	*/
 
-	Write_Open_Filename_Return (".all", "wb", !switch_write_file || !switch_write_file_Units);
+	Write_Open_Filename_Return (".all", "wb", !switch_write_file || !switch_write_file_Blocks);
 
 	/*Defined in universal.h:*/
 	fwrite(&Nx, 		sizeof(int),		1, 	file);
@@ -1623,9 +1623,9 @@ int write_file_resume()
 	fwrite(&n_sea_level_input_points, sizeof(int),	1, 	file);
 	fwrite(&n_eros_level_input_points, sizeof(int),	1, 	file);
 	fwrite(&n_record_times, 	sizeof(int),		1, 	file);
-	fwrite(&i_first_unit_load, sizeof(int),	1, 	file);
-	fwrite(&i_unit_insert, sizeof(int),		1, 	file);
-	fwrite(&numUnits, 	sizeof(int),		1, 	file);
+	fwrite(&i_first_Block_load, sizeof(int),	1, 	file);
+	fwrite(&i_Block_insert, sizeof(int),		1, 	file);
+	fwrite(&numBlocks, 	sizeof(int),		1, 	file);
 	fwrite(&nwrotenfiles, 	sizeof(int),		1, 	file);
 	fwrite(&run_type, 	sizeof(int),		1, 	file);
 
@@ -1640,7 +1640,7 @@ int write_file_resume()
 	fwrite(&switch_file_out, 	sizeof(BOOL),		1, 	file);
 	fwrite(&switch_gradual, 	sizeof(BOOL),		1, 	file);
 	fwrite(&switch_topoest, 		sizeof(BOOL),		1, 	file);
-	fwrite(&switch_write_file_Units, sizeof(BOOL),		1, 	file);
+	fwrite(&switch_write_file_Blocks, sizeof(BOOL),		1, 	file);
 	fwrite(&deform_sed, sizeof(BOOL),		1, 	file);
 
 
@@ -1697,7 +1697,7 @@ int write_file_resume()
 	for (i=0; i<Ny; i++) fwrite(h_last_unit[i], sizeof(float), Nx, file);
 	for (i=0; i<Ny; i++) fwrite(EET[i], sizeof(float), Nx, file);
 	for (i=0; i<Ny; i++) fwrite(topo[i], sizeof(float), Nx, file);
-	for (i=0; i<Ny; i++) fwrite(Units_base[i], sizeof(float), Nx, file);
+	for (i=0; i<Ny; i++) fwrite(Blocks_base[i], sizeof(float), Nx, file);
 
 	fwrite(horiz_record_time, sizeof(float), n_record_times, file);
 
@@ -1720,27 +1720,27 @@ int write_file_resume()
 		}
 	}
 
-	fwrite(Units, 	sizeof(struct UNIT),	numUnits, file);
-	for (j=0; j<numUnits; j++) {
-		for (i=0; i<Ny; i++) fwrite(Units[j].thick[i], sizeof(float), Nx, file);
+	fwrite(Blocks, 	sizeof(struct BLOCK),	numBlocks, file);
+	for (j=0; j<numBlocks; j++) {
+		for (i=0; i<Ny; i++) fwrite(Blocks[j].thick[i], sizeof(float), Nx, file);
 	}
-	for (j=0; j<numUnits; j++) {
-		if (Units[j].type == 'V') {
+	for (j=0; j<numBlocks; j++) {
+		if (Blocks[j].type == 'V') {
 			for (i=0; i<Ny; i++) {
-				fwrite(Units[j].vel_x[i], sizeof(float), Nx, file);
-				fwrite(Units[j].vel_y[i], sizeof(float), Nx, file);
-				fwrite(Units[j].visc[i],  sizeof(float), Nx, file);
-				fwrite(Units[j].viscTer[i],  sizeof(float), Nx, file);
+				fwrite(Blocks[j].vel_x[i], sizeof(float), Nx, file);
+				fwrite(Blocks[j].vel_y[i], sizeof(float), Nx, file);
+				fwrite(Blocks[j].visc[i],  sizeof(float), Nx, file);
+				fwrite(Blocks[j].viscTer[i],  sizeof(float), Nx, file);
 			}
 		}
 		else {
-				fwrite(&Units[j].vel_x[0][0], sizeof(float), 1, file);
-				fwrite(&Units[j].vel_y[0][0], sizeof(float), 1, file);
+				fwrite(&Blocks[j].vel_x[0][0], sizeof(float), 1, file);
+				fwrite(&Blocks[j].vel_y[0][0], sizeof(float), 1, file);
 		}
-		if (Units[j].type == 'S') {
+		if (Blocks[j].type == 'S') {
 			for (i=0; i<Ny; i++) {
-				fwrite(Units[j].detr_ratio[i], sizeof(float), Nx, file);
-				fwrite(Units[j].detr_grsize[i], sizeof(float), Nx, file);
+				fwrite(Blocks[j].detr_ratio[i], sizeof(float), Nx, file);
+				fwrite(Blocks[j].detr_grsize[i], sizeof(float), Nx, file);
 			}
 		}
 	}
@@ -1780,7 +1780,7 @@ int write_file_surftransp ()
 	  EROSION and SEDIMENTATION file
 	*/
 
-	Write_Open_Filename_Return (".st", "wt", !erosed_model || !switch_write_file_Units || Time==Timeini);
+	Write_Open_Filename_Return (".st", "wt", !erosed_model || !switch_write_file_Blocks || Time==Timeini);
 
 	fprintf(file, "#TISC output drainage.  sea_level: %.1f m\n# x(km)  y(km) topo[m]  accumul_erosion[m] eros_rate[m/My]\n", sea_level);
 	for (i=0; i<Ny; i++) for (j=0; j<Nx; j++) {
@@ -1808,8 +1808,8 @@ int write_file_time (float **xarxa1, float **xarxa2)
 	BOOL	return_cond;
 	float	youngest_age=-1e16;
 
-	for (i=0; i<numUnits; i++) youngest_age = MAX_2(Units[i].age, youngest_age);
-	return_cond = !switch_write_file_Units 
+	for (i=0; i<numBlocks; i++) youngest_age = MAX_2(Blocks[i].age, youngest_age);
+	return_cond = !switch_write_file_Blocks 
 		|| !isost_model 
 		|| (((Time-last_time_file_time) < dt_record || (!dt_record && youngest_age!=Time)) && (Timefinal-Time) >= dt) 
 		||  (Time-last_time_file_time) == 0;
@@ -1863,25 +1863,25 @@ int write_file_time (float **xarxa1, float **xarxa2)
 
 int write_file_velocity_field ()
 {
-	int 	i, j, k, thin_sheet_units=0;
+	int 	i, j, k, thin_sheet_Blocks=0;
 	FILE 	*file;
 
 	/*
 	  WRITES A FILE WITH THE VELOCITY FIELD AND THE VISCOSITY OF THE 
-	  THIN SHEET UNITS
+	  THIN SHEET BlockS
 	*/
 
-	for (k=0; k<numUnits; k++) if (Units[k].type == 'V') thin_sheet_units++;
-	Write_Open_Filename_Return (".vel", "wt", !switch_write_file_Units || !thin_sheet_units);
+	for (k=0; k<numBlocks; k++) if (Blocks[k].type == 'V') thin_sheet_Blocks++;
+	Write_Open_Filename_Return (".vel", "wt", !switch_write_file_Blocks || !thin_sheet_Blocks);
 
 	fprintf(file, "# x(km)\ty(km) \tvel_x(km/My) vel_y(km/My)  viscosity(Pa s-1)-->  \t\t(t=%.2f My)\n#    \tDens:\t", Time/Matosec) ;
-	for (k=0; k<numUnits; k++) {
-		if (Units[k].type == 'V') fprintf(file, "\t\t\t%.0f", Units[k].density);
+	for (k=0; k<numBlocks; k++) {
+		if (Blocks[k].type == 'V') fprintf(file, "\t\t\t%.0f", Blocks[k].density);
 	}
 	for (i=0; i<Ny; i++)  for (j=0; j<Nx; j++) {
 		fprintf(file, "\n%7.2f\t%7.2f", (xmin+j*dx)/1000, (ymax-i*dy)/1000);
-		for (k=0; k<numUnits; k++) {
-			if (Units[k].type == 'V') fprintf(file, "\t%.2f\t%.2f\t\t%.5e", Units[k].vel_x[i][j]/1000*Matosec, Units[k].vel_y[i][j]/1000*Matosec, Units[k].visc[i][j]);
+		for (k=0; k<numBlocks; k++) {
+			if (Blocks[k].type == 'V') fprintf(file, "\t%.2f\t%.2f\t\t%.5e", Blocks[k].vel_x[i][j]/1000*Matosec, Blocks[k].vel_y[i][j]/1000*Matosec, Blocks[k].visc[i][j]);
 		}
 	}
 	fclose(file);

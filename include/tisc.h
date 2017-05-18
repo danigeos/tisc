@@ -5,7 +5,7 @@ INCLUDE FILE FOR tisc.c
 //#include <stdio.h>
 #include "geomodel.h"		/*General definitions and types for geophysical models*/
 
-#define	NmaxUnits	250	/*Max number of units*/
+#define	NmaxBlocks	250	/*Max number of Blocks*/
 #undef	MATHLIB_SOLVER		/*Indicates whether linkage with MathLib will be done (define) or not (undef)*/
 
 #define GET_KREST(Krest, q, i, j) { /*Define the restoring force value.*/\
@@ -20,7 +20,7 @@ INCLUDE FILE FOR tisc.c
 struct GRIDNODE	*sortcell;
 struct DRAINAGE	**drainage;
 struct LAKE_INFO *Lake;		/*Lake[0] does not exist; Lake[1] is the sea or the first normal lake.*/
-struct UNIT 	*Units;
+struct BLOCK 	*Blocks;
 
 int	erosed_model, 
 	hydro_model, 
@@ -54,7 +54,7 @@ float 	**D,			/*Equivalent rigidity grid*/
 	**precipitation_file,  	/*Runoff distribution defined in file*/
 	**topo,  		/*Topography relative to z=0*/
 	**accumul_erosion,  	/*Total erosion at each node*/
-	**Units_base,		/*Height of the base of Units[1] (the lowest) measured from the present plate level.*/
+	**Blocks_base,		/*Base of Blocks[0] (the lowest) measured from the current position of the original datum surface (now deflected by isostasy*/
 	**w;
 
 char	boundary_conds[5],	/*Boundary conditions at N, S, E, W.*/

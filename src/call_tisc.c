@@ -71,7 +71,7 @@ int init_tisc_ (
 	windazimut=*ad_windazimut;
 	relative_humidity=*ad_relative_humidity;
 	if (rain || Krain) erosed_model = 6; else erosed_model = 1;
-	switch_write_file = YES;	switch_write_file_Units = YES;
+	switch_write_file = YES;	switch_write_file_Blocks = YES;
 	strcpy(projectname, "res_tisc");
 
 	dx = (xmax-xmin) / (Nx-1);
@@ -89,7 +89,7 @@ int init_tisc_ (
 
 	sea_level = 0;
 	
-	numUnits=0;
+	numBlocks=0;
 	densenv = 0;
 	denssedim = 2200;
 	denscrust = 2780;
@@ -97,9 +97,9 @@ int init_tisc_ (
 	densasthen = 3250;
 
 	Allocate_Memory_for_external_use();
-	insert_new_unit(numUnits);
-	Units[numUnits-1].density=denssedim;
-	Units[numUnits-1].erodibility=erodibility_sed;
+	insert_new_Block(numBlocks);
+	Blocks[numBlocks-1].density=denssedim;
+	Blocks[numBlocks-1].erodibility=erodibility_sed;
 	
 	for (i=0; i<Ny; i++) for (j=0; j<Nx; j++) D[i][j] = ET2RIG(Te_default);
 	strcpy(boundary_conds, "6566");
@@ -140,16 +140,16 @@ int call_surf_proc_ (
 		eros_now[i][j]=0;
 		w[i][j]=0; /*to avoid changes in **topo in calculate_topo()*/
 		topo[i][j]=topo_array[i*Nx+j]; 
-		Units[numUnits-1].thick[i][j]=sed_thick_array[i*Nx+j]; 
-		Units_base[i][j] = topo[i][j] - Units[numUnits-1].thick[i][j];
+		Blocks[numBlocks-1].thick[i][j]=sed_thick_array[i*Nx+j]; 
+		Blocks_base[i][j] = topo[i][j] - Blocks[numBlocks-1].thick[i][j];
 	}
 
 
-	/*Diffusive Erosion: adds to the topo and the next load Dq and removes material from units*/
+	/*Diffusive Erosion: adds to the topo and the next load Dq and removes material from Blocks*/
 	if (verbose_level>=4) fprintf(stdout, "\nCalling Diffusive_Eros: ");	fflush(stdout);
 	Diffusive_Eros (Kerosdif, dt, dt_eros/5);
 
-	/*Fluvial Transport: adds to the topo and the next load Dq and removes material from units*/
+	/*Fluvial Transport: adds to the topo and the next load Dq and removes material from Blocks*/
 	if (verbose_level>=4) fprintf(stdout, "\nCalling Fluvial_Transport: ");	fflush(stdout);
 	if (hydro_model) Surface_Transport (topo, topo, dt, dt_eros, erosed_model, lake_instant_fill);
 	
@@ -165,7 +165,7 @@ int call_surf_proc_ (
 	}
 
 	for (i=0; i<Ny; i++) for (j=0; j<Nx; j++) {
-		topo_array[i*Nx+j]=topo[i][j]; sed_thick_array[i*Nx+j]=Units[numUnits-1].thick[i][j]; 
+		topo_array[i*Nx+j]=topo[i][j]; sed_thick_array[i*Nx+j]=Blocks[numBlocks-1].thick[i][j]; 
 	}
 
         //fprintf(stdout, "\n  noSed er.: %+8.2e N    sed.incr.: %+8.2e N outp.seds: %+8.2e N  ",  total_bedrock_eros_mass*g, total_sed_mass*g, total_lost_sed_mass*g);
@@ -191,7 +191,7 @@ int call_flexure_ (
 		Nx, Ny, *ad_write_files);
 
 	for (i=0; i<Ny; i++)  for (j=0; j<Nx; j++)  {Dq[i][j]=load_array[i*Nx+j]; w[i][j]=0;}
-	/*Diffusive Erosion: adds to the topo and the next load Dq and removes material from units*/
+	/*Diffusive Erosion: adds to the topo and the next load Dq and removes material from Blocks*/
 	b = (double *) calloc (Neqs, sizeof(double));
 	A = alloc_matrix_dbl (Neqs, NDi+1+NDs);
 	if (verbose_level>=4) fprintf(stdout, "\nCalling LES_Matrix");
@@ -205,8 +205,8 @@ int call_flexure_ (
 		/*if (verbose_level>=4) fprintf(stdout, "\nWritting deflection file.");
 		nwrotenfiles=0;
 		write_file_time(w, topo);
-		if (verbose_level>=4) fprintf(stdout, "\nWritting units file.");
-		write_file_Units();*/
+		if (verbose_level>=4) fprintf(stdout, "\nWritting Blocks file.");
+		write_file_Blocks();*/
 	}
 
 	for (i=0; i<Ny; i++) for (j=0; j<Nx; j++) {

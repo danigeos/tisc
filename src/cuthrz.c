@@ -6,7 +6,7 @@
 #include "tisclib.c"
 #include "tiscio.c"
 
-int 	read_file_output_units ();
+int 	read_file_output_Blocks ();
 
 
 int main(int argc, char **argv)
@@ -39,7 +39,7 @@ int main(int argc, char **argv)
 		else strcpy(projectname, argv[iarg]);
 	}
 
-	read_file_output_units();
+	read_file_output_Blocks();
 
 	w = alloc_matrix(Ny, Nx);
 
