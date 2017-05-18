@@ -18,7 +18,7 @@ valgrind --dsymutil=yes --track-origins=yes --tool=memcheck --leak-check=full `w
 	-Incorporate sediment compaction (easy in calculate_topo and when writting the hrz/pfl files)..
 	-La flexion no es estable con cambios bruscos de Te (Mayo 2001).
 	-It should take a mean erodibility when eroding.
-	-Track sediment composition (carbonates, salt, and detrital grain size) in another class in structure Units. This to calculate grain size distribution in basin, and as a first step for the next point once transitory flow is implemented. 
+	-Track sediment composition (carbonates, salt, and detrital grain size) in another class in structure Blocks. This to calculate grain size distribution in basin, and as a first step for the next point once transitory flow is implemented. 
 	-Implement grain size and sediment load effects on transport and erosion (Sklar). Test if climate variability from deltaO can explain erosion acceleration in Herman et al., 2013 Nature.
 	-Interesting for acceleration of erosion during lake overtopping.
 	-Implement transitory water flow.
@@ -622,6 +622,12 @@ int move_unit()
 
 	for (int iu=0; iu<numUnits; iu++) {
 	    if (Units[iu].density == denssedim) {
+/*!!*/
+//Units[iu].vel_y[0][0] = 2.5e3/Matosec;
+//Units[iu].last_vel_time = Units[iu].age;
+//Units[iu].last_shift_x  = 0;
+//Units[iu].last_shift_y  = 0;
+//Units[iu].time_stop     = 1e19;
 		/*DEFORM SEDIMENT UNITS*/
 		for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) 
 			new_thick[i][j] = Units[iu].thick[i][j];
@@ -665,7 +671,7 @@ int move_unit()
 		    Units[iu].thick[i][j] = new_thick[i][j];
 		}
 	    }
-	    else 
+	    else //!!
 	    {
 	      if (Units[iu].type == 'V' && Time < Units[iu].time_stop) {
 #ifdef THIN_SHEET

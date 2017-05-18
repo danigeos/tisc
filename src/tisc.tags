@@ -144,9 +144,9 @@ for	test.c	/^	for (i=0; i<Lake[ild].n; i++) {$/
 free_matrix	../lib/libreria.c	/^int free_matrix (float **matrix, int n_fil)$/
 free_matrix_dbl	../lib/libreria.c	/^int free_matrix_dbl (double **matrix, int n_fil)$/
 free_matrix_int	../lib/libreria.c	/^int free_matrix_int (int **matrix, int n_fil)$/
-geoidanompolig	../lib/libreria.c	/^float geoidanompolig($/
+geoidanompolyg	../lib/libreria.c	/^float geoidanompolyg($/
 gradual_unit	tisclib.c	/^int gradual_unit()$/
-gravanompolig	../lib/libreria.c	/^float gravanompolig($/
+gravanompolyg	../lib/libreria.c	/^float gravanompolyg($/
 init_tisc_	call_tisc.c	/^int init_tisc_ ($/
 inputs	tisc.c	/^int inputs (int argc, char **argv)$/
 insert_new_unit	tisclib.c	/^int insert_new_unit(int num_new_unit)$/
@@ -158,7 +158,7 @@ match_parameter	tisclib.c	/^int match_parameter (char *str1, char *str2, int s/
 max_water_in_air_colum	surf_proc.c	/^float max_water_in_air_colum (int i, int j)$/
 move_unit	tisc.c	/^int move_unit()$/
 outin	../lib/libreria.c	/^int outin($/
-poligon_area	../lib/libreria.c	/^float poligon_area($/
+polygon_area	../lib/libreria.c	/^float polygon_area($/
 prism_vertical_atraction	../lib/libreria.c	/^double prism_vertical_atraction ($/
 project_xy_line	../lib/libreria.c	/^float project_xy_line($/
 project_xy_segment	../lib/libreria.c	/^float project_xy_segment($/

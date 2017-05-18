@@ -11,7 +11,7 @@
 7.- Graphic output
 8.- The conceptual model
 9.- The algorithms and numerical methods
-10.- Improvements in successive versions
+10.- Version history
 11.- Model limitations
 12.- FAQ - Frequently Asked Questions
 13.- Glossary
@@ -570,7 +570,7 @@ No. Density Age Volume Surf.  Vel_x Vel_y Shft_x Shft_y erosL
   larger (N^4?).
     
 
-10.- IMPROVEMENTS IN SUCCESSIVE VERSIONS
+10.- VERSION HISTORY:
   v1.0 (1994) Proto-model or numerical algorithm to calculate thin plate
     elastic and viscoelastic flexure in 3D.
   v2.0 (1995) Moving tectonic loads implemented.
@@ -605,7 +605,7 @@ No. Density Age Volume Surf.  Vel_x Vel_y Shft_x Shft_y erosL
     Files *.H0 and *.W0 are now called *.ZINI and *.WINI, respectively.
     Orographic precipitation following Roe et al. 2003. (Feb. 2004) Glaciar ice
     flow and glaciar erosion and transport (Knap et al., ; Braun et al., 2001).
-  v4.2 (Nov.2004) Change of name to TISC (the command is 'tisc').
+  v4.2 (Nov.2004) Change of name to TISC (the executable is now 'tisc').
   TISC_2007-07-24 Change in version nomenclature. Debug of drainage network
     calculation, now very robust even with evaporation. Parameters
     switch_debug and switch_verbose now joint into verbose_level.
@@ -635,10 +635,14 @@ No. Density Age Volume Surf.  Vel_x Vel_y Shft_x Shft_y erosL
   TISC_2016-08-30
     An average erodibility is now calculated for the shallowest meters of 
     bedrock.
-    Chi is written in column 8 of *.bas. A script is available to plot chi. 
-    GitHub used for version upload. GitHub wiki.
+    River Chi (scaled length) is written in column 8 of *.bas. A script is 
+    available to plot chi. 
+    GitHub used for version upload. GitHub wiki. The symbolic links under 
+    tisc/ are now hard links to allow proper git synchronization. 
     Water divides: TISC now writes the swimming distance between neigbouring 
     cells in column #14 of drainage file *.xyw.
+    
+    
 
 11.- MODEL LIMITATIONS
   Units move only an entire number of nodes at each time step. Unit deformation
