@@ -105,19 +105,19 @@ struct UNIT { 		/*for TISC*/
 	float	**viscTer;		/*Viscosity thermal term (only used for thin sheet calculations, in the first step)*/
 };
 
-struct UNIT_1D {	/*for tAo*/
+struct BLOCK_1D {	/*for tAo*/
 	float	*thick;			/*Present thickness at each x point*/
-	float	*detr_ratio;		/*Only used for sediment units: % of detrital sediment (non carbonatic)*/
-	float	*detr_grsize;		/*Only used for sediment units: grain size of the detrital sediment*/
-	float	age;			/*Age of initial loading of the unit*/
+	float	*detr_ratio;		/*Only used for sediment Blocks: % of detrital sediment (non carbonatic)*/
+	float	*detr_grsize;		/*Only used for sediment Blocks: grain size of the detrital sediment*/
+	float	age;			/*Age of initial file read*/
 	float	density;		/*Density*/
 	float	erodibility;		/*erosion parameter*/
 	float	last_shift;		/*Espected shift (not affected by finite differences discretization)*/
 	float	last_vel_time; 		/*Last time in which velocity changed*/
-	float	shift;			/*Total horizontal shift of unit*/
-	float	time_stop;		/*Time in wich unit will stop*/
+	float	shift;			/*Total horizontal shift of Block*/
+	float	time_stop;		/*Time in wich Block will stop*/
 	char 	type;			/*'T' means thin_sheet*/
-	float	vel;			/*Velocity at wich unit moves*/
+	float	vel;			/*Velocity at wich Block moves*/
 };
 
 struct GRIDNODE {

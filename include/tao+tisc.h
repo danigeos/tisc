@@ -65,9 +65,9 @@ int	nloads, 			/*Number of loads done*/
 	n_sea_level_input_points,	/*Number of sea level input points*/
 	n_eros_level_input_points, 	/*Number of input points of erosion level*/
 	n_record_times, 		/*Number of horizons to record*/
-	i_first_unit_load, 		/*Number of the first unit corresponding to a load*/
-	i_unit_insert, 			/*Number of the unit in wich will be inserted the heigh of the next load*/
-	numUnits, 			/*Number of recorded units*/
+	i_first_Block_load, 		/*Number of the first Block corresponding to a load*/
+	i_Block_insert, 			/*Number of the Block in wich will be inserted the heigh of the next load*/
+	numBlocks, 			/*Number of recorded Blocks*/
 	nwrotenfiles, 			/*Number of wroten output files*/
 	run_type; 			/*tao execution mode*/
 	
@@ -89,7 +89,7 @@ float	Kerosdif, 		/*Diffusive erosion rate in m2/Ma, (e. g. D. Waltham & S. Hard
 
 
 float	zini, 				/*altitude of the initial plate position over the sea level [m]*/
-	dt_record, 			/*maximum Time interval between two units [s]*/
+	dt_record, 			/*maximum Time interval between automatically-generated sediment Blocks [s]*/
 	sed_porosity, 
 	last_time_file_time, 
 	random_topo=0, 			/*Maximum random variation of initial topo*/
@@ -101,8 +101,8 @@ BOOL	switch_dt_output=NO,
 	switch_file_out=NO, 
 	switch_gradual, 		/*YES to distribute the load between the Time of reading file and the Time of the following one*/
 	switch_topoest, 		/*YES if load files give topographic loads which must stay at zero level while the deflection room is filled up with 'densinfill' density material*/
-	switch_write_file_Units, 	/*YES if units file will have to be wroten*/
-	deform_sed;			/*YES to deform sediment automatically,based on unit motion*/
+	switch_write_file_Blocks, 	/*YES if Blocks (profile *.pfl) file is to be written*/
+	deform_sed;			/*YES to deform sediment automatically, based on Blocks motion*/
 
 
 /*FUNCTION DECLARATIONS:*/
