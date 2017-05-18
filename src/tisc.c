@@ -93,16 +93,16 @@ int tectload()
 	
 	PRINT_GRID_INFO (topo, "topogr.  ", "m");
 
-	/*Moves units*/
-	move_unit();
+	/*Moves Blocks*/
+	move_Block();
 
 	/*Reads external load from file*/
 	while (read_file_unit());
 
 	/*Distributes the emplacement of a unit along time*/
-	gradual_unit();
+	gradual_Block();
 
-	RepareUnits();
+	Repare_Blocks();
 
 	return (1);
 }
@@ -208,9 +208,9 @@ int Elastic_Deflection()
 
     	    for (i=0; i<Ny; i++) for (j=0; j<Nx; j++)  w[i][j] += Dw[i][j];
     	    if (switch_topoest) {
-   		    /*Defines the thickness of last infill unit*/
+   		    /*Defines the thickness of last infill Block*/
     		    for (i=0; i<Ny; i++)  for (j=0; j<Nx; j++)  
-		    	Units[i_first_unit_load-1].thick[i][j] +=  MAX_2(Dw[i][j], 0) ;
+		    	Blocks[i_first_Block_load-1].thick[i][j] +=  MAX_2(Dw[i][j], 0) ;
     	    }
 
 
@@ -349,7 +349,7 @@ int inputs (int argc, char **argv)
 	}
 
 	nloads=0; n_image=0; nlakes=0;
-	numUnits=0; i_first_unit_load=0; i_unit_insert=0;
+	numBlocks=0; i_first_Block_load=0; i_Block_insert=0;
 	nwrotenfiles=0; switch_topoest=NO;
 
 	switch (run_type)
@@ -424,7 +424,7 @@ int inputs (int argc, char **argv)
 	evaporation_ct *= 1e6/Matosec/1e3;
 	lost_rate *= 1e-2 * 1e-3;
 	temp_sea_level += TEMP_FREEZE_WATER; /*converts from C to K*/
-	switch_write_file_Units = YES; 
+	switch_write_file_Blocks = YES; 
 	if (strlen(boundary_conds)<4)  boundary_conds[1]= boundary_conds[2]= boundary_conds[3]= boundary_conds[0];
 	if (strlen(eros_bound_cond)<4) eros_bound_cond[1]=eros_bound_cond[2]=eros_bound_cond[3]=eros_bound_cond[0];
 
@@ -459,7 +459,7 @@ int inputs (int argc, char **argv)
 	read_file_initial_rivers();
 	for (i=0; i<Ny; i++)  for (j=0; j<Nx; j++)  {
 		topo[i][j] += zini;
-		Units_base[i][j] = topo[i][j];
+		Blocks_base[i][j] = topo[i][j];
 		topo[i][j] -= w[i][j];
 		h_water[i][j] = MAX_2(sea_level-topo[i][j], 0);
 	}
@@ -539,7 +539,7 @@ int interpr_command_line_opts(int argc, char **argv)
 					break;
 				case 'P':
 					switch_ps=YES;
-					switch_write_file_Units=YES;
+					switch_write_file_Blocks=YES;
 					if (argv[iarg][2] == 'c') {
 						switch_dt_output=YES;
 						strcpy(gif_geom, "");
@@ -605,40 +605,40 @@ int interpr_command_line_opts(int argc, char **argv)
 
 
 
-int move_unit()
+int move_Block()
 {
 	int	*nshift_x, *nshift_y;
 	float	**new_thick;
 	char 	tmpTSBCfilename[84]="";
 
 	/*
-	  Moves the units and calculates the isostatic load and thickness change
+	  Moves the Blocks and calculates the isostatic load and thickness change
 	  Deforms the sediment.
 	*/
 
 	new_thick = alloc_matrix(Ny, Nx);
-	nshift_x = calloc(numUnits, sizeof(int));
-	nshift_y = calloc(numUnits, sizeof(int));
+	nshift_x = calloc(numBlocks, sizeof(int));
+	nshift_y = calloc(numBlocks, sizeof(int));
 
-	for (int iu=0; iu<numUnits; iu++) {
-	    if (Units[iu].density == denssedim) {
+	for (int iu=0; iu<numBlocks; iu++) {
+	    if (Blocks[iu].density == denssedim) {
 /*!!*/
-//Units[iu].vel_y[0][0] = 2.5e3/Matosec;
-//Units[iu].last_vel_time = Units[iu].age;
-//Units[iu].last_shift_x  = 0;
-//Units[iu].last_shift_y  = 0;
-//Units[iu].time_stop     = 1e19;
-		/*DEFORM SEDIMENT UNITS*/
+//Blocks[iu].vel_y[0][0] = 2.5e3/Matosec;
+//Blocks[iu].last_vel_time = Blocks[iu].age;
+//Blocks[iu].last_shift_x  = 0;
+//Blocks[iu].last_shift_y  = 0;
+//Blocks[iu].time_stop     = 1e19;
+		/*DEFORM SEDIMENT BlockS*/
 		for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) 
-			new_thick[i][j] = Units[iu].thick[i][j];
+			new_thick[i][j] = Blocks[iu].thick[i][j];
 		for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++){
 		    float sedthick;
-		    sedthick=Units[iu].thick[i][j];
-		    /*Find the uppermost moving unit below this point in this sedim. unit*/
+		    sedthick=Blocks[iu].thick[i][j];
+		    /*Find the uppermost moving Block below this point in this sedim. Block*/
 		    for (int ju=iu-1; ju>=0; ju--) {
-			/*Calculate the thickness of sediments between the top of this sed. unit and the moving unit*/
-			if (Units[ju].density == denssedim) {
-			    sedthick += Units[ju].thick[i][j];
+			/*Calculate the thickness of sediments between the top of this sed. Block and the moving Block*/
+			if (Blocks[ju].density == denssedim) {
+			    sedthick += Blocks[ju].thick[i][j];
 			}
 			else {
    			  /*Amount of cells to propagate the deformation: ~20 deg assumed.*/
@@ -647,7 +647,7 @@ int move_unit()
 			  int nprop_y = SIGN(nshift_y[ju]) * (int) ceil(sedthick*3/dy);
 			  int i_unprop = i+nprop_y;
 			  DOMAIN_LIMIT(i_unprop, j_unprop);
-			  if (Units[ju].thick[i_unprop][j_unprop]>.1) {
+			  if (Blocks[ju].thick[i_unprop][j_unprop]>.1) {
 			    if (!nshift_y[ju] && !nshift_x[ju]) 
 			    	break;
 			    else {
@@ -656,9 +656,9 @@ int move_unit()
     				i_unshift = i+nshift_y[ju];	j_unshift = j-nshift_x[ju];
     				/*If block ju is moving below [i][j] then shift seds.*/
     				if (deform_sed && IN_DOMAIN(i_shift,j_shift)) 
-					new_thick[i_shift][j_shift] += Units[iu].thick[i][j];
+					new_thick[i_shift][j_shift] += Blocks[iu].thick[i][j];
     				if (deform_sed && IN_DOMAIN(i,j) && IN_DOMAIN(i_unshift,j_unshift)) 
-					new_thick[i][j] -= Units[iu].thick[i][j];
+					new_thick[i][j] -= Blocks[iu].thick[i][j];
     				break;
 			    }
 			  }
@@ -666,14 +666,14 @@ int move_unit()
 		    }
 		}
 		for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) {
-		    Dq[i][j] += g * (new_thick[i][j] - Units[iu].thick[i][j]) * Units[iu].density;
+		    Dq[i][j] += g * (new_thick[i][j] - Blocks[iu].thick[i][j]) * Blocks[iu].density;
 		    if (new_thick[i][j]<-1) PRINT_ERROR("negative sediment thickness: %.1f m", new_thick[i][j]);
-		    Units[iu].thick[i][j] = new_thick[i][j];
+		    Blocks[iu].thick[i][j] = new_thick[i][j];
 		}
 	    }
 	    else //!!
 	    {
-	      if (Units[iu].type == 'V' && Time < Units[iu].time_stop) {
+	      if (Blocks[iu].type == 'V' && Time < Blocks[iu].time_stop) {
 #ifdef THIN_SHEET
 	        int i,j, n, m, nn, nincogn, nbanda, 
 			thicken_BC=1, /*0 means No temporal thickening variations on the boundaries, thickness=thickness_old; IBC_thicken!=0 -> No lateral variations of the thickening on the boundaries, d(thickness)/dx=d(thickness)/dy=0*/
@@ -685,8 +685,8 @@ int move_unit()
 			*average_pressure, 
 			*vel_x_array, *vel_y_array, *vert_strain_rate, 
 			*layer_thickness;
-		/*THIN SHEET UNIT DEFORMATION*/
-		elapsed_time = Time-Units[iu].last_vel_time;
+		/*THIN SHEET Block DEFORMATION*/
+		elapsed_time = Time-Blocks[iu].last_vel_time;
 		dt_aux = dt;
 		Lx = xmax-xmin; Ly = ymax-ymin;
 		n=Nx-1; m=Ny-1; nn=Nx*Ny; nincogn=2*nn; nbanda=4*(Nx)+7;
@@ -699,35 +699,35 @@ int move_unit()
 		layer_thickness =	alloc_array_dbl(Nx*Ny);
 		sprintf(tmpTSBCfilename, "%s"".TSBC.tmp", projectname);
 		reformat_file_thin_sheet_BC(tmpTSBCfilename);
-		PRINT_INFO("Deforming thin_sheet unit %d", iu);
+		PRINT_INFO("Deforming thin_sheet Block %d", iu);
 		for (i=0; i<Ny; i++) for (j=0; j<Nx; j++)  {
 			int k=(Ny-1-i)*Nx+j, l, m;
-			viscTer[k] = Units[iu].viscTer[i][j];  /*.1e7*/  /* viscTer[Pa] = 1/2 * strength[Pa*m] / layer.thickness[m] */
+			viscTer[k] = Blocks[iu].viscTer[i][j];  /*.1e7*/  /* viscTer[Pa] = 1/2 * strength[Pa*m] / layer.thickness[m] */
 			/*AVERAGE PRESSURE*/
 			/*Water term*/
 			average_pressure[k] = g*denswater*h_water[i][j];
-			/*Units terms from the top to the thin_sheet*/
-			for (l=numUnits-1; l>iu; l--) {
-			    average_pressure[k] += g*Units[l].density*Units[l].thick[i][j];
+			/*Blocks terms from the top to the thin_sheet*/
+			for (l=numBlocks-1; l>iu; l--) {
+			    average_pressure[k] += g*Blocks[l].density*Blocks[l].thick[i][j];
 			}
 			/*Thin sheet term*/
-			average_pressure[k] += g/2*Units[iu].density*Units[iu].thick[i][j];
+			average_pressure[k] += g/2*Blocks[iu].density*Blocks[iu].thick[i][j];
 			/*Asthenosphere restitutive push*/
 			average_pressure[k] += (densasthen-densenv)*g*w[i][j];
 			/*change sign to <0, meaning compresion*/
 			average_pressure[k] *= -1; 
 
 			vert_strain_rate[k] = 0;
-			layer_thickness[k] = Units[iu].thick[i][j];
+			layer_thickness[k] = Blocks[iu].thick[i][j];
 			if (elapsed_time > dt) {
-			    vel_x_array[k] = Units[iu].vel_x[i][j];
-			    vel_y_array[k] = Units[iu].vel_y[i][j];
-			    viscosity[k]   = Units[iu].visc[i][j];
+			    vel_x_array[k] = Blocks[iu].vel_x[i][j];
+			    vel_y_array[k] = Blocks[iu].vel_y[i][j];
+			    viscosity[k]   = Blocks[iu].visc[i][j];
 			}
 			else {
 			    vel_x_array[k] = 0;
 			    vel_y_array[k] = 0;
-			    viscosity[k] =  (double) Units[iu].viscTer[i][j] / 3.17e-17; /*viscosity[Pa*s] = viscTer/str.rate  3.17e-16 s^-1==1%/My*/
+			    viscosity[k] =  (double) Blocks[iu].viscTer[i][j] / 3.17e-17; /*viscosity[Pa*s] = viscTer/str.rate  3.17e-16 s^-1==1%/My*/
 			}
 		}
 		{
@@ -761,11 +761,11 @@ int move_unit()
 		);
 		for (i=0; i<Ny; i++)  for (j=0; j<Nx; j++)  {
 			int k=(Ny-1-i)*Nx+j;
-			Dq[i][j] += g * (layer_thickness[k] - Units[iu].thick[i][j]) * Units[iu].density;
-			Units[iu].thick[i][j] = layer_thickness[k];
-			Units[iu].vel_x[i][j] = vel_x_array[k];
-			Units[iu].vel_y[i][j] = vel_y_array[k];
-			Units[iu].visc[i][j]  = viscosity[k];
+			Dq[i][j] += g * (layer_thickness[k] - Blocks[iu].thick[i][j]) * Blocks[iu].density;
+			Blocks[iu].thick[i][j] = layer_thickness[k];
+			Blocks[iu].vel_x[i][j] = vel_x_array[k];
+			Blocks[iu].vel_y[i][j] = vel_y_array[k];
+			Blocks[iu].visc[i][j]  = viscosity[k];
 		}
 		free(viscTer);
 		free(viscosity);
@@ -780,24 +780,24 @@ int move_unit()
 	      else {
 	    	int i, j, i_unshifted, j_unshifted;
 		float theor_shift_x, theor_shift_y;
-		/*MOVE BLOCK UNITS*/
-		theor_shift_x = Units[iu].vel_x[0][0] * (Time-Units[iu].last_vel_time);
-		theor_shift_y = Units[iu].vel_y[0][0] * (Time-Units[iu].last_vel_time);
-		nshift_x[iu] = floor((theor_shift_x - Units[iu].last_shift_x) /dx +.5);
-		nshift_y[iu] = floor((theor_shift_y - Units[iu].last_shift_y) /dy +.5);
-		if (Time > Units[iu].time_stop + .1*dt) {nshift_x[iu]=0; nshift_y[iu]=0;}
-		Units[iu].shift_x += nshift_x[iu]*dx;
-		Units[iu].shift_y += nshift_y[iu]*dy;
-		Units[iu].last_shift_x += nshift_x[iu]*dx;
-		Units[iu].last_shift_y += nshift_y[iu]*dy;
+		/*MOVE BLOCKS*/
+		theor_shift_x = Blocks[iu].vel_x[0][0] * (Time-Blocks[iu].last_vel_time);
+		theor_shift_y = Blocks[iu].vel_y[0][0] * (Time-Blocks[iu].last_vel_time);
+		nshift_x[iu] = floor((theor_shift_x - Blocks[iu].last_shift_x) /dx +.5);
+		nshift_y[iu] = floor((theor_shift_y - Blocks[iu].last_shift_y) /dy +.5);
+		if (Time > Blocks[iu].time_stop + .1*dt) {nshift_x[iu]=0; nshift_y[iu]=0;}
+		Blocks[iu].shift_x += nshift_x[iu]*dx;
+		Blocks[iu].shift_y += nshift_y[iu]*dy;
+		Blocks[iu].last_shift_x += nshift_x[iu]*dx;
+		Blocks[iu].last_shift_y += nshift_y[iu]*dy;
 		for (i=0; i<Ny; i++) for (j=0; j<Nx; j++){
 			i_unshifted = i+nshift_y[iu];	j_unshifted = j-nshift_x[iu];	
 			DOMAIN_LIMIT(i_unshifted, j_unshifted);	/*[i][j], unshifted*/
-			new_thick[i][j] = Units[iu].thick[i_unshifted][j_unshifted];
+			new_thick[i][j] = Blocks[iu].thick[i_unshifted][j_unshifted];
 		}
 		for (i=0; i<Ny; i++) for (j=0; j<Nx; j++) {
-			Dq[i][j] += g * (new_thick[i][j] - Units[iu].thick[i][j]) * Units[iu].density;
-			Units[iu].thick[i][j] = new_thick[i][j];
+			Dq[i][j] += g * (new_thick[i][j] - Blocks[iu].thick[i][j]) * Blocks[iu].density;
+			Blocks[iu].thick[i][j] = new_thick[i][j];
 		}
 	      }
 	    }
@@ -825,7 +825,7 @@ int read_file_unit()
 	float	time_stop=9999/*My*/, time_unit, 
 		erodibility_aux=NO_DATA, fill_up_to=NO_DATA, 
 		vel_x=0, vel_y=0, density=NO_DATA;
-	BOOL 	insert, cut_units, cut_all, top, fault, switch_move, 
+	BOOL 	insert, cut_Blocks, cut_all, top, fault, switch_move, 
 		thin_sheet, ride, hidden, z_absol;
 	FILE 	*file;
 	char 	filename[MAXLENFILE];
@@ -857,9 +857,9 @@ int read_file_unit()
 
 	PRINT_INFO("Reading '%s'", filename);
 	switch_move = fault = switch_gradual = 
-		insert = hidden = cut_units = cut_all = 
+		insert = hidden = cut_Blocks = cut_all = 
 		thin_sheet = top = ride = z_absol = NO;
-	i_unit_insert = numUnits;
+	i_Block_insert = numBlocks;
 
 	/*READS AND INTERPOLATES UNIT/LOAD FILE*/
 	{
@@ -883,7 +883,7 @@ int read_file_unit()
 			Match_Param_Replace_int ( "move",  		switch_move,   	0 )
 			Match_Param_Replace_int ( "fault",      	fault,   	0 )
 			Match_Param_Replace_int ( "z_absol",      	z_absol,   	0 )
-			Match_Param_Replace_int ( "cut_units",  	cut_units,   	0 )
+			Match_Param_Replace_int ( "cut_Blocks",  	cut_Blocks,   	0 )
 			Match_Param_Replace_int ( "cut_all",  		cut_all,   	0 )
 			Match_Param_Replace_int ( "thin_sheet",		thin_sheet,   	0 )
 			Match_Param_Replace_int ( "topoest",		switch_topoest,   	0 )
@@ -896,7 +896,7 @@ int read_file_unit()
 			Match_Param_Replace_int ( "insert_load",	insert,   	1 )
 			Match_Param_Replace_int ( "top_load",		top,   	1 )
 			Match_Param_Replace_int ( "move_load",  	switch_move,   	1 )
-			Match_Param_Replace_int ( "cut_loads",  	cut_units,   	1 )
+			Match_Param_Replace_int ( "cut_loads",  	cut_Blocks,   	1 )
 			Match_Param_Replace_flt ( "erodability",	erodibility_aux,   	1 )
 			Match_Param_Replace_flt ( "l_fluv_eros",	erodibility_aux,   	1 )
 	    	    }
@@ -915,7 +915,7 @@ int read_file_unit()
 
 	/*Check incompatibilities between unit file signals*/
 	if (switch_gradual && switch_move) {
-		PRINT_WARNING("Gradual & moving units are not implemented. This one won't be gradual.");
+		PRINT_WARNING("Gradual & moving Blocks are not implemented. This one won't be gradual.");
 		switch_gradual = NO;
 	}
 
@@ -930,92 +930,92 @@ int read_file_unit()
 	if (fault) {
 		switch_move = YES;
 	}
-	/*Creates a unit of infill if switch_topoest; it will be filled later during Deflection*/
+	/*Creates a Block of infill if switch_topoest; it will be filled later during Deflection*/
 	if (switch_topoest) {
-		insert_new_unit(i_first_unit_load);
-		Units[i_first_unit_load].type = 'I'; 	/*stands for Infill*/
-		Units[i_first_unit_load].density = densinfill;
-		if (densinfill<2550) Units[i_first_unit_load].erodibility = erodibility_sed;
-		i_first_unit_load++; 	i_unit_insert++;
+		insert_new_Block(i_first_Block_load);
+		Blocks[i_first_Block_load].type = 'I'; 	/*stands for Infill*/
+		Blocks[i_first_Block_load].density = densinfill;
+		if (densinfill<2550) Blocks[i_first_Block_load].erodibility = erodibility_sed;
+		i_first_Block_load++; 	i_Block_insert++;
 	}
 	if (insert) {
-		i_unit_insert = 0;
+		i_Block_insert = 0;
 	}
 	if (top) {
-		for (int k=numUnits-1; k>=0; k--) {
-			if (Units[k].density != denssedim) {
-				i_unit_insert = k+1;
+		for (int k=numBlocks-1; k>=0; k--) {
+			if (Blocks[k].density != denssedim) {
+				i_Block_insert = k+1;
 				break;
 			}
 		}
 	}
 	if (cut_all) {
-		cut_units = YES;
+		cut_Blocks = YES;
 	}
 
-	if (fault && !top) i_unit_insert = 0;
+	if (fault && !top) i_Block_insert = 0;
 
 	if (fault) {
-		int numUnits0=numUnits;
-		/*CUT UNITS*/
-		/*Make copies of all units*/
-		PRINT_DEBUG("Cutting units: numUnits= %d", numUnits);
-		for (int k=0; k<numUnits0; k++) {
+		int numBlocks0=numBlocks;
+		/*CUT BlockS*/
+		/*Make copies of all Blocks*/
+		PRINT_DEBUG("Cutting Blocks: numBlocks= %d", numBlocks);
+		for (int k=0; k<numBlocks0; k++) {
 			float **thick_aux, **vel_x_aux, **vel_y_aux;
-			insert_new_unit(numUnits);
-			thick_aux = Units[numUnits-1].thick;
-			vel_x_aux = Units[numUnits-1].vel_x;
-			vel_y_aux = Units[numUnits-1].vel_y;
-			Units[numUnits-1] = Units[k];
-			Units[numUnits-1].thick = thick_aux;
-			Units[numUnits-1].vel_x = vel_x_aux;
-			Units[numUnits-1].vel_y = vel_y_aux;
-			Units[numUnits-1].vel_x[0][0] = vel_x;
-			Units[numUnits-1].vel_y[0][0] = vel_y;
-			Units[numUnits-1].last_vel_time = Time;
-			Units[numUnits-1].last_shift_x = 0;
-			Units[numUnits-1].last_shift_y = 0;
-			Units[numUnits-1].time_stop = time_stop;
-			if (Units[numUnits-1].type == 'V') {
+			insert_new_Block(numBlocks);
+			thick_aux = Blocks[numBlocks-1].thick;
+			vel_x_aux = Blocks[numBlocks-1].vel_x;
+			vel_y_aux = Blocks[numBlocks-1].vel_y;
+			Blocks[numBlocks-1] = Blocks[k];
+			Blocks[numBlocks-1].thick = thick_aux;
+			Blocks[numBlocks-1].vel_x = vel_x_aux;
+			Blocks[numBlocks-1].vel_y = vel_y_aux;
+			Blocks[numBlocks-1].vel_x[0][0] = vel_x;
+			Blocks[numBlocks-1].vel_y[0][0] = vel_y;
+			Blocks[numBlocks-1].last_vel_time = Time;
+			Blocks[numBlocks-1].last_shift_x = 0;
+			Blocks[numBlocks-1].last_shift_y = 0;
+			Blocks[numBlocks-1].time_stop = time_stop;
+			if (Blocks[numBlocks-1].type == 'V') {
 			    if (thin_sheet) {
-				Units[numUnits-1].vel_x  = alloc_matrix(Ny, Nx);
-				Units[numUnits-1].vel_y  = alloc_matrix(Ny, Nx);
-				Units[numUnits-1].visc   = alloc_matrix(Ny, Nx);
-				Units[numUnits-1].viscTer= alloc_matrix(Ny, Nx);
+				Blocks[numBlocks-1].vel_x  = alloc_matrix(Ny, Nx);
+				Blocks[numBlocks-1].vel_y  = alloc_matrix(Ny, Nx);
+				Blocks[numBlocks-1].visc   = alloc_matrix(Ny, Nx);
+				Blocks[numBlocks-1].viscTer= alloc_matrix(Ny, Nx);
 			    }
 			    else {
-				Units[numUnits-1].type = '-';
+				Blocks[numBlocks-1].type = '-';
 			    }
 			}
-			if (Units[numUnits-1].type == 'S') {
-				Units[numUnits-1].detr_ratio  = alloc_matrix(Ny, Nx);
-				Units[numUnits-1].detr_grsize = alloc_matrix(Ny, Nx);
+			if (Blocks[numBlocks-1].type == 'S') {
+				Blocks[numBlocks-1].detr_ratio  = alloc_matrix(Ny, Nx);
+				Blocks[numBlocks-1].detr_grsize = alloc_matrix(Ny, Nx);
 			}
-			if (density         != NO_DATA && Units[numUnits-1].type != 'S') Units[numUnits-1].density = density;
-			if (erodibility_aux != NO_DATA && Units[numUnits-1].type != 'S') Units[numUnits-1].erodibility = erodibility_aux;
+			if (density         != NO_DATA && Blocks[numBlocks-1].type != 'S') Blocks[numBlocks-1].density = density;
+			if (erodibility_aux != NO_DATA && Blocks[numBlocks-1].type != 'S') Blocks[numBlocks-1].erodibility = erodibility_aux;
 		}
-		PRINT_DEBUG("Updating Units_base: numUnits= %d", numUnits);
-		/*Modify Units_base and cut above the fault*/
+		PRINT_DEBUG("Updating Blocks_base: numBlocks= %d", numBlocks);
+		/*Modify Blocks_base and cut above the fault*/
 		for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) {
-			float z_fault=-h_last_unit[i][j], base_of_unit=Units_base[i][j];
-			if (z_absol) base_of_unit -= w[i][j];
-			h_last_unit[i][j] = MAX_2(0, Units_base[i][j]-z_fault);	/*unit thickness below fault (to create the new unit, see below)*/
-			Units_base[i][j]  = MIN_2(Units_base[i][j], z_fault);	/*new base of units*/
-			if (cut_units) {
-				for (int k=0; k<numUnits0; k++) {
-					float top_of_unit=base_of_unit+Units[k].thick[i][j];
-					if (Units[k].density == denssedim && !cut_all) {
+			float z_fault=-h_last_unit[i][j], base_of_Block=Blocks_base[i][j];
+			if (z_absol) base_of_Block -= w[i][j];
+			h_last_unit[i][j] = MAX_2(0, Blocks_base[i][j]-z_fault);	/*Block thickness below fault (to create the new Block, see below)*/
+			Blocks_base[i][j]  = MIN_2(Blocks_base[i][j], z_fault);	/*new base of Blocks*/
+			if (cut_Blocks) {
+				for (int k=0; k<numBlocks0; k++) {
+					float top_of_Block=base_of_Block+Blocks[k].thick[i][j];
+					if (Blocks[k].density == denssedim && !cut_all) {
 						break;
 					}
-					if (z_fault <= base_of_unit) {
-						Units[k+numUnits0].thick[i][j] += Units[k].thick[i][j];
-						Units[k].thick[i][j]            = 0;
+					if (z_fault <= base_of_Block) {
+						Blocks[k+numBlocks0].thick[i][j] += Blocks[k].thick[i][j];
+						Blocks[k].thick[i][j]            = 0;
 					}
 					else {
-						Units[k+numUnits0].thick[i][j] += MAX_2 (0, top_of_unit-z_fault);
-						Units[k].thick[i][j]           -= MAX_2 (0, top_of_unit-z_fault);
+						Blocks[k+numBlocks0].thick[i][j] += MAX_2 (0, top_of_Block-z_fault);
+						Blocks[k].thick[i][j]           -= MAX_2 (0, top_of_Block-z_fault);
 					}
-					base_of_unit = top_of_unit;
+					base_of_Block = top_of_Block;
 				}
 			}
 		}
@@ -1023,74 +1023,74 @@ int read_file_unit()
 	if (density        ==NO_DATA) density         = denscrust;
 	if (erodibility_aux==NO_DATA) erodibility_aux = erodibility;
 
-	PRINT_DEBUG("Creating Unit for this file: i_unit_insert= %d", i_unit_insert);
-	/*Create a new unit for the thickness in this file*/
-	insert_new_unit(i_unit_insert);
+	PRINT_DEBUG("Creating Block for this file: i_Block_insert= %d", i_Block_insert);
+	/*Create a new Block for the thickness in this file*/
+	insert_new_Block(i_Block_insert);
 
-	/*Add the thickness in file to the new unit; Shrink the units and basement if the thickness is negative*/
+	/*Add the thickness in file to the new Block; Shrink the Blocks and basement if the thickness is negative*/
 	if (!switch_gradual && !hidden) {
 		for (int i=0; i<Ny; i++)  for (int j=0; j<Nx; j++) {
 			if (h_last_unit[i][j]>=0) {
-				Units[i_unit_insert].thick[i][j] = h_last_unit[i][j];
+				Blocks[i_Block_insert].thick[i][j] = h_last_unit[i][j];
 			}
 			else {
 				float 	h_unit_aux, h_unit_aux2;
 				int	k;
 				/*Excavating rock for negative thickness in file, starting from base of water*/
 				h_unit_aux = fabs((double) h_last_unit[i][j]);
-				for (k=i_unit_insert-1; h_unit_aux>0 && k>=0; k--) {
-					h_unit_aux2 = MIN_2(Units[k].thick[i][j], h_unit_aux);
+				for (k=i_Block_insert-1; h_unit_aux>0 && k>=0; k--) {
+					h_unit_aux2 = MIN_2(Blocks[k].thick[i][j], h_unit_aux);
 					h_unit_aux -= h_unit_aux2;
-					Units[k].thick[i][j] -= h_unit_aux2;
+					Blocks[k].thick[i][j] -= h_unit_aux2;
 				}
-				/*k is the deepest eroded unit*/
+				/*k is the deepest eroded Block*/
 				if (k==-1) {
-					Units_base[i][j] -= h_unit_aux;
+					Blocks_base[i][j] -= h_unit_aux;
 				}
 			}
 		}
 	}
-	if (hidden) Units[i_unit_insert].type = 'H';
+	if (hidden) Blocks[i_Block_insert].type = 'H';
 	if (thin_sheet) {
 		float default_viscTerm = .5e7; /*.1e7*/
 		char filename[MAXLENFILE];
-		Units[i_unit_insert].type    = 'V';
-		Units[i_unit_insert].vel_x   = alloc_matrix(Ny, Nx);
-		Units[i_unit_insert].vel_y   = alloc_matrix(Ny, Nx);
-		Units[i_unit_insert].visc    = alloc_matrix(Ny, Nx);
-		Units[i_unit_insert].viscTer = alloc_matrix(Ny, Nx);
+		Blocks[i_Block_insert].type    = 'V';
+		Blocks[i_Block_insert].vel_x   = alloc_matrix(Ny, Nx);
+		Blocks[i_Block_insert].vel_y   = alloc_matrix(Ny, Nx);
+		Blocks[i_Block_insert].visc    = alloc_matrix(Ny, Nx);
+		Blocks[i_Block_insert].viscTer = alloc_matrix(Ny, Nx);
 		sprintf(filename, "%s%d.VISC", projectname, nloads);
 		if ((file = fopen(filename, "rt")) == NULL) {
 			PRINT_WARNING("Cannot read thermal viscosity file '%s'.", filename);
-			for (int i=0; i<Ny; i++)  for (int j=0; j<Nx; j++) Units[i_unit_insert].viscTer[i][j] = default_viscTerm;
+			for (int i=0; i<Ny; i++)  for (int j=0; j<Nx; j++) Blocks[i_Block_insert].viscTer[i][j] = default_viscTerm;
 		}
 		else {
 			PRINT_INFO("Reading viscosity for unit %d from file '%s'.", nloads, filename);
-			readinterp2D(file, Units[i_unit_insert].viscTer, mode_interp, default_viscTerm, xmin, xmax, ymin, ymax, Nx, Ny);
+			readinterp2D(file, Blocks[i_Block_insert].viscTer, mode_interp, default_viscTerm, xmin, xmax, ymin, ymax, Nx, Ny);
 		}
 	}
-	Units[i_unit_insert].density = density;
-	Units[i_unit_insert].erodibility = erodibility_aux;
-	Units[i_unit_insert].vel_x[0][0] = vel_x;
-	Units[i_unit_insert].vel_y[0][0] = vel_y;
-	Units[i_unit_insert].time_stop = time_stop;
+	Blocks[i_Block_insert].density = density;
+	Blocks[i_Block_insert].erodibility = erodibility_aux;
+	Blocks[i_Block_insert].vel_x[0][0] = vel_x;
+	Blocks[i_Block_insert].vel_y[0][0] = vel_y;
+	Blocks[i_Block_insert].time_stop = time_stop;
 
 	if (ride) {
-		for (int i_unit=i_unit_insert+1; i_unit<numUnits; i_unit++) {
-			Units[i_unit].vel_x         = Units[i_unit_insert].vel_x; 
-			Units[i_unit].vel_y         = Units[i_unit_insert].vel_y; 
-			Units[i_unit].last_shift_x  = 0; 
-			Units[i_unit].last_shift_y  = 0; 
-			Units[i_unit].last_vel_time = Time; 
-			Units[i_unit].time_stop     = Units[i_unit_insert].time_stop; 
+		for (int i_Block=i_Block_insert+1; i_Block<numBlocks; i_Block++) {
+			Blocks[i_Block].vel_x         = Blocks[i_Block_insert].vel_x; 
+			Blocks[i_Block].vel_y         = Blocks[i_Block_insert].vel_y; 
+			Blocks[i_Block].last_shift_x  = 0; 
+			Blocks[i_Block].last_shift_y  = 0; 
+			Blocks[i_Block].last_vel_time = Time; 
+			Blocks[i_Block].time_stop     = Blocks[i_Block_insert].time_stop; 
 		}
 	}
 
-	/*Don't RepareUnits() in case of: 
+	/*Don't Repare_Blocks() in case of: 
 		Gradual load, because then h_last_unit[] will be empty until tectload()
-		Topoest load, because the infill unit will be filled upon deflection.
+		Topoest load, because the infill Block will be filled upon deflection.
 	*/
-	if (!switch_gradual && !switch_topoest) RepareUnits();
+	if (!switch_gradual && !switch_topoest) Repare_Blocks();
 
 	/*Increment the isostatic load for this time interval*/
 	if (!switch_gradual && !fault) 
@@ -1157,42 +1157,42 @@ int surface_processes (float **topo_ant)
 	CALCULATES EROSION AND SEDIMENTATION:
 	*/
 	BOOL	switch_horiz_record=NO;
-	float	Timelastunit;
+	float	TimelastBlock;
 	int 	test;
 
 	total_sed_mass=total_bedrock_eros_mass=0;
-//sprintf("\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>%f %d",Timelastunit, test);
+//sprintf("\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>%f %d",TimelastBlock, test);
 	if (!erosed_model && !hydro_model) return (0) ;
 	switch_topoest=NO;
 
 #ifdef SURFACE_TRANSPORT
-	/*Creates a new sediment unit if necessary*/
+	/*Creates a new sediment Block if necessary*/
 	if (erosed_model) {
 	    int i;
-	    float Timelastunit=-9999*Matosec;
+	    float TimelastBlock=-9999*Matosec;
   	    for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) eros_now[i][j]=0;
-  	    for (int i=0; i<numUnits; i++)
-  		  if (Units[i].age > Timelastunit && Units[i].density==denssedim) Timelastunit = Units[i].age;
+  	    for (int i=0; i<numBlocks; i++)
+  		  if (Blocks[i].age > TimelastBlock && Blocks[i].density==denssedim) TimelastBlock = Blocks[i].age;
   	    for (int i=0; i<n_record_times; i++)
   		  if (Time>horiz_record_time[i]-dt/2 && Time<=horiz_record_time[i]+dt/2)
   			  switch_horiz_record=YES;
   	    if (Time == Timeini
-  	      || ((Time-Timelastunit)>(dt_record-.001*dt) && dt_record && !n_record_times)
+  	      || ((Time-TimelastBlock)>(dt_record-.001*dt) && dt_record && !n_record_times)
   	      || switch_horiz_record) {
-  		  insert_new_unit(numUnits);
-  		  Units[numUnits-1].type = 'S' ;
-  		  Units[numUnits-1].density = denssedim ;
-  		  Units[numUnits-1].erodibility = erodibility_sed ;
-		  Units[numUnits-1].detr_ratio = alloc_matrix(Ny, Nx);
-		  Units[numUnits-1].detr_grsize = alloc_matrix(Ny, Nx);
+  		  insert_new_Block(numBlocks);
+  		  Blocks[numBlocks-1].type = 'S' ;
+  		  Blocks[numBlocks-1].density = denssedim ;
+  		  Blocks[numBlocks-1].erodibility = erodibility_sed ;
+		  Blocks[numBlocks-1].detr_ratio = alloc_matrix(Ny, Nx);
+		  Blocks[numBlocks-1].detr_grsize = alloc_matrix(Ny, Nx);
   	    }
 	}
 
 
-	/*Fluvial Transport: adds to the topo and the next load Dq and removes material from units*/
+	/*Fluvial Transport: adds to the topo and the next load Dq and removes material from Blocks*/
 	Surface_Transport (topo, topo_ant, dt, dt_eros, erosed_model, lake_instant_fill);
 
-	/*Diffusive Erosion: adds to the topo and the next load Dq and removes material from units*/
+	/*Diffusive Erosion: adds to the topo and the next load Dq and removes material from Blocks*/
 	/*For grids of 100x100 needs dt of .01 My to converge*/
 	Diffusive_Eros (Kerosdif, dt, dt_eros/5);
 
@@ -1221,13 +1221,13 @@ int surface_processes (float **topo_ant)
 
 	{
 	    float volume=0, total_vol_seds=0;
-    	    for (int i=numUnits-1; i>=0; i--) {
+    	    for (int i=numBlocks-1; i>=0; i--) {
     		    int j, k;
     		    for (volume=j=0; j<Ny; j++) for (k=0; k<Nx; k++) {
-    			    volume += Units[i].thick[j][k];
+    			    volume += Blocks[i].thick[j][k];
     		    }
     		    volume *= (dx*dy);
-    		    if (Units[i].density==denssedim) total_vol_seds += volume;
+    		    if (Blocks[i].density==denssedim) total_vol_seds += volume;
     	    }
     	    PRINT_SUMLINE("sediment_vol: %.2e km3\n", total_vol_seds/1e9);
 	}
@@ -1244,41 +1244,41 @@ int The_End()
 	char 	command[MAXLENLINE];
 	float	volume, total_vol_seds=0, surface;
 
-	fprintf(stdout, "\n\n%d units:", numUnits);
+	fprintf(stdout, "\n\n%d Blocks:", numBlocks);
 	fprintf(stdout, "\nNo. Density Age Volume Surf.  Vel_x Vel_y Shft_x Shft_y erosL");
 	if (verbose_level>=2) fprintf(stdout, " AgeStop");
 	fprintf(stdout, "\n     kg/m3  My  1e3km3 1e3km2 km/My km/My   km     km    [m] ");
 	if (verbose_level>=2) fprintf(stdout, "  My    ");
 
-	for (i=numUnits-1; i>=0; i--) { 
+	for (i=numBlocks-1; i>=0; i--) { 
 		float vel_x=0, vel_y=0;
 		for (volume=surface=j=0; j<Ny; j++) for (k=0; k<Nx; k++) {
-			volume += Units[i].thick[j][k];
-			if (Units[i].thick[j][k] > 1) surface += dx*dy;
+			volume += Blocks[i].thick[j][k];
+			if (Blocks[i].thick[j][k] > 1) surface += dx*dy;
 		}
 		volume *= (dx*dy);
-		if (Units[i].type=='V') {
+		if (Blocks[i].type=='V') {
 			for (j=0; j<Ny; j++) for (k=0; k<Nx; k++) {
-				vel_x += Units[i].vel_x[j][k];
-				vel_y += Units[i].vel_y[j][k];
+				vel_x += Blocks[i].vel_x[j][k];
+				vel_y += Blocks[i].vel_y[j][k];
 			}
 			vel_x /= (Nx*Ny);
 			vel_y /= (Nx*Ny);
 		}
 		else {
-			vel_x = Units[i].vel_x[0][0];
-			vel_y = Units[i].vel_y[0][0];
+			vel_x = Blocks[i].vel_x[0][0];
+			vel_y = Blocks[i].vel_y[0][0];
 		}
-		if (Units[i].density==denssedim) total_vol_seds += volume;
+		if (Blocks[i].density==denssedim) total_vol_seds += volume;
 		fprintf(stdout, "\n%2d: %5.0f%6.1f%7.1f%6.1f%6.1f%6.1f%7.1f%7.1f %6.1e", 
-			i, Units[i].density, Units[i].age/Matosec, volume/1e12, surface/1e9, 
+			i, Blocks[i].density, Blocks[i].age/Matosec, volume/1e12, surface/1e9, 
 			vel_x/1e3*Matosec, vel_y/1e3*Matosec, 
-			Units[i].shift_x/1e3, Units[i].shift_y/1e3, 
-			Units[i].erodibility); 
+			Blocks[i].shift_x/1e3, Blocks[i].shift_y/1e3, 
+			Blocks[i].erodibility); 
 		if (verbose_level>=2) fprintf(stdout, "%7.1f", 
-			Units[i].time_stop/Matosec);
-		fprintf(stdout, "  %c", Units[i].type);
-		if (i==i_first_unit_load) 	fprintf(stdout, "  1st unit");
+			Blocks[i].time_stop/Matosec);
+		fprintf(stdout, "  %c", Blocks[i].type);
+		if (i==i_first_Block_load) 	fprintf(stdout, "  1st Block");
 	}
 	fprintf(stdout, "\n -: %5.0f%6.1f    -     -     0     0      0      0   %6.1e  ", denscrust, Timeini/Matosec, erodibility);
 	if (verbose_level>=2) fprintf(stdout, " -   ");
@@ -1345,8 +1345,8 @@ int Viscous_Relaxation()
 
 	for (i=0; i<Ny; i++) for (j=0; j<Nx; j++)  w[i][j] += Dw[i][j]; 
 	if (switch_topoest) {
-		/*Defines the thickness of last infill unit*/
-		for (i=0; i<Ny; i++)  for (j=0; j<Nx; j++)  Units[i_first_unit_load-1].thick[i][j] +=  Dw[i][j] /*MAX(Dw[i][j], 0)*/ ;
+		/*Defines the thickness of last infill Block*/
+		for (i=0; i<Ny; i++)  for (j=0; j<Nx; j++)  Blocks[i_first_Block_load-1].thick[i][j] +=  Dw[i][j] /*MAX(Dw[i][j], 0)*/ ;
 	}
 
 	calculate_topo(topo);
@@ -1366,7 +1366,7 @@ int Write_Ouput()
 {
 	write_file_time(w, h_water);
 
-	write_file_Units();
+	write_file_Blocks();
 	write_file_cross_section();
 	write_file_drainage();
 	write_file_ice();

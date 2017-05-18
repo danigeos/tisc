@@ -85,22 +85,22 @@
 typedef enum BOOLEAN	{NO, YES} BOOL;
 
 
-struct UNIT { 		/*for TISC*/
+struct BLOCK { 		/*for TISC*/
 	float	**thick;		/*Present thickness at each x point*/
-	float	**detr_ratio;		/*Only used for sediment units: % of detrital sediment (non carbonatic)*/
-	float	**detr_grsize;		/*Only used for sediment units: grain size of the detrital sediment*/
-	float	age;			/*Age of initial loading of the unit*/
+	float	**detr_ratio;		/*Only used for sediment Blocks: % of detrital sediment (non carbonatic)*/
+	float	**detr_grsize;		/*Only used for sediment Blocks: grain size of the detrital sediment*/
+	float	age;			/*Age of initial file reading*/
 	float	density;		/*Density*/
 	float	erodibility;		/*erosion parameter*/
-	float	last_shift_x;		/*Total x shift of unit*/
-	float	last_shift_y;		/*Total y shift of unit*/
+	float	last_shift_x;		/*Previous x shift of Block*/
+	float	last_shift_y;		/*Previous y shift of Block*/
 	float	last_vel_time; 		/*Last time in which velocity changed*/
-	float	shift_x;		/*Total x shift of unit*/
-	float	shift_y;		/*Total y shift of unit*/
-	float	time_stop;		/*Time in which unit will stop*/
+	float	shift_x;		/*Total x shift of Block*/
+	float	shift_y;		/*Total y shift of Block*/
+	float	time_stop;		/*Time to stop*/
 	char 	type;			/*'T' means thin_sheet*/
-	float	**vel_x;		/*Velocity of unit in x direction*/
-	float	**vel_y;		/*Velocity of unit in y direction*/
+	float	**vel_x;		/*Velocity in x direction*/
+	float	**vel_y;		/*Velocity in y direction*/
 	float	**visc;			/*Viscosity (only for thin sheet calculations)*/
 	float	**viscTer;		/*Viscosity thermal term (only used for thin sheet calculations, in the first step)*/
 };

@@ -1,11 +1,12 @@
-###  Sample *.UNIT file for tisc  ###
+###  Sample *.UNIT file for TISC  ###
+#UNIT files are used to define new Blocks in TISC and tAo (loads, faults, ...)
+#First UNIT is read from file 'project1.UNIT', 2nd 'project2'.UNIT, etc.
 #The unit parameters and thickness contained in these *.UNIT files 
 #is read from the routine 'read_file_unit()' in tisc.c. 
 #Have a look at that one to better understand how this input works.
 
 #PARAMETER	VALUE	UNITS
 #----------------------------
-#Input options:
 z_default	0	[m] Default z-value (unit thickness/fault depth) in the
 				nodes where it is not  specified. z<0 downwards
 				except if fault=1 (see below). 
@@ -47,11 +48,11 @@ time		0	[Ma]	Time when this load/unit must be applied. Note
 					that 'time' in each unit file must be 
 					larger than in the previous unit file 
 					(projectname'N-1'.UNIT).
-vel_x		0	[km/Ma]	Velocity in x. Units move by an entire number of 
+vel_x		0	[km/Ma]	Velocity in x. Blocks move by an entire number of 
 					nodes at each time step.
-vel_y		0	[km/Ma]	Velocity in y. Units move by an entire number of 
+vel_y		0	[km/Ma]	Velocity in y. Blocks move by an entire number of 
 					nodes at each time step.
-time_stop	9999	[Ma]	Time to stop the load/unit.
+time_stop	9999	[Ma]	Time to stop the Block/unit.
 density		2800	[kg/m3]	Density of this load/unit.
 erodibility	100e3	[m]	erodibility of the unit.
 
@@ -85,14 +86,14 @@ cut_all		0	[0/1]	All units (also sediments) should be cut by
 thin_sheet	0	[0/1]	Calculate the deformation of this unit with a 
 					thin viscous sheet (Bird, 1991). 
 					Assumes local isostasy.
-insert		0	[0/1]	Do not put this load on the top of the units, 
+insert		0	[0/1]	Do not put this load on the top of the Blocks, 
 					but insert it as the lowest load.
-top		0	[0/1]	Put this load on the top of the units, but as 
+top		0	[0/1]	Put this load on the top of the Blocks, but as 
 					the highest load.
 topoest		0	[0/1]	1 means topographic load, i.e., the load is 
 					vertically fixed and does not subside 
 					but the deflection is filled with a 
-					unit of 'densinfill' density. This is 
+					Block of 'densinfill' density. This is 
 					equivalent to switch_topoest=1 in the 
 					parameters file.
 #fill_up_to	0	[m]	If present, TISC fills with constant density 

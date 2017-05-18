@@ -75,7 +75,7 @@
 	'-T' Sets elastic thickness to <eet_value>. 0 means local isostasy
 		(faster calculation).
 	'-t' Sets initial (i), final (f), increment (d), surface 	
-		processes (e), viscous relaxation (v) or sediment-unit-record
+		processes (e), viscous relaxation (v) or sediment-Block-record
 		(r) times.
 	'-V' Means verbose mode with additional run-time prints. Add '<level>'
 		for additional i/o information. See doc/template.PRM file for
@@ -143,7 +143,7 @@
   hydrology, erosion, and isostasy, are calculated. 
   Signal meaning during execution:
 	l    calculating new load.
-	u    defining new unit.
+	b    defining new Block.
 	e/s  calculating erosion/sedimentation.
 	ft   calculating fluvial transport.
 	e    calculating elastic deflection.
@@ -386,20 +386,20 @@ T= 9.5000 My
   sediment vol: 4.09e+03 km3
 -->>
 
-  At the final time step, a list of the generated units is shown including 
+  At the final time step, a list of the generated Blocks is shown including 
   their properties:  
 <<--
-2 units:
+2 Blocks:
 No. Density Age Volume Surf.  Vel_x Vel_y Shft_x Shft_y erosL
      kg/m3  My  1e3km3 1e3km2 km/My km/My   km     km    [m] 
  1:  2200   5.0    0.0   0.6   0.0   0.0    0.0    0.0 6.0e+04  S
- 0:  2200   0.0    0.0   0.8   0.0   0.0    0.0    0.0 6.0e+04  S  1st unit
+ 0:  2200   0.0    0.0   0.8   0.0   0.0    0.0    0.0 6.0e+04  S  1st Block
  -:  2850   0.0    -     -     0     0      0      0   1.2e+05  -  basement
 -->>
 
   Output files contain the information required for graphic output, and have a
   lowercase extension:
-  'project.hrz'	Final geometry of all units (elevat./depth of all the horizons).
+  'project.hrz'	Final geometry of all Blocks (elevat./depth of all the horizons).
   'project.xyzt' Isostatic (flexural) subsidence (deflection w) along  time.
   'project.all'	Binary file with all the information to resume the model (see
 		  -F option). Valid for checkpointing purposes.
@@ -442,7 +442,7 @@ No. Density Age Volume Surf.  Vel_x Vel_y Shft_x Shft_y erosL
   'project.st'	Total erosion/sedimentation and present rate (in equivalent
 		  meters of denscrust).
   'project.eeth' interpolated values for elastic thickness entered via '*.EET'
-  'project.vel' Velocity and viscosity distribution from the thin-sheet unit.
+  'project.vel' Velocity and viscosity distribution from the thin-sheet Block.
   'project.pfl'	Cross section along path defined in *.PRFL
   'project.ps'	Postscript file produced using GMT software. TISC runs the
 		  shell  script tisc.gmt.job at the end of the run in order to
@@ -645,16 +645,16 @@ No. Density Age Volume Surf.  Vel_x Vel_y Shft_x Shft_y erosL
     
 
 11.- MODEL LIMITATIONS
-  Units move only an entire number of nodes at each time step. Unit deformation
+  Blocks move only an entire number of nodes at each time step. Block deformation
     during motion follows a vertical shear approach (preserving vertical
-    thickness). Rotation of units is not allowed.
+    thickness). Rotation of Blocks is not allowed.
   TISC doesn't account for deformation in lower crust or mantle, and the
     deformation in the upper crust (by shortening) is kinematically introduced
     in the model. Subduction is not considered either. Different velocities of
     shortening for each detachment fault are (still) not implemented.
   Gradual sediment compaction is not considered, but this shouldn't affect the 
     sediment onlap/offlap geometry in the external side of the foreland basin,
-    but only the thickness of the units.
+    but only the thickness of the Blocks.
   Grain size or sediment facies distribution of the deposits are not
     differentiated.
   Sharp changes of EET produce numerical instabilities that can be detected by
@@ -746,17 +746,18 @@ No. Density Age Volume Surf.  Vel_x Vel_y Shft_x Shft_y erosL
 	'densinfill' density material. See 'switch_topoestable' entry.
 
   Unit
- 	The word 'unit' is used for two similar concepts: Input units are 
-	the input files described above to provide the geometry of faults 
-	or loads; 'output units' (written in *.hrz and in the screen output) 
-	are generally more numerous because they include the sediemntary 
-	units calculated by tAo. The numbering of the input and output 
-	units does not match.
-	A unit corresponds in the code with a 2D body (a sediment unit,
- 	thrusting unit, an instantaneous load or whatever), with a density, 
+	Input files (*.UNIT) described above to provide the geometry of faults or
+	loads. Units are converted into internal 'Blocks' after being read.
+
+  Blocks
+	Blocks are TISC's bodies. They are generally more numerous than the 
+	units from files, because they include the sedimentary blocks calculated 
+	by tAo. They are written to file *.hrz and listed in the screen output. 
+	A Block corresponds in the code to a 3D body (a sediment Block,
+	thrusting Block, an instantaneous load or whatever), with a density, 
 	velocity, age and thickness profile associated. Internally, this is 
-	stored in the structure 'Units' and a summary of these units is
-	written to the standard output.
+	stored in a C-language structure called 'Blocks' and a summary of 
+	these Blocks is written to the standard output at the end of the run.
 	
   Open/Endorheic lake
 	A lake that has larger water input discharge than the evaporation at its
