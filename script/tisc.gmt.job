@@ -23,7 +23,7 @@ pstext	-JX -R -O -G0 -W255/255/255 -K <<END >> $ps
 END
 
 
-#UPPER RIGHT: GEOLOGY or THIN SHEET VELOCITY FIELD & UNIT THICKNESS
+#UPPER RIGHT: GEOLOGY or THIN SHEET VELOCITY FIELD & BLOCK THICKNESS
 psbasemap -JX$size -R$Region -B$ticklabels\:"x (km)":/$ticklabels\:"y (km)":Nsew \
 	-X$horz_shift -K -O >> $ps
 if (-r $prj.vel) then 

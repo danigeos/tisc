@@ -127,11 +127,12 @@ int insert_new_Block(int num_new_Block)
 	struct BLOCK	Block_aux;
 
 	/*Creates a new Block and increments numBlocks by 1.
-		num_new_Block ranges from 0 to numBlocks-1
-		Blocks above num_new_Block (inclusive) are shifted upwards.
+		num_new_Block ranges from 0 to numBlocks.
+		Blocks number num_new_Block and above are shifted upwards.
+		If num_new_Block == numBlocks then a new block is created on top of all. 
 	*/
 
-	if (verbose_level>=2) fprintf(stdout, "  u"); fflush(stdout);
+	if (verbose_level>=2) fprintf(stdout, "  b"); fflush(stdout);
 	PRINT_DEBUG("New Block being created: %d ; numBlocks= %d ; i_first_Block_load = %d ; i_Block_insert = %d", num_new_Block, numBlocks, i_first_Block_load, i_Block_insert);
 	if (numBlocks>NmaxBlocks-5) PRINT_WARNING("Lots of Blocks! "); 
 
