@@ -1,7 +1,7 @@
 ###  TISC parameters file  ###
 
 #TISC VERSION FOR THIS FILE:
-version		TISC_2014-03-25
+version		TISC_2017-05-19
 
 #MODELED REGION: 
 #Coordinates of the center of corner cells (i.e., netCDF's "node 

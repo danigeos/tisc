@@ -270,7 +270,8 @@ int inputs (int argc, char **argv)
 	putenv("tisc_dir=" TISCDIR); /*printf("\nEnvir. Read: %s", getenv ("tisc_dir")); system ("echo test: $tisc_dir"); system ("printenv | grep tisc");*/
 
 	/*Version of TISC is matched against the parameters file *.PRM*/
-	strcpy(version, "TISC_2016-08-30");
+	/*¡¡ UPDATE template.PRM !!*/
+	strcpy(version, "TISC_2017-05-19");
 
 	/*Default parameter values are read from ./tisc/doc/template.PRM:*/
 	sprintf(projectname, "%s/doc/template", TISCDIR);
@@ -1282,7 +1283,7 @@ int The_End()
 	}
 	fprintf(stdout, "\n -: %5.0f%6.1f    -     -     0     0      0      0   %6.1e  ", denscrust, Timeini/Matosec, erodibility);
 	if (verbose_level>=2) fprintf(stdout, " -   ");
-	fprintf(stdout, " -   basement\n");
+	fprintf(stdout, "-  basement\n");
 	fprintf(stdout, "\nFinal total sediment volume: %.2f 1e3 km3\n", total_vol_seds/1e12);
 
 	if (!switch_dt_output) Write_Ouput();
