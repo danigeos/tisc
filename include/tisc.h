@@ -99,7 +99,7 @@ int Rise_Damn_Node (int iia, int jja, int i, int j);
 int Sediment (double dh_sed, int row, int col);
 int surface_processes (float **topo_ant);
 int tectload();
-int move_unit();
+int move_Blocks();
 int read_file_unit();
 int syntax();
 int The_End();
