@@ -71,6 +71,7 @@
 		and +random_topo/2. seed is an integer.
 	'-r' Sets density of environment (e), crust (c), infill (i), mantle (m)
 		or asthenosphere (a).
+	'-S' Move block number <b> by <n> positions (use with '-F').
 	'-s' Add 'm' to use 'mathlib' to solve the flexural equations.
 	'-T' Sets elastic thickness to <eet_value>. 0 means local isostasy
 		(faster calculation).
@@ -80,12 +81,14 @@
 	'-V' Means verbose mode with additional run-time prints. Add '<level>'
 		for additional i/o information. See doc/template.PRM file for
 		level specification.
+	'-v' Changes velocity to <velx>,<vely> for block number <num> or, if 
+		<num><0, to all blocks with density=-<num> (use with '-F').
 
 	See also the default parameter file: tisc/doc/template.PRM
 
+
 	Examples:
-		See examples in tisc/demo/README file and subdirectories 
-		therein.
+		See examples in tisc/demo/ and subdirectories therein.
 	
 
 2.- INTRODUCTION
@@ -641,6 +644,9 @@ No. Density Age Volume Surf.  Vel_x Vel_y Shft_x Shft_y erosL
     tisc/ are now hard links to allow proper git synchronization. 
     Water divides: TISC now writes the swimming distance between neigbouring 
     cells in column #14 of drainage file *.xyw.
+  TISC_2017-05-19
+	Changed UNIT1D and Units structure to BLOCK1D and Blocks, to avoid confusion 
+	with input files (UNITS).
     
     
 

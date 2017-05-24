@@ -1,24 +1,22 @@
 #---------------------------- TISC makefile ----------------------------
-#
-#First read and modify options in ./config.mk
+##First read and modify options in ./config.mk
 #
 #Type  'make'  in this directory to compile.
 #
 #tisc has been succesfully compiled with this Makefile in: 
-#  iOS 11
-#  IBM AIX Version 3.2 for IBM RISC 6000 workstations.
-#  Linux for pentium processor. 
-#  Hewlett Packard Envizex.
-#  Sun Solaris OS5
+#  iOS 11, linux, 
+#Earlier versions were functional in:
+#  IBM AIX Version 3.2 for IBM RISC 6000 workstations, Hewlett Packard Envizex. Sun Solaris OS5
 #------------------------------------------------------------------------
 
 include config.mk
 
 all:
 	(cd src; make all)
-	@echo; echo; echo Compilation done.
-	@(echo "ADD  bin/  AND  script/ TO YOUR PATH.")
-	@(echo "ADD  setenv tisc_dir `pwd`  TO YOUR VARIABLES.")
+	@echo; echo; echo Compilation succeeded!
+	@(echo "ADD TO YOUR PATH: `pwd`/bin/  AND  `pwd`/script/")
+	@(echo "ADD IN .cshrc:    setenv tisc_dir `pwd` ")
+	@(echo "ADD IN .bashrc:   export tisc_dir=`pwd` ")
 
 clean_for_tar:
 	(cd src; make clean)
@@ -58,7 +56,7 @@ upload_version_starting_from_scratch:
 
 upload:
 	#for initialization:  
-	#git init; git remote add tisc https://github.com/danigeos/tisc; git add Makefile README config.mk bin demo doc include lib script src
+	#git init; git remote add tisc https://github.com/danigeos/tisc; git add Makefile README config.mk bin demo doc include lib script src; git rm --cached doc/first_compilation.txt
 	git commit -a 
-	git push -u -f tisc master
+	git push tisc master
 

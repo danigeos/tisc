@@ -51,26 +51,35 @@ The 20km thickness is also specified in the flex.PRM file, but try adding
 different elastic thickness.  
 
 4) ../demo/4_river_transp/
-	Command:	tisc conic_island -tf10
-	(with -tf10, tisc will ignore the final time in the PRM file and set
-	it to 10 Myr). 
+	This setup calculates the orographic precipitation produced by a vocano.
+	Command:
+	tisc conic_island -tf10 -Pc
+	#-Pc makes a jpeg image at each time step.
+	#-tf10 ignores the final time in the PRM file and set it to 10 Myr. 
 
 5) ../demo/5_lakes/
 	Command:	tisc 2lakes 
 
 6) ../demo/6_deformation/
-	Command:	tisc deformation
+	Commands:
+	tisc demo -Pc #to have a jpg produced at each time step
+	tisc demo -F -v-2850/3.14/31.4 -tf20  #to change velocity of blocks with a 2850 density
+	tisc demo -F -v3/2.17/21.7 -tf25  #to change velocity of block 3
+	tisc demo -F -S1/1 -tf -tf30  #to move block 1 up by 1 position
 
 7) ../demo/7_climate/
-	Command: 	tisc climate -Pc | tee climate.outputscreen.txt
+	Command: 	
+	tisc climate -Pc | tee climate.outputscreen.txt
 
 8) ../demo/8_Ebro_evol/
 	This is the Ebro Basin model published in G-C et al., JGR, 2003.
-	Command: 	tisc Ebro_evol -Pc"-page 1040x700-210-580 -density 180 -crop 1040x1000+0+0" | tee Ebro_evol.screen
+	Command: 	
+	tisc Ebro_evol -Pc"-page 1040x700-210-580 -density 180 -crop 1040x1000+0+0" | tee Ebro_evol.screen
 
 	Try inhibiting the surface processes with this:
 			tisc Ebro_evol -qerosed_model=0 -qhydro_model=0
 
 9) ../demo/9_Iberian_drainage/
 	This calculates the present drainage of the Iberian peninsula.
-	Command: 	tisc Iberia_present
+	Command: 	
+	tisc Iberia_present

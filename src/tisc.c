@@ -33,11 +33,9 @@ valgrind --dsymutil=yes --track-origins=yes --tool=memcheck --leak-check=full `w
 
 int main(int argc, char **argv)
 {
-	float 	**topo_ant;
 
 	/*get input parameters and files*/
 	inputs(argc, argv) ;
-	topo_ant = alloc_matrix(Ny, Nx);
 
 	fprintf(stdout, "\nT= %.4f My", Time/Matosec);
 
@@ -46,7 +44,7 @@ int main(int argc, char **argv)
 	/*MAIN LOOP: In this loop time increments from Timeini to Timefinal*/
 	do {
 		/*Remember topography before tectonics and flexure*/
-		calculate_topo(topo_ant);
+		calculate_topo(topo);
 
 		/*Calculate tectonic deformation and tectonic load*/
 		tectload();
@@ -61,7 +59,7 @@ int main(int argc, char **argv)
 		Viscous_Relaxation();
 
 		/*Calculates surface water flow and sediment-erosion*/
-		surface_processes(topo_ant);
+		surface_processes(topo);
 
 		Time += dt;
 		fprintf(stdout, "\nT= %.4f My", Time/Matosec);
@@ -70,8 +68,6 @@ int main(int argc, char **argv)
 	} while (Time < Timefinal-dt/10);
 
 	The_End();
-
-	free_matrix(topo_ant, Ny);
 
 	return(1);
 }
@@ -94,7 +90,7 @@ int tectload()
 	PRINT_GRID_INFO (topo, "topogr.  ", "m");
 
 	/*Moves Blocks*/
-	move_Block();
+	move_Blocks();
 
 	/*Reads external load from file*/
 	while (read_file_unit());
@@ -293,31 +289,31 @@ int inputs (int argc, char **argv)
 				case 'F':
 					run_type=2;
 					if (strlen(prm)>0) strcpy (resume_filename, prm);
-					else		   sprintf(resume_filename, "%s"".all", projectname);
+					else sprintf(resume_filename, "%s"".all", projectname);
 					break;
 				case 'h':
 					switch (argv[iarg][2]) {
-					    case 'p':
-					    	fprintf(stderr, "\nFile ./tisc/doc/template.PRM (sample parameters file) follows in stdout:\n") ;
-						sprintf(command, "cat %s/doc/template.PRM", TISCDIR);
-						system(command) ;
-						break;
-					    case 'c':
-					    	fprintf(stderr, "\nFile ./tisc/doc/template.PRM (sample parameters file) follows in stdout:\n") ;
-						sprintf(command, "cat %s/doc/template.PRM | %s/script/cleanPRM", TISCDIR, TISCDIR);
-						system(command) ;
-						break;
-					    case 'u':
-					    	fprintf(stderr, "\nFile ./tisc/doc/template.UNIT (sample unit file) follows in stdout:\n") ;
-						sprintf(command, "cat %s/doc/template.UNIT", TISCDIR);
-						system(command) ;
-						break;
-					    default:
-						fprintf(stderr, "\nFile ./tisc/doc/tisc.info.txt follows:\n") ;
-						sprintf(command, "more %s/doc/tisc.info.txt", TISCDIR);
-						AUTHORSHIP;
-						system(command) ;
-						break;
+						case 'p':
+							fprintf(stderr, "\nFile ./tisc/doc/template.PRM (sample parameters file) follows in stdout:\n") ;
+							sprintf(command, "cat %s/doc/template.PRM", TISCDIR);
+							system(command) ;
+							break;
+						case 'c':
+							fprintf(stderr, "\nFile ./tisc/doc/template.PRM (sample parameters file) follows in stdout:\n") ;
+							sprintf(command, "cat %s/doc/template.PRM | %s/script/cleanPRM", TISCDIR, TISCDIR);
+							system(command) ;
+							break;
+						case 'u':
+							fprintf(stderr, "\nFile ./tisc/doc/template.UNIT (sample unit file) follows in stdout:\n") ;
+							sprintf(command, "cat %s/doc/template.UNIT", TISCDIR);
+							system(command) ;
+							break;
+						default:
+							fprintf(stderr, "\nFile ./tisc/doc/tisc.info.txt follows:\n") ;
+							sprintf(command, "more %s/doc/tisc.info.txt", TISCDIR);
+							AUTHORSHIP;
+							system(command) ;
+							break;
 					}
 					fprintf(stderr, "\n") ;
 					exit(0);
@@ -333,7 +329,7 @@ int inputs (int argc, char **argv)
 		}
 		else {
 			if (run_type != 2) run_type=10;
-			strcpy(projectname, argv[iarg]);
+			if (strlen(projectname)<1) strcpy(projectname, argv[iarg]);
 		}
 	}
 
@@ -356,7 +352,7 @@ int inputs (int argc, char **argv)
 	switch (run_type)
 	{
 		case 0:
-			fprintf(stdout, "\n\n\n     *** END of program ***\n\n\n\n");
+			fprintf(stdout, "\n\n\t*** END of run ***\n\n\n\n");
 			exit(0);
 		case 1:
 			interpr_command_line_opts(argc, argv);
@@ -388,20 +384,20 @@ int inputs (int argc, char **argv)
 	}
 
 	{
-	    char filename[MAXLENLINE]; FILE *file;
-	    sprintf(filename, "%s.out", projectname);
-	    if (switch_file_out) {
-	    	if ((file = fopen(filename, "w")) == NULL) {
-	    	    PRINT_ERROR("Cannot open standard output file %s.\n", filename);
-	    	}
-	    	else {
-	    	    PRINT_INFO("standard output redirected to %s.\n", filename);
-		    stdout=file;
-	    	}
-	    }
-	    else {
+		char filename[MAXLENLINE]; FILE *file;
+		sprintf(filename, "%s.out", projectname);
+		if (switch_file_out) {
+			if ((file = fopen(filename, "w")) == NULL) {
+				PRINT_ERROR("Cannot open standard output file %s.\n", filename);
+			}
+			else {
+				PRINT_INFO("standard output redirected to %s.\n", filename);
+			stdout=file;
+			}
+		}
+		else {
 		remove(filename);
-	    }
+		}
 	}
 
 	Allocate_Memory();	 
@@ -438,13 +434,13 @@ int inputs (int argc, char **argv)
 
 	/*Test of incompatibilities between parameters*/
 	if (switch_topoest && switch_sea)	{ switch_sea=NO; 	PRINT_WARNING("Sea not possible when topoest<>0. Sea load switch turned off.") ; }
-	if (densenv && switch_sea)		{ switch_sea=NO; 	PRINT_WARNING("Sea not possible when densenv<>0. Sea load switch turned off.") ; }
-	if (evaporation_ct && evaporation_ct<rain)	{ 		PRINT_WARNING("Evaporation should exceed the rain to produce endorheic lakes.") ; }
+	if (densenv && switch_sea)			{ switch_sea=NO;	PRINT_WARNING("Sea not possible when densenv<>0. Sea load switch turned off.") ; }
+	if (evaporation_ct && evaporation_ct<rain)	{ 			PRINT_WARNING("Evaporation should exceed the rain to produce endorheic lakes.") ; }
 	if (K_ice_eros && !hydro_model)		{ K_ice_eros=0; 	PRINT_WARNING("No ice flow if hydro_model==0; K_ice_eros turned off.") ; }
-	if (switch_topoest && !densinfill) 	{ 			PRINT_WARNING("Infill density has 0 value while topography has been selected to remain at initial level.") ; }
-	if (switch_ps && !switch_write_file)	{ 			PRINT_WARNING("switch_write_file should be turned on. Postscript may not be produced.") ; }
+	if (switch_topoest && !densinfill) 	{ 					PRINT_WARNING("Infill density has 0 value while topography has been selected to remain at initial level.") ; }
+	if (switch_ps && !switch_write_file){	 				PRINT_WARNING("switch_write_file should be turned on. Postscript may not be produced.") ; }
 	if (tau<=0 && isost_model==2)  		{ isost_model=1; 	PRINT_WARNING("Negative tau will be ignored: elastic plate is assumed.");}
-	if (Nx<6 || Ny<6)			{ 			PRINT_WARNING("Too coarse %dx%d gridding.", Nx, Ny); }
+	if (Nx<6 || Ny<6)					{					PRINT_WARNING("Too coarse %dx%d gridding.", Nx, Ny); }
 
 	sprintf(command, "rm -f .*.tisc.tmp %s.mtrz", projectname);
 	system(command);
@@ -498,10 +494,10 @@ int interpr_command_line_opts(int argc, char **argv)
 					break;
 				case 'D':
 					if (run_type!=2) {
-					    xmin = atof(strtok(prm, "/"));
-					    xmax = atof(strtok(NULL, "/"));
-					    ymin = atof(strtok(NULL, "/"));
-					    ymax = atof(strtok(NULL, "/"));
+						xmin = atof(strtok(prm, "/"));
+						xmax = atof(strtok(NULL, "/"));
+						ymin = atof(strtok(NULL, "/"));
+						ymax = atof(strtok(NULL, "/"));
 					}
 					else PRINT_WARNING("Impossible to change the domain when resuming a model.");
 					break;
@@ -577,6 +573,30 @@ int interpr_command_line_opts(int argc, char **argv)
 						case 'a':	densasthen = value2; 	break;
 					}
 					break;
+				case 'S':
+					{
+						int iblock, nblocks;
+						struct BLOCK Block_aux;
+						iblock = atoi(strtok(prm, "/"));
+						nblocks = atoi(strtok(NULL, "/"));
+						PRINT_INFO("Block %d will be moved by %d positions", iblock, nblocks);
+						Block_aux=Blocks[iblock];
+						if (nblocks>0) {
+							for (int iu=iblock; iu<iblock+nblocks; iu++) {
+								Blocks[iu]=Blocks[iu+1];
+								PRINT_INFO("%d = %d", iu, iu+1);
+							}
+						}
+						else {
+							for (int iu=iblock; iu>iblock+nblocks; iu--) {
+								Blocks[iu]=Blocks[iu-1];
+								PRINT_INFO("%d = %d", iu, iu-1);
+							}
+						}
+						Blocks[iblock+nblocks]=Block_aux;
+						PRINT_INFO("%d = %d", iblock+nblocks, numBlocks-1);
+					}
+					break;
 				case 's':
 					solver_type = argv[iarg][2];
 					break;
@@ -597,6 +617,23 @@ int interpr_command_line_opts(int argc, char **argv)
 					verbose_level = 2;
 					if (argv[iarg][2]) verbose_level = value;
 					break;
+				case 'v':
+					{
+						double density, vel_x, vel_y;
+						density = atof(strtok(prm, "/"));
+						vel_x = atof(strtok(NULL, "/"));
+						vel_y = atof(strtok(NULL, "/"));
+						for (int iu=0; iu<numBlocks; iu++) {
+							if (Blocks[iu].density==-density || iu==density) {
+								Blocks[iu].vel_x[0][0]=vel_x*1e3/Matosec;
+								Blocks[iu].vel_y[0][0]=vel_y*1e3/Matosec;
+								Blocks[iu].last_vel_time=Time-dt;/*!!*/
+								Blocks[iu].last_shift_x=0;
+								Blocks[iu].last_shift_y=0;
+							}
+						}
+					}
+					break;
 			}
 		}
 	}
@@ -606,7 +643,7 @@ int interpr_command_line_opts(int argc, char **argv)
 
 
 
-int move_Block()
+int move_Blocks()
 {
 	int	*nshift_x, *nshift_y;
 	float	**new_thick;
@@ -622,7 +659,7 @@ int move_Block()
 	nshift_y = calloc(numBlocks, sizeof(int));
 
 	for (int iu=0; iu<numBlocks; iu++) {
-	    if (Blocks[iu].density == denssedim) {
+		if (Blocks[iu].density == denssedim) {
 /*!!*/
 //Blocks[iu].vel_y[0][0] = 2.5e3/Matosec;
 //Blocks[iu].last_vel_time = Blocks[iu].age;
@@ -633,13 +670,13 @@ int move_Block()
 		for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) 
 			new_thick[i][j] = Blocks[iu].thick[i][j];
 		for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++){
-		    float sedthick;
-		    sedthick=Blocks[iu].thick[i][j];
-		    /*Find the uppermost moving Block below this point in this sedim. Block*/
-		    for (int ju=iu-1; ju>=0; ju--) {
+			float sedthick;
+			sedthick=Blocks[iu].thick[i][j];
+			/*Find the uppermost moving Block below this point in this sedim. Block*/
+			for (int ju=iu-1; ju>=0; ju--) {
 			/*Calculate the thickness of sediments between the top of this sed. Block and the moving Block*/
 			if (Blocks[ju].density == denssedim) {
-			    sedthick += Blocks[ju].thick[i][j];
+				sedthick += Blocks[ju].thick[i][j];
 			}
 			else {
    			  /*Amount of cells to propagate the deformation: ~20 deg assumed.*/
@@ -649,34 +686,34 @@ int move_Block()
 			  int i_unprop = i+nprop_y;
 			  DOMAIN_LIMIT(i_unprop, j_unprop);
 			  if (Blocks[ju].thick[i_unprop][j_unprop]>.1) {
-			    if (!nshift_y[ju] && !nshift_x[ju]) 
-			    	break;
-			    else {
- 		    		int i_shift, j_shift, i_unshift, j_unshift;
-    				i_shift =   i-nshift_y[ju];	j_shift =   j+nshift_x[ju];
-    				i_unshift = i+nshift_y[ju];	j_unshift = j-nshift_x[ju];
-    				/*If block ju is moving below [i][j] then shift seds.*/
-    				if (deform_sed && IN_DOMAIN(i_shift,j_shift)) 
+				if (!nshift_y[ju] && !nshift_x[ju]) 
+					break;
+				else {
+ 					int i_shift, j_shift, i_unshift, j_unshift;
+					i_shift =   i-nshift_y[ju];	j_shift =   j+nshift_x[ju];
+					i_unshift = i+nshift_y[ju];	j_unshift = j-nshift_x[ju];
+					/*If block ju is moving below [i][j] then shift seds.*/
+					if (deform_sed && IN_DOMAIN(i_shift,j_shift)) 
 					new_thick[i_shift][j_shift] += Blocks[iu].thick[i][j];
-    				if (deform_sed && IN_DOMAIN(i,j) && IN_DOMAIN(i_unshift,j_unshift)) 
+					if (deform_sed && IN_DOMAIN(i,j) && IN_DOMAIN(i_unshift,j_unshift)) 
 					new_thick[i][j] -= Blocks[iu].thick[i][j];
-    				break;
-			    }
+					break;
+				}
 			  }
 			}
-		    }
+			}
 		}
 		for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) {
-		    Dq[i][j] += g * (new_thick[i][j] - Blocks[iu].thick[i][j]) * Blocks[iu].density;
-		    if (new_thick[i][j]<-1) PRINT_ERROR("negative sediment thickness: %.1f m", new_thick[i][j]);
-		    Blocks[iu].thick[i][j] = new_thick[i][j];
+			Dq[i][j] += g * (new_thick[i][j] - Blocks[iu].thick[i][j]) * Blocks[iu].density;
+			if (new_thick[i][j]<-1) PRINT_ERROR("negative sediment thickness: %.1f m", new_thick[i][j]);
+			Blocks[iu].thick[i][j] = new_thick[i][j];
 		}
-	    }
-	    else //!!
-	    {
-	      if (Blocks[iu].type == 'V' && Time < Blocks[iu].time_stop) {
+		}
+		else //!!
+		{
+		  if (Blocks[iu].type == 'V' && Time < Blocks[iu].time_stop) {
 #ifdef THIN_SHEET
-	        int i,j, n, m, nn, nincogn, nbanda, 
+			int i,j, n, m, nn, nincogn, nbanda, 
 			thicken_BC=1, /*0 means No temporal thickening variations on the boundaries, thickness=thickness_old; IBC_thicken!=0 -> No lateral variations of the thickening on the boundaries, d(thickness)/dx=d(thickness)/dy=0*/
 			nitermax=0;  /*0 means viscosity is independent from strain rate => no iterations; normal=50*/
 		double elapsed_time, dt_aux, Lx, Ly, tallmax=.015, alfa=.5, g=9.81, 
@@ -709,7 +746,7 @@ int move_Block()
 			average_pressure[k] = g*denswater*h_water[i][j];
 			/*Blocks terms from the top to the thin_sheet*/
 			for (l=numBlocks-1; l>iu; l--) {
-			    average_pressure[k] += g*Blocks[l].density*Blocks[l].thick[i][j];
+				average_pressure[k] += g*Blocks[l].density*Blocks[l].thick[i][j];
 			}
 			/*Thin sheet term*/
 			average_pressure[k] += g/2*Blocks[iu].density*Blocks[iu].thick[i][j];
@@ -721,33 +758,33 @@ int move_Block()
 			vert_strain_rate[k] = 0;
 			layer_thickness[k] = Blocks[iu].thick[i][j];
 			if (elapsed_time > dt) {
-			    vel_x_array[k] = Blocks[iu].vel_x[i][j];
-			    vel_y_array[k] = Blocks[iu].vel_y[i][j];
-			    viscosity[k]   = Blocks[iu].visc[i][j];
+				vel_x_array[k] = Blocks[iu].vel_x[i][j];
+				vel_y_array[k] = Blocks[iu].vel_y[i][j];
+				viscosity[k]   = Blocks[iu].visc[i][j];
 			}
 			else {
-			    vel_x_array[k] = 0;
-			    vel_y_array[k] = 0;
-			    viscosity[k] =  (double) Blocks[iu].viscTer[i][j] / 3.17e-17; /*viscosity[Pa*s] = viscTer/str.rate  3.17e-16 s^-1==1%/My*/
+				vel_x_array[k] = 0;
+				vel_y_array[k] = 0;
+				viscosity[k] =  (double) Blocks[iu].viscTer[i][j] / 3.17e-17; /*viscosity[Pa*s] = viscTer/str.rate  3.17e-16 s^-1==1%/My*/
 			}
 		}
 		{
 			float apmin=1e19, apmax=-1e19;
 			float vimin=1e19, vimax=-1e19;
 			for (i=0; i<Ny; i++) for (j=0; j<Nx; j++)  {
-			    int k=(Ny-1-i)*Nx+j;
-			    apmin = MIN_2(apmin, average_pressure[k]);
-			    apmax = MAX_2(apmax, average_pressure[k]);
- 			    vimin = MIN_2(vimin, viscosity[k]);
-			    vimax = MAX_2(vimax, viscosity[k]);
- 			    /*printf("\t%d %d av_pres=%.2e", i,j, average_pressure[k]);*/
-			    /*if (i==1 && j==1)   printf("\n%d,%d: ap=%.4e", i,j, average_pressure[k]);
-			    if (i==19 && j==19) printf("\n%d,%d: ap=%.4e", i,j, average_pressure[k]);*/
+				int k=(Ny-1-i)*Nx+j;
+				apmin = MIN_2(apmin, average_pressure[k]);
+				apmax = MAX_2(apmax, average_pressure[k]);
+ 				vimin = MIN_2(vimin, viscosity[k]);
+				vimax = MAX_2(vimax, viscosity[k]);
+ 				/*printf("\t%d %d av_pres=%.2e", i,j, average_pressure[k]);*/
+				/*if (i==1 && j==1)   printf("\n%d,%d: ap=%.4e", i,j, average_pressure[k]);
+				if (i==19 && j==19) printf("\n%d,%d: ap=%.4e", i,j, average_pressure[k]);*/
 			}
 			PRINT_INFO("Viscosity  min = %.4e ;  max = %.4e ;  elapsed_time= %.2e s", vimin, vimax, elapsed_time);
 			PRINT_INFO("Av. press. min = %.4e ;  max = %.4e", apmin, apmax);
 		}
-	        velocity_field_(&elapsed_time, &dt_aux, &Lx, &Ly, 
+			velocity_field_(&elapsed_time, &dt_aux, &Lx, &Ly, 
 			&n, &m, &nn, &vissup, &visinf, viscTer, viscosity, 
 			&nincogn, &tallmax, &alfa, &nitermax, average_pressure, 
 			vel_x_array, vel_y_array,
@@ -777,31 +814,31 @@ int move_Block()
 		free(layer_thickness);
 		remove(tmpTSBCfilename); 
 #endif
-	      }
-	      else {
-	    	int i, j, i_unshifted, j_unshifted;
-		float theor_shift_x, theor_shift_y;
-		/*MOVE BLOCKS*/
-		theor_shift_x = Blocks[iu].vel_x[0][0] * (Time-Blocks[iu].last_vel_time);
-		theor_shift_y = Blocks[iu].vel_y[0][0] * (Time-Blocks[iu].last_vel_time);
-		nshift_x[iu] = floor((theor_shift_x - Blocks[iu].last_shift_x) /dx +.5);
-		nshift_y[iu] = floor((theor_shift_y - Blocks[iu].last_shift_y) /dy +.5);
-		if (Time > Blocks[iu].time_stop + .1*dt) {nshift_x[iu]=0; nshift_y[iu]=0;}
-		Blocks[iu].shift_x += nshift_x[iu]*dx;
-		Blocks[iu].shift_y += nshift_y[iu]*dy;
-		Blocks[iu].last_shift_x += nshift_x[iu]*dx;
-		Blocks[iu].last_shift_y += nshift_y[iu]*dy;
-		for (i=0; i<Ny; i++) for (j=0; j<Nx; j++){
-			i_unshifted = i+nshift_y[iu];	j_unshifted = j-nshift_x[iu];	
-			DOMAIN_LIMIT(i_unshifted, j_unshifted);	/*[i][j], unshifted*/
-			new_thick[i][j] = Blocks[iu].thick[i_unshifted][j_unshifted];
+		  }
+		  else {
+			int i, j, i_unshifted, j_unshifted;
+			float theor_shift_x, theor_shift_y;
+			/*MOVE BLOCKS*/
+			theor_shift_x = Blocks[iu].vel_x[0][0] * (Time-Blocks[iu].last_vel_time);
+			theor_shift_y = Blocks[iu].vel_y[0][0] * (Time-Blocks[iu].last_vel_time);
+			nshift_x[iu] = floor((theor_shift_x - Blocks[iu].last_shift_x) /dx +.5);
+			nshift_y[iu] = floor((theor_shift_y - Blocks[iu].last_shift_y) /dy +.5);
+			if (Time > Blocks[iu].time_stop + .1*dt) {nshift_x[iu]=0; nshift_y[iu]=0;}
+			Blocks[iu].shift_x += nshift_x[iu]*dx;
+			Blocks[iu].shift_y += nshift_y[iu]*dy;
+			Blocks[iu].last_shift_x += nshift_x[iu]*dx;
+			Blocks[iu].last_shift_y += nshift_y[iu]*dy;
+			for (i=0; i<Ny; i++) for (j=0; j<Nx; j++){
+				i_unshifted = i+nshift_y[iu];	j_unshifted = j-nshift_x[iu];	
+				DOMAIN_LIMIT(i_unshifted, j_unshifted);	/*[i][j], unshifted*/
+				new_thick[i][j] = Blocks[iu].thick[i_unshifted][j_unshifted];
+			}
+			for (i=0; i<Ny; i++) for (j=0; j<Nx; j++) {
+				Dq[i][j] += g * (new_thick[i][j] - Blocks[iu].thick[i][j]) * Blocks[iu].density;
+				Blocks[iu].thick[i][j] = new_thick[i][j];
+			}
+		  }
 		}
-		for (i=0; i<Ny; i++) for (j=0; j<Nx; j++) {
-			Dq[i][j] += g * (new_thick[i][j] - Blocks[iu].thick[i][j]) * Blocks[iu].density;
-			Blocks[iu].thick[i][j] = new_thick[i][j];
-		}
-	      }
-	    }
 	}
 
 	free_matrix(new_thick, Ny);
@@ -839,18 +876,18 @@ int read_file_unit()
 	}
 	time_unit = Timeini/Matosec;
 	{
-	    int nlines=0, nread, show, replace=0;
-	    char str1[MAXLENLINE], str2[MAXLENLINE], line[MAXLENLINE+200], *lineptr;
-	    show=(verbose_level>=3)? 1 : 0;
-	    rewind(file);
-	    while ((lineptr=fgets(line, MAXLENLINE+200-1, file)) != NULL && nlines<NMAXHEADERLINES) {
-		nlines++; nread=sscanf(lineptr, "%s %s", str1, str2);
-		if (nread == 2) {
-			Match_Param_Replace_flt ( "time",  	time_unit, 0 )
-			/*Old versions:*/
-			Match_Param_Replace_flt ( "time_load",	time_unit, 1 )
+		int nlines=0, nread, show, replace=0;
+		char str1[MAXLENLINE], str2[MAXLENLINE], line[MAXLENLINE+200], *lineptr;
+		show=(verbose_level>=3)? 1 : 0;
+		rewind(file);
+		while ((lineptr=fgets(line, MAXLENLINE+200-1, file)) != NULL && nlines<NMAXHEADERLINES) {
+			nlines++; nread=sscanf(lineptr, "%s %s", str1, str2);
+			if (nread == 2) {
+				Match_Param_Replace_flt ( "time",  	time_unit, 0 )
+				/*Old versions:*/
+				Match_Param_Replace_flt ( "time_load",	time_unit, 1 )
+			}
 		}
-	    }
 	}
 	time_unit *= Matosec;
 	/*Return if it isn't time yet to read the new unit file*/
@@ -864,46 +901,46 @@ int read_file_unit()
 
 	/*READS AND INTERPOLATES UNIT/LOAD FILE*/
 	{
-	    int nlines=0, nread, show, replace=0;
-	    char str1[MAXLENLINE], str2[MAXLENLINE], line[MAXLENLINE+200], *lineptr;
-	    show=(verbose_level>=3)? 1 : 0;
-	    rewind(file); 
-	    while ((lineptr=fgets(line, MAXLENLINE+200-1, file)) != NULL && nlines<NMAXHEADERLINES) {
-	    	    nlines++; nread=sscanf(lineptr, "%s %s", str1, str2);
-	    	    if (nread == 2) {
-			Match_Param_Replace_flt ( "vel_x",		vel_x,   	0 )
-			Match_Param_Replace_flt ( "vel_y",		vel_y,   	0 )
-			Match_Param_Replace_flt ( "time_stop",  	time_stop,   	0 )
-			Match_Param_Replace_flt ( "density", 	 	density,   	0 )
-			Match_Param_Replace_flt ( "erodibility",	erodibility_aux,   	0 )
-			Match_Param_Replace_int ( "gradual",		switch_gradual,   	0 )
-			Match_Param_Replace_int ( "hidden",		hidden,   	0 )
-			Match_Param_Replace_int ( "ride",		ride,   	0 )
-			Match_Param_Replace_int ( "insert",		insert,   	0 )
-			Match_Param_Replace_int ( "top",		top,   	0 )
-			Match_Param_Replace_int ( "move",  		switch_move,   	0 )
-			Match_Param_Replace_int ( "fault",      	fault,   	0 )
-			Match_Param_Replace_int ( "z_absol",      	z_absol,   	0 )
-			Match_Param_Replace_int ( "cut_Blocks",  	cut_Blocks,   	0 )
-			Match_Param_Replace_int ( "cut_all",  		cut_all,   	0 )
-			Match_Param_Replace_int ( "thin_sheet",		thin_sheet,   	0 )
-			Match_Param_Replace_int ( "topoest",		switch_topoest,   	0 )
-			Match_Param_Replace_flt ( "fill_up_to", 	fill_up_to,   	0 )
-			/*Old versions:*/
-			Match_Param_Replace_int ( "fault_load", 	fault,   	1 )
-			Match_Param_Replace_int ( "interp_load",	switch_gradual ,   	1)
-			Match_Param_Replace_int ( "hidden_load",	hidden,   	1 )
-			Match_Param_Replace_flt ( "dens_load",  	density,   	1 )
-			Match_Param_Replace_int ( "insert_load",	insert,   	1 )
-			Match_Param_Replace_int ( "top_load",		top,   	1 )
-			Match_Param_Replace_int ( "move_load",  	switch_move,   	1 )
-			Match_Param_Replace_int ( "cut_loads",  	cut_Blocks,   	1 )
-			Match_Param_Replace_flt ( "erodability",	erodibility_aux,   	1 )
-			Match_Param_Replace_flt ( "l_fluv_eros",	erodibility_aux,   	1 )
-	    	    }
-	    	    if (strcmp(str1, "thickness_distribution")==0) break;
-	    }
-	    rewind(file); 
+		int nlines=0, nread, show, replace=0;
+		char str1[MAXLENLINE], str2[MAXLENLINE], line[MAXLENLINE+200], *lineptr;
+		show=(verbose_level>=3)? 1 : 0;
+		rewind(file); 
+		while ((lineptr=fgets(line, MAXLENLINE+200-1, file)) != NULL && nlines<NMAXHEADERLINES) {
+				nlines++; nread=sscanf(lineptr, "%s %s", str1, str2);
+				if (nread == 2) {
+				Match_Param_Replace_flt ( "vel_x",		vel_x,   	0 )
+				Match_Param_Replace_flt ( "vel_y",		vel_y,   	0 )
+				Match_Param_Replace_flt ( "time_stop",  	time_stop,   	0 )
+				Match_Param_Replace_flt ( "density", 	 	density,   	0 )
+				Match_Param_Replace_flt ( "erodibility",	erodibility_aux,   	0 )
+				Match_Param_Replace_int ( "gradual",		switch_gradual,   	0 )
+				Match_Param_Replace_int ( "hidden",		hidden,   	0 )
+				Match_Param_Replace_int ( "ride",		ride,   	0 )
+				Match_Param_Replace_int ( "insert",		insert,   	0 )
+				Match_Param_Replace_int ( "top",		top,   	0 )
+				Match_Param_Replace_int ( "move",  		switch_move,   	0 )
+				Match_Param_Replace_int ( "fault",	  	fault,   	0 )
+				Match_Param_Replace_int ( "z_absol",	  	z_absol,   	0 )
+				Match_Param_Replace_int ( "cut_Blocks",  	cut_Blocks,   	0 )
+				Match_Param_Replace_int ( "cut_all",  		cut_all,   	0 )
+				Match_Param_Replace_int ( "thin_sheet",		thin_sheet,   	0 )
+				Match_Param_Replace_int ( "topoest",		switch_topoest,   	0 )
+				Match_Param_Replace_flt ( "fill_up_to", 	fill_up_to,   	0 )
+				/*Old versions:*/
+				Match_Param_Replace_int ( "fault_load", 	fault,   	1 )
+				Match_Param_Replace_int ( "interp_load",	switch_gradual ,   	1)
+				Match_Param_Replace_int ( "hidden_load",	hidden,   	1 )
+				Match_Param_Replace_flt ( "dens_load",  	density,   	1 )
+				Match_Param_Replace_int ( "insert_load",	insert,   	1 )
+				Match_Param_Replace_int ( "top_load",		top,   	1 )
+				Match_Param_Replace_int ( "move_load",  	switch_move,   	1 )
+				Match_Param_Replace_int ( "cut_loads",  	cut_Blocks,   	1 )
+				Match_Param_Replace_flt ( "erodability",	erodibility_aux,   	1 )
+				Match_Param_Replace_flt ( "l_fluv_eros",	erodibility_aux,   	1 )
+				}
+				if (strcmp(str1, "thickness_distribution")==0) break;
+		}
+		rewind(file); 
 	}
 	if (fill_up_to == NO_DATA) 
 		readinterp2D(file, h_last_unit, mode_interp, 0, xmin, xmax, ymin, ymax, Nx, Ny);
@@ -1110,12 +1147,12 @@ int read_file_unit()
 	fprintf(stdout, " l") ;
 	if (fault)  		fprintf(stdout, "F") ;
 	if (thin_sheet)  	fprintf(stdout, "V") ;
-	if (hidden)		fprintf(stdout, "H") ;
+	if (hidden)			fprintf(stdout, "H") ;
 	if (insert) 		fprintf(stdout, "I") ;
-	if (top) 		fprintf(stdout, "P") ;
+	if (top) 			fprintf(stdout, "P") ;
 	if (switch_gradual)	fprintf(stdout, "G") ;
 	if (switch_move) 	fprintf(stdout, "M") ;
-	if (ride) 		fprintf(stdout, "R") ;
+	if (ride) 			fprintf(stdout, "R") ;
 	if (switch_topoest)	fprintf(stdout, "T") ;
 
 	return(1);

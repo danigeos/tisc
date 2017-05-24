@@ -67,7 +67,7 @@ if (-r $prj.INT) psxy $prj.INT -JX -R -M -W1/0/255/0 -L -O -K >> $ps
 
 
 
-#2D CROSS SECTION:
+#CROSS SECTION:
 set width_CS = `echo  2 \* $width + $separation  | bc -l`
 if (-r $prj.pfl) then
 set height_CS = 3.5
