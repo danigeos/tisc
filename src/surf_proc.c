@@ -89,7 +89,7 @@ int 	Define_Lake (int i_lake);
 int 	Delete_Node_From_Lake (int row, int col);
 int 	Divide_Lake (int row, int col);
 int 	Erode (double d_mass, int row, int col);
-int 	constant_rate_eros (float **topo, float Keroseol, float Ksedim, float sea_level, BOOL switch_sea, float dt, float Time);
+int 	constant_rate_eros (float **topo, float Keroseol, float Ksedim, float sea_level, int water_load, float dt, float Time);
 int 	Fluvial_Transport(struct GRIDNODE *sortcell, float dt_st, int erosed_model, float *total_lost_sed_mass, int lake_instant_fill);
 int 	Ice_EroSed (float **ice_velx_sl, float **ice_vely_sl, float dt_eros, float *total_ice_eros, float *total_ice_sedim);
 int 	Ice_Flow (float **ice_velx_sl, float **ice_vely_sl, float **ice_velx_df, float **ice_vely_df, float dt_st, float *total_ice_melt, float *total_ice_precip, float *total_lost_water, float *total_evap_water);
@@ -515,7 +515,7 @@ int Calculate_Discharge (struct GRIDNODE *sortcell, float *total_lost_water, flo
 
 
 int constant_rate_eros (
-	float **topo, float Keroseol, float Ksedim, float sea_level, BOOL switch_sea, 
+	float **topo, float Keroseol, float Ksedim, float sea_level, int water_load, 
 	float dt, float Time) 
 {
 	float Dh;
@@ -534,7 +534,7 @@ int constant_rate_eros (
 		    Erode (THICK2SEDMASS(Dh), i, j);
 	    }
 	    /*SEDIMENTATION*/
-	    else if (switch_sea) {
+	    else if (water_load) {
 		    Dh = MIN_2(Ksedim*dt, sea_level-topo[i][j]);
 	    	    Sediment (THICK2SEDMASS(Dh), i, j);
 	    }

@@ -2,26 +2,24 @@
 *****                              TISC                                    *****
 ********************************************************************************
 	For compilation and installation check the file ../tisc/README
+	Main author since 1993 Daniel Garcia-Castellanos, danielgc@ictja.csic.es. 
 	Copyright details and other information in ../tisc/doc/ 
 ********************************************************************************
 
 Memory debugging with: 
 valgrind --dsymutil=yes --track-origins=yes --tool=memcheck --leak-check=full `which tisc` linear_range -tf0
 
-*/
-/*
 	COMMENTS (programmer's agenda)
 	-Edit here.
-	-Add the water layer to the pfl profile, as in tAo.
-	-DONE. Find water divides: the maximum swimming distance with the neigbouring cells. In write_file_drainage.
-	-Filter part of water to the lowest surrounding node at 2-cell distance (16 candidates), to simulate underground that accelerates capture.
-	-Incorporate sediment compaction (easy in calculate_topo and when writting the hrz/pfl files)..
-	-La flexion no es estable con cambios bruscos de Te (Mayo 2001).
-	-It should take a mean erodibility when eroding.
 	-Track sediment composition (carbonates, salt, and detrital grain size) in another class in structure Blocks. This to calculate grain size distribution in basin, and as a first step for the next point once transitory flow is implemented. 
+	-Filter part of the surface water to the lowest surrounding node at 2-cell distance (16 candidates), to simulate underground that accelerates capture.
+	-La flexion no es estable con cambios bruscos de Te (Mayo 2001).
 	-Implement grain size and sediment load effects on transport and erosion (Sklar). Test if climate variability from deltaO can explain erosion acceleration in Herman et al., 2013 Nature.
-	-Interesting for acceleration of erosion during lake overtopping.
-	-Implement transitory water flow.
+	-Implement transitory water flow. Interesting for acceleration of erosion during lake overtopping.
+	-DONE. Implement sediment compaction (easy in calculate_topo and when writting the hrz/pfl files).
+	-DONE. Add the water layer to the pfl profile, as in tAo.
+	-DONE. Find water divides: the maximum swimming distance with the neigbouring cells. In write_file_drainage.
+	-DONE. It should take a mean erodibility when eroding.
 	-DONE, works if hydro_model!=0. Water load of lakes does not work properly. 
 */
 
@@ -76,179 +74,8 @@ int main(int argc, char **argv)
 
 
 /**************************************************/
-/******* SUBROUTINES  ALPHABETICALLY  SORTED ******/
+/****      SUBROUTINES  IN  RANDOM  ORDER     *****/
 /**************************************************/
-
-
-int tectload()
-{
-	/*
-	CALCULATES NEW LOAD INCREMENT FROM UNIT FILES, Returns 1 if elastic
-	flexure must be done (i.e, if changes in load  occurred), 0 otherwise.
-	*/
-	
-	PRINT_GRID_INFO (topo, "topogr.  ", "m");
-
-	/*Moves Blocks*/
-	move_Blocks();
-
-	/*Reads external load from file*/
-	while (read_file_unit());
-
-	/*Distributes the emplacement of a unit along time*/
-	gradual_Block();
-
-	Repare_Blocks();
-
-	return (1);
-}
-
-
-
-int Direct_mode(char *load_file_name)
-{
-	int 	i, j;
-	FILE 	*file;
-
-	/*Solves flexure problem in direct mode: taking a single external load file and 
-	writing deflection in standar output. There are no other input files neither 
-	output files*/
-
-	PRINT_INFO("Entering direct mode. xmin/xmax/ymin/ymax=%.1f/%.1f/%.1f/%.1f Nx/Ny=%d/%d\n", xmin,xmax,ymin,ymax, Nx,Ny);
-	dx = (xmax-xmin) / (Nx-1) ;
-	dy = (ymax-ymin) / (Ny-1) ;
-	Allocate_Memory();
-	if (strcmp(load_file_name, "")) {
-		if ((file = fopen(load_file_name, "rt")) == NULL) {
-			PRINT_INFO("Load file '%s' not found.\n", load_file_name);
-			exit(0);
-		}
-		readinterp2D(file, h_last_unit, mode_interp, 0, xmin, xmax, ymin, ymax, Nx, Ny) ;
-		fclose(file);
-	}
-	for (i=0; i<Ny; i++) for (j=0; j<Nx; j++) {
-		D[i][j] = ET2RIG(Te_default); 
-		Dq[i][j] = h_last_unit[i][j];
-	}
-	Elastic_Deflection();
-	fprintf(stdout, "\n\nx[km]\t\ty[km]\t\tw[m]\t\tpressure[Pa]\n"); 
-	for (i=0; i<Ny; i++) for (j=0; j<Nx; j++) 
-		fprintf(stdout, "%8.1f\t%8.1f\t%8.1f\t%8.1f\n", 
-			(xmin+j*dx)/1e3, (ymax-i*dy)/1e3, w[i][j], h_last_unit[i][j]);
-	fprintf(stdout, "\n"); 
-	return (1);
-}
-
-
-
-
-int Elastic_Deflection()
-{
-	int 	i, j, NDi=2*Ny, NDs=2*Ny, Neqs=Nx*Ny, 
-		nonzeroes=13*Nx*Ny, ESP, PATH, FLAG, NSP, 
-		*R, *C, *IC, *IA, *JA, *ISP;
-	double	**A, *b, *w_aux;
-	float 	*B, *Z, *mathlib_matrix, *RSP;
-	BOOL	load_changes=NO;
-
-	for (i=0; i<Ny; i++) for (j=0; j<Nx; j++) if (Dq[i][j]) load_changes = YES;
-	if (isost_model>0 && (load_changes || (Time==Timeini && (Px || Py || Pxy)))) {
-    	    if (!Te_default) {
-    		/*LOCAL ISOSTASY*/
-    		float Krest;
-    		for (i=0; i<Ny; i++) for (j=0; j<Nx; j++)  {
-    		    GET_KREST(Krest, q, i,j)
-    		    Dw[i][j] = Dq[i][j] / Krest;
-    		}
-    	    }
-    	    else {
-    	      /*REGIONAL ISOSTASY*/
-    	      switch (solver_type) {
-    		case 'l':
-    		    /*Requires 4*Nx*Ny*Ny cells*/
-    		    b = (double *) calloc (Neqs, sizeof(double));
-    		    A = alloc_matrix_dbl (Neqs, NDi+1+NDs);
-    		    defineLESalmostdiagonalmatrix(A, b, q, Dq, w, 0);
-    		    solveLESalmostdiagonal(A, b, Dw);
-    		    free_matrix_dbl (A, Neqs);
-    		    free(b);
-    		    break;
-    		case 'm':
-    		    NSP = 40*(6*Neqs+2+nonzeroes);
-    		    PATH = 1;
-		    B = (float *) calloc (Neqs, sizeof(float));
-		    Z = (float *) calloc (Neqs, sizeof(float));
-    		    mathlib_matrix = (float *) calloc (nonzeroes, sizeof(float));
-    		    R =     (int *) calloc (Neqs, sizeof(int));
-    		    C =     (int *) calloc (Neqs, sizeof(int));
-    		    IC =    (int *) calloc (Neqs, sizeof(int));
-    		    IA =    (int *) calloc (Neqs+1, sizeof(int));
-    		    JA =    (int *) calloc (nonzeroes, sizeof(int));
-    		    ISP =   (int *) calloc (1*NSP, sizeof(int));
-    		    RSP =   (float *) calloc (NSP, sizeof(float));
-    		    defineLESmatrix_for_mathlib(mathlib_matrix, IA, JA, B, Dq, w, &nonzeroes, 0);
-    		    for (i=0; i<Neqs; i++)  R[i]=IC[i]=C[i]=i+1;
-#ifdef MATHLIB_SOLVER
-    		    printf("\nNeqs=%d NSP=%d nonzeroes=%d", Neqs, NSP, nonzeroes);
-    		    cdrv(&Neqs, R, C, IC, IA, JA, mathlib_matrix, B, Z, &NSP, ISP, RSP, &ESP, &PATH, &FLAG);
-    		    if (FLAG!=0) {PRINT_ERROR("\aTDRV exit #%d. Memory excess=%d\n", FLAG, ESP); }
-    		    fprintf(stdout, "\tMemory excess=%d\n", ESP);
-#endif
-    		    for (i=0; i<Ny; i++) for (j=0; j<Nx; j++)	Dw[i][j] = Z[j*Ny+i];
-
-    		    free(Z); free(B); free(mathlib_matrix);
-    		    free(R); free(C);free(IC); free(IA); free(JA); free(ISP); free(RSP);
-    		    break;
-    	      }
-	    }
-
-    	    for (i=0; i<Ny; i++) for (j=0; j<Nx; j++)  w[i][j] += Dw[i][j];
-    	    if (switch_topoest) {
-   		    /*Defines the thickness of last infill Block*/
-    		    for (i=0; i<Ny; i++)  for (j=0; j<Nx; j++)  
-		    	Blocks[i_first_Block_load-1].thick[i][j] +=  MAX_2(Dw[i][j], 0) ;
-    	    }
-
-
-    	    calculate_topo(topo);
-
-    	    /*Statistics on load*/
-    	    {
-    		    int i, j, imax, jmax, imin, jmin;
-    		    float maxloadinc=-1e25, minloadinc=1e25, total_load=0;
-    		    for (i=0;i<Ny;i++) for (j=0;j<Nx;j++) {
-    			q[i][j] += Dq[i][j];
-    			total_load += Dq[i][j]*dx*dy;
-    			if (maxloadinc<Dq[i][j]) {maxloadinc=Dq[i][j]; imax=i; jmax=j;}
-    			if (minloadinc>Dq[i][j]) {minloadinc=Dq[i][j]; imin=i; jmin=j;}
-    		    }
-    		    if (load_changes) 
-		    	PRINT_SUMLINE("load  now:  max = %+8.2e N/m2  min = %+8.2e N/m2   Total: %+8.2e N\tMax at %.0f,%.0f km", 
-		    		maxloadinc, minloadinc, total_load, (xmin+dx*jmax)/1e3, (ymax-dy*imax)/1e3); 
-    	    }
-    	    /*Statistics on deflection*/
-    	    {
-    		    float total_load=0, total_restitutive_force=0, Krest;
-    		    for (i=0; i<Ny; i++) for (j=0; j<Nx; j++)	{
-    			    total_load += Dq[i][j];
-    			    GET_KREST(Krest, q, i,j);
-    			    total_restitutive_force += (Krest*w[i][j]);
-    		    }
-    		    if (verbose_level>=1) {
-    			    PRINT_SUMLINE("load: %+8.2e N   restit_force: %+8.2e N", total_restitutive_force*dx*dy, total_load*dx*dy);
-			    PRINT_GRID_INFO (w, "deflect. ", "m");
-    		    }
-    	    }
-	}
-
-	/*Resets deflection and load grids*/
-	for (i=0; i<Ny; i++)  for (j=0; j<Nx; j++)  Dq[i][j]=Dw[i][j]=0;
-
-	return(1);
-}
-
-
-
 
 
 int inputs (int argc, char **argv)
@@ -285,6 +112,7 @@ int inputs (int argc, char **argv)
 			switch (argv[iarg][1]) {
 				case 'f':
 					reformat=1;
+					if (argv[iarg][2]) reformat = value;
 					break;
 				case 'F':
 					run_type=2;
@@ -376,7 +204,7 @@ int inputs (int argc, char **argv)
 			}
 			if (reformat) {
 				sprintf(projectname, "%s/doc/template", TISCDIR);
-				read_file_parameters(0, 1);
+				read_file_parameters(0, reformat);
 				exit(0);
 			}
 			interpr_command_line_opts(argc, argv);
@@ -433,8 +261,8 @@ int inputs (int argc, char **argv)
 	if (verbose_level>=1) {time_t ltime; time(&ltime); fprintf(stdout, "\nTime start: %s", ctime(&ltime));}
 
 	/*Test of incompatibilities between parameters*/
-	if (switch_topoest && switch_sea)	{ switch_sea=NO; 	PRINT_WARNING("Sea not possible when topoest<>0. Sea load switch turned off.") ; }
-	if (densenv && switch_sea)			{ switch_sea=NO;	PRINT_WARNING("Sea not possible when densenv<>0. Sea load switch turned off.") ; }
+	if (switch_topoest && water_load)	{ water_load=0; 	PRINT_WARNING("Sea not possible when topoest<>0. Sea load switch turned off.") ; }
+	if (densenv && water_load)			{ water_load=0; 	PRINT_WARNING("Sea not possible when densenv<>0. Sea load switch turned off.") ; }
 	if (evaporation_ct && evaporation_ct<rain)	{ 			PRINT_WARNING("Evaporation should exceed the rain to produce endorheic lakes.") ; }
 	if (K_ice_eros && !hydro_model)		{ K_ice_eros=0; 	PRINT_WARNING("No ice flow if hydro_model==0; K_ice_eros turned off.") ; }
 	if (switch_topoest && !densinfill) 	{ 					PRINT_WARNING("Infill density has 0 value while topography has been selected to remain at initial level.") ; }
@@ -471,23 +299,20 @@ int inputs (int argc, char **argv)
 
 int interpr_command_line_opts(int argc, char **argv) 
 {
-	int	iarg;
-
 	/*Interpretates the command line options*/
 
 	PRINT_INFO("Enetering command line interpretation.");
-	for (iarg=1; iarg<argc; iarg++) {
+	for (int iarg=1; iarg<argc; iarg++) {
 		if (argv[iarg][0] == '-') {
-			int	ilet;
 			float 	value, value2;
 			char 	prm[MAXLENLINE], prm2[MAXLENLINE], *ptr;
-			for (ilet=2; ilet<strlen(argv[iarg])+2; ilet++) 
+			for (int ilet=2; ilet<strlen(argv[iarg])+2; ilet++) 
 				prm[ilet-2] = argv[iarg][ilet];
-			for (ilet=3; ilet < strlen(argv[iarg])+2; ilet++) 
+			for (int ilet=3; ilet < strlen(argv[iarg])+2; ilet++) 
 				prm2[ilet-3] = argv[iarg][ilet];
 			value  = atof(prm);
 			value2 = atof(prm2);
-			/*printf("\n%s", prm);*/
+			PRINT_DEBUG("\aArgument: %s", argv[iarg]);
 			switch (argv[iarg][1]) {
 				case 'B':
 					strcpy(boundary_conds, prm);
@@ -639,6 +464,176 @@ int interpr_command_line_opts(int argc, char **argv)
 	}
 	return(1);
 }
+
+
+
+int Direct_mode(char *load_file_name)
+{
+	int 	i, j;
+	FILE 	*file;
+
+	/*Solves flexure problem in direct mode: taking a single external load file and 
+	writing deflection in standar output. There are no other input files neither 
+	output files*/
+
+	PRINT_INFO("Entering direct mode. xmin/xmax/ymin/ymax=%.1f/%.1f/%.1f/%.1f Nx/Ny=%d/%d\n", xmin,xmax,ymin,ymax, Nx,Ny);
+	dx = (xmax-xmin) / (Nx-1) ;
+	dy = (ymax-ymin) / (Ny-1) ;
+	Allocate_Memory();
+	if (strcmp(load_file_name, "")) {
+		if ((file = fopen(load_file_name, "rt")) == NULL) {
+			PRINT_INFO("Load file '%s' not found.\n", load_file_name);
+			exit(0);
+		}
+		readinterp2D(file, h_last_unit, mode_interp, 0, xmin, xmax, ymin, ymax, Nx, Ny) ;
+		fclose(file);
+	}
+	for (i=0; i<Ny; i++) for (j=0; j<Nx; j++) {
+		D[i][j] = ET2RIG(Te_default); 
+		Dq[i][j] = h_last_unit[i][j];
+	}
+	Elastic_Deflection();
+	fprintf(stdout, "\n\nx[km]\t\ty[km]\t\tw[m]\t\tpressure[Pa]\n"); 
+	for (i=0; i<Ny; i++) for (j=0; j<Nx; j++) 
+		fprintf(stdout, "%8.1f\t%8.1f\t%8.1f\t%8.1f\n", 
+			(xmin+j*dx)/1e3, (ymax-i*dy)/1e3, w[i][j], h_last_unit[i][j]);
+	fprintf(stdout, "\n"); 
+	return (1);
+}
+
+
+
+
+int tectload()
+{
+	/*
+	CALCULATES NEW LOAD INCREMENT FROM UNIT FILES, Returns 1 if elastic
+	flexure must be done (i.e, if changes in load  occurred), 0 otherwise.
+	*/
+	
+	PRINT_GRID_INFO (topo, "topogr.  ", "m");
+
+	/*Moves Blocks*/
+	move_Blocks();
+
+	/*Reads external load from file*/
+	while (read_file_unit());
+
+	/*Distributes the emplacement of a unit along time*/
+	gradual_Block();
+
+	Repare_Blocks();
+
+	return (1);
+}
+
+
+
+int Elastic_Deflection()
+{
+	int 	i, j, NDi=2*Ny, NDs=2*Ny, Neqs=Nx*Ny, 
+		nonzeroes=13*Nx*Ny, ESP, PATH, FLAG, NSP, 
+		*R, *C, *IC, *IA, *JA, *ISP;
+	double	**A, *b, *w_aux;
+	float 	*B, *Z, *mathlib_matrix, *RSP;
+	BOOL	load_changes=NO;
+
+	for (i=0; i<Ny; i++) for (j=0; j<Nx; j++) if (Dq[i][j]) load_changes = YES;
+	if (isost_model>0 && (load_changes || (Time==Timeini && (Px || Py || Pxy)))) {
+    	    if (!Te_default) {
+    		/*LOCAL ISOSTASY*/
+    		float Krest;
+    		for (i=0; i<Ny; i++) for (j=0; j<Nx; j++)  {
+    		    GET_KREST(Krest, q, i,j)
+    		    Dw[i][j] = Dq[i][j] / Krest;
+    		}
+    	    }
+    	    else {
+    	      /*REGIONAL ISOSTASY*/
+    	      switch (solver_type) {
+    		case 'l':
+    		    /*Requires 4*Nx*Ny*Ny cells*/
+    		    b = (double *) calloc (Neqs, sizeof(double));
+    		    A = alloc_matrix_dbl (Neqs, NDi+1+NDs);
+    		    defineLESalmostdiagonalmatrix(A, b, q, Dq, w, 0);
+    		    solveLESalmostdiagonal(A, b, Dw);
+    		    free_matrix_dbl (A, Neqs);
+    		    free(b);
+    		    break;
+    		case 'm':
+    		    NSP = 40*(6*Neqs+2+nonzeroes);
+    		    PATH = 1;
+		    B = (float *) calloc (Neqs, sizeof(float));
+		    Z = (float *) calloc (Neqs, sizeof(float));
+    		    mathlib_matrix = (float *) calloc (nonzeroes, sizeof(float));
+    		    R =     (int *) calloc (Neqs, sizeof(int));
+    		    C =     (int *) calloc (Neqs, sizeof(int));
+    		    IC =    (int *) calloc (Neqs, sizeof(int));
+    		    IA =    (int *) calloc (Neqs+1, sizeof(int));
+    		    JA =    (int *) calloc (nonzeroes, sizeof(int));
+    		    ISP =   (int *) calloc (1*NSP, sizeof(int));
+    		    RSP =   (float *) calloc (NSP, sizeof(float));
+    		    defineLESmatrix_for_mathlib(mathlib_matrix, IA, JA, B, Dq, w, &nonzeroes, 0);
+    		    for (i=0; i<Neqs; i++)  R[i]=IC[i]=C[i]=i+1;
+#ifdef MATHLIB_SOLVER
+    		    printf("\nNeqs=%d NSP=%d nonzeroes=%d", Neqs, NSP, nonzeroes);
+    		    cdrv(&Neqs, R, C, IC, IA, JA, mathlib_matrix, B, Z, &NSP, ISP, RSP, &ESP, &PATH, &FLAG);
+    		    if (FLAG!=0) {PRINT_ERROR("\aTDRV exit #%d. Memory excess=%d\n", FLAG, ESP); }
+    		    fprintf(stdout, "\tMemory excess=%d\n", ESP);
+#endif
+    		    for (i=0; i<Ny; i++) for (j=0; j<Nx; j++)	Dw[i][j] = Z[j*Ny+i];
+
+    		    free(Z); free(B); free(mathlib_matrix);
+    		    free(R); free(C);free(IC); free(IA); free(JA); free(ISP); free(RSP);
+    		    break;
+    	      }
+	    }
+
+    	    for (i=0; i<Ny; i++) for (j=0; j<Nx; j++)  w[i][j] += Dw[i][j];
+    	    if (switch_topoest) {
+   		    /*Defines the thickness of last infill Block*/
+    		    for (i=0; i<Ny; i++)  for (j=0; j<Nx; j++)  
+		    	Blocks[i_first_Block_load-1].thick[i][j] +=  MAX_2(Dw[i][j], 0) ;
+    	    }
+
+
+    	    calculate_topo(topo);
+
+    	    /*Statistics on load*/
+    	    {
+    		    int i, j, imax, jmax, imin, jmin;
+    		    float maxloadinc=-1e25, minloadinc=1e25, total_load=0;
+    		    for (i=0;i<Ny;i++) for (j=0;j<Nx;j++) {
+    			q[i][j] += Dq[i][j];
+    			total_load += Dq[i][j]*dx*dy;
+    			if (maxloadinc<Dq[i][j]) {maxloadinc=Dq[i][j]; imax=i; jmax=j;}
+    			if (minloadinc>Dq[i][j]) {minloadinc=Dq[i][j]; imin=i; jmin=j;}
+    		    }
+    		    if (load_changes) 
+		    	PRINT_SUMLINE("load  now:  max = %+8.2e N/m2  min = %+8.2e N/m2   Total: %+8.2e N\tMax at %.0f,%.0f km", 
+		    		maxloadinc, minloadinc, total_load, (xmin+dx*jmax)/1e3, (ymax-dy*imax)/1e3); 
+    	    }
+    	    /*Statistics on deflection*/
+    	    {
+    		    float total_load=0, total_restitutive_force=0, Krest;
+    		    for (i=0; i<Ny; i++) for (j=0; j<Nx; j++)	{
+    			    total_load += Dq[i][j];
+    			    GET_KREST(Krest, q, i,j);
+    			    total_restitutive_force += (Krest*w[i][j]);
+    		    }
+    		    if (verbose_level>=1) {
+    			    PRINT_SUMLINE("load: %+8.2e N   restit_force: %+8.2e N", total_restitutive_force*dx*dy, total_load*dx*dy);
+			    PRINT_GRID_INFO (w, "deflect. ", "m");
+    		    }
+    	    }
+	}
+
+	/*Resets deflection and load grids*/
+	for (i=0; i<Ny; i++)  for (j=0; j<Nx; j++)  Dq[i][j]=Dw[i][j]=0;
+
+	return(1);
+}
+
 
 
 
@@ -1237,11 +1232,11 @@ int surface_processes (float **topo_ant)
 	Landslide_Transport (critical_slope, dt, dt_eros);
 
 	/*Adds background erosion and sea sedimentation*/
-	constant_rate_eros (topo, Keroseol, Ksedim, sea_level, switch_sea, dt, Time);
+	constant_rate_eros (topo, Keroseol, Ksedim, sea_level, water_load, dt, Time);
 #endif
 
 	/*Calculates water column load*/
-	water_load();
+	calculate_water_load();
 
 
 
@@ -1283,9 +1278,9 @@ int The_End()
 	float	volume, total_vol_seds=0, surface;
 
 	fprintf(stdout, "\n\n%d Blocks:", numBlocks);
-	fprintf(stdout, "\nNo. Density Age Volume Surf.  Vel_x Vel_y Shft_x Shft_y erosL");
+	fprintf(stdout, "\nNo. Density Age  Volume  Surf.     Vel_x  Vel_y   Shft_x Shft_y erosL");
 	if (verbose_level>=2) fprintf(stdout, " AgeStop");
-	fprintf(stdout, "\n     kg/m3  My  1e3km3 1e3km2 km/My km/My   km     km    [m] ");
+	fprintf(stdout, "\n     kg/m3  My   1e3km3  1e3km2    km/My  km/My   km     km     [m] ");
 	if (verbose_level>=2) fprintf(stdout, "  My    ");
 
 	for (i=numBlocks-1; i>=0; i--) { 
@@ -1308,7 +1303,7 @@ int The_End()
 			vel_y = Blocks[i].vel_y[0][0];
 		}
 		if (Blocks[i].density==denssedim) total_vol_seds += volume;
-		fprintf(stdout, "\n%2d: %5.0f%6.1f%7.1f%6.1f%6.1f%6.1f%7.1f%7.1f %6.1e", 
+		fprintf(stdout, "\n%2d: %5.0f %6.2f %7.1f %6.1f %6.1f %6.1f %6.1f %6.1f   %6.1e", 
 			i, Blocks[i].density, Blocks[i].age/Matosec, volume/1e12, surface/1e9, 
 			vel_x/1e3*Matosec, vel_y/1e3*Matosec, 
 			Blocks[i].shift_x/1e3, Blocks[i].shift_y/1e3, 
@@ -1318,7 +1313,7 @@ int The_End()
 		fprintf(stdout, "  %c", Blocks[i].type);
 		if (i==i_first_Block_load) 	fprintf(stdout, "  1st Block");
 	}
-	fprintf(stdout, "\n -: %5.0f%6.1f    -     -     0     0      0      0   %6.1e  ", denscrust, Timeini/Matosec, erodibility);
+	fprintf(stdout, "\n -: %5.0f %6.2f   -       -       0      0      0      0     %6.1e  ", denscrust, Timeini/Matosec, erodibility);
 	if (verbose_level>=2) fprintf(stdout, " -   ");
 	fprintf(stdout, "-  basement\n");
 	fprintf(stdout, "\nFinal total sediment volume: %.2f 1e3 km3\n", total_vol_seds/1e12);

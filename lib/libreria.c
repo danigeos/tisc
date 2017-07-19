@@ -14,7 +14,7 @@ extern float
 	Rearth;			/*Earth's radius*/
 
 extern int	
-	verbose_level;				/**/
+	verbose_level;
 
 extern BOOL	
 	switch_geograph_coor;			/*1 if x-y are geographycal coordinates in decimal degrees*/
@@ -118,12 +118,11 @@ int **alloc_matrix_int (int n_fil, int n_col)
 float anombloq(register float x1, register float x2, float z1, float z2, float contrdens)
 {
 	register float 	anomaliaaux, x1cuad, x2cuad, z1cuad, z2cuad;
-
-/*	  CALCULATES GRAVITY ANOMALY DUE TO A RECTANGLE 2D  (3D HORIZONTAL 		*/
-/*		INFINITE PRISM). INTERNATIONAL SYSTEM UNITS USED.			*/
-/*  Z1 and Z2 are positive vertical distances if the rectangle is under measure point.	*/
-/*  Always z1<z2, even if they are negative (block over measure level). 		*/
-/*  If z2<z1 then this routine giives the anomaly with changed sign.			*/
+	//CALCULATES GRAVITY ANOMALY DUE TO A RECTANGLE 2D  (3D HORIZONTAL 
+	//INFINITE PRISM). INTERNATIONAL SYSTEM UNITS USED.
+	//Z1 and Z2 are positive vertical distances if the rectangle is under measure point.
+	//Always z1<z2, even if they are negative (block over measure level). 
+	//If z2<z1 then this routine giives the anomaly with changed sign.
 
 	if (z1==0) 	z1=.001 ;
 	if (z2==0) 	z2=.001 ;
@@ -137,6 +136,29 @@ float anombloq(register float x1, register float x2, float z1, float z2, float c
 	anomaliaaux += 2*z1*(atan(x1/z1)-atan(x2/z1));
 	anomaliaaux *= CGU*contrdens;
 	return (anomaliaaux);
+}
+
+
+
+float compaction(float phi0, float comp_depth, float z1, float z2) 
+{
+	//Returns the decrease in thickness by compaction or decompaction 
+	//due to the overlying load. Always positive. Thickness changes 
+	//when bringing the layer z2-z1 to depth 0 or viceversa. 
+	//z2>z1>0 (positive downwards) 
+	//z1 is the top
+	float z;
+	if (!comp_depth) return(0);
+	if (z1<0) z1=0; 
+	if (z2<z1) z2=z1+1.; 
+	float dh=(z2-z1)/4; /*Temptative value for iteration*/
+	for (int i=0; i<100; i++) {
+		float dha=dh; 
+		dh=phi0*comp_depth*(exp(-z2/comp_depth)-exp(-z1/comp_depth)+1-exp(-(dh+z2-z1)/comp_depth)); 
+		if (fabs(dh-dha)<.1) break;
+	} 
+	dh = MIN_2(z2-z1, dh);
+	return(dh); 
 }
 
 
@@ -1178,22 +1200,22 @@ float polygon_area(
 
 
 
-double prism_vertical_atraction (
-	float x1, float x2,	/*X distance from measure to prism in m [x1<x2]*/
-	float y1, float y2,	/*Y distance from measure to prism in m [y1<y2]*/
-	float z1, float z2, 	/*Z distance from measure to prism top and bottom faces, respectively, in m [z positive downwards, z1<z2]*/
+double prism_vertical_attraction (
+	float x1, float x2,	/*X horizontal distance from measure to prism x-sides in m [x1<x2]*/
+	float y1, float y2,	/*Y horizontal distance from measure to prism y-sides in m [y1<y2]*/
+	float z1, float z2, /*Z vertical   distance from measure to prism top and bottom faces, respectively, in m [z positive downwards, z1<z2]*/
 	float dens) 		/*density of prism*/
 {
 	double vert_anom=0;
 
 	/*
-	  VERTICAL GRAVITATIONAL ATTRACTION PRODUCED BY A 
-	  VERTICAL PRISM of constant density
-	
-	  x2>x1 ; y2>y1 ; z2>z1
-	  x2 = x_right_prism - x_measure
-	  z1 = z_top_prism - z_measure
-	  z is positive downwards
+		VERTICAL GRAVITATIONAL ATTRACTION PRODUCED BY A VERTICAL PRISM of constant density
+
+		x2>x1 ; y2>y1 ; z2>z1
+		x2 = x_right_prism - x_measure
+		z1 = z_top_prism - z_measure
+		z is positive downwards
+		Returns gravity in m/s2; a positive value for downwards attraction, i.e., for bodies of positive density below the measurement (z2>z1>0)
 	*/
 
 	if (!x1) x1=1e-2;
@@ -1201,17 +1223,12 @@ double prism_vertical_atraction (
 	if (!y1) y1=1e-2;
 	if (!y2) y2=1e-2;
 
-	/*
-	fprintf(stderr, "\n> x1= %.2f\ty1= %.2f\tz1= %.2f \tdens=%.2f", x1, y1, z1, dens);
-	fprintf(stderr, "\n> x2= %.2f\ty2= %.2f\tz2= %.2f \tanom=%.2f", x2, y2, z2, vert_anom*1e5);
-	*/
-
 	if (!(x2-x1)) return(0);
 	if (!(y2-y1)) return(0);
 	if (!(z2-z1)) return(0);
-	if ((x2-x1)<0) {PRINT_ERROR("prism_vertical_atraction: x1>x2."); return(0);}
-	if ((y2-y1)<0) {PRINT_ERROR("prism_vertical_atraction: y1>y2."); return(0);}
-	if ((z2-z1)<0) {PRINT_ERROR("prism_vertical_atraction: z1>z2."); return(0);}
+	if ((x2-x1)<0) {PRINT_ERROR("prism_vertical_attraction: x1>x2."); return(0);}
+	if ((y2-y1)<0) {PRINT_ERROR("prism_vertical_attraction: y1>y2."); return(0);}
+	if ((z2-z1)<0) {PRINT_ERROR("prism_vertical_attraction: z1>z2."); return(0);}
 	if (!dens)    return(0);
 
 #define VERTANOMCONTRIB(s,x,y,z) {\
@@ -1230,6 +1247,11 @@ double prism_vertical_atraction (
 	VERTANOMCONTRIB(-1, x1,y1,z1);
 
 	vert_anom *= - CGU * dens;
+
+	if (vert_anom<0) {
+		PRINT_WARNING("Downwards gravity attraction is negative! x1/x2/y1/y2/z1/z2= %.2f/%.2f/%.2f/%.2f/%.3f/%.3f\tdens=%.1f\tanom=%.2e\nSet to 0.", x1, x2, y1, y2, z1, z2, dens, vert_anom);
+		vert_anom=0;
+	}
 
 	return (vert_anom);
 }

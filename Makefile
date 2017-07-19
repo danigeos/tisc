@@ -32,7 +32,7 @@ vers: 	clean_for_tar
 	rm -R -f tisc tisc_version
 	mkdir tisc tisc/bin
 	cp -R -L Makefile config.mk README demo doc include lib script src    tisc 
-	rm -f tisc/doc/first_compilation.txt
+	rm -f tisc/doc/.first_compilation.txt
 	if [ $(findstring THIN_SHEET,$(DEFS)) ]; then echo Including thin sheet stuff; else \
 		echo Removing thin sheet stuff; \
 		rm tisc/lib/*thin_sheet* ; \
@@ -56,7 +56,7 @@ upload_version_starting_from_scratch:
 
 upload:
 	#for initialization:  
-	#git init; git remote add tisc https://github.com/danigeos/tisc; git add Makefile README config.mk bin demo doc include lib script src; git rm --cached doc/first_compilation.txt
+	#git init; git remote add tisc https://github.com/danigeos/tisc; git add Makefile README config.mk bin demo doc include lib script src; git rm --cached doc/.first_compilation.txt
 	git commit -a 
 	git push tisc master
 

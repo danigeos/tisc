@@ -8,8 +8,8 @@ grdcontour $tmp.top.grd.tmp -JX -R -C$tmp.topo_cpt.tmp -W1 -O -K >> $ps
 
 if (-r $prj.xyg) then
 	xyz2grd $prj.xyg -G$tmp.gravanom.grd.tmp -I$dx/$dy -R -H2
-	grdcontour $tmp.gravanom.grd.tmp -JX -R -C20 -L20/200000 -A20+s6+k255/0/0   -W3/255/0/0ta -O -K >> $ps
-	grdcontour $tmp.gravanom.grd.tmp -JX -R -C20 -L-200000/-20 -A20+s6+k255/0/0 -W3/255/0/0 -O -K >> $ps
+	grdcontour $tmp.gravanom.grd.tmp -JX -R -C10 -L10/100000 -A20+s6+k255/0/0   -W1/255/0/0ta -O -K >> $ps
+	grdcontour $tmp.gravanom.grd.tmp -JX -R -C10 -L-100000/-10 -A20+s6+k255/0/0 -W1/255/0/0 -O -K >> $ps
 endif
 
 

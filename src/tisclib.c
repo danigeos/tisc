@@ -81,14 +81,23 @@ int Allocate_Memory()
 
 int calculate_topo(float **topo_new)
 {
-	int 	i, j, i_Block;
-
-	for (i=0; i<Ny; i++) for (j=0; j<Nx; j++) {
-		for (i_Block=0, topo_new[i][j]=Blocks_base[i][j]-w[i][j]; i_Block<numBlocks; i_Block++) {
+	float mean=0;
+	/*Calculates current topography based on Blocks, Blocks_base and deflection*/
+	PRINT_DEBUG("Entering");
+	for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) {
+		float thickness_above=0;
+		for (int i_Block=0; i_Block<numBlocks; i_Block++) 
+			thickness_above += Blocks[i_Block].thick[i][j];
+		topo_new[i][j] = Blocks_base[i][j]-w[i][j];
+		for (int i_Block=0; i_Block<numBlocks; i_Block++) {
+			thickness_above -= Blocks[i_Block].thick[i][j];
 			topo_new[i][j] += Blocks[i_Block].thick[i][j];
+			if (Blocks[i_Block].density==denssedim) topo_new[i][j] -= compaction(sed_porosity, compact_depth, thickness_above, thickness_above+Blocks[i_Block].thick[i][j]);
 		}
+		mean += topo_new[i][j];
 	}
-	return (1);
+	mean /= Nx*Ny;
+	return (mean);
 }
 
 
@@ -683,6 +692,7 @@ int match_parameter (char *str1, char *str2, int show, int replace, char *line)
 	Match_Param_Replace_flt ( "denssedim",	denssedim,  	0 )
 	Match_Param_Replace_flt ( "densenv",	densenv,  	0 )
 	Match_Param_Replace_flt ( "sed_porosity",	sed_porosity,  	0 )
+	Match_Param_Replace_flt ( "compact_depth",	compact_depth, 	0 )
 	Match_Param_Replace_chr ( "boundary_conds",	boundary_conds,  	0 )
 	Match_Param_Replace_flt ( "Px", 	Px,  	0 )
 	Match_Param_Replace_flt ( "Py", 	Py,  	0 )
@@ -716,7 +726,7 @@ int match_parameter (char *str1, char *str2, int show, int replace, char *line)
 	Match_Param_Replace_flt ( "dt_eros",	dt_eros,  	0 )
 	Match_Param_Replace_flt ( "dt_record",	dt_record,  	0 )
 	Match_Param_Replace_int ( "isost_model",	isost_model,  	0 )
-	Match_Param_Replace_int ( "switch_sea", 	switch_sea,  	0 )
+	Match_Param_Replace_int ( "water_load", 	water_load,  	0 )
 	Match_Param_Replace_int ( "switch_topoest", 	switch_topoest,  	0 )
 	Match_Param_Replace_int ( "switch_files",	switch_write_file,  	0 )
 	Match_Param_Replace_int ( "switch_ps",  	switch_ps,  	0 )
@@ -735,6 +745,7 @@ int match_parameter (char *str1, char *str2, int show, int replace, char *line)
 	Match_Param_Replace_flt ( "leng_fluv_eros",	erodibility,  	1 )
 	Match_Param_Replace_flt ( "leng_fluv_sedim",	l_fluv_sedim,  	1 )
 	Match_Param_Replace_int ( "switch_erosed",	erosed_model,  	1 )
+	Match_Param_Replace_int ( "switch_sea", 	water_load,  	1 )
 	Match_Param_Replace_flt ( "l_fluv_eros",	erodibility,  	1 )
 	Match_Param_Replace_flt ( "l_fluv_eros_sed",	erodibility_sed,  	1 )
 	Match_Param_Replace_flt ( "dtmemounit",	dt_record,  	1 )
@@ -884,7 +895,7 @@ float calculate_sea_level()
 	  in the water column (sea and lakes).
 	*/
 
-	if (!switch_sea) return (0);
+	if (!water_load) return (0);
 
 	/*Calculates sea level*/
 	if (n_sea_level_input_points) {
@@ -908,13 +919,13 @@ float calculate_sea_level()
 
 
 
-int water_load()
+int calculate_water_load()
 {
 	float	water_volume=0;
 
 	calculate_topo(topo);
 
-	if (!switch_sea) return(0);
+	if (!water_load) return(0);
 
 	for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) {
 		int il;

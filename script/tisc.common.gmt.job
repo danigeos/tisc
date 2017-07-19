@@ -383,6 +383,6 @@ if (-r $prj.hrz) then
 endif
 
 #CHI
-if (-r $prj.bas) awk '(substr($0,1,1)!=">" && substr($0,1,1)!="#"){print $1,$2,$8;}' $prj.bas | \
-	xyz2grd -G$tmp.chi.grd.tmp -I$dx/$dy -R$Region 
-
+if (-r $prj.bas) then 
+	awk '(substr($0,1,1)!=">" && substr($0,1,1)!="#"){print $1,$2,$8;}' $prj.bas | xyz2grd -G$tmp.chi.grd.tmp -I$dx/$dy -R$Region 
+endif
