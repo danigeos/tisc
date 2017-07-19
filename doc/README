@@ -4,24 +4,11 @@
 *****		         USING FINITE DIFFERENCES                          *****
 ********************************************************************************
 
-TISC is a program written in C under Linux to calculate the 2D (planform)
-flexure of the  lithosphere, fluvial transport along, and, in particular, to
-numerically simulate the formation of foreland basins. Please read the
-'tisc/doc/tisc.info.txt' file to know more about TISC. TISC is the 3D version of
-the cross-section (pseudo 2D) numerical model tAo, and uses the finite 
-difference technique.
+TISC is a program written in C under Linux to calculate the 2D (planform) flexure of the  lithosphere, fluvial transport along, and, in particular, to numerically simulate the formation of foreland basins. TISC is the 3D version of the cross-section (pseudo 2D) numerical model tAo, and uses the finite difference technique.
 
-Disclaimer: TISC is a tool developed for my own research with no professional 
-programmers involved, the code is thus not so user-friendly, and I cannot 
-guarantee my assistance in case of  trouble. See other warnings in the license 
-file tisc/doc/LICENSE.txt.
-
+Main author: Daniel Garcia-Castellanos (CSIC)
+Details on authorship and citation in 'tisc/doc/tisc.info.txt'. 
 See license details in the documentation at tisc/doc/LICENSE.txt.
-Author: Daniel Garcia-Castellanos
-
-Scientific citation: 
-	Garcia-Castellanos, D., 2002. Interplay between lithospheric flexure and
-	river transport in foreland basins. Basin Res., 14 (2), 89-104.
 
 
 
@@ -30,9 +17,7 @@ TO INSTALL TISC:
 TISC has been developed in C under Linux, and is ready for compilation in a Mac 
 Linux environment.
 
--Uncompress and untar the file containing TISC using the unix command 
-	'gunzip -c tisc.tar.gz | tar -xvf -'
-this will create directory 'tisc/' in your current directory.
+-Uncompress the downloaded file in a directory 'tisc/'.
 
 -Modify compiling options by editing 'tisc/config.mk' and 'tisc/src/Makefile'.
 
@@ -40,7 +25,7 @@ this will create directory 'tisc/' in your current directory.
 tisc in the tisc/bin/ directory. You should then put tisc/bin/ and tisc/script/ 
 in your shell path.
 
--Optionally install GMT free-ware software (used for graphic output) and put 
+-Preferably install GMT 4 (free-ware software, used for graphic output) and put 
 its bin/ directory in your path. This should work:
 	sudo apt-get update
 	sudo apt-get install gmt ksh csh tofrodos

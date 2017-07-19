@@ -19,7 +19,7 @@ psbasemap -JX$size -R$Region -B$ticklabels\:"x (km)":/$ticklabels\:"y (km)":NseW
 	-Y17 -X2 -K -P >! $ps
 source $tisc_dir/script/tisc.common.topo+drainage.gmt.job
 pstext	-JX -R -O -G0 -W255/255/255 -K <<END >> $ps 
-	$xtime	$ytime	13 0 1 9	$Timenow Ma
+	$xtime	$ytime	13 0 1 9	$Timenow My
 END
 
 
@@ -62,7 +62,7 @@ endif
 #LOWER RIGHT:
 set dx_scale = `echo \-1.5 | bc -l`
 if (-r $prj.pfl) then
-#2D CROSS SECTION:
+	#2D CROSS SECTION:
 	set height_CS = 3.5
 	set vert_shift_CS = `echo 0 | bc -l`
 	set width_CS = `echo  $width  | bc -l`
@@ -71,14 +71,13 @@ if (-r $prj.pfl) then
 	psbasemap -JX$width_CS/$height_CS -R0/$dmax/$zmin/$zmax \
 		-B$ticklabels\:"distance (km)":/$zticklabels\:"z (km)":NsEw \
 		-O -K -X$horz_shift_CS -Y$vert_shift_CS >> $ps
-
 	source $tisc_dir/script/tisc.common.cross_section.gmt.job
 else
 if (-r $prj.eeth) then
-#EET:
+	#EET:
+	psbasemap -JX -R$Region -B$ticklabels\:"x (km)":/$ticklabels\:"y (km)":nsEw \
+		-X$horz_shift -Y0 -O -K >> $ps
 	source $tisc_dir/script/tisc.common.EET.gmt.job
-else
-set dx_scale = `echo $width - 1.5 | bc -l`
 endif
 endif
 

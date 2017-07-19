@@ -3,7 +3,7 @@
 #Add -f as the second parameter to force overwritting the original PRM file. 
 
 echo Deprecated! use instead: 
-echo "tisc -f projectname > newprojectname.PRM"
+echo "tisc -f projectname | awk '{printf("\n%12s\t%s", $1, $2)}' > newprojectname.PRM"
 
 set inputPRM = $1 #$tisc_dir/doc/template.PRM
 awk 'BEGIN{field1length=15}\

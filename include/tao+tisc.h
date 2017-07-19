@@ -89,8 +89,9 @@ float	Kerosdif, 		/*Diffusive erosion rate in m2/Ma, (e. g. D. Waltham & S. Hard
 
 
 float	zini, 				/*altitude of the initial plate position over the sea level [m]*/
-	dt_record, 			/*maximum Time interval between automatically-generated sediment Blocks [s]*/
+	dt_record, 				/*maximum Time interval between automatically-generated sediment Blocks [s]*/
 	sed_porosity, 
+	compact_depth, 
 	last_time_file_time, 
 	random_topo=0, 			/*Maximum random variation of initial topo*/
 	**var_sea_level, 		/*Array nx2 with sea level along time*/
@@ -113,5 +114,6 @@ int 	free_matrix_dbl		(double **, int);
 int 	WriteAlmostDiagonalMatrix 	(double **A, double *b, int rango, char *filename, int NDs, int NDi);
 int 	SolveAlmostDiagonalTriangularEquationSystem (double **A, double *b, int num_ecs, int NDsre, int NDire, float *x);
 int 	TriangularizeAlmostDiagonalEquationSystem (double **A, double *b, int num_rows, int NDsre, int NDire);
+float compaction(float phi0, float comp_depth, float z1, float z2);
 
 char 	*replace_word(char *s,  char *old,  char *new);

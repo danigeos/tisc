@@ -104,8 +104,8 @@ thin_sheet :
 	fi
 
 notify :
-	@if [ -f ../doc/first_compilation.txt ]; \
-	then echo ; else echo First compilation of TISC in `hostname` by `whoami`>../doc/first_compilation.txt; pwd>>../doc/first_compilation.txt; \
-		date>>../doc/first_compilation.txt ; echo>> ../doc/first_compilation.txt; finger `whoami` >> ../doc/first_compilation.txt; mail danielgc@ictja.csic.es<../doc/first_compilation.txt; \
+	@if [ -f ../doc/.first_compilation.txt ]; \
+	then echo ; else echo First compilation of TISC in `hostname` by `whoami`>../doc/.first_compilation.txt; pwd>>../doc/.first_compilation.txt; \
+		date>>../doc/.first_compilation.txt ; echo>> ../doc/.first_compilation.txt; finger `whoami` >> ../doc/.first_compilation.txt; mail danielgc@ictja.csic.es<../doc/.first_compilation.txt; \
 	fi
 

@@ -15,20 +15,21 @@
 11.- Model limitations
 12.- FAQ - Frequently Asked Questions
 13.- Glossary
-14.- Credits
+14.- Authorship, Credits
 15.- Acknowledgements
-16.- References
+16.- Disclaimer
+17.- References
 
 
 1.- SYNTAX AND USE OF TISC
   tisc  project  -B<bound_type> -D[xmin/xmax/ymin/ymax] -d<dx>[/<dy>]
-	-e<Kriv>[/<Kdif>] -F[<file>] -h[i|u|p|c] -l -M<lith_type>
+	-e<Kriv>[/<Kdif>] -f[2] -F[<file>] -h[i|u|p|c] -l -M<lith_type>
 	-N<Nx>[/<Ny>] -o -P[c[geom]] -p<rain>[/<Krain>] -Q<file>
 	-q<param>=<value> -R<random_topo>[/<seed>] -r<e|c|i|m|a><dens>
 	-s<solver> -T<eet> -t<i|f|d|e|v|r><time> -V[<level>]
 
   Options:
-	'project' is the root name of model files (i.e., if modelname='test'
+	'project' is the root name for the files (i.e., if modelname='test'
 		then the parameters file will be 'test.PRM' and the first
 		load/fault 'test1.UNIT'. 
 	'-B' Sets boundary conditions (see doc/template.PRM file).
@@ -43,7 +44,8 @@
 		completing a run. Put this option always *after* the project
 		name in the command.
 	'-f' Reformats the parameters file 'project.PRM' according to the
-		present version (based on 'template.PRM').
+		present version (using 'template.PRM'). Writes to stnd. output.
+		Add '2' to shorten.
 	'-h' To show this information file. Append 'p' to print the default
 		parameters file in stdout; 'c' to print a clean version of it.
 		'u' to print an example of load file; 'i' (default) to print
@@ -126,10 +128,10 @@
 3.- PROGRAM STRUCTURE AND COMPILATION
   TISC is written in C under Linux.
   Check the file ./tisc/README for details on compilation.
+  The main source code file is src/tisc.c, description of variables use 
+  in file include/tisc.h. 
   Check the FAQ section below in this document.
-  TISC requires GMT4 to generate graphic output. Also install either
-  graphicsmagick or imagemagick for -Pc option. Other recommended
-  software is: bc, xv (xview), gv (ghostview).
+  TISC requires GMT4 to generate graphic output. 
 
 
 4.- USER GUIDE - HOW TO SETUP YOUR OWN PROJECT
@@ -646,7 +648,10 @@ No. Density Age Volume Surf.  Vel_x Vel_y Shft_x Shft_y erosL
     cells in column #14 of drainage file *.xyw.
   TISC_2017-05-19
 	Changed UNIT1D and Units structure to BLOCK1D and Blocks, to avoid confusion 
-	with input files (UNITS).
+	with input files (UNITS). 
+  TISC
+	Gradual sediment compaction now implemented (see
+	new parameter compact_depth). 
     
     
 
@@ -770,39 +775,28 @@ No. Density Age Volume Surf.  Vel_x Vel_y Shft_x Shft_y erosL
 	surface and viceversa, respectively.
 
 
-14.- CREDITS
-  TISC is a program developed between Sept. 1994 and Sept. 2008 by Daniel
-  Garcia-Castellanos.
+14.- AUTHORSHIP, CREDITS
+	TISC is a program developed since Sept. 1994 by Daniel Garcia-Castellanos, with small contributions from others, cited in the code and the GitHub   repository.
+
+    Details on copyright are in the tisc/doc/ directory.
+	Please, contact the author if you will use the program.
+
+	When showing results of this program please cite at least one of the following articles:
   
-  Details on copyright are in the tisc/doc/ directory.
+	Garcia-Castellanos, D., 2002. Interplay between lithospheric flexure and river transport in foreland basins. Basin Res. 14, 89-104.
 
-  Please, contact the author if you will use the program.
-
-  When showing results of this program please cite at least one of the following
-  articles:
-  
-  Garcia-Castellanos, D., 2002. Interplay between lithospheric flexure and river
-  transport in foreland basins. Basin Res. 14, 89-104.
-
-  Garcia-Castellanos, D., J. Verges, J.M. Gaspar-Escribano & S. Cloetingh, 2003.
-  Interplay between tectonics, climate and fluvial transport during the Cenozoic
-  evolution of the Ebro Basin (NE Iberia). J. Geophys. Res., 108 (B7), 2347,
-  10.1029/2002JB002073.
+	Garcia-Castellanos, D., Jiménez-Munt, I., 2015. Topographic evolution and  climate aridification during continental collision: insights from computer simulations. PLOS ONE, doi:10.1371/journal.pone.0132252
+ 
+ 	Please, check also the disclaimers section.
 
 
 15.- ACKNOWLEDGEMENTS
-  TISC has been developed mainly in the Instituto de Ciencias de la Tierra Jaume
-  Almera (Barcelona) and the Vrije Universiteit (Amsterdam), but stages at the
-  Dalhousie University (Halifax, Canada) and the Australia National University
-  (Canberra) have also been helpful. Most funding comes from public research
-  institutions. Feedback with users has been essential and special mention must
-  be made to:
-  Mihai Tarapoanca, Jorge Gaspar-Escribano, Juan Alvarez, Chiara
-  Barbieri, Jeroen Bartol, Karen Leever, Javier Fullea, Gradmann Sofie, 
-  Ronald van Balen, Charlotte Fillon.
+	TISC has been developed mainly in the Instituto de Ciencias de la Tierra Jaume Almera (Barcelona) and the Vrije Universiteit (Amsterdam), but stages at the Dalhousie University (Halifax, Canada) and the Australia National University (Canberra) have also been helpful. Most funding comes from public research institutions. Feedback with users has been essential and special mention must be made to: Mihai Tarapoanca, Jorge Gaspar-Escribano, Juan Alvarez, Chiara Barbieri, Jeroen Bartol, Karen Leever, Javier Fullea, Gradmann Sofie, Ronald van Balen, Charlotte Fillon.
 
+16.- DISCLAIMER 
+	TISC is a tool developed for my own research with no professional programmers involved, the code is thus not so user-friendly, and I cannot always guarantee my assistance in case of trouble. See other warnings in the license file tisc/doc/LICENSE.txt.
 
-16.- REFERENCES
+17.- REFERENCES
   Works and people referred in this document and the source code (incomplete):
   (*) indicates works where TISC has been used.
   (**) indicates works with a detailed formulation. 
@@ -862,10 +856,6 @@ No. Density Age Volume Surf.  Vel_x Vel_y Shft_x Shft_y erosL
 	  coupled channel network growth and hillslope evolution model (3
 	  sections), Water Resourc. Res., 27, 1671-1702.
 
-
-More information in the header of the main source code file 'tisc.c', descrip-
-tion of variables use in file tisc.h. Visit also the website 
-https://sites.google.com/site/daniggcc/software/tisc/
 
 
 END OF TISC INFORMATION FILE

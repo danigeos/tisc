@@ -24,7 +24,7 @@ Timefinal	15	Final time
 tau		1	Relaxation time
 dt 		1	Time interval
 dt_eros		.05	Approximate dt for surface processes
-dtmemounit	5	Time between horizon record (0 means no horizons apart from those specified in '*.REC' file) and deflection evolution.
+dtmemounit	1	Time between horizon record (0 means no horizons apart from those specified in '*.REC' file) and deflection evolution.
 
 Flexure:
 Te		25000	Default EET [m] when no *.EET file is given. Te=0 => local isostasy.
@@ -61,6 +61,8 @@ denscrust	2850	Mean density of crust
 densinfill	2850	Infill density used to fill under topographic loads.
 denssedim	2200	Sediment density
 densenv		0	Enviromental material density
+sed_porosity	.35	Mean porosity of sediments (pores are assumed to be 
+compact_depth	2000
 
 Surface water I/O:
 hydro_model	0	To switch erosion/sedimentation processes

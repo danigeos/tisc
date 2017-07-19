@@ -323,7 +323,7 @@ int read_file_parameters (int show, int reformat)
 	}
 
 	if (show) fprintf(stdout, "\nParameters at '%s'.", PRMfilename);
-	if (reformat==1) fprintf(stdout, "\n\n\n");
+	if (reformat==1) fprintf(stdout, "\n\n");
 	while ((lineptr=fgets(line, MAXLENLINE+200-1, file)) != NULL) {
 		int status;
 		status=0;
@@ -437,6 +437,7 @@ int read_file_resume(char *filename)
 	/*Defined in geomodel.h:*/
 	fread(&grav_anom_type, 	sizeof(int),		1, 	file);
 	fread(&isost_model, 	sizeof(int),		1, 	file);
+	fread(&water_load, 	sizeof(int),		1, 	file);
 
 	fread(&Te_default, 	sizeof(float),		1, 	file);
 	fread(&crust_thick_default, sizeof(float),	1, 	file);
@@ -468,7 +469,6 @@ int read_file_resume(char *filename)
 		strcpy(projectname_aux,projectname);
 	}
 
-	fread(&switch_sea, 	sizeof(BOOL),		1, 	file);
 	fread(&switch_geograph_coor, sizeof(BOOL),	1, 	file);
 
 
@@ -486,6 +486,7 @@ int read_file_resume(char *filename)
 	fread(&zini, 		sizeof(float),		1, 	file);
 	fread(&dt_record, 	sizeof(float),		1, 	file);
 	fread(&sed_porosity, 	sizeof(float),		1, 	file);
+	fread(&compact_depth, 	sizeof(float),		1, 	file);
 	fread(&Kerosdif, 	sizeof(float),		1, 	file);
 	fread(&last_time_file_time, 	sizeof(float),		1, 	file);
 	fread(&random_topo, 	sizeof(float),		1, 	file);
@@ -837,7 +838,9 @@ int read_file_output_Blocks ()
 	/*
 	  This routine is not used by tisc, but by related programs such 
 	  as cuthrz or gravanom_3D	  
-	  READS A FILE WITH ELEVATION OF HORIZONS IN COLUMNS
+	  READS A FILE WITH ELEVATION OF HORIZONS IN COLUMNS.
+
+	  WONT WORK WITH COPACTION!!
 	*/
 
 	/*Horizons file*/
@@ -1004,52 +1007,76 @@ int read_file_2D_CS (struct BLOCK *Blocks, struct CS2D *CrossSection, int Nx2D)
 
 int Calculate_2D_Cross_Section (struct BLOCK *Blocks, struct CS2D *CrossSection, int Nx2D)
 {
-	int	i, i2D, j, i_Block;
-	float	**hori_aux;
+	float	**hori_aux, **thickness_above;
 
 	hori_aux = alloc_matrix(Ny, Nx);
+	thickness_above = alloc_matrix(Ny, Nx);
 
 	/*Blocks_base horizon:*/
-	for (i=0; i<Ny; i++)  for (j=0; j<Nx; j++) {
+	for (int i=0; i<Ny; i++)  for (int j=0; j<Nx; j++) {
 		hori_aux[i][j] = Blocks_base[i][j] - w[i][j];
 	}
-	for (i2D=0; i2D<Nx2D; i2D++) {
+	for (int i2D=0; i2D<Nx2D; i2D++) {
 		CrossSection[i2D].horiz[0] =
 			interpol_point_in_mesh (hori_aux, Nx, Ny, xmin, dx, ymin, dy, CrossSection[i2D].x, CrossSection[i2D].y) ;
 	}
-	/*Block horizons:*/
-	for (i_Block=0; i_Block<numBlocks; i_Block++) {
-		for (i=0; i<Ny; i++)  for (j=0; j<Nx; j++) {
-			hori_aux[i][j] += Blocks[i_Block].thick[i][j];
+
+/*
+		float thickness_above=0, top_block;
+		fprintf(file, "\n%7.2f\t%7.2f", (xmin+j*dx)/1000, (ymax-i*dy)/1000);
+		for (int i_Block=0; i_Block<numBlocks; i_Block++) 
+			thickness_above += Blocks[i_Block].thick[i][j];
+		top_block = Blocks_base[i][j]-w[i][j];
+		fprintf(file, "\t%.1f",  top_block);
+		for (int i_Block=0; i_Block<numBlocks; i_Block++) {
+			comp
+			thickness_above -= Blocks[i_Block].thick[i][j];
+			top_block += Blocks[i_Block].thick[i][j];
+			if (Blocks[i_Block].density==denssedim) top_block -= compaction(sed_porosity, compact_depth, thickness_above, thickness_above+Blocks[i_Block].thick[i][j]);
+			fprintf(file, "\t%8.1f",  top_block);
 		}
-		for (i2D=0; i2D<Nx2D; i2D++) {
+*/
+
+
+	/*Block horizons:*/
+	for (int i_Block=0; i_Block<numBlocks; i_Block++) 
+		for (int i=0; i<Ny; i++)  for (int j=0; j<Nx; j++) 
+			thickness_above[i][j] += Blocks[i_Block].thick[i][j];
+	for (int i_Block=0; i_Block<numBlocks; i_Block++) {
+		for (int i=0; i<Ny; i++)  for (int j=0; j<Nx; j++) {
+			thickness_above[i][j] -= Blocks[i_Block].thick[i][j];
+			hori_aux[i][j] += Blocks[i_Block].thick[i][j];
+			if (Blocks[i_Block].density==denssedim) hori_aux[i][j] -= compaction(sed_porosity, compact_depth, thickness_above[i][j], thickness_above[i][j]+Blocks[i_Block].thick[i][j]);
+		}
+		for (int i2D=0; i2D<Nx2D; i2D++) {
 			CrossSection[i2D].horiz[i_Block+1] =
 				interpol_point_in_mesh (hori_aux, Nx, Ny, xmin, dx, ymin, dy, CrossSection[i2D].x, CrossSection[i2D].y) ;
 		}
 	}
-        /*========Added By Michael Berry, adding lakes to cross section ===============*/
-        if (hydro_model){
-                for (i=0; i<Ny; i++)  for (j=0; j<Nx; j++){
-                        hori_aux[i][j] += h_water[i][j];
-                }
-                for (i2D=0; i2D<Nx2D; i2D++) {
-                        CrossSection[i2D].horiz[numBlocks+1] =
-                                interpol_point_in_mesh (hori_aux, Nx, Ny, xmin, dx, ymin, dy, CrossSection[i2D].x, CrossSection[i2D].y) ;
-                }
-        }
-        /*==========end of new code ===================================================*/
+    /*========Added By Michael Berry, adding lakes to cross section ===============*/
+    if (hydro_model){
+            for (int i=0; i<Ny; i++)  for (int j=0; j<Nx; j++){
+                    hori_aux[i][j] += h_water[i][j];
+            }
+            for (int i2D=0; i2D<Nx2D; i2D++) {
+                    CrossSection[i2D].horiz[numBlocks+1] =
+                            interpol_point_in_mesh (hori_aux, Nx, Ny, xmin, dx, ymin, dy, CrossSection[i2D].x, CrossSection[i2D].y) ;
+            }
+    }
+    /*==========end of addition ===================================================*/
 	/*ice horizon:*/
 	if (K_ice_eros) {
-		for (i=0; i<Ny; i++)  for (j=0; j<Nx; j++) {
+		for (int i=0; i<Ny; i++)  for (int j=0; j<Nx; j++) {
 			hori_aux[i][j] += ice_thickness[i][j];
 		}
-		for (i2D=0; i2D<Nx2D; i2D++) {
+		for (int i2D=0; i2D<Nx2D; i2D++) {
 			CrossSection[i2D].horiz[numBlocks+2] =
 				interpol_point_in_mesh (hori_aux, Nx, Ny, xmin, dx, ymin, dy, CrossSection[i2D].x, CrossSection[i2D].y) ;
 		}
 	}
 
 	free_matrix(hori_aux, Ny);
+	free_matrix(thickness_above, Ny);
 	return(1);
 }
 
@@ -1089,15 +1116,13 @@ int write_file_cross_section ()
 	for (i=0; i<numBlocks; i++) fprintf(file, "\t%8.2f", Blocks[i].age/Matosec);
 	for (i=0; i<Nx2D; i++) {
 		fprintf(file, "\n%8.1f\t%8.1f\t%8.1f  ",
-			CrossSection[i].x/1000,
-			CrossSection[i].y/1000,
-			CrossSection[i].l/1000) ;
+		CrossSection[i].x/1000,
+		CrossSection[i].y/1000,
+		CrossSection[i].l/1000) ;
 		for (j=0; j<numBlocks+1; j++) fprintf(file, "\t%8.1f", CrossSection[i].horiz[j] );
-                /*===========Added by Michael Berry====*/
-
-                if (hydro_model) fprintf(file,"\t%8.1f", CrossSection[i].horiz[numBlocks+1]);
-
-                /*===========end of added===============*/
+            /*===========Added by Michael Berry====*/
+            if (hydro_model) fprintf(file,"\t%8.1f", CrossSection[i].horiz[numBlocks+1]);
+            /*===========end of addition===========*/
 		if (K_ice_eros) fprintf(file, "\t%8.1f", CrossSection[i].horiz[numBlocks+2] );
 	}
 	fclose(file);
@@ -1118,106 +1143,10 @@ int write_file_cross_section ()
 
 
 
-int Calculate_2D_Cross_Section_bk (struct BLOCK *Blocks, struct CS2D *CrossSection, int Nx2D)
-{
-	int	i, i2D, j, i_Block;
-	float	**hori_aux;
-
-	hori_aux = alloc_matrix(Ny, Nx);
-
-	/*Blocks_base horizon:*/
-	for (i=0; i<Ny; i++)  for (j=0; j<Nx; j++) {
-		hori_aux[i][j] = Blocks_base[i][j] - w[i][j];
-	}
-	for (i2D=0; i2D<Nx2D; i2D++) {
-		CrossSection[i2D].horiz[0] = 
-			interpol_point_in_mesh (hori_aux, Nx, Ny, xmin, dx, ymin, dy, CrossSection[i2D].x, CrossSection[i2D].y) ;
-	}
-	/*Block horizons:*/
-	for (i_Block=0; i_Block<numBlocks; i_Block++) {
-		for (i=0; i<Ny; i++)  for (j=0; j<Nx; j++) {
-			hori_aux[i][j] += Blocks[i_Block].thick[i][j];
-		}
-		for (i2D=0; i2D<Nx2D; i2D++) {
-			CrossSection[i2D].horiz[i_Block+1] = 
-				interpol_point_in_mesh (hori_aux, Nx, Ny, xmin, dx, ymin, dy, CrossSection[i2D].x, CrossSection[i2D].y) ;
-		}
-	}
-	/*ice horizon:*/
-	if (K_ice_eros) {
-		for (i=0; i<Ny; i++)  for (j=0; j<Nx; j++) {
-			hori_aux[i][j] += ice_thickness[i][j];
-		}
-		for (i2D=0; i2D<Nx2D; i2D++) {
-			CrossSection[i2D].horiz[numBlocks+1] =
-				interpol_point_in_mesh (hori_aux, Nx, Ny, xmin, dx, ymin, dy, CrossSection[i2D].x, CrossSection[i2D].y) ;
-		}
-	}
-
-	free_matrix(hori_aux, Ny);
-	return(1);
-}
-
-
-
-
-int write_file_cross_section_bk ()
-{
-	int 	i, j, 
-		Nx2D=1001; 	/*Number of points of the 2D selected profile*/
-	FILE 	*file ;
-	BOOL 	switch_CrossSection;
-	struct CS2D *CrossSection;
-	/*
-	  CALCULATES AND WRITES 2D CROSS SECTION FILE
-	*/
-
-	CrossSection = (struct CS2D *) calloc(Nx2D, sizeof(struct CS2D));
-	for (i=0; i<Nx2D; i++)  CrossSection[i].horiz = (float *) calloc(numBlocks+2, sizeof(float));
-
-	switch_CrossSection = read_file_2D_CS(Blocks, CrossSection, Nx2D);
-
-	if (!switch_CrossSection) {for (i=0; i<Nx2D; i++)  free(CrossSection[i].horiz); free(CrossSection);}
-	Write_Open_Filename_Return (".pfl", "wt", !switch_CrossSection);
-
-	Calculate_2D_Cross_Section (Blocks, CrossSection, Nx2D);
-
-	fprintf(file, "# x(km)  \t y(km)  \t  long(km)\t   z(m)-->\n#\t\t\t\t  Densities->\t%8.0f", denscrust) ;
-	for (i=0; i<numBlocks; i++) fprintf(file, "\t%8.0f", Blocks[i].density);
-	if (K_ice_eros) fprintf(file, "\t%8.0f", densice);
-	fprintf(file, "\n#\t\t\t\t  Ages->\t%8.2f", Timeini/Matosec);
-	for (i=0; i<numBlocks; i++) fprintf(file, "\t%8.2f", Blocks[i].age/Matosec);
-	for (i=0; i<Nx2D; i++) {
-		fprintf(file, "\n%8.1f\t%8.1f\t%8.1f  ",
-			CrossSection[i].x/1000,
-			CrossSection[i].y/1000,
-			CrossSection[i].l/1000) ;
-		for (j=0; j<numBlocks+1; j++) fprintf(file, "\t%8.1f", CrossSection[i].horiz[j] );
-		if (K_ice_eros) fprintf(file, "\t%8.1f", CrossSection[i].horiz[numBlocks+1] );
-	}
-	fclose(file);
-
-	if (verbose_level>=1) {
-		float max2D=-1e9, min2D=1e9, *basam2D;
-		basam2D = alloc_array(Nx2D);
-		for(i=0; i<Nx2D; i++)  basam2D[i] = CrossSection[i].horiz[numBlocks];
-		Perfil_info(basam2D, Nx2D, &max2D, &min2D);
-		fprintf(stdout, "\n  2D prof. :  max = %9.1f m     min = %9.1f m   ", max2D, min2D);
-		free(basam2D);
-	}
-
-	for (i=0; i<Nx2D; i++)  free(CrossSection[i].horiz);
-	free (CrossSection);
-	return 1;
-}
-
-
 
 int write_file_Blocks ()
 {
-	int 	i, j, k ;
 	FILE 	*file ;
-	float 	hori;
 
 	/*
 	  WRITES A FILE WITH ELEVATION OF ELEVATION OF SURFACES BETWEEN BLOCKS IN COLUMNS
@@ -1225,19 +1154,30 @@ int write_file_Blocks ()
 
 	Write_Open_Filename_Return (".hrz", "wt", !switch_write_file_Blocks);
 
-	fprintf(file, "# x(km)\ty(km) \t z(m)-->  \t\t(t=%.2f My)\n#    \tDens:\t%.0f", Time/Matosec, denscrust) ;
-	for (k=0; k<numBlocks; k++) {
+	fprintf(file, "# x(km)\t\t y(km)\t\t z(m)-->  \t\t(t=%.2f My)\n#    \tDens:\t%.0f", Time/Matosec, denscrust) ;
+	for (int k=0; k<numBlocks; k++) {
 		fprintf(file, "\t%.0f", Blocks[k].density);
 	}
-	for (i=0; i<Ny; i++)  for (j=0; j<Nx; j++) {
-		hori = Blocks_base[i][j] - w[i][j];
-		fprintf(file, "\n%7.2f\t%7.2f\t%.1f", (xmin+j*dx)/1000, (ymax-i*dy)/1000, hori);
-		for (k=0; k<numBlocks; k++) {
-			hori += Blocks[k].thick[i][j];
-			fprintf(file, "\t%.1f",  hori);
+	if (erosed_model>=2) fprintf(file, "\t   water");
+	for (int i=0; i<Ny; i++)  for (int j=0; j<Nx; j++) {
+		float thickness_above=0, top_block;
+		fprintf(file, "\n%9.3f\t%9.3f", (xmin+j*dx)/1000, (ymax-i*dy)/1000);
+		for (int i_Block=0; i_Block<numBlocks; i_Block++) 
+			thickness_above += Blocks[i_Block].thick[i][j];
+		top_block = Blocks_base[i][j]-w[i][j];
+		fprintf(file, "\t%.1f",  top_block);
+		for (int i_Block=0; i_Block<numBlocks; i_Block++) {
+			thickness_above -= Blocks[i_Block].thick[i][j];
+			top_block += Blocks[i_Block].thick[i][j];
+			if (Blocks[i_Block].density==denssedim) top_block -= compaction(sed_porosity, compact_depth, thickness_above, thickness_above+Blocks[i_Block].thick[i][j]);
+			fprintf(file, "\t%8.1f",  top_block);
 		}
-		topo[i][j]=hori;
-	}
+/*		if (erosed_model>=2) {
+			float top_water=top_block;
+			if (drainage[i][j].lake) top_water = Lake[drainage[i][j].lake].alt;
+			fprintf(file, "\t%8.1f", top_water);
+		}
+*/	}
 	fclose(file);
 	return 1;
 }
@@ -1594,6 +1534,7 @@ int write_file_resume()
 	/*Defined in geomodel.h:*/
 	fwrite(&grav_anom_type, 	sizeof(int),		1, 	file);
 	fwrite(&isost_model, 	sizeof(int),		1, 	file);
+	fwrite(&water_load, 	sizeof(int),		1, 	file);
 
 	fwrite(&Te_default, 	sizeof(float),		1, 	file);
 	fwrite(&crust_thick_default, sizeof(float),	1, 	file);
@@ -1615,7 +1556,6 @@ int write_file_resume()
 
 	fwrite(projectname, 	sizeof(char),	MAXLENFILE, 	file);
 
-	fwrite(&switch_sea, 	sizeof(BOOL),		1, 	file);
 	fwrite(&switch_geograph_coor, sizeof(BOOL),	1, 	file);
 
 	/*Defined in tao+tisc.h:*/
@@ -1632,6 +1572,7 @@ int write_file_resume()
 	fwrite(&zini, 		sizeof(float),		1, 	file);
 	fwrite(&dt_record, 	sizeof(float),		1, 	file);
 	fwrite(&sed_porosity, 	sizeof(float),		1, 	file);
+	fwrite(&compact_depth, 	sizeof(float),		1, 	file);
 	fwrite(&Kerosdif, 	sizeof(float),		1, 	file);
 	fwrite(&last_time_file_time, 	sizeof(float),		1, 	file);
 	fwrite(&random_topo, 	sizeof(float),		1, 	file);
