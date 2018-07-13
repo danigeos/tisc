@@ -19,6 +19,7 @@ source $tisc_dir/script/tisc.common.topo+drainage.gmt.job
 
 #PRECIPITATION
 if (-r $prj.xyw) then 
+#set min_rain = 2.
 source $tisc_dir/script/tisc.common.rain.gmt.job
 endif
 
@@ -71,7 +72,7 @@ if (-r $prj.INT) psxy $prj.INT -JX -R -M -W1/0/255/0 -L -O -K >> $ps
 set width_CS = `echo  2 \* $width + $separation  | bc -l`
 if (-r $prj.pfl) then
 set height_CS = 3.5
-set vert_shift_CS = `echo -$height_CS \- $separation | bc -l`
+set vert_shift_CS = `echo -$height_CS \- 2.5 | bc -l`
 set horz_shift_CS = `echo  -$width - $separation  | bc -l`
 set dmax   	= `awk '{dmax=$3;} END{print dmax}' $prj.pfl`
 psbasemap -JX$width_CS/$height_CS -R0/$dmax/$zmin/$zmax \

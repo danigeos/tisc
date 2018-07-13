@@ -1116,14 +1116,14 @@ int Fluvial_Transport(struct GRIDNODE *sortcell, float dt_st, int erosed_model, 
 	    	case 'E':
 	    	    /*Calculate distance to the output node*/
 	    	    if (IN_DOMAIN(drow,dcol)) {
-			    int ild = drainage[drow][dcol].lake;
-			    if (ild)	slope = - (Lake[ild].alt    - topo[row][col]) / dist;
-			    else	slope = - (topo[drow][dcol] - topo[row][col]) / dist;
-	    		    dist = sqrt(dy*(drow-row)*dy*(drow-row) + dx*(dcol-col)*dx*(dcol-col));
-	    	    }
+				    int ild = drainage[drow][dcol].lake;
+		    		dist = sqrt(dy*(drow-row)*dy*(drow-row) + dx*(dcol-col)*dx*(dcol-col));
+				    if (ild) slope = - (Lake[ild].alt    - topo[row][col]) / dist;
+				    else	 slope = - (topo[drow][dcol] - topo[row][col]) / dist;
+		   	    }
 	    	    else {
 	    		    dist = dxy;
-			    slope = main_tribut_slope;
+					slope = main_tribut_slope;
 	    	    }
 
 		    switch (erosed_model) {

@@ -23,6 +23,7 @@ if (-r $prj.pfl) psxy $prj.pfl -JX -R -M -W$col_lin -H2 -O -K >> $ps
 psbasemap -JX -R -Bnsew -O -K >> $ps
 
 
+set vert_shift_CS = `awk -v v=$vert_shift_CS 'BEGIN{print v-1.5}'`
 #2D CROSS SECTION:
 if (-r $prj.pfl) then
 	psbasemap -JX$width_CS/$height_CS -R0/$dmax/$zmin/$zmax \

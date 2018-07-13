@@ -1,9 +1,7 @@
 density		2850
 mode_interp	4
 z_default	0
-#gradual		1
 time		1
-time_stop	4
 #topoest	1
 
 500	c

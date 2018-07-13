@@ -21,11 +21,11 @@
 #define SIGNAL		-9999
 
 #define PRINT_ERROR(...)	{if (verbose_level>=0) {fprintf(stderr, "\nERROR: In %s: ", __func__); fprintf(stderr, __VA_ARGS__);}} 	/**/
-#define PRINT_SUMLINE(...)	{if (verbose_level>=1) {fprintf(stdout, "\n  "__VA_ARGS__);}} 		/**/
-#define PRINT_INFO(...) 	{if (verbose_level>=2) {fprintf(stdout, "\nInfo: "__VA_ARGS__);}} 	/**/
+#define PRINT_SUMLINE(...)	{if (verbose_level>=1) {fprintf(stdout, "\n  "__VA_ARGS__);} fflush(stdout);} 		/**/
+#define PRINT_INFO(...) 	{if (verbose_level>=2) {fprintf(stdout, "\nInfo: "__VA_ARGS__);} fflush(stdout);} 	/**/
 #define PRINT_WARNING(...)	{if (verbose_level>=3) {fprintf(stderr, "\nWarning: In %s: ", __func__); fprintf(stderr, __VA_ARGS__);}}	/**/
 #define PRINT_DEBUG(...)	{if (verbose_level>=4) {fprintf(stderr, "\nDebug: In %s: ", __func__); fprintf(stderr, __VA_ARGS__);}} 	/*Used to track position in the code*/
-#define PRINT_DEBUGPLUS(...)	{if (verbose_level>=5) {fprintf(stderr, "\nDebug+: In %s: ", __func__); fprintf(stderr, __VA_ARGS__);}} 	/*Used to help on code debugging*/
+#define PRINT_DEBUGPLUS(...){if (verbose_level>=5) {fprintf(stderr, "\nDebug+: In %s: ", __func__); fprintf(stderr, __VA_ARGS__);}} 	/*Used to help on code debugging*/
 #define PRINT_GRID_INFO(grid, name, units) {\
 	    float max=-1e19, min=1e19, vol=0;\
 	    for (int i=0; i<Ny; i++)    for (int j=0; j<Nx; j++) {\

@@ -130,7 +130,7 @@ int call_surf_proc_ (
 	*/
 
 	int i, j;
-        total_lost_sed_mass=total_sed_mass=total_bedrock_eros_mass=0;
+	total_sed_mass=total_bedrock_eros_mass=0;
 
 	dt = *ad_dt;
 	if (verbose_level>=4) fprintf(stdout, "\nTransporting during %.2f Ma: %dx%d ; write files = %d ",
@@ -168,7 +168,6 @@ int call_surf_proc_ (
 		topo_array[i*Nx+j]=topo[i][j]; sed_thick_array[i*Nx+j]=Blocks[numBlocks-1].thick[i][j]; 
 	}
 
-        //fprintf(stdout, "\n  noSed er.: %+8.2e N    sed.incr.: %+8.2e N outp.seds: %+8.2e N  ",  total_bedrock_eros_mass*g, total_sed_mass*g, total_lost_sed_mass*g);
 	fflush (stdout);
 }
 

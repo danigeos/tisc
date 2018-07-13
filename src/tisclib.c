@@ -891,8 +891,7 @@ float ReSort_Matrix (float **matrix, struct GRIDNODE *orden, int Nx, int Ny)
 float calculate_sea_level()
 {
 	/*
-	  Calculates the sea level and the load related to changes 
-	  in the water column (sea and lakes).
+	  Calculates the sea level
 	*/
 
 	if (!water_load) return (0);
@@ -921,6 +920,10 @@ float calculate_sea_level()
 
 int calculate_water_load()
 {
+	/*
+	  Calculates the load related to changes 
+	  in the water column (sea and lakes).
+	*/
 	float	water_volume=0;
 
 	calculate_topo(topo);

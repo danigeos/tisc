@@ -7,14 +7,15 @@ xmin		-50e3	Western model limit coordinate [m]	This is the x coordinate of the c
 xmax		+50e3	Eastern model limit coordinate [m]
 ymin		-50e3	Southern model limit coordinate [m]
 ymax		+50e3	Northern model limit coordinate [m]
-
+zmin	-1000
+zmax	3000
 #Gridding:
 Nx		101	E-W direction grid points
 Ny		101	N-S direction grid points
 
 #Initial relief:
 zini		0	Initial height [m] of the plate over the sea level (added to the initial topography in '*.H0').
-random_topo	1000	Noise in initial relief [m]
+random_topo	100	Noise in initial relief [m]
 
 
 #Time variables [Ma]:
@@ -43,23 +44,23 @@ denssedim	2200	Sediment density
 densenv		0	Enviromental material density
 
 #Surface water drainage:
-hydro_model	3	To switch fluvial network calculation
-rain 		50	
-Krain		.2 
-windazimut	135	If hydro_model=2: azimut of wind flow direction in 
+hydro_model	1	
+rain 		500	
+Krain		500 
+windazimut	135	If hydro_model>=2: azimut of wind flow direction in 
 				degrees counted clockwise from north (positive y).
-CXrain		10e3	Proportionality of runoff with x (distance of duplication [m]). 0 means no variations in x.
+CXrain		0e3	Proportionality of runoff with x (distance of duplication [m]). 0 means no variations in x.
 evaporation	00	Evaporation rate at lakes [l/m2/a]=[mm/a].
 lost_rate	0	Surface water lost per unit length [%/km]
 
 #Surface transport:
-erosed_model	6	To switch erosion/sedimentation processes
-Kerosdif   	1	Diffusive transport erosion coefficient [m2/a]
-K_river_cap	2000	Constant of river transport capacity [kg/m3]
-l_fluv_eros	2e-7	Length scale of fluvial erosion	[m] (this default value is overriden by the one in load files *.LOAD)
-l_fluv_eros_sed	2e-6	Length scale of fluvial erosion	[m] (for sediments)
+erosed_model	2	To switch erosion/sedimentation processes
+Kerosdif   	0	Diffusive transport erosion coefficient [m2/a]
+Keroseol 	.0
+K_river_cap	50	Constant of river transport capacity [kg/m3]
+l_fluv_eros	25e3	Length scale of fluvial erosion	[m] 
+l_fluv_eros_sed	20e3	Length scale of fluvial erosion	[m] (for sediments)
 l_fluv_sedim	25e3	Length scale of fluvial sedimentation [m]
-K_ice_eros	0 .0025
 
 #Interpolation:
 mode_interp 	4	Default interpolation mode for input files (if not specified in the files):

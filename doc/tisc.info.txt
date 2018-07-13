@@ -29,14 +29,14 @@
 	-s<solver> -T<eet> -t<i|f|d|e|v|r><time> -V[<level>]
 
   Options:
-	'project' is the root name for the files (i.e., if modelname='test'
-		then the parameters file will be 'test.PRM' and the first
-		load/fault 'test1.UNIT'. 
+	'project' is the root name for all files (i.e., if modelname='test'	then 
+		the parameters file will be 'test.PRM' and the first load/fault 
+		'test1.UNIT'. 
 	'-B' Sets boundary conditions (see doc/template.PRM file).
 	'-D' Set the model region (domain) [m].
 	'-d' To set dx and dy grid cell dimensions.
-	'-e' To set the constants of fluvial transport capacity [kg/m3] and
-		diffusive transport [m2/a]. -e0 suppresses surface transport
+	'-e' To set the constants of fluvial transport capacity [kg/m3] and 
+		diffusive transport [m2/a]. -e0 suppresses surface transport 
 		calculations.
 	'-F' To continue (resume) a previous run by reading <file>. Default
 		file_name is 'project.all'. If specified, <file> must be a
@@ -63,9 +63,9 @@
 	'-p' Sets the amount of runoff [l/m2/a]=[mm/a] and its pro-
 		portionality with height [mm/a/km]. -p0 suppresses the
 		hydrological calculations.
-	'-Q' With this option TISC will just calculate the elastic deflection
-		of <file> (3 columns: x[m],y[m],pressure[Pa]). Will write
-		deflection to the standard output and exit the program.
+    '-Q' With this option TISC will just calculate the elastic deflection of 
+    	<file> (3 columns: x[m],y[m],pressure[Pa]). Will write deflection to
+		the standard output and exit the program.
 	'-q' Sets any othe parameters value listed in ./tisc/doc/template.PRM
 		file. <value> must be given in internal program units (usually
 		IS).
@@ -83,8 +83,8 @@
 	'-V' Means verbose mode with additional run-time prints. Add '<level>'
 		for additional i/o information. See doc/template.PRM file for
 		level specification.
-	'-v' Changes velocity to <velx>,<vely> for block number <num> or, if 
-		<num><0, to all blocks with density=-<num> (use with '-F').
+    '-v' Changes velocity to <velx>,<vely> for block number <num> or, if
+		'-<num><0, to all blocks with density=-<num> (use with '-F').
 
 	See also the default parameter file: tisc/doc/template.PRM
 
@@ -107,7 +107,7 @@
   river network (transport  capacity proportional to water discharge and
   slope). 
   The most complex among these is the surface transport, which incorporates the
-  calculation of the  river network, a steady-flow hydrological balance, and the
+  calculation of the  river network, a steady-flow hydrological balance, and the 
   formation of lakes in topographic minima. TISC is a pseudo-3D (planform) 
   version of the code tAo, which works in cross-section.
   Look at the bibliography (in particular the papers by Garcia-Castellanos & 
@@ -132,17 +132,21 @@
   in file include/tisc.h. 
   Check the FAQ section below in this document.
   TISC requires GMT4 to generate graphic output. 
+  It also requires 'convert' as part of the ImageMagick package.
+  In mac you can install convert using: 'brew install imagemagick'
+  System requirements are a standard Mac or Linux-based computer with around 16 
+  to 32 GB RAM and a high-end (but standard) processor.
 
 
 4.- USER GUIDE - HOW TO SETUP YOUR OWN PROJECT
-  See the examples in tisc/demo!
+  First see the examples in tisc/demo!
   Experiment with the shell scripts in tisc/scripts to see what plots can
   be made from the output files.
-  tisc can be used as a quick flexural calculator using option -Q.
-  Otherwise, TISC normally reads a set of input files that form a
-  'project'. Input files start with a common project name and have an
-  uppercase extension and are explained below, in section 'INPUTS'.  The
-  main input file is the *.PRM file, which contains the main parameters
+  TISC can be used as a quick flexural calculator using option -Q.
+  Otherwise, TISC normally reads a set of input files that form a 'project'. 
+  Input files start with a common project name and have an 
+  uppercase extension and are explained below, in section 'INPUTS'. The main 
+  input file is the *.PRM file, which contains the main parameters
   of the project.  
   The program then enters a time loop. At each time step the tectonic motion,
   hydrology, erosion, and isostasy, are calculated. 
@@ -181,13 +185,13 @@
 	above. 'tisc/doc/template.PRM' file is an explained example containing
 	the default parameter values. The internal use of each parameter is
 	also somewhat explained in the incude file 'tisc.h'.
-	--xmin, xmax, ymin, ymax give the coordinates of the center of the 
+	xmin, xmax, ymin, ymax give the coordinates of the center of the 
 	boundary cells or pixels (i.e., the location of their associated nodes).
 	The conceptual limit of the model is at xmin-dx/2, ymax+dx/2, ... 
 	For example, if the resolution of a model is needed to be reduced to 
 	dx/2,dy/2 keeping the same domain parameters, then the new Nx,Ny should 
 	not be Nx*2,Ny*2, but (Nx-1)*2+1,(Ny-1)*2+1.
-	--If  (switch_topoest != 0) then the load will rest at zero level 
+	If  (switch_topoest != 0) then the load will rest at zero level 
 	and plate subsidence will be filled with 'densinfill' material. Do 
 	not use it with erosion model.
 
@@ -210,8 +214,8 @@
 	be taken from the *.PRM file). Note that abrupt EET lateral changes can
 	lead to instabilities in the calculation of flexural deflection.
 	The file format is:
-	[z_default --]		#Default value of the elastic thickness.
-	[mode_interp  -]	#See explanation in doc/template.UNIT.
+	[z_default <value>]		#Default value of the elastic thickness.
+	[mode_interp  <value>]	#See explanation in doc/template.UNIT.
 	x1  y1	thickness1
 	x2  y2	thickness2
 	x3  y3	thickness3
@@ -405,7 +409,7 @@ No. Density Age Volume Surf.  Vel_x Vel_y Shft_x Shft_y erosL
   Output files contain the information required for graphic output, and have a
   lowercase extension:
   'project.hrz'	Final geometry of all Blocks (elevat./depth of all the horizons).
-  'project.xyzt' Isostatic (flexural) subsidence (deflection w) along  time.
+  'project.xyzt' Isostatic (flexural) subsidence (deflection w).
   'project.all'	Binary file with all the information to resume the model (see
 		  -F option). Valid for checkpointing purposes.
   'project.xyw'	Drainage network. Mass transport rate. Type of node ('R'=river;
@@ -649,9 +653,9 @@ No. Density Age Volume Surf.  Vel_x Vel_y Shft_x Shft_y erosL
   TISC_2017-05-19
 	Changed UNIT1D and Units structure to BLOCK1D and Blocks, to avoid confusion 
 	with input files (UNITS). 
-  TISC
-	Gradual sediment compaction now implemented (see
-	new parameter compact_depth). 
+  TISC_2018-07-13
+	Gradual sediment compaction now implemented (see new parameter 
+	compact_depth). Bug solved for erosed_model 6. 
     
     
 
