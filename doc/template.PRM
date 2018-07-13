@@ -71,7 +71,7 @@ boundary_conds	5555	Boundary conditions for flexure at N, S, E, W (4
 			#5: means free boundary (null 1st and second derivates, 
 				i.e., null slope and moment).
 			#6: fixes local isostatic deflection at boundary.
-switch_sea	1	To take into account sea+lake load and allow for temporal sea
+water_load	1	To take into account sea+lake load and allow for temporal sea
 				level variations read from '*.SLV'.
 topoest		0	If 1 then the final topography (instead of load thickness)
 				will be read from *.UNIT files. That topography is vertically
@@ -85,7 +85,7 @@ Pxy		0e12	Horizontal tectonic shear force xy
 hydro_model	0	Defines the hydrological (climate&drainage) model. 
 			#0: no precipitation, no fluvial transport. The 
 				following parameters have no effect.
-			#1: runoff(x,y) = (rain + Krain*altitude[km]) * 
+			#1: runoff(x,y) = (rain + Krain*elevation[km]) * 
 				(1-DX/CXrain) * (1-DY/CYrain) 
 				is used if no *.RAIN file is given or if the 
 				value in that file is negative. DX,DY is the 
@@ -95,7 +95,7 @@ hydro_model	0	Defines the hydrological (climate&drainage) model.
 			#3: orographic precipitation following Garcia-
 				Castellanos (2007, EPSL), water-conservative.
 rain		500	[l/m2/yr]=[mm/yr]=[1.58e-8 m3/m2/s].
-			If hydro_model=1: Background precipitation (or runoff, 
+			If hydro_model=1: 'rain' or precipitation (or runoff, 
 				water going to the drainage system) if no 
 				*.RAIN file is given or if the file value is 
 				negative. 
@@ -155,7 +155,7 @@ erosed_model	0	Defines the erosion/sedimentation model.
 				implementing channel width in Beaumont's. qeq=K/W·Q^m·S^n
 			#6: As #1 + rivers following hybrid detachment+transport limited
 				model, based on the basal shear stress law (formulation and
-				values in Garcia-Castellanos & Jimenez-Munt, 2015), accounting
+				values in Garcia-Castellanos & Jimenez-Munt, PlosONE, 2015), accounting
 				for channel width: dh/dt=K'·Q^m·S^n if q<qeq,
 				qeq=K_river_cap·Q·S where K' is a function of K in dh/dz =
 				K*tau^1.5 and K is given through 'erodibility'. Erosion
@@ -237,7 +237,7 @@ switch_files	1	For extra file output: see files *.bas *.all *.lakes in
 				doc/tisc.info.txt.
 mode_interp	4	Default interpolation mode for input files. See
 				doc/template.UNIT.
-switch_ps	1	For postscript graphic output (uses GMT shell scripts).
+switch_ps	1	For postscript graphic output (uses GMT4 shell scripts).
 
 
 

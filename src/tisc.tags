@@ -69,6 +69,7 @@ Minvertfile	invertfile.c	/^int main (int argc, char **argv)$/
 Mlonlat2xy	lonlat2xy.c	/^main(int argc, char **argv)$/
 Moutin	outin.c	/^main(int argc, char **argv)$/
 Mtisc	tisc.c	/^int main(int argc, char **argv)$/
+Mtisc.sync-conflict-20180409-010856	tisc.sync-conflict-20180409-010856.c	/^int main(int argc, char **argv)$/
 NEIGHBOURS	../include/types_n_defs.h	/^#define NEIGHBOURS(i,j,ni,nj)	(fabs(i-ni) <= 1 && /
 NOT_AT_BORDER	../include/types_n_defs.h	/^#define NOT_AT_BORDER(i,j)	((i>0)  && (i<Ny-1)  &&/
 NOT_AT_BORDER_1D	../include/types_n_defs.h	/^#define NOT_AT_BORDER_1D(i)	((i>0)  && (i<Nx-1))$/
@@ -80,7 +81,7 @@ OUT_DOMAIN_1D	../include/types_n_defs.h	/^#define OUT_DOMAIN_1D(i)	((i<0)  || (i
 Orographic_Precipitation_Evaporation_conservative	surf_proc.c	/^int Orographic_Precipitation_Evaporation_conservat/
 Orographic_Precipitation_with_local_slope	surf_proc.c	/^float Orographic_Precipitation_with_local_slope (i/
 PRINT_DEBUG	../include/types_n_defs.h	/^#define PRINT_DEBUG(...)	{if (verbose_level>=4) {f/
-PRINT_DEBUGPLUS	../include/types_n_defs.h	/^#define PRINT_DEBUGPLUS(...)	{if (verbose_level>=5/
+PRINT_DEBUGPLUS	../include/types_n_defs.h	/^#define PRINT_DEBUGPLUS(...){if (verbose_level>=5)/
 PRINT_ERROR	../include/types_n_defs.h	/^#define PRINT_ERROR(...)	{if (verbose_level>=0) {f/
 PRINT_GRID_INFO	../include/types_n_defs.h	/^#define PRINT_GRID_INFO(grid, name, units) {\\$/
 PRINT_INFO	../include/types_n_defs.h	/^#define PRINT_INFO(...) 	{if (verbose_level>=2) {f/
@@ -160,7 +161,7 @@ max_water_in_air_colum	surf_proc.c	/^float max_water_in_air_colum (int i, int j)
 move_Blocks	tisc.c	/^int move_Blocks()$/
 outin	../lib/libreria.c	/^int outin($/
 polygon_area	../lib/libreria.c	/^float polygon_area($/
-prism_vertical_attraction	../lib/libreria.c	/^double prism_vertical_attraction ($/
+prism_vert_grav	../lib/libreria.c	/^double prism_vert_grav ($/
 project_xy_line	../lib/libreria.c	/^float project_xy_line($/
 project_xy_segment	../lib/libreria.c	/^float project_xy_segment($/
 read_file_2D_CS	tiscio.c	/^int read_file_2D_CS (struct BLOCK *Blocks, struct /
@@ -190,6 +191,7 @@ tectload	tisc.c	/^int tectload()$/
 triangularizar	../lib/libreria.c	/^int triangularizar(float **a, float *b, int nx)$/
 write_file_Blocks	tiscio.c	/^int write_file_Blocks ()$/
 write_file_cross_section	tiscio.c	/^int write_file_cross_section ()$/
+write_file_deflection	tiscio.c	/^int write_file_deflection ()$/
 write_file_drainage	tiscio.c	/^int write_file_drainage ()$/
 write_file_ice	tiscio.c	/^int write_file_ice ()$/
 write_file_lakes	tiscio.c	/^int write_file_lakes ()$/

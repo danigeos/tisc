@@ -33,7 +33,7 @@ ifneq ($(findstring SURFACE_TRANSPORT,$(DEFS)),)
 	SP_LIBS = surf_proc.o 
 endif
 
-all:	clean tisc cuthrz lonlat2xy invertfile projbanda outin blockxyz #call_tisc.o
+all:	clean tisc cuthrz lonlat2xy invertfile outin blockxyz call_tisc.o #projbanda
 	exit
 
 backup:
@@ -65,8 +65,10 @@ lonlat2xy: lonlat2xy.c libreria
 	$(CC) lonlat2xy.c -o $(BIN)/lonlat2xy $(OPTS) $(LIBS) $(LIB)/libreria.o -I$(INCL)
 
 projbanda:
-	$(FC) projbanda.f -o $(BIN)/projbanda -O3 -I$(INCL) -L../lib/
-	chmod  a+x  $(BIN)/$@
+	if [ $(findstring THIN_SHEET,$(DEFS)) ]; then \
+		$(FC) projbanda.f -o $(BIN)/projbanda -O3 -I$(INCL) -L../lib/
+		chmod  a+x  $(BIN)/$@
+	fi
 
 %:	
 	$(CC) $*.c -c $(OPTS) -I$(INCL) 
@@ -93,7 +95,9 @@ tisc.o: tisc.c tisclib.c tiscio.c
 	fi
 
 call_tisc.o : call_tisc.c
-	$(CC) -c -o call_tisc.o $(OPTS) -I$(INCL) -DSURFACE_TRANSPORT call_tisc.c
+	if [ $(findstring SURFACE_TRANSPORT,$(DEFS)) ]; then \
+		$(CC) -c -o call_tisc.o $(OPTS) -I$(INCL) -DSURFACE_TRANSPORT call_tisc.c ;\
+	fi
 
 libreria :
 	(cd $(LIB)  ; make libreria.o ; )

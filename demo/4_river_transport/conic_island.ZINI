@@ -1,6 +1,6 @@
-z_default -1000
+z_default 000
 
--1000
+000
 #nawk 'BEGIN {r=45e3;x0=0;y0=0;pi=3.141592;for(a=0;a<=2*pi;a+=2*pi/16) printf ("\n%8.0f\t%8.0f",x0+r*cos(a),y0+r*sin(a))}'
    45000	       0
    41575	   17221

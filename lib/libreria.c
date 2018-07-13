@@ -1015,6 +1015,7 @@ int interpol2D (
 	free_matrix(Ypol, nmax_pols);
 	free(height);
 	free(peso);
+	free(interp_submode);
 
 	return(1);
 }
@@ -1200,7 +1201,7 @@ float polygon_area(
 
 
 
-double prism_vertical_attraction (
+double prism_vert_grav (
 	float x1, float x2,	/*X horizontal distance from measure to prism x-sides in m [x1<x2]*/
 	float y1, float y2,	/*Y horizontal distance from measure to prism y-sides in m [y1<y2]*/
 	float z1, float z2, /*Z vertical   distance from measure to prism top and bottom faces, respectively, in m [z positive downwards, z1<z2]*/
@@ -1209,7 +1210,7 @@ double prism_vertical_attraction (
 	double vert_anom=0;
 
 	/*
-		VERTICAL GRAVITATIONAL ATTRACTION PRODUCED BY A VERTICAL PRISM of constant density
+		VERTICAL GRAVITATIONAL ATTRACTION PRODUCED BY A VERTICAL parallelepiped of constant density
 
 		x2>x1 ; y2>y1 ; z2>z1
 		x2 = x_right_prism - x_measure
@@ -1226,9 +1227,9 @@ double prism_vertical_attraction (
 	if (!(x2-x1)) return(0);
 	if (!(y2-y1)) return(0);
 	if (!(z2-z1)) return(0);
-	if ((x2-x1)<0) {PRINT_ERROR("prism_vertical_attraction: x1>x2."); return(0);}
-	if ((y2-y1)<0) {PRINT_ERROR("prism_vertical_attraction: y1>y2."); return(0);}
-	if ((z2-z1)<0) {PRINT_ERROR("prism_vertical_attraction: z1>z2."); return(0);}
+	if ((x2-x1)<0) {PRINT_ERROR("prism_vert_grav: x1>x2."); return(0);}
+	if ((y2-y1)<0) {PRINT_ERROR("prism_vert_grav: y1>y2."); return(0);}
+	if ((z2-z1)<0) {PRINT_ERROR("prism_vert_grav: z1>z2. %.2e > %.2e", z1, z2); return(0);}
 	if (!dens)    return(0);
 
 #define VERTANOMCONTRIB(s,x,y,z) {\
@@ -1249,8 +1250,9 @@ double prism_vertical_attraction (
 	vert_anom *= - CGU * dens;
 
 	if (vert_anom<0) {
-		PRINT_WARNING("Downwards gravity attraction is negative! x1/x2/y1/y2/z1/z2= %.2f/%.2f/%.2f/%.2f/%.3f/%.3f\tdens=%.1f\tanom=%.2e\nSet to 0.", x1, x2, y1, y2, z1, z2, dens, vert_anom);
-		vert_anom=0;
+		//Negative values may result from bodies above the measure!
+		//PRINT_WARNING("Downwards gravity attraction is negative! x1/x2/y1/y2/z1/z2= %.2f/%.2f/%.2f/%.2f/%.3f/%.3f\tdens=%.1f\tanom=%.2e\nSet to 0.", x1, x2, y1, y2, z1, z2, dens, vert_anom);
+		//vert_anom=0;
 	}
 
 	return (vert_anom);

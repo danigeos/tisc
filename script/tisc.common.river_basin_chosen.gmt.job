@@ -9,38 +9,31 @@ else
 endif
 
 echo -n choosing RIVER BASIN... 
+echo "Largest basins in increasing order of discharge:"
+grep "#" $prj.bas | sort -n -k 9 | tail -n $nbasins_show 
 
 set ibasin = 1; 
+
+#If not 1+4 parameters passed to the main script but at least 1+2 then used them as the x,y location of the chosen basin 
 if ($2 != "" && $5 == "") then 
 	if ($3 != "") then
+		echo Choosing by location...
 		set xriv = $2; set yriv = $3
-		set ibasin = `awk 'BEGIN{ddmin=1e20}\
-		    {if ($2=="begin") basin=$5;\
-			dd=($1-xriv)*($1-xriv)+($2-yriv)*($2-yriv);\
-			if (dd<ddmin) {basinmin=basin; ddmin=dd}} END{print basinmin}' xriv=$xriv yriv=$yriv $prj.bas`
-	else
-		set ibasin = $2
-	endif
+        set ibasin = `awk 'BEGIN{ddmin=1e20} { if ($2=="begin") basin=$5; dd=1e20; if ($2!="begin" && $2!= "END" && substr($0,1,1)!="#") {dd=($1-xriv)*($1-xriv)+($2-yriv)*($2-yriv); if (dd<ddmin) {basinmin=basin; ddmin=dd}}} END{print basinmin}' xriv=$xriv yriv=$yriv $prj.bas`
+    else
+        set ibasin = $2
+    endif
 else
-	set ibasin = `grep "#" $prj.bas | sort -n -k 9 | tail -n 1 | awk '{print $5}'`
+    set ibasin = `grep "#" $prj.bas | sort -n -k 9 | tail -n 1 | awk '{print $5}'`
 endif
 
-awk '{  if ($2=="begin" && $5==basin) pp=1;\
-	else {if ($2=="END" && $5==basin) exit; if (pp) print $0; }\
-	}' basin=$ibasin $prj.bas > $tmp.chosen_basin.bas.tmp
-if ($2 != "" && $3 != "" && $4 != "i") then 
-	tac $tmp.chosen_basin.bas.tmp | awk -v xriv=$xriv -v yriv=$yriv \
-		'BEGIN{xr[0]=xriv; yr[0]=yriv; n=1;} \
-		{if ($1==xriv && $2==yriv) lengthini=$7;\
-		for (i=0;i<n;i++) {if ($9==xr[i] && $10==yr[i]) {xr[n]=$1; yr[n]=$2; n++; print $1"\t"$2"\t"$3"\t"$4"\t"$5"\t"$6"\t"$7-lengthini"\t"$8"\t"$9"\t"$10"\t"$11"\t"$12-lengthini"\t"$13"\t"$14"\t"$15"\t"$16; break;}}}' \
-		| tac > $tmp.chosen_basin2.bas.tmp
-	mv $tmp.chosen_basin2.bas.tmp $tmp.chosen_basin.bas.tmp
-endif
+awk '{if ($2=="begin" && $5==ibasin) pp=1;\
+	else {if ($2=="END" && $5==ibasin) exit; if (pp) print $0; }\
+	}' ibasin=$ibasin $prj.bas > $tmp.chosen_basin.bas.tmp
 sort -n -k 13 $tmp.chosen_basin.bas.tmp | tail -n 10 > $tmp.river_source.tmp
 set x_source = `awk 'END{print $1}' $tmp.river_source.tmp`
 set y_source = `awk 'END{print $2}' $tmp.river_source.tmp`
-echo "Largest basins in increasing order of discharge:"
-grep "#" $prj.bas | sort -n -k 9 | tail -n $nbasins_show 
+
 echo "Plotting basin #"$ibasin". "
 
 

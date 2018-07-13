@@ -19,10 +19,18 @@ if ($?separation == "0") set separation = .8
 if ($?intens == "0") set intens	= .2
 if ($?height_CS == "0") set height_CS = 3.5
 
-set x0 = $2
-set xf = $3
-set y0 = $4
-set yf = $5
+
+if ($5 != "") then 
+	set x0 = $2
+	set xf = $3
+	set y0 = $4
+	set yf = $5
+else 
+	set x0 
+	set xf 
+	set y0 
+	set yf 
+endif
 
 if (-r $prj.hrz) then
 	awk -v x0=$x0 -v xf=$xf -v y0=$y0 -v yf=$yf '{\
@@ -205,7 +213,7 @@ cat - <<END>  $tmp.lakes_endorh_cpt.tmp
 	.49	30	150	255	1	30	150	255
 END
 
-set min_rain = .5
+set min_rain = 1.
 cat - <<END>  $tmp.rain_cpt.tmp 
 #0		255	150	0	$min_rain 255	255	0
 $min_rain 	21      234     255     1     21      234     255
@@ -350,6 +358,12 @@ grdmath $tmp.intensity.top.grd.tmp $meanL MUL .00001 MUL = $tmp.intensity.top_al
 grdmath $tmp.top.grd.tmp 0 GT = $tmp.contin.grd.tmp
 grdmath $tmp.intensity.top_all.grd.tmp $tmp.contin.grd.tmp MUL = $tmp.intensity.top.grd.tmp
 #grdinfo $tmp.intensity.top.grd.tmp
+
+#Isostatic subsidence:
+if (-r $prj.xyzt) then
+awk '{print $1,$2,$3;}' $prj.xyzt | \
+	xyz2grd -G$tmp.subs.grd.tmp -I$dx/$dy -R$Region -H2
+endif
 
 #Lakes:
 if (-r $prj.lak) then 

@@ -648,7 +648,7 @@ int read_file_resume(char *filename)
 
 	fread(&end_check, 	sizeof(int),		1, 	file);
 	if (end_check != 123456) {
-		PRINT_ERROR("\achecking the end of resume file (%d) failed.\n", end_check);
+		PRINT_ERROR("\aChecking the end of resume file (%d) failed!\n", end_check);
 		exit(0);
 	}
 	else {
@@ -1714,7 +1714,6 @@ int write_file_resume()
 
 int write_file_surftransp ()
 {
-	int 	i, j;
 	FILE 	*file;
 
 	/*
@@ -1724,7 +1723,7 @@ int write_file_surftransp ()
 	Write_Open_Filename_Return (".st", "wt", !erosed_model || !switch_write_file_Blocks || Time==Timeini);
 
 	fprintf(file, "#TISC output drainage.  sea_level: %.1f m\n# x(km)  y(km) topo[m]  accumul_erosion[m] eros_rate[m/My]\n", sea_level);
-	for (i=0; i<Ny; i++) for (j=0; j<Nx; j++) {
+	for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) {
 		fprintf(file, "%7.2f\t%7.2f\t%.1f\t%.1f\t%.1f\n",
 			(xmin+j*dx)/1000, (ymax-i*dy)/1000, topo[i][j], 
 			accumul_erosion[i][j] / dx/dy/denscrust, eros_now[i][j]/(dt/Matosec) / dx/dy/denscrust);
@@ -1797,6 +1796,26 @@ int write_file_time (float **xarxa1, float **xarxa2)
 	nwrotenfiles++;
 	last_time_file_time = Time;
 
+	return (1);
+}
+
+
+
+int write_file_deflection ()
+{
+	/*
+	  WRITES deflection and elevation
+	*/
+	FILE 	*file;
+
+	Write_Open_Filename_Return (".xyzt", "wt", !isost_model || !switch_write_file_Blocks);
+
+	fprintf(file, "#TISC output deflection. Te_default: %.1f m\n# x(km)  y(km) w[m] topo[m]\n", Te_default);
+	for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) {
+		fprintf(file, "%7.2f\t%7.2f\t%.1f\t%.1f\n",
+			(xmin+j*dx)/1000, (ymax-i*dy)/1000, w[i][j], topo[i][j]);
+	}
+	fclose(file);
 	return (1);
 }
 

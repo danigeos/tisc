@@ -7,7 +7,7 @@
 ********************************************************************************
 
 Memory debugging with: 
-valgrind --dsymutil=yes --track-origins=yes --tool=memcheck --leak-check=full `which tisc` linear_range -tf0
+/usr/local/Cellar/valgrind/3.13.0/bin/valgrind --dsymutil=yes --track-origins=yes --tool=memcheck --leak-check=full tisc linear_range -tf0
 
 	COMMENTS (programmer's agenda)
 	-Edit here.
@@ -16,7 +16,7 @@ valgrind --dsymutil=yes --track-origins=yes --tool=memcheck --leak-check=full `w
 	-La flexion no es estable con cambios bruscos de Te (Mayo 2001).
 	-Implement grain size and sediment load effects on transport and erosion (Sklar). Test if climate variability from deltaO can explain erosion acceleration in Herman et al., 2013 Nature.
 	-Implement transitory water flow. Interesting for acceleration of erosion during lake overtopping.
-	-DONE. Implement sediment compaction (easy in calculate_topo and when writting the hrz/pfl files).
+	-DONE. Implement sediment compaction (in calculate_topo and when writting the hrz/pfl files).
 	-DONE. Add the water layer to the pfl profile, as in tAo.
 	-DONE. Find water divides: the maximum swimming distance with the neigbouring cells. In write_file_drainage.
 	-DONE. It should take a mean erodibility when eroding.
@@ -49,6 +49,9 @@ int main(int argc, char **argv)
 		
 		/*Sea level variations*/
 		calculate_sea_level();
+
+		/*Calculates water column load*/
+		calculate_water_load();
 
 		/*Define & solve elastic flexure equation*/
 		Elastic_Deflection();
@@ -94,7 +97,7 @@ int inputs (int argc, char **argv)
 
 	/*Version of TISC is matched against the parameters file *.PRM*/
 	/*¡¡ UPDATE template.PRM !!*/
-	strcpy(version, "TISC_2017-05-19");
+	strcpy(version, "TISC_2018-07-13");
 
 	/*Default parameter values are read from ./tisc/doc/template.PRM:*/
 	sprintf(projectname, "%s/doc/template", TISCDIR);
@@ -1235,8 +1238,6 @@ int surface_processes (float **topo_ant)
 	constant_rate_eros (topo, Keroseol, Ksedim, sea_level, water_load, dt, Time);
 #endif
 
-	/*Calculates water column load*/
-	calculate_water_load();
 
 
 
@@ -1342,6 +1343,7 @@ int The_End()
 
 	if (verbose_level>=3) AUTHORSHIP;
 	fprintf(stdout, "\n");
+	free(Lake);
 
 	if (run_type==10 || run_type==2) exit(0);
 	return(1);
@@ -1397,8 +1399,8 @@ int Viscous_Relaxation()
 
 int Write_Ouput()
 {
-	write_file_time(w, h_water);
-
+	//write_file_time(w, h_water);
+	write_file_deflection();
 	write_file_Blocks();
 	write_file_cross_section();
 	write_file_drainage();
