@@ -402,7 +402,7 @@ int Calculate_Discharge (struct GRIDNODE *sortcell, float *total_lost_water, flo
 			int ru=25; //Half-width of the rectangle of underground flow calculation (in cells)
 			if (permeability) {
 				if ((((float) rand())/((float) RAND_MAX))-.5 > 0) {
-					for (int i=row-ru; i<=row+ru; i++) for (int j=col-ru; j<=col+ru; j++) if (IN_DOMAIN(i, j)) if (i!=row || j!=col) {
+					for (int i=row-ru; i<=row+ru; i++) for (int j=col-ru; j<=col+ru; j++) if (IN_DOMAIN(i, j)) if (i!=row || j!=col) {
 						float dist, underground_water_flow;
 						dist=sqrt((i-row)*(i-row)*dy*dy+(j-col)*(j-col)*dx*dx);
 						/*Darcy's law (isotropic porous medium): fluid_velocity = perm/visc * pressure_diff/distance */
@@ -414,7 +414,7 @@ int Calculate_Discharge (struct GRIDNODE *sortcell, float *total_lost_water, flo
 					}
 				}
 				else {
-					for (int i=row+ru; i<=row-ru; i--) for (int j=col+ru; j<=col-ru; j--) if (IN_DOMAIN(i, j)) if (i!=row || j!=col) {
+					for (int i=row+ru; i<=row-ru; i--) for (int j=col+ru; j<=col-ru; j--) if (IN_DOMAIN(i, j)) if (i!=row || j!=col) {
 						float dist, underground_water_flow;
 						dist=sqrt((i-row)*(i-row)*dy*dy+(j-col)*(j-col)*dx*dx);
 						/*Darcy's law (isotropic porous medium): fluid_velocity = perm/visc * pressure_diff/distance */
