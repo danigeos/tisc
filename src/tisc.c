@@ -2,7 +2,7 @@
 *****                              TISC                                    *****
 ********************************************************************************
 	For compilation and installation check the file ../tisc/README
-	Main author since 1993 Daniel Garcia-Castellanos, danielgc@ictja.csic.es. 
+	Main author since 1994 Daniel Garcia-Castellanos, danielgc@ictja.csic.es. 
 	Copyright details and other information in ../tisc/doc/ 
 ********************************************************************************
 
@@ -11,11 +11,12 @@ Memory debugging with:
 
 	COMMENTS (programmer's agenda)
 	-Edit here.
-	-Track sediment composition (carbonates, salt, and detrital grain size) in another class in structure Blocks. This to calculate grain size distribution in basin, and as a first step for the next point once transitory flow is implemented. 
-	-Filter part of the surface water to the lowest surrounding node at 2-cell distance (16 candidates), to simulate underground that accelerates capture.
+	-Track sediment composition (carbonates, salt, and detrital grain size) in another class in structure Blocks. This to calculate grain size distribution in basin, and as a first step for sed-size dependent erosion, once transitory flow is implemented. 
 	-La flexion no es estable con cambios bruscos de Te (Mayo 2001).
 	-Implement grain size and sediment load effects on transport and erosion (Sklar). Test if climate variability from deltaO can explain erosion acceleration in Herman et al., 2013 Nature.
 	-Implement transitory water flow. Interesting for acceleration of erosion during lake overtopping.
+	-DONE. Filter part of the surface water to the lowest surrounding node at 2-cell distance (16 candidates), to simulate underground that accelerates capture. -Alternative: smooth out the discharge grid to simulate underground flow.
+	-DONE. Solved bug in erosed_model 6.
 	-DONE. Implement sediment compaction (in calculate_topo and when writting the hrz/pfl files).
 	-DONE. Add the water layer to the pfl profile, as in tAo.
 	-DONE. Find water divides: the maximum swimming distance with the neigbouring cells. In write_file_drainage.
@@ -648,8 +649,8 @@ int move_Blocks()
 	char 	tmpTSBCfilename[84]="";
 
 	/*
-	  Moves the Blocks and calculates the isostatic load and thickness change
-	  Deforms the sediment.
+	  Moves the Blocks and calculates the isostatic load and thickness change at each cell.
+	  Deforms the sediment above.
 	*/
 
 	new_thick = alloc_matrix(Ny, Nx);
@@ -664,7 +665,7 @@ int move_Blocks()
 //Blocks[iu].last_shift_x  = 0;
 //Blocks[iu].last_shift_y  = 0;
 //Blocks[iu].time_stop     = 1e19;
-		/*DEFORM SEDIMENT BlockS*/
+		/*DEFORM SEDIMENT Blocks*/
 		for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) 
 			new_thick[i][j] = Blocks[iu].thick[i][j];
 		for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++){
@@ -923,6 +924,7 @@ int read_file_unit()
 				Match_Param_Replace_int ( "cut_all",  		cut_all,   	0 )
 				Match_Param_Replace_int ( "thin_sheet",		thin_sheet,   	0 )
 				Match_Param_Replace_int ( "topoest",		switch_topoest,   	0 )
+				Match_Param_Replace_int ( "densenv",		densenv,   	0 )
 				Match_Param_Replace_flt ( "fill_up_to", 	fill_up_to,   	0 )
 				/*Old versions:*/
 				Match_Param_Replace_int ( "fault_load", 	fault,   	1 )
@@ -1142,7 +1144,7 @@ int read_file_unit()
 	if (switch_gradual) PRINT_INFO("Will be gradually loaded till %.2fMy.", time_stop/Matosec);
 	if (switch_move) PRINT_INFO("Vel= %.2fE,%.2fN km/My till T=%.2f My", vel_x*Matosec/1000, vel_y*Matosec/1000, time_stop/Matosec);
 
-	fprintf(stdout, " l") ;
+	fprintf(stdout, " unit") ;
 	if (fault)  		fprintf(stdout, "F") ;
 	if (thin_sheet)  	fprintf(stdout, "V") ;
 	if (hidden)			fprintf(stdout, "H") ;

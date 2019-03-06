@@ -213,7 +213,7 @@ cat - <<END>  $tmp.lakes_endorh_cpt.tmp
 	.49	30	150	255	1	30	150	255
 END
 
-set min_rain = 1.
+if (! $?min_rain) set min_rain = .5
 cat - <<END>  $tmp.rain_cpt.tmp 
 #0		255	150	0	$min_rain 255	255	0
 $min_rain 	21      234     255     1     21      234     255
@@ -351,9 +351,9 @@ awk -v zmin=$topomin -v zmax=$topomax '{if ($5>zmin && $1 <zmax) print $0}' $tmp
 
 
 #Ilumination:
-grdgradient $tmp.top.grd.tmp -A190 -G$tmp.intensity.top.grd.tmp  #-Nt1
+grdgradient $tmp.top.grd.tmp -A180 -G$tmp.intensity.top.grd.tmp  #-Nt1
 #scales with model length. 00002 MUL is normal for orogen+basin scale (1000km)
-grdmath $tmp.intensity.top.grd.tmp $meanL MUL .00001 MUL = $tmp.intensity.top_all.grd.tmp
+grdmath $tmp.intensity.top.grd.tmp $meanL MUL .00003 MUL = $tmp.intensity.top_all.grd.tmp
 #iluminate only above sea
 grdmath $tmp.top.grd.tmp 0 GT = $tmp.contin.grd.tmp
 grdmath $tmp.intensity.top_all.grd.tmp $tmp.contin.grd.tmp MUL = $tmp.intensity.top.grd.tmp

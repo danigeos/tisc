@@ -25,10 +25,12 @@ Linux environment.
 tisc in the tisc/bin/ directory. You should then put tisc/bin/ and tisc/script/ 
 in your shell path.
 
--Preferably install GMT 4 (free-ware software, used for graphic output) and put 
+-Install GMT 4 (free-ware software, used for graphic output) and put 
 its bin/ directory in your path. This should work:
 	sudo apt-get update
 	sudo apt-get install gmt ksh csh tofrodos
+
+-The GMT scripts are wirtten in C-shell language.
 
 -Try examples of running TISC going to directory 'tisc/demo/'. This will allow
 you to be sure that the code is working properly. Check that the graphic

@@ -3,9 +3,10 @@
 #TISC VERSION FOR THIS FILE:
 version		TISC_2017-05-19
 
-#MODELED REGION: 
-#Coordinates of the center of corner cells (i.e., netCDF's "node registration").
-#The left limit of the left-most cells is at xmin-dx/2. 
+#MODEL REGION: 
+#Coordinates of the corner nodes (center of corner cells, as in netCDF's "node
+#registration"). F.e.: the left limit of the left-most cells is xmin-dx/2. 
+#Conceptually, the model's area is (xmax-xmin+dx)*(ymax-ymin+dy)
 xmin		-500e3	Western model limit coordinate [m]
 xmax		+500e3	Eastern model limit coordinate [m]
 ymin		-500e3	Southern model limit coordinate [m]
@@ -27,13 +28,15 @@ random_topo	0	Adds noise to initial topo between -random_topo/2 and
 				much slower using a high value.
 
 #DENSITIES [kg/m3]:
-densasthen	3250	Density beneath the lithospheric plate, at the isostatic
-				compensation level in the asthenosphere
+densasthen	3200	Density beneath the lithospheric plate, at the isostatic
+				compensation level in the asthenosphere (Lachenbruch & Morgan, 
+				1990).
 denscrust	2850	Mean density of crust (used for the basement).
 densinfill	2800	Used only if topoest==1. Infill density used to fill
 				under topographic (fixed) loads.
 denssedim	1900	Sediment density at deposition (bulk, including pores and
-				their water content).
+				their water content). denssedim = sed_porosity*denswater+
+				+(1-sed_porosity)*grain_density).
 densenv		0	Environment density (air or water) above the existing blocks.
 sed_porosity .3		Mean porosity of sediment at deposition (seafloor). For
 				density purposes, pores are assumed to be filled by water. The
@@ -135,6 +138,8 @@ evaporation	00	Evaporation rate at lakes [l/m2/yr]=[mm/yr]. evaporation>runoff
 				is then calculated as: E=evaporation * (1+beta*wind) *
 				(Wmax-Wcol)/Wmax
 lost_rate	0	Water evapotranspirated per river unit length [%/km]
+permeability	0 [m2] for underground flow. 0 means no underground flow. 
+				Typical values for sandstone and shale: 1e-18 to 1e-12.
 temp_sea_level	8	If hydro_model>=2 or K_ice_eros>0: Temperature at sea level
 				[C]. 
 
@@ -142,7 +147,8 @@ temp_sea_level	8	If hydro_model>=2 or K_ice_eros>0: Temperature at sea level
 erosed_model	0	Defines the erosion/sedimentation model.
 			#0: Means no surface transport. The following parameters have no
 				effect.
-			#1: only hillslope diffusion + landsliding. Non conservative.
+			#1: constant-rate scheme + hillslope diffusion + landsliding. Non 
+				conservative.
 			#2: As #1 + rivers following undercapacity model (Beaumont et al.,
 				1992): qeq=K_river_cap·Q·S and dq/dl=1/erodability*(q-qeq)
 				(reaction equation).
@@ -168,7 +174,7 @@ erosed_model	0	Defines the erosion/sedimentation model.
 Keroseol	.0	Continental background erosion rate (ratio per My, [m/(m·My)]).
 Ksedim  	0e2	Additional sedimentation rate below sea level [m/My].
 Kerosdif   	.00	Diffusive transport coefficient [m2/yr] (e.g., Ks in 
-				Kooi&Beaumont,1994,p12193). Tucker&Bras(1998, WaterRes.);
+				Kooi&Beaumont,1994,p12193). Tucker&Bras(1998, WaterRes);
 				Tucker&Slingerland(1997,WaterRes) use 10e-2.
 				Kooi&Beaumont(1994): 0.5-5.0. Flemings&Jordan (1989) list
 				observations of 10e-4 - 10e-2 m2/yr. Braun&Sambridge(1997,
@@ -180,7 +186,7 @@ Kerosdif   	.00	Diffusive transport coefficient [m2/yr] (e.g., Ks in
 critical_slope	0	Maximum surface slope (slope triggering landsliding, 
 				[m/m]), (0 means no landsliding). 
 K_river_cap	500	For erosed_model>=2: Constant for river transport capacity
-				[kg/m3]: qeq = K_river_cap*Qw*Slope Units are kg sedim. per m3
+				[kg/m3]: qeq = K_river_cap*Qw*Slope. Units are kg of sedim. per m3
 				water for S=1, different than in literature, e.g. T&S96 use .1
 				m3/m3, divide tAo values by denssedim to compare). For
 				erosed_model>=3 it has influence only under ~1000. Use a higher
@@ -201,7 +207,7 @@ erodibility	1e-7	This default erodibility value is ignored for units with a
 			If erosed_model=7: k_b=2.3e-7 (m/yr)/(W/m2) (for volcanics, 90-day
 				recurrence Qw; Ferrier et al., 2013, Nature).
 erodibility_sed	1e-6	Same as 'erodibility' but for sediments.
-l_fluv_sedim	25e3	Sedimentation decay distance [m] (fluvial aggradation 
+l_fluv_sedim	10e3	Sedimentation decay distance [m] (fluvial aggradation 
 				or delta sedimentation). For erosed_model=3, this is only
 				relevant for delta sedimentation at the sea and lakes. Larger
 				values imply wider deltas and a more gradual transition from
@@ -226,7 +232,7 @@ K_ice_eros	0	Constant of ice incision rate relating ice sliding velocity to
 				.1e-3].
 
 #INPUT/OUTPUT:
-verbose_level	1	Specify the level of runtime prints in stdout.
+verbose_level	1	Specify the level of runtime prints in stdout:
 			#0: Errors and basic information are printed. 
 			#1: Statistics are also printed (default). 
 			#2: Info: Prints additional information. 

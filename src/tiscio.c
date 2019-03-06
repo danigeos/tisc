@@ -367,6 +367,93 @@ int read_file_parameters (int show, int reformat)
 
 
 
+int match_parameter (char *str1, char *str2, int show, int replace, char *line)
+{
+	BOOL switch_debug=NO;
+	int nparams=0;
+
+	Match_Param_Replace_int ( "Nx", 	Nx,  	0 )
+	Match_Param_Replace_int ( "Ny", 	Ny,  	0 )
+	Match_Param_Replace_flt ( "xmin", 	xmin,  	0 )
+	Match_Param_Replace_flt ( "xmax", 	xmax,  	0 )
+	Match_Param_Replace_flt ( "ymin", 	ymin,  	0 )
+	Match_Param_Replace_flt ( "ymax", 	ymax,  	0 )
+	Match_Param_Replace_flt ( "Te",		Te_default,  	0 )
+	Match_Param_Replace_flt ( "zini",	zini,  	0 )
+	Match_Param_Replace_flt ( "random_topo",	random_topo,  	0 )
+	Match_Param_Replace_int ( "mode_interp",	mode_interp,  	0 )
+	Match_Param_Replace_flt ( "densasthen",	densasthen,  	0 )
+	Match_Param_Replace_flt ( "densmantle",	densmantle,  	0 )
+	Match_Param_Replace_flt ( "denscrust",	denscrust,  	0 )
+	Match_Param_Replace_flt ( "densinfill",	densinfill,  	0 )
+	Match_Param_Replace_flt ( "denssedim",	denssedim,  	0 )
+	Match_Param_Replace_flt ( "densenv",	densenv,  	0 )
+	Match_Param_Replace_flt ( "sed_porosity",	sed_porosity,  	0 )
+	Match_Param_Replace_flt ( "compact_depth",	compact_depth, 	0 )
+	Match_Param_Replace_chr ( "boundary_conds",	boundary_conds,  	0 )
+	Match_Param_Replace_flt ( "Px", 	Px,  	0 )
+	Match_Param_Replace_flt ( "Py", 	Py,  	0 )
+	Match_Param_Replace_flt ( "Pxy",	Pxy,  	0 )
+	Match_Param_Replace_int ( "hydro_model",	hydro_model,  	0 )
+	Match_Param_Replace_flt ( "rain",	rain,  	0 )
+	Match_Param_Replace_flt ( "Krain",	Krain,  	0 )
+	Match_Param_Replace_flt ( "relhumid",	relative_humidity,  	0 )
+	Match_Param_Replace_flt ( "windazimut",	windazimut,  	0 )
+	Match_Param_Replace_flt ( "CXrain",	CXrain,  	0 )
+	Match_Param_Replace_flt ( "CYrain",	CYrain,  	0 )
+	Match_Param_Replace_flt ( "evaporation",	evaporation_ct,  	0 )
+	Match_Param_Replace_flt ( "lost_rate",	lost_rate,  	0 )
+	Match_Param_Replace_flt ( "permeability",	permeability,  	0 )
+	Match_Param_Replace_int ( "erosed_model",	erosed_model,  	0 )
+	Match_Param_Replace_flt ( "Kerosdif",	Kerosdif,  	0 )
+	Match_Param_Replace_flt ( "Keroseol",	Keroseol, 	0 )
+	Match_Param_Replace_flt ( "Ksedim",	Ksedim, 	0 )
+	Match_Param_Replace_flt ( "critical_slope",	critical_slope,  	0 )
+	Match_Param_Replace_flt ( "K_river_cap",	K_river_cap,  	0 )
+	Match_Param_Replace_flt ( "erodibility",	erodibility,  	0 )
+	Match_Param_Replace_flt ( "erodibility_sed",	erodibility_sed,  	0 )
+	Match_Param_Replace_flt ( "l_fluv_sedim",	l_fluv_sedim,  	0 )
+	Match_Param_Replace_flt ( "temp_sea_level",	temp_sea_level,  	0 )
+	Match_Param_Replace_int ( "deform_sed",  	deform_sed, 	0 )
+	Match_Param_Replace_flt ( "K_ice_eros",	K_ice_eros,  	0 )
+	Match_Param_Replace_chr ( "eros_bound_cond",	eros_bound_cond,  	0 )
+	Match_Param_Replace_flt ( "Timeini",	Timeini,  	0 )
+	Match_Param_Replace_flt ( "Timefinal",	Timefinal,  	0 )
+	Match_Param_Replace_flt ( "tau",	tau,  	0 )
+	Match_Param_Replace_flt ( "dt",		dt,  	0 )
+	Match_Param_Replace_flt ( "dt_eros",	dt_eros,  	0 )
+	Match_Param_Replace_flt ( "dt_record",	dt_record,  	0 )
+	Match_Param_Replace_int ( "isost_model",	isost_model,  	0 )
+	Match_Param_Replace_int ( "water_load", 	water_load,  	0 )
+	Match_Param_Replace_int ( "switch_topoest", 	switch_topoest,  	0 )
+	Match_Param_Replace_int ( "switch_files",	switch_write_file,  	0 )
+	Match_Param_Replace_int ( "switch_ps",  	switch_ps,  	0 )
+	Match_Param_Replace_int ( "verbose_level",	verbose_level,  	0 )
+
+	/*Old versions:*/
+	Match_Param_Replace_flt ( "erodability",	erodibility,  	1 )
+	Match_Param_Replace_flt ( "erodability_sed",	erodibility_sed,  	1 )
+	Match_Param_Replace_int ( "switch_verbose",	verbose_level,  	1 )
+	Match_Param_Replace_int ( "switch_debug",	switch_debug,  	1 )
+	if (switch_debug) verbose_level=3;
+	Match_Param_Replace_flt ( "alt0",	zini,  	1 )
+	Match_Param_Replace_int ( "lith_type",	isost_model,  	1 )
+	Match_Param_Replace_int ( "erosed_type",	erosed_model,  	1 )
+	Match_Param_Replace_int ( "switch_hydro",	hydro_model,  	1 )
+	Match_Param_Replace_flt ( "leng_fluv_eros",	erodibility,  	1 )
+	Match_Param_Replace_flt ( "leng_fluv_sedim",	l_fluv_sedim,  	1 )
+	Match_Param_Replace_int ( "switch_erosed",	erosed_model,  	1 )
+	Match_Param_Replace_int ( "switch_sea", 	water_load,  	1 )
+	Match_Param_Replace_flt ( "l_fluv_eros",	erodibility,  	1 )
+	Match_Param_Replace_flt ( "l_fluv_eros_sed",	erodibility_sed,  	1 )
+	Match_Param_Replace_flt ( "dtmemounit",	dt_record,  	1 )
+
+	return (nparams);
+}
+
+
+
+
 int read_file_rain(float **precipitation_file)
 {
 	/*
@@ -523,6 +610,7 @@ int read_file_resume(char *filename)
 	fread(&erodibility_sed, 	sizeof(float),		1, 	file);
 	fread(&l_fluv_sedim, 	sizeof(float),		1, 	file);
 	fread(&lost_rate, 	sizeof(float),		1, 	file);
+	fread(&permeability, 	sizeof(float),		1, 	file);
 	fread(&evaporation_ct, 	sizeof(float),		1, 	file);
 	fread(&rain, 	sizeof(float),		1, 	file);
 	fread(&Krain, 	sizeof(float),		1, 	file);
@@ -1240,6 +1328,7 @@ int write_file_drainage ()
 			if (!il && ild && !Lake[ild].n_sd)
 				    switch_mouth=YES;
 			if (switch_mouth) break;
+/*WHY?!!*/		if (k>Nx*Ny) {break;}
 			ik=id; jk=jd;
 		}
 		/*Follow down from the neigbours and take the max swimming distance*/
@@ -1249,10 +1338,8 @@ int write_file_drainage ()
 			distneighb=0;
 			if (IN_DOMAIN(ik,jk)) for (int k=1; ; k++) {
 				int id, jd, ild;
-//printf("\n#####%d    %d %d  %d %d\n", l, k, i, j, ik, jk);
 				id=drainage[ik][jk].dr_row; jd=drainage[ik][jk].dr_col;
 				il=drainage[ik][jk].lake;
-//printf("\n>>>>>%d %d    %d %d  %d %d   %d %d\n", k, i, j, ik, jk, id, jd);
 				if (IN_DOMAIN(id,jd))	    ild=drainage[id][jd].lake;
 				else			    ild=0;
 				if (IN_DOMAIN(id,jd)) distneighb += sqrt((id-ik)*(id-ik)*dy*dy+(jd-jk)*(jd-jk)*dx*dx);
@@ -1268,6 +1355,7 @@ int write_file_drainage ()
 					    switch_mouth=YES;
 				if (switch_mouth) {distneighb+=dist; break;}
 				if (done[id][jd]) {distneighb+=done[id][jd]; break;}
+/*WHY?!!*/		if (k>Nx*Ny) {break;}
 				ik=id; jk=jd;
 			}
 			if (distneighb>maxdist) maxdist = distneighb;
@@ -1609,6 +1697,7 @@ int write_file_resume()
 	fwrite(&erodibility_sed, 	sizeof(float),		1, 	file);
 	fwrite(&l_fluv_sedim, 	sizeof(float),		1, 	file);
 	fwrite(&lost_rate, 	sizeof(float),		1, 	file);
+	fwrite(&permeability, 	sizeof(float),		1, 	file);
 	fwrite(&evaporation_ct, 	sizeof(float),		1, 	file);
 	fwrite(&rain, 	sizeof(float),		1, 	file);
 	fwrite(&Krain, 	sizeof(float),		1, 	file);

@@ -68,7 +68,7 @@
 
 #define TEMP_FREEZE_WATER	273.15	/*K*/
 #define GAMMA_GROUND		.003 	/*!! .0065 "lapse rate constant" in K/m*/
-#define GAMMA_AIR		.008 	/*"lapse rate constant" in K/m*/
+#define GAMMA_AIR		.008 	/*"Environmental lapse rate constant" in K/m*/
 #define GAMMA			.0065 	/*K/m*/
 #define TEMPERATURE_GROUND(topo)	(temp_sea_level - GAMMA_GROUND*(topo)) /*[K] air temperature at ground level*/
 #define TEMPERATURE_AIR(topo,height)	(TEMPERATURE_GROUND(topo) - GAMMA_AIR*(height)) /*[K] air temperature*/
@@ -79,11 +79,11 @@
 
 
 
-#define AUTHORSHIP		{ fprintf(stderr, "\n\t\t\t\t2008, Daniel Garcia-Castellanos\n");}
+#define AUTHORSHIP		{ fprintf(stderr, "\n\t\t\t\t2018, Daniel Garcia-Castellanos\n");}
 
 /*YES=1;  NO=0. Defines boolean type for switches with values true or false (YES or NO)*/
 typedef enum BOOLEAN	{NO, YES} BOOL;
-
+#define SI YES
 
 struct BLOCK { 		/*for TISC*/
 	float	**thick;		/*Present thickness at each x point*/
