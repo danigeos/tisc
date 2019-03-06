@@ -1,5 +1,6 @@
 #TOPOGRAPHY:
 echo -n plotting TOPO... 
+#grdmath $tmp.intensity.top.grd.tmp 2 MUL = $tmp.intensity.top.grd.tmp
 grdimage $tmp.top.grd.tmp -C$tmp.topo_cpt.tmp  -JX -R \
 	-I$tmp.intensity.top.grd.tmp \
 	-O -K >> $ps

@@ -1,4 +1,4 @@
-Original author: 1995-2015 Daniel Garcia-Castellanos. 
+Original author: 1995-2018 Daniel Garcia-Castellanos. 
 
     This file is part of the documentation of 'TISC'.
 

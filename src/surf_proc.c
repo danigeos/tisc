@@ -1,7 +1,7 @@
 /*
 	LIBRARY  FOR  SURFACE PROCESSES of tisc.c
 
-	1995-2014 Daniel Garcia-Castellanos
+	1995-2018 Daniel Garcia-Castellanos
 	Check copyright and other information in tisc/doc/ 
 */
 
@@ -40,6 +40,7 @@ extern float 	Time,
 	spl_m, spl_n, 
 	l_fluv_sedim, 		/*Length scale of fluvial sedimentation */
 	lost_rate, 		/*Percent of lost water per unit length */
+	permeability, /*[m2]*/
 	sed_porosity, 
 	rain, Krain, relative_humidity, /*[m3/s/m2], [m3/s/m2/m], []*/
 	windazimut, CXrain, CYrain, 	/*[deg], [m], [m]*/
@@ -47,6 +48,7 @@ extern float 	Time,
 	total_rain,
 	total_bedrock_eros_mass,
 	total_sed_mass,
+	viscwater, 
 	xmin, xmax, ymin, ymax;
 
 extern float 	
@@ -128,7 +130,7 @@ int Surface_Transport (float **topo, float **topo_ant, float dt, float dt_eros, 
 		**Dtopo, **topoini, 
 		d_mass, 	/*Increment of suspended mass in this cell (positive means erosion).*/
 		total_lost_sed_mass=0, 
-		total_lost_water, total_evap_water, 
+		total_lost_water, total_evap_water, total_underground_water, 
 		total_ice_melt, total_ice_precip, 
 		oldicevol=0, oldicesedvol=0, total_ice_eros=0, total_ice_sedim=0;
 
@@ -160,48 +162,48 @@ int Surface_Transport (float **topo, float **topo_ant, float dt, float dt_eros, 
 
 	/*Distributes transport in 'n_iters' substeps:*/
 	for (int iter=0; iter<n_iters; iter++) {	  	  
-	    if (verbose_level>=3) fprintf(stdout, "\b\b\b%3d", n_iters-iter); fflush(stdout);
+		if (verbose_level>=3) fprintf(stdout, "\b\b\b%3d", n_iters-iter); fflush(stdout);
 
-	    total_ice_melt = total_ice_precip = 0;
-	    total_rain = total_lost_water = total_evap_water = 0;
+		total_ice_melt = total_ice_precip = 0;
+		total_rain = total_lost_water = total_evap_water = total_underground_water = 0;
 
-	    /*Adds a proportional part of the last topo increment.*/
-	    for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) topo[i][j] += Dtopo[i][j]/n_iters;
+		/*Adds a proportional part of the last topo increment.*/
+		for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) topo[i][j] += Dtopo[i][j]/n_iters;
 
-	    for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) {
-	    	drainage[i][j].masstr = 0;
-	    	drainage[i][j].discharge = 0;
-	    }
+		for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) {
+			drainage[i][j].masstr = 0;
+			drainage[i][j].discharge = 0;
+		}
 
-	    /*Resorts the matrix of topography.*/
-	    ReSort_Matrix (topo, sortcell, Nx, Ny);
+		/*Resorts the matrix of topography.*/
+		ReSort_Matrix (topo, sortcell, Nx, Ny);
 
-	    Define_Drainage_Net(sortcell);
+		Define_Drainage_Net(sortcell);
 
-	    Calculate_Precipitation_Evaporation();
-	    
-	    Ice_Flow(ice_velx_sl, ice_vely_sl, ice_velx_df, ice_vely_df, dt_st, &total_ice_melt, &total_ice_precip, &total_lost_water, &total_evap_water);
+		Calculate_Precipitation_Evaporation();
+		
+		Ice_Flow(ice_velx_sl, ice_vely_sl, ice_velx_df, ice_vely_df, dt_st, &total_ice_melt, &total_ice_precip, &total_lost_water, &total_evap_water);
 
-	    read_file_node_defs(dt_st);
+		read_file_node_defs(dt_st);
 
-	    Calculate_Discharge(sortcell, &total_lost_water, &total_evap_water);
+		Calculate_Discharge(sortcell, &total_lost_water, &total_evap_water, &total_underground_water);
 
-	    Fluvial_Transport(sortcell, dt_st, erosed_model, &total_lost_sed_mass, lake_instant_fill);
+		Fluvial_Transport(sortcell, dt_st, erosed_model, &total_lost_sed_mass, lake_instant_fill);
 
-	    Ice_EroSed(ice_velx_sl, ice_vely_sl, dt_st, &total_ice_eros, &total_ice_sedim);
+		Ice_EroSed(ice_velx_sl, ice_vely_sl, dt_st, &total_ice_eros, &total_ice_sedim);
 	}
 
 	if (verbose_level>=3) fprintf(stdout, "\b\b\b"); fflush(stdout);
 
 	/*Print relevant statistics*/
 	if (verbose_level>=1) {
-	    	float 	error;
+			float 	error;
 		PRINT_GRID_INFO (secsperyr*precipitation, "precipit.", "m/yr");
 		PRINT_GRID_INFO (secsperyr*evaporation,   "evaporat.", "m/yr");
-		PRINT_SUMLINE("rain_now : %+8.2e m3/s  evap_wat: %+8.2e m3/s outp_water: %+8.2e m3/s", total_rain, total_evap_water, total_lost_water); 
+		PRINT_SUMLINE("rain_now : %+8.2e m3/s  evap_wat: %+8.2e m3/s outp_water: %+8.2e m3/s undergr_water: %+8.2e m3/s", total_rain, total_evap_water, total_lost_water, total_underground_water); 
 		if (total_rain) error=-(total_rain-total_evap_water-total_lost_water+total_ice_melt)/total_rain*100; else error = (total_ice_melt-total_evap_water-total_lost_water)/total_ice_melt*100;
-	    	if (fabs(error)>=1)
-	    		PRINT_WARNING("water_balance: %.1f%% (>0 => disch>rain)", error);
+			if (fabs(error)>=1)
+				PRINT_WARNING("water_balance: %.1f%% (>0 => disch>rain)", error);
 	}
 	if (K_ice_eros && verbose_level>=1) {
 		float 	vel_dfmax=-1e15, vel_df, vel_slmax=-1e15, vel_sl, max_ice_thick=0, newicevol=0, newicesedvol=0;		
@@ -221,81 +223,81 @@ int Surface_Transport (float **topo, float **topo_ant, float dt, float dt_eros, 
 			}
 		}
 		{
-		    	float 	error, incr_rate;
+				float 	error, incr_rate;
 			incr_rate = (newicevol-oldicevol)*dx*dy/dt;
 			PRINT_SUMLINE("snow_now : %+8.2e m3/s  melt_ice: %+8.2e m3/s ice_incr:   %+8.2e m3/s", total_ice_precip, total_ice_melt, incr_rate);
 			if (total_ice_precip) error=(total_ice_precip-total_ice_melt-incr_rate)/total_ice_precip*100; else error=(total_ice_melt+incr_rate)/total_ice_melt*100;
 			if (fabs(error)>=1)
-		    		PRINT_SUMLINE("ice_balance:   %.1f%% (>0 => snow>ice_incr)", error);
+					PRINT_SUMLINE("ice_balance:   %.1f%% (>0 => snow>ice_incr)", error);
 		}
 		PRINT_SUMLINE("temp.@sea: %.2f C;   @ 1000 m: %.2f C", TEMPERATURE(0)-TEMP_FREEZE_WATER, TEMPERATURE(1000)-TEMP_FREEZE_WATER);
-		PRINT_SUMLINE("ice      :  max= %.0f m @ %.0f,%.0f km   vol= %.2e km3   vel_max(df,sl)= %.2f,%.2f m/yr", 
+		PRINT_SUMLINE("ice	  :  max= %.0f m @ %.0f,%.0f km   vol= %.2e km3   vel_max(df,sl)= %.2f,%.2f m/yr", 
 			ice_thickness[imax][jmax], (jmax*dx+xmin)/1e3, (ymax-imax*dy)/1e3, newicevol*dx*dy/1e9, 
 			vel_dfmax*secsperyr,  vel_slmax*secsperyr);
 		if (verbose_level>=3) fprintf(stdout, " @ %.0f,%.0f & %.0f,%.0f km", 
 			(j_vel_dfmax*dx+xmin)/1e3, (ymax-i_vel_dfmax*dy)/1e3,  
 			(j_vel_slmax*dx+xmin)/1e3, (ymax-i_vel_slmax*dy)/1e3);
 		{
-		    	float 	error, incr_rate;
+				float 	error, incr_rate;
 			incr_rate = (newicesedvol-oldicesedvol)*dx*dy*denscrust;
-			PRINT_SUMLINE("ice_eros : %+8.2e N     ice_sedim: %+8.2e N   inc_glac_sd: %+8.2e N  ", total_ice_eros*g, total_ice_sedim*g, incr_rate*g);
-		    	if (total_ice_eros) error=-(total_ice_eros-total_ice_sedim-incr_rate)/total_ice_eros*100; else error=(incr_rate-total_ice_sedim)/incr_rate*100;
+			PRINT_SUMLINE("ice_eros : %+8.2e N	 ice_sedim: %+8.2e N   inc_glac_sd: %+8.2e N  ", total_ice_eros*g, total_ice_sedim*g, incr_rate*g);
+				if (total_ice_eros) error=-(total_ice_eros-total_ice_sedim-incr_rate)/total_ice_eros*100; else error=(incr_rate-total_ice_sedim)/incr_rate*100;
 			if (fabs(error)>=1)
-		    		PRINT_WARNING("icesed_balance: %.1f%% (>0 => sed>eros)", error);
+					PRINT_WARNING("icesed_balance: %.1f%% (>0 => sed>eros)", error);
 		}
 	}
 	if (hydro_model && verbose_level>=1) {
-	    	int i_biggest_nosea=0, n_biggest_nosea=0, largest_river=0;
-	    	for (int i=1; i<=nlakes; i++) {
-	    	    if (Lake[i].n > n_biggest_nosea) {
-	    		    if (Lake[i].n_sd) {
-	    			if (topo[Lake[i].row_sd[0]][Lake[i].col_sd[0]] > sea_level)
-	    			    n_biggest_nosea = Lake[i].n; i_biggest_nosea = i;
-	    		    }
-	    		    else    n_biggest_nosea = Lake[i].n; i_biggest_nosea = i;
-	    	    }
-	    	}
-	    	for (int i=1; i<=nlakes; i++) {
-	    	    if (i==i_biggest_nosea || (Lake[i].n>ceil((double) Nx*Ny/500) && verbose_level>=2) || (Lake[i].n>ceil((double) Nx*Ny/2000) && verbose_level>=3)) {
-	    		PRINT_SUMLINE("lake %3d/%d : %7.2e km3 %7.2e km2 %4.0f m ", i, nlakes, Lake[i].vol/1e9, Lake[i].n*dx*dy/1e6, Lake[i].alt);
-	    		if (Lake[i].n) fprintf(stdout, "%4.0f,%-4.0f %2d out ", (Lake[i].col[0]*dx+xmin)/1e3, (ymax-Lake[i].row[0]*dy)/1e3, Lake[i].n_sd);
-	    		if (Lake[i].n_sd) {
-	    		    if (topo[Lake[i].row_sd[0]][Lake[i].col_sd[0]]>sea_level) {
-	    			 fprintf(stdout, "@      %3.0f,%-3.0f %5.1f m3/s", (Lake[i].col_sd[0]*dx+xmin)/1e3, (ymax-Lake[i].row_sd[0]*dy)/1e3, Lake_Input_Discharge(i));
-	    		    }
-	    		    else fprintf(stdout, "Sea    %3.0f,%-3.0f %5.1f m3/s", (Lake[i].col[Lake[i].n-1]*dx+xmin)/1e3, (ymax-Lake[i].row[Lake[i].n-1]*dy)/1e3, Lake_Input_Discharge(i));
-	    		}
-	    		else     fprintf(stdout, "Endorh %3.0f,%-3.0f %5.1f m3/s", (Lake[i].col[Lake[i].n-1]*dx+xmin)/1e3, (ymax-Lake[i].row[Lake[i].n-1]*dy)/1e3, Lake_Input_Discharge(i));
-	    	    }
-	    	}
+			int i_biggest_nosea=0, n_biggest_nosea=0, largest_river=0;
+			for (int i=1; i<=nlakes; i++) {
+				if (Lake[i].n > n_biggest_nosea) {
+					if (Lake[i].n_sd) {
+					if (topo[Lake[i].row_sd[0]][Lake[i].col_sd[0]] > sea_level)
+						n_biggest_nosea = Lake[i].n; i_biggest_nosea = i;
+					}
+					else	n_biggest_nosea = Lake[i].n; i_biggest_nosea = i;
+				}
+			}
+			for (int i=1; i<=nlakes; i++) {
+				if (i==i_biggest_nosea || (Lake[i].n>ceil((double) Nx*Ny/500) && verbose_level>=2) || (Lake[i].n>ceil((double) Nx*Ny/2000) && verbose_level>=3)) {
+				PRINT_SUMLINE("lake %3d/%d : %7.2e km3 %7.2e km2 %4.0f m ", i, nlakes, Lake[i].vol/1e9, Lake[i].n*dx*dy/1e6, Lake[i].alt);
+				if (Lake[i].n) fprintf(stdout, "%4.0f,%-4.0f %2d out ", (Lake[i].col[0]*dx+xmin)/1e3, (ymax-Lake[i].row[0]*dy)/1e3, Lake[i].n_sd);
+				if (Lake[i].n_sd) {
+					if (topo[Lake[i].row_sd[0]][Lake[i].col_sd[0]]>sea_level) {
+					 fprintf(stdout, "@	  %3.0f,%-3.0f %5.1f m3/s", (Lake[i].col_sd[0]*dx+xmin)/1e3, (ymax-Lake[i].row_sd[0]*dy)/1e3, Lake_Input_Discharge(i));
+					}
+					else fprintf(stdout, "Sea	%3.0f,%-3.0f %5.1f m3/s", (Lake[i].col[Lake[i].n-1]*dx+xmin)/1e3, (ymax-Lake[i].row[Lake[i].n-1]*dy)/1e3, Lake_Input_Discharge(i));
+				}
+				else	 fprintf(stdout, "Endorh %3.0f,%-3.0f %5.1f m3/s", (Lake[i].col[Lake[i].n-1]*dx+xmin)/1e3, (ymax-Lake[i].row[Lake[i].n-1]*dy)/1e3, Lake_Input_Discharge(i));
+				}
+			}
 		{
-		    float max_river_discharge=0; int imax, jmax;
-		    for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) {
-		    	    if (max_river_discharge <= drainage[i][j].discharge) {
-		    		    max_river_discharge = drainage[i][j].discharge;
-		    		    imax=i; jmax=j;
-		    	    }
-		    }
-		    PRINT_SUMLINE("river_max: %8.2f m3/s %8.2f kg/s @ %6.1f,%.1f km, %.1f m",
-		    	    drainage[imax][jmax].discharge, drainage[imax][jmax].masstr, (jmax*dx+xmin)/1e3, (ymax-imax*dy)/1e3, topo[imax][jmax]);
+			float max_river_discharge=0; int imax, jmax;
+			for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) {
+					if (max_river_discharge <= drainage[i][j].discharge) {
+						max_river_discharge = drainage[i][j].discharge;
+						imax=i; jmax=j;
+					}
+			}
+			PRINT_SUMLINE("river_max: %8.2f m3/s %8.2f kg/s @ %6.1f,%.1f km, %.1f m",
+					drainage[imax][jmax].discharge, drainage[imax][jmax].masstr, (jmax*dx+xmin)/1e3, (ymax-imax*dy)/1e3, topo[imax][jmax]);
 		}
 		{
-		    float max_eros=0, max_sedim=0, diff;
-		    calculate_topo(topo);
-		    for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) {
-			    diff=topo[i][j]-topoini[i][j]; 
-		    	    if (max_eros > diff) {
-		    		    max_eros = diff;
-		    	    }
-		    	    if (max_sedim < diff) {
-		    		    max_sedim = diff;
-		    	    }
-		    }
-		    PRINT_SUMLINE("topo_diff_eros_max= %8.2f mm/yr    sedim_max: %8.2f mm/yr",
-		    	    max_eros*1e3/(dt/secsperyr), max_sedim*1e3/(dt/secsperyr) );
+			float max_eros=0, max_sedim=0, diff;
+			calculate_topo(topo);
+			for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) {
+				diff=topo[i][j]-topoini[i][j]; 
+					if (max_eros > diff) {
+						max_eros = diff;
+					}
+					if (max_sedim < diff) {
+						max_sedim = diff;
+					}
+			}
+			PRINT_SUMLINE("topo_diff_eros_max= %8.2f mm/yr	sedim_max: %8.2f mm/yr",
+					max_eros*1e3/(dt/secsperyr), max_sedim*1e3/(dt/secsperyr) );
 		}
 	}
-	PRINT_SUMLINE("eros_nosd: %+8.2e N     sedim_inc: %+8.2e N   outp_seds:   %+8.2e N  ",  total_bedrock_eros_mass*g, total_sed_mass*g, total_lost_sed_mass*g);
+	PRINT_SUMLINE("eros_nosd: %+8.2e N	 sedim_inc: %+8.2e N   outp_seds:   %+8.2e N  ",  total_bedrock_eros_mass*g, total_sed_mass*g, total_lost_sed_mass*g);
 	{
 		float error;
 		if (total_bedrock_eros_mass) error = -(total_bedrock_eros_mass-total_sed_mass-total_lost_sed_mass)/total_bedrock_eros_mass*100; else error = (total_sed_mass-total_lost_sed_mass)/total_sed_mass*100;
@@ -310,11 +312,12 @@ int Surface_Transport (float **topo, float **topo_ant, float dt, float dt_eros, 
 
 
 
-int Calculate_Discharge (struct GRIDNODE *sortcell, float *total_lost_water, float *total_evap_water)
+int Calculate_Discharge (struct GRIDNODE *sortcell, float *total_lost_water, float *total_evap_water, float *total_underground_water)
 {
 	/*
 	  CALCULATES THE LIQUID WATER DISCHARGE ALONG THE HYDROLOGICAL NETWORK.
-	  Modifies the drainage network accounting for LAKE EVAPORATION and its reduction of lake area in case of ENDORHEISM.
+	  Modifies the drainage network accounting for LAKE EVAPORATION and its 
+	  reduction of lake area in case of ENDORHEISM.
 	*/
 
 	int 	il, 
@@ -324,122 +327,156 @@ int Calculate_Discharge (struct GRIDNODE *sortcell, float *total_lost_water, flo
 
 	PRINT_DEBUG("Calculating discharge");
 	/*
-	  This bucle starts from the highest cell and 
+	  This loop starts from the highest cell and 
 	  descends node by node transferring water and eroded mass
 	*/
 	for (int isort=0; isort < Nx*Ny; isort++) {
-    		row  = sortcell[isort].row;	    col  = sortcell[isort].col;
-    		drow = drainage[row][col].dr_row;   dcol = drainage[row][col].dr_col;
-    		il   = drainage[row][col].lake;
+			row  = sortcell[isort].row;
+			col  = sortcell[isort].col;
+			drow = drainage[row][col].dr_row;
+			dcol = drainage[row][col].dr_col;
+			il   = drainage[row][col].lake;
 
-    		/*Check if this is an endorheic lake node and then check if the lake surface must be lowered by making this a river node*/
-    		if (il) {
-    		    float lake_evap=0;
-    		    for (int i=0; i<Lake[il].n;i++) lake_evap += evaporation[Lake[il].row[i]][Lake[il].col[i]];
-    		    lake_evap *= dx*dy;
-    		    if (Lake_Input_Discharge(il)<lake_evap && Lake[il].n>1) {
-    			    PRINT_DEBUGPLUS("Deletion attempt for [%d][%d] from lake %d ; lake_inp:%f ; evap:%f ; lakenodes:%d", row,col, il, Lake_Input_Discharge(il), lake_evap, Lake[il].n);
-    			    Attempt_Delete_Node_From_Lake (row,col);
-    			    drow = drainage[row][col].dr_row;	    dcol = drainage[row][col].dr_col;
-    			    il = drainage[row][col].lake;
-    		    }
-    		}
+			//Check if this is an endorheic lake node and then check if the 
+			//lake surface must be lowered by making this a river node
+			if (il) {
+				float lake_evap=0;
+				for (int i=0; i<Lake[il].n;i++) lake_evap += evaporation[Lake[il].row[i]][Lake[il].col[i]];
+				lake_evap *= dx*dy;
+				if (Lake_Input_Discharge(il)<lake_evap && Lake[il].n>1) {
+					PRINT_DEBUGPLUS("Deletion attempt for [%d][%d] from lake %d ; lake_inp:%f ; evap:%f ; lakenodes:%d", row,col, il, Lake_Input_Discharge(il), lake_evap, Lake[il].n);
+					Attempt_Delete_Node_From_Lake (row,col);
+					drow = drainage[row][col].dr_row;
+					dcol = drainage[row][col].dr_col;
+					il = drainage[row][col].lake;
+				}
+			}
 
-    		/*Calculate the distance to the output node*/
-    		switch (drainage[row][col].type) {
-    		  case 'R':
-    		  case 'E':
-    			if (IN_DOMAIN(drow, dcol))
-    			    dd = sqrt(dy*(drow-row)*dy*(drow-row) + dx*(dcol-col)*dx*(dcol-col));
-    			else
-    			    dd = 0;
-    			break;
-    		  case 'L':
-    			dd = 0;
-    			break;
-    		  default:
-    			PRINT_ERROR("[%d][%d] has no defined drainage type in Calculate_Discharge.", row, col);
-    		}
+			/*Calculate the distance to the output node*/
+			switch (drainage[row][col].type) {
+			  case 'R':
+			  case 'E':
+				if (IN_DOMAIN(drow, dcol))
+					dd = sqrt(dy*(drow-row)*dy*(drow-row) + dx*(dcol-col)*dx*(dcol-col));
+				else
+					dd = 0;
+				break;
+			  case 'L':
+				dd = 0;
+				break;
+			  default:
+				PRINT_ERROR("[%d][%d] has no defined drainage type in Calculate_Discharge.", row, col);
+			}
 
-    		/*Adds the rainfall water (m3/s) to the water transported to this cell: */
-    		runoff = precipitation[row][col] * dx*dy;
-    		/*Put the rain of open lakes and sea in their outlets. Closed lakes keep it at the recipient node*/
-    		if (drainage[row][col].type == 'L') {
-    		    /*if (Lake[il].n_sd)*/ runoff = 0; /*!!*/
-    		}
-    		if (drainage[row][col].type == 'E') {
-    		    /*Put into this outlet the rain from lake nodes draining here.*/
-    		    for (int i=0; i<Lake[il].n; i++) {
-    			if (drainage[Lake[il].row[i]][Lake[il].col[i]].dr_row == row && drainage[Lake[il].row[i]][Lake[il].col[i]].dr_col == col) {
-    			    runoff += precipitation[row][col] * dx*dy;
-    			}
-    		    }
-    		}
+			/*Adds the rainfall water (m3/s) to the water transported to this cell: */
+			runoff = precipitation[row][col] * dx*dy;
+			/*Put the rain of open lakes and sea in their outlets. Closed lakes keep it at the recipient node*/
+			if (drainage[row][col].type == 'L') {
+				/*if (Lake[il].n_sd)*/ runoff = 0; /*!!*/
+			}
+			if (drainage[row][col].type == 'E') {
+				/*Put into this outlet the rain from lake nodes draining here.*/
+				for (int i=0; i<Lake[il].n; i++) {
+					if (drainage[Lake[il].row[i]][Lake[il].col[i]].dr_row == row && drainage[Lake[il].row[i]][Lake[il].col[i]].dr_col == col) {
+						runoff += precipitation[row][col] * dx*dy;
+					}
+				}
+			}
  
-    		total_rain += runoff;
-    		drainage[row][col].discharge += runoff;
+			total_rain += runoff;
+			drainage[row][col].discharge += runoff;
 
-    		/*Remove evaporated lake water from outlets (evaporation in endorheic lakes is done below)*/
-    		if (drainage[row][col].type == 'E') {
-    		    float lake_evap=0, input_disch, factor;
-    		    for (int i=0; i<Lake[il].n; i++) lake_evap += evaporation[Lake[il].row[i]][Lake[il].col[i]];
-		    lake_evap *= dx*dy; 
-    		    input_disch = Lake_Input_Discharge(il);
-    		    if (input_disch) factor = MIN_2(1, lake_evap/input_disch);
-    		    else factor = 0;
-    		    *total_evap_water		 += drainage[row][col].discharge * factor;
-    		    drainage[row][col].discharge -= drainage[row][col].discharge * factor;
-    		}
-    		/*Transfers water.*/
-    		if (IN_DOMAIN(drow, dcol)) {
-    		    /*Remove evapotranspirated water from the rivers*/
-    		    *total_evap_water		     += drainage[row][col].discharge * MIN_2(lost_rate*dd, 1);
-    		    drainage[row][col].discharge     -= drainage[row][col].discharge * MIN_2(lost_rate*dd, 1);
-    		    switch (drainage[drow][dcol].type) {
-    			case 'L':
-    			    /*Check: this shouldn't happen (a node transferring to a lake with a higher level).*/
-    			    if (Lake[drainage[drow][dcol].lake].n_sd) if (IN_DOMAIN(drainage[drow][dcol].dr_row, drainage[drow][dcol].dr_col)) if (topo[drainage[drow][dcol].dr_row][drainage[drow][dcol].dr_col] > topo[row][col])
-    				    PRINT_ERROR("[%d][%d] transferring water to lake in [%d][%d] is < than outlet [%d][%d]:  %.1f<%.1f.", row, col, drow, dcol, drainage[drow][dcol].dr_row, drainage[drow][dcol].dr_col, topo[row][col], topo[drainage[drow][dcol].dr_row][drainage[drow][dcol].dr_col]);
-    			    /*Drain to the lake node*/
-    			    drainage[drow][dcol].discharge += drainage[row][col].discharge;
-    			    /*Drain also to its outlet if it has*/
-    			    if (IN_DOMAIN(drainage[drow][dcol].dr_row, drainage[drow][dcol].dr_col))
-    				    drainage[drainage[drow][dcol].dr_row][drainage[drow][dcol].dr_col].discharge += drainage[row][col].discharge;
-    			    else {
-    				    /*Do nothing, border outlet transfer will be calculated below*/
-    			    }
-    			    break;
-    			case 'R':
-    			    if (drow==row && dcol==col) {
-    				    PRINT_ERROR("\aI should never write this!.");
-    				    *total_evap_water += drainage[row][col].discharge;
-    			    }
-    			    else
-    				    drainage[drow][dcol].discharge += drainage[row][col].discharge;
-    			    break;
-    			case 'E':
-    			    /*Lake internal drainage is done above*/
-    			    if (il != drainage[drow][dcol].lake)
-    				    drainage[drow][dcol].discharge += drainage[row][col].discharge;
-    			    break;
-    			default:
-    			    PRINT_ERROR("[%d][%d] draining to [%d][%d] has missing drainage type.", row, col, drow, dcol);
-    			    break;
-    		    }
-    		}
-    		else {
-    			if (AT_BORDER(row,col)) {
-    			    /*Transfers out of model.*/
-    			    *total_lost_water += drainage[row][col].discharge;
-    			}
-    			else {
-    			    /*Evaporates water from endorheic lake nodes*/
-    			    *total_evap_water += drainage[row][col].discharge;
-    			}
-    		}
+			/*Remove evaporated lake water from outlets (evaporation in endorheic lakes is done below)*/
+			if (drainage[row][col].type == 'E') {
+				float lake_evap=0, input_disch, factor;
+				for (int i=0; i<Lake[il].n; i++) lake_evap += evaporation[Lake[il].row[i]][Lake[il].col[i]];
+				lake_evap *= dx*dy;
+				input_disch = Lake_Input_Discharge(il);
+				if (input_disch) factor = MIN_2(1, lake_evap/input_disch);
+				else factor = 0;
+				*total_evap_water += drainage[row][col].discharge * factor;
+				drainage[row][col].discharge -= drainage[row][col].discharge * factor;
+			}
+
+			/*Underground seepage of part of the water to lower nodes*/
+			int ru=25; //Half-width of the rectangle of underground flow calculation (in cells)
+			if (permeability) {
+				if ((((float) rand())/((float) RAND_MAX))-.5 > 0) {
+					for (int i=row-ru; i<=row+ru; i++) for (int j=col-ru; j<=col+ru; j++) if (IN_DOMAIN(i, j)) if (i!=row || j!=col) {
+						float dist, underground_water_flow;
+						dist=sqrt((i-row)*(i-row)*dy*dy+(j-col)*(j-col)*dx*dx);
+						/*Darcy's law (isotropic porous medium): fluid_velocity = perm/visc * pressure_diff/distance */
+						/*Need to account for the 3D effect properly*/
+						underground_water_flow = (topo[row][col]>topo[i][j])? MIN_2(drainage[row][col].discharge, dxy*dxy*dx*dy/dist/dist*permeability/viscwater*denswater*g*(topo[row][col]-topo[i][j])/dist) : 0;
+						drainage[row][col].discharge -= underground_water_flow;
+						drainage[i][j].discharge     += underground_water_flow;
+						*total_underground_water     += underground_water_flow;
+					}
+				}
+				else {
+					for (int i=row+ru; i<=row-ru; i--) for (int j=col+ru; j<=col-ru; j--) if (IN_DOMAIN(i, j)) if (i!=row || j!=col) {
+						float dist, underground_water_flow;
+						dist=sqrt((i-row)*(i-row)*dy*dy+(j-col)*(j-col)*dx*dx);
+						/*Darcy's law (isotropic porous medium): fluid_velocity = perm/visc * pressure_diff/distance */
+						/*Need to account for the 3D effect properly*/
+						underground_water_flow = (topo[row][col]>topo[i][j])? MIN_2(drainage[row][col].discharge, dxy*dxy*dx*dy/dist/dist*permeability/viscwater*denswater*g*(topo[row][col]-topo[i][j])/dist) : 0;
+						drainage[row][col].discharge -= underground_water_flow;
+						drainage[i][j].discharge     += underground_water_flow;
+						*total_underground_water     += underground_water_flow;
+					}
+				}
+			}
+
+			/*Transfers water.*/
+			if (IN_DOMAIN(drow, dcol)) {
+				/*Remove evapotranspirated water from the rivers*/
+				*total_evap_water			 	+= drainage[row][col].discharge * MIN_2(lost_rate*dd, 1);
+				drainage[row][col].discharge	-= drainage[row][col].discharge * MIN_2(lost_rate*dd, 1);
+				switch (drainage[drow][dcol].type) {
+				case 'L':
+					/*Check: this shouldn't happen (a node transferring to a lake with a higher level).*/
+					if (Lake[drainage[drow][dcol].lake].n_sd) if (IN_DOMAIN(drainage[drow][dcol].dr_row, drainage[drow][dcol].dr_col)) if (topo[drainage[drow][dcol].dr_row][drainage[drow][dcol].dr_col] > topo[row][col])
+						PRINT_ERROR("[%d][%d] transferring water to lake in [%d][%d] is < than outlet [%d][%d]:  %.1f<%.1f.", row, col, drow, dcol, drainage[drow][dcol].dr_row, drainage[drow][dcol].dr_col, topo[row][col], topo[drainage[drow][dcol].dr_row][drainage[drow][dcol].dr_col]);
+					/*Drain to the lake node*/
+					drainage[drow][dcol].discharge += drainage[row][col].discharge;
+					/*Drain also to its outlet if it has*/
+					if (IN_DOMAIN(drainage[drow][dcol].dr_row, drainage[drow][dcol].dr_col))
+						drainage[drainage[drow][dcol].dr_row][drainage[drow][dcol].dr_col].discharge += drainage[row][col].discharge;
+					else {
+						/*Do nothing, border outlet transfer will be calculated below*/
+					}
+					break;
+				case 'R':
+					if (drow==row && dcol==col) {
+						PRINT_ERROR("\aI should never write this!.");
+						*total_evap_water += drainage[row][col].discharge;
+					}
+					else
+						drainage[drow][dcol].discharge += drainage[row][col].discharge;
+					break;
+				case 'E':
+					/*Lake internal drainage is done above*/
+					if (il != drainage[drow][dcol].lake)
+						drainage[drow][dcol].discharge += drainage[row][col].discharge;
+					break;
+				default:
+					PRINT_ERROR("[%d][%d] draining to [%d][%d] has missing drainage type.", row, col, drow, dcol);
+					break;
+				}
+			}
+			else {
+				if (AT_BORDER(row,col)) {
+					/*Transfers out of model.*/
+					*total_lost_water += drainage[row][col].discharge;
+				}
+				else {
+					/*Evaporates water from endorheic lake nodes*/
+					*total_evap_water += drainage[row][col].discharge;
+				}
+			}
 	}
 	
-	/*Calculate lake altitudes and volumes*/
+	/*Calculate lake elevation and volume*/
 	/*LAKES HAVE CHANGED HERE, IN Calculate_Discharge, BY EVAPORATION!*/
 	for (int il=1; il<=nlakes; il++) {
 		if (Lake[il].n_sd) {
@@ -459,53 +496,53 @@ int Calculate_Discharge (struct GRIDNODE *sortcell, float *total_lost_water, flo
 
 	/*CHECKS:*/
 	for (int il=1; il<=nlakes; il++) {
-	    float diff, lake_evap=0, max_evap=0;
-	    for (int i=0; i<Lake[il].n; i++) {lake_evap += evaporation[Lake[il].row[i]][Lake[il].col[i]]; max_evap=MAX_2(max_evap,evaporation[Lake[il].row[i]][Lake[il].col[i]]);}
-	    lake_evap *= dx*dy;
-	    /*Check: open-lake input discharge should be >= evaporation*surface, except perhaps for the Sea*/
-	    if (Lake[il].n_sd) {
+		float diff, lake_evap=0, max_evap=0;
+		for (int i=0; i<Lake[il].n; i++) {lake_evap += evaporation[Lake[il].row[i]][Lake[il].col[i]]; max_evap=MAX_2(max_evap,evaporation[Lake[il].row[i]][Lake[il].col[i]]);}
+		lake_evap *= dx*dy;
+		/*Check: open-lake input discharge should be >= evaporation*surface, except perhaps for the Sea*/
+		if (Lake[il].n_sd) {
 		if (diff=(lake_evap - Lake_Input_Discharge(il))<0) {
-		    BOOL its_sea=0;
-		    IF_LAKE_IS_SEA(il) its_sea=1;
-		    if (!its_sea) 
+			BOOL its_sea=0;
+			IF_LAKE_IS_SEA(il) its_sea=1;
+			if (!its_sea) 
 			if (diff>total_rain/200) PRINT_WARNING("Lake %d (open; not sea; %d nodes) has less input %.2f m3/s than evap. %.2f m3/s.", il, Lake[il].n, Lake_Input_Discharge(il), lake_evap);
 		}
-	    }
-	    /*Check: lake input discharge should be ~= evaporation*surface if lake is endorheic*/
-	    if (!Lake[il].n_sd && (fabs(lake_evap-Lake_Input_Discharge(il)) > 1.1*max_evap*dx*dy || verbose_level>=4)) {
+		}
+		/*Check: lake input discharge should be ~= evaporation*surface if lake is endorheic*/
+		if (!Lake[il].n_sd && (fabs(lake_evap-Lake_Input_Discharge(il)) > 1.1*max_evap*dx*dy || verbose_level>=4)) {
 		PRINT_WARNING("Calculate_Discharge: Endorh. lake %d (%d nodes) at [%d][%d] evaporates different %.2f m3/s than inputs %.2f m3/s.", 
 				il, Lake[il].n, Lake[il].row[0], Lake[il].col[0], lake_evap, Lake_Input_Discharge(il) );
-	    }
-	    /*Check: the lake's registered altitude should be the same as the one of the last node (except in the sea)*/
-	    if (Lake[il].alt != topo[Lake[il].row[Lake[il].n-1]][Lake[il].col[Lake[il].n-1]]) {
-	    	BOOL its_sea=0;
-	    	IF_LAKE_IS_SEA(il) its_sea=1;
-	    	if (!its_sea) {
-	    	    PRINT_ERROR("\aLake %d (not sea) should have the altitude of lake's last node %.2f m instead of %.2f m.", il, topo[Lake[il].row[Lake[il].n-1]][Lake[il].col[Lake[il].n-1]], Lake[il].alt);
-		    for (int i=0; i<Lake[il].n; i++) PRINT_WARNING("[%d][%d] elevation: %.2f", Lake[il].row[i], Lake[il].col[i], topo[Lake[il].row[i]][Lake[il].col[i]]);
-	        }
-	    }
-	    /*Check: the lake's registered elevation should be the maximum among lake nodes (except for the sea)*/
-	    {
+		}
+		/*Check: the lake's registered altitude should be the same as the one of the last node (except in the sea)*/
+		if (Lake[il].alt != topo[Lake[il].row[Lake[il].n-1]][Lake[il].col[Lake[il].n-1]]) {
+			BOOL its_sea=0;
+			IF_LAKE_IS_SEA(il) its_sea=1;
+			if (!its_sea) {
+				PRINT_ERROR("\aLake %d (not sea) should have the altitude of lake's last node %.2f m instead of %.2f m.", il, topo[Lake[il].row[Lake[il].n-1]][Lake[il].col[Lake[il].n-1]], Lake[il].alt);
+			for (int i=0; i<Lake[il].n; i++) PRINT_WARNING("[%d][%d] elevation: %.2f", Lake[il].row[i], Lake[il].col[i], topo[Lake[il].row[i]][Lake[il].col[i]]);
+			}
+		}
+		/*Check: the lake's registered elevation should be the maximum among lake nodes (except for the sea)*/
+		{
 		float max_elev=-1e9;
 		for (int i=0; i<Lake[il].n; i++) max_elev = MAX_2(topo[Lake[il].row[i]][Lake[il].col[i]], max_elev);
 		if (Lake[il].alt != max_elev) {
-		    BOOL its_sea=0;
-		    IF_LAKE_IS_SEA(il) its_sea=1;
-		    /*BUG: This check failed at Jenna West mac, giving repeated errors without apparent cause 2016-09-01*/
-		    if (!its_sea)
+			BOOL its_sea=0;
+			IF_LAKE_IS_SEA(il) its_sea=1;
+			/*BUG: This check failed at Jenna West mac, giving repeated errors without apparent cause 2016-09-01*/
+			if (!its_sea)
 			PRINT_ERROR("Lake %d (not sea) should have the elevation of its highest node %.2f m instead of %.2f m.", il, max_elev, Lake[il].alt);
 		}
 		/*Check: all outlets should have the same elevation (except for the sea)*/
 		for (int i=1; i<Lake[il].n_sd; i++) {
-		    if (topo[Lake[il].row_sd[i-1]][Lake[il].col_sd[i-1]] != topo[Lake[il].row_sd[i]][Lake[il].col_sd[i]]) {
-			    BOOL its_sea=0;
-			    IF_LAKE_IS_SEA(il) its_sea=1;
-			    if (!its_sea)
+			if (topo[Lake[il].row_sd[i-1]][Lake[il].col_sd[i-1]] != topo[Lake[il].row_sd[i]][Lake[il].col_sd[i]]) {
+				BOOL its_sea=0;
+				IF_LAKE_IS_SEA(il) its_sea=1;
+				if (!its_sea)
 				PRINT_ERROR("\aLake %d (open but not sea) should have all saddles at same elevation but has %.2f m at [%d][%d] instead of %.2f m.", il, topo[Lake[il].row_sd[i-1]][Lake[il].col_sd[i-1]], Lake[il].row_sd[i-1], Lake[il].col_sd[i-1], topo[Lake[il].row_sd[i]][Lake[il].col_sd[i]]);
-		    }
+			}
 		}
-	    }
+		}
 	}
 
 	return (1);
@@ -528,16 +565,16 @@ int constant_rate_eros (
 
 	/*Calculate eros/sed*/
 	for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) {
-	    /*EROSION proportional to elevation*/
-	    if (topo[i][j] > sea_level) {
-		    Dh = Keroseol * dt * (topo[i][j]-sea_level);
-		    Erode (THICK2SEDMASS(Dh), i, j);
-	    }
-	    /*SEDIMENTATION*/
-	    else if (water_load) {
-		    Dh = MIN_2(Ksedim*dt, sea_level-topo[i][j]);
-	    	    Sediment (THICK2SEDMASS(Dh), i, j);
-	    }
+		/*EROSION proportional to elevation*/
+		if (topo[i][j] > sea_level) {
+			Dh = Keroseol * dt * (topo[i][j]-sea_level);
+			Erode (THICK2SEDMASS(Dh), i, j);
+		}
+		/*SEDIMENTATION*/
+		else if (water_load) {
+			Dh = MIN_2(Ksedim*dt, sea_level-topo[i][j]);
+				Sediment (THICK2SEDMASS(Dh), i, j);
+		}
 	}
 
 }
@@ -585,20 +622,20 @@ int Define_Drainage_Net (struct GRIDNODE *sortcell)
 		
 	LOOP (for every node with a topo > sea_level):
 	1. if has no undefined-lake adjacents
-	    1.1 if < than all the adjacents and it is not in the border, 
-	    	then mark it as a new undefined lake.
-	    1.2 if = than at least one of the adjacents
-	    	1.2.1 if > than one adjacent, then mark the node as a new 
-	    		undefined lake and mark it as the outlet.
+		1.1 if < than all the adjacents and it is not in the border, 
+			then mark it as a new undefined lake.
+		1.2 if = than at least one of the adjacents
+			1.2.1 if > than one adjacent, then mark the node as a new 
+				undefined lake and mark it as the outlet.
 		1.2.2 if <= than all adjacents, then mark the node as a new 
 			undefined lake.
 	2. if has undefined lake adjacents 
-	    2.1. if <= than all the adjacents that are not undefined 
+		2.1. if <= than all the adjacents that are not undefined 
 		lakes, then mark it as the adjacent undefined lake.
-	    2.2. if > than at least one adjacent that is not undefined 
-	    	lake, then mark it as the adjacent undefined lake, mark it as 
-	    	an outlet and mark the minimum adjacent that is not undefined 
-	    	lake as the node to transfer. 
+		2.2. if > than at least one adjacent that is not undefined 
+			lake, then mark it as the adjacent undefined lake, mark it as 
+			an outlet and mark the minimum adjacent that is not undefined 
+			lake as the node to transfer. 
 	3. if it's a lake labelled different than an undefined lake 
 	  	adjacent, then unify both lakes adding the outlets. If one of 
 	  	the lakes is defined then the resulting lake is too.
@@ -613,19 +650,19 @@ int Define_Drainage_Net (struct GRIDNODE *sortcell)
 		water and seds. Lakes cannot be formed only with outlets.
 
 	EXAMPLE in 1D assuming no evaporation:
-         22  1111  333 444444555 666666  66   <--lake_number
+		 22  1111  333 444444555 666666  66   <--lake_number
 	 ELRRSSSSRRELLRELLLLLLLLRLLLLLE  LERR <--node_type
-      z	|                       #      |     |
-	|              #        ##### #| ##  |
-	|          #  ###   #  ########| ### |
-	|  ##     ### #### ############| ####|
-	|####    ######################| ####|
-    z=0	|----#-------------------------| ----|
-	|     ###                      |     |
-	|       #                      |     |
-         12120000--2212222122122-122212  22--  \
-         2121      2111211111211 211111  11    | <-- applied rule
-         2 1                 2   2             /
+	  z	|					   #	  |	 |
+	|			  #		##### #| ##  |
+	|		  #  ###   #  ########| ### |
+	|  ##	 ### #### ############| ####|
+	|####	######################| ####|
+	z=0	|----#-------------------------| ----|
+	|	 ###					  |	 |
+	|	   #					  |	 |
+		 12120000--2212222122122-122212  22--  \
+		 2121	  2111211111211 211111  11	| <-- applied rule
+		 2 1				 2   2			 /
 
 	The information about the lakes is stored in two structures: 'drainage' 
 	(for every node in the grid) and 'Lake' (for every lake).
@@ -667,7 +704,7 @@ int Define_Drainage_Net (struct GRIDNODE *sortcell)
 			switch (l) {
 				case 0: case 2: dist=dy;  break;   /*N,S*/
 				case 1: case 3: dist=dx;  break;   /*E,W*/
-				default:        dist=dxy; break;   /*others*/
+				default:		dist=dxy; break;   /*others*/
 			}
 			if (IN_DOMAIN(ro[l],co[l])) {
 				deriv = (topo[ro[l]][co[l]]-topo[i][j])/dist;
@@ -775,13 +812,13 @@ int Define_Drainage_Net (struct GRIDNODE *sortcell)
 			  last (upper most) node, then define all 'sea-like' lakes.
 			*/
 			if (isort>0) {
-			    if (topo[sortcell[isort-1].row][sortcell[isort-1].col] > sea_level) {
+				if (topo[sortcell[isort-1].row][sortcell[isort-1].col] > sea_level) {
 				for (int l=1; l<=nlakes; l++) {
 					if (Lake[l].n_sd) {
 						Define_Lake(l);
 					}
 				}
-			    }
+				}
 			}
 			else {
 				for (int l=1; l<=nlakes; l++) {
@@ -798,7 +835,7 @@ int Define_Drainage_Net (struct GRIDNODE *sortcell)
 		if (!drainage[i][j].lake) {
 			drainage[i][j].type = 'R';
 			if (imaxderneg != SIGNAL) {
-			    	/*Drain to the lowest neighbour*/
+					/*Drain to the lowest neighbour*/
 				drainage[i][j].dr_row = ro[imaxderneg];
 				drainage[i][j].dr_col = co[imaxderneg];
 			}
@@ -814,20 +851,20 @@ int Define_Drainage_Net (struct GRIDNODE *sortcell)
 	  The outlet drainage is not mantained because in the borders does not work.
 	*/
 	for (int l=1; l<=nlakes; l++) {
-	    if (Lake[l].n == Lake[l].n_sd) {
-	    	for (int m=0; m<Lake[l].n; m++) {
-	    	    /*
-	    	      Determines drainage of the new non-lake (river) nodes.
-	    	      Add transferring and other information to 'drainage'.
-	    	    */
-		    /*!!next line unnecessary, since they are outlets with defined drainage*/
-	    	    Minimum_Neg_Slope (Lake[l].row[m], Lake[l].col[m],  &drainage[Lake[l].row[m]][Lake[l].col[m]].dr_row, &drainage[Lake[l].row[m]][Lake[l].col[m]].dr_col);
-	    	    drainage[Lake[l].row[m]][Lake[l].col[m]].lake = 0;
-	    	    drainage[Lake[l].row[m]][Lake[l].col[m]].type = 'R';
-	    	}
-	    	Deallocate_Lake(l);
-	    	l--;
-	    }
+		if (Lake[l].n == Lake[l].n_sd) {
+			for (int m=0; m<Lake[l].n; m++) {
+				/*
+				  Determines drainage of the new non-lake (river) nodes.
+				  Add transferring and other information to 'drainage'.
+				*/
+			/*!!next line unnecessary, since they are outlets with defined drainage*/
+				Minimum_Neg_Slope (Lake[l].row[m], Lake[l].col[m],  &drainage[Lake[l].row[m]][Lake[l].col[m]].dr_row, &drainage[Lake[l].row[m]][Lake[l].col[m]].dr_col);
+				drainage[Lake[l].row[m]][Lake[l].col[m]].lake = 0;
+				drainage[Lake[l].row[m]][Lake[l].col[m]].type = 'R';
+			}
+			Deallocate_Lake(l);
+			l--;
+		}
 	}
 
 	/*
@@ -879,27 +916,27 @@ int Define_Drainage_Net (struct GRIDNODE *sortcell)
 
 	/*For the same altitude, put the outlets first in sortcell*/
 	for (int isort=0; isort<Nx*Ny-1; isort++) {
-	    if (drainage[sortcell[isort].row][sortcell[isort].col].type != 'E') {
+		if (drainage[sortcell[isort].row][sortcell[isort].col].type != 'E') {
 		float topoisort;
 		topoisort = topo[sortcell[isort].row][sortcell[isort].col];
 		for (int j=isort+1; j<Nx*Ny; j++) {
-		    float topoj;
-		    topoj = topo[sortcell[j].row][sortcell[j].col];
-		    if (topoj == topoisort) {
+			float topoj;
+			topoj = topo[sortcell[j].row][sortcell[j].col];
+			if (topoj == topoisort) {
 			if (drainage[sortcell[j].row][sortcell[j].col].type == 'E') {
-		    	    int auxrow, auxcol;
-			    auxrow=sortcell[j].row;
-			    auxcol=sortcell[j].col;
-			    sortcell[j].row=sortcell[isort].row;
-			    sortcell[j].col=sortcell[isort].col;
-			    sortcell[isort].row=auxrow;
-			    sortcell[isort].col=auxcol;
-			    break;
-		    	}
-		    }
-		    else break;
+					int auxrow, auxcol;
+				auxrow=sortcell[j].row;
+				auxcol=sortcell[j].col;
+				sortcell[j].row=sortcell[isort].row;
+				sortcell[j].col=sortcell[isort].col;
+				sortcell[isort].row=auxrow;
+				sortcell[isort].col=auxcol;
+				break;
+				}
+			}
+			else break;
 		}
-	    }
+		}
 	}
 
 	/*CHECK RESULTS*/
@@ -923,16 +960,16 @@ int Define_Drainage_Net (struct GRIDNODE *sortcell)
 	}
 	/*Check: All outlets of a lake have the same height, except for the sea*/
 	for (int il=1; il<=nlakes; il++) {
-	    float  sd_height;
-	    BOOL its_sea=0;
-	    IF_LAKE_IS_SEA(il) its_sea=1;
-	    if (!its_sea) {
+		float  sd_height;
+		BOOL its_sea=0;
+		IF_LAKE_IS_SEA(il) its_sea=1;
+		if (!its_sea) {
 		for (int m=1; m<Lake[il].n_sd; m++) {
-		    sd_height = topo[Lake[il].row_sd[m-1]][Lake[il].col_sd[m-1]];
-		    if (sd_height!=topo[Lake[il].row_sd[m]][Lake[il].col_sd[m]])
+			sd_height = topo[Lake[il].row_sd[m-1]][Lake[il].col_sd[m-1]];
+			if (sd_height!=topo[Lake[il].row_sd[m]][Lake[il].col_sd[m]])
 			PRINT_ERROR("lake %d has outlets %d and %d with different height.", il, m-1, m);
 		}
-	    }
+		}
 	}
 	/*Check: Nodes of a lake cannot be repeated. Outlets of a lake cannot be repeated.*/
 	/*Check: Drainage direction and lake transferring info should match.*/
@@ -947,32 +984,32 @@ int Define_Drainage_Net (struct GRIDNODE *sortcell)
 	/*Check: All nodes transfer either to SIGNAL,SIGNAL or to a real node.*/
 	for (int i=0; i<Ny; i++)  for (int j=0; j<Nx; j++) {
 		if (drainage[i][j].dr_row < 0 && drainage[i][j].dr_row != SIGNAL || 
-		    drainage[i][j].dr_col < 0 && drainage[i][j].dr_col != SIGNAL) 
+			drainage[i][j].dr_col < 0 && drainage[i][j].dr_col != SIGNAL) 
 			PRINT_ERROR("[%d][%d] -->>  [%d][%d] \t'%c'", i,j,drainage[i][j].dr_row,drainage[i][j].dr_col, drainage[i][j].type);
 	}
 	/*Check: all outlets should have the same elevation (except for the sea)*/
 	for (int il=1; il<=nlakes; il++) {
-	    for (int i=1; i<Lake[il].n_sd; i++) {
-	    	if (topo[Lake[il].row_sd[i-1]][Lake[il].col_sd[i-1]] != topo[Lake[il].row_sd[i]][Lake[il].col_sd[i]]) {
-	    		BOOL its_sea=0;
-	    		IF_LAKE_IS_SEA(il) its_sea=1;
-	    		if (!its_sea)
-	    		    PRINT_ERROR("\aLake %d (open but not sea) should have all saddles at same elevation but has %.1f m at [%d][%d] instead of %.1f m.", il, topo[Lake[il].row_sd[i-1]][Lake[il].col_sd[i-1]], Lake[il].row_sd[i-1], Lake[il].col_sd[i-1], topo[Lake[il].row_sd[i]][Lake[il].col_sd[i]]);
-	        }
-	    }
+		for (int i=1; i<Lake[il].n_sd; i++) {
+			if (topo[Lake[il].row_sd[i-1]][Lake[il].col_sd[i-1]] != topo[Lake[il].row_sd[i]][Lake[il].col_sd[i]]) {
+				BOOL its_sea=0;
+				IF_LAKE_IS_SEA(il) its_sea=1;
+				if (!its_sea)
+					PRINT_ERROR("\aLake %d (open but not sea) should have all saddles at same elevation but has %.1f m at [%d][%d] instead of %.1f m.", il, topo[Lake[il].row_sd[i-1]][Lake[il].col_sd[i-1]], Lake[il].row_sd[i-1], Lake[il].col_sd[i-1], topo[Lake[il].row_sd[i]][Lake[il].col_sd[i]]);
+			}
+		}
 	}
 	/*Check: all outlets should have the maximum elevation among lake nodes (except for the sea)*/
 	for (int il=1; il<=nlakes; il++) {
-	    float max_elev=-1e9;
-	    for (int i=0; i<Lake[il].n; i++) max_elev = MAX_2(topo[Lake[il].row[i]][Lake[il].col[i]], max_elev);
-	    for (int i=0; i<Lake[il].n_sd; i++) {
-	    	if (topo[Lake[il].row_sd[i]][Lake[il].col_sd[i]] < max_elev) {
-	    		BOOL its_sea=0;
-	    		IF_LAKE_IS_SEA(il) its_sea=1;
-	    		if (!its_sea)
-	    		    PRINT_ERROR("\aLake %d (open but not sea) should have all saddles higher than all other nodes but %.1f m at [%d][%d] is lower than %.1f m.", il, topo[Lake[il].row_sd[i]][Lake[il].col_sd[i]], Lake[il].row_sd[i], Lake[il].col_sd[i], max_elev);
-	        }
-	    }
+		float max_elev=-1e9;
+		for (int i=0; i<Lake[il].n; i++) max_elev = MAX_2(topo[Lake[il].row[i]][Lake[il].col[i]], max_elev);
+		for (int i=0; i<Lake[il].n_sd; i++) {
+			if (topo[Lake[il].row_sd[i]][Lake[il].col_sd[i]] < max_elev) {
+				BOOL its_sea=0;
+				IF_LAKE_IS_SEA(il) its_sea=1;
+				if (!its_sea)
+					PRINT_ERROR("\aLake %d (open but not sea) should have all saddles higher than all other nodes but %.1f m at [%d][%d] is lower than %.1f m.", il, topo[Lake[il].row_sd[i]][Lake[il].col_sd[i]], Lake[il].row_sd[i], Lake[il].col_sd[i], max_elev);
+			}
+		}
 	}
 
 	return(1);
@@ -1006,17 +1043,17 @@ int Diffusive_Eros (float Kerosdif, float dt, float dt_eros)
 	PRINT_INFO("n_iters=%3d", n_iters);
 
 	for (int k=0; k<n_iters; k++) {
-     	     diffusion_2D(topo, Dheros, Nx, Ny, Kerosdif, dx, dy, dt/n_iters);
+	 		 diffusion_2D(topo, Dheros, Nx, Ny, Kerosdif, dx, dy, dt/n_iters);
 
-     	     /*Adds results to the height and the next load Dq and removes material from the Blocks*/
-     	     for(int i=0; i<Ny; i++)  for(int j=0; j<Nx; j++)  {
-     		     if (Dheros[i][j]>0) {
-     			     Sediment ( Dheros[i][j]*dx*dy*denscrust, i, j);
-     		     }
-     		     if (Dheros[i][j]<0) {
-     			     Erode    (-Dheros[i][j]*dx*dy*denscrust, i, j);
-     		     }
-     	     }
+	 		 /*Adds results to the height and the next load Dq and removes material from the Blocks*/
+	 		 for(int i=0; i<Ny; i++)  for(int j=0; j<Nx; j++)  {
+	 			 if (Dheros[i][j]>0) {
+	 				 Sediment ( Dheros[i][j]*dx*dy*denscrust, i, j);
+	 			 }
+	 			 if (Dheros[i][j]<0) {
+	 				 Erode	(-Dheros[i][j]*dx*dy*denscrust, i, j);
+	 			 }
+	 		 }
 	}
 
 	free_matrix(Dheros, Ny);
@@ -1062,71 +1099,71 @@ int Fluvial_Transport(struct GRIDNODE *sortcell, float dt_st, int erosed_model, 
 	  descends transferring the eroded mass
 	*/
 	if (erosed_model>=2) for (int isort=0; isort < Nx*Ny; isort++) {
-	    float minsorr_trib, maxsorr, minsorr, main_tribut_slope, main_tribut_disch, main_tribut_alt;
-	    row = sortcell[isort].row;  col = sortcell[isort].col;
-	    ro[0]=row-1, ro[1]=row,   ro[2]=row+1, ro[3]=row,	ro[4]=row-1, ro[5]=row+1, ro[6]=row+1, ro[7]=row-1;
-	    co[0]=col,   co[1]=col+1, co[2]=col,   co[3]=col-1, co[4]=col+1, co[5]=col+1, co[6]=col-1, co[7]=col-1;
-	    drow = drainage[row][col].dr_row;
-	    dcol = drainage[row][col].dr_col;
+		float minsorr_trib, maxsorr, minsorr, main_tribut_slope, main_tribut_disch, main_tribut_alt;
+		row = sortcell[isort].row;  col = sortcell[isort].col;
+		ro[0]=row-1, ro[1]=row,   ro[2]=row+1, ro[3]=row,	ro[4]=row-1, ro[5]=row+1, ro[6]=row+1, ro[7]=row-1;
+		co[0]=col,   co[1]=col+1, co[2]=col,   co[3]=col-1, co[4]=col+1, co[5]=col+1, co[6]=col-1, co[7]=col-1;
+		drow = drainage[row][col].dr_row;
+		dcol = drainage[row][col].dr_col;
 
-	    /*Calculate max and min height in the 8 sorrounding points:*/
-	    maxsorr=minsorr=topo[row][col];
-	    for(int i=0; i<NDERS; i++) {
-	    	    if (IN_DOMAIN(ro[i],co[i])) {
-	    		    minsorr = MIN_2(minsorr, topo[ro[i]][co[i]]);
-	    		    maxsorr = MAX_2(maxsorr, topo[ro[i]][co[i]]);
-	    	    }
-	    }
-	    /*
-	      Finds the height of the minimum sorrounding contributor
-	      and the slope of the main contributor
-	    */
-	    minsorr_trib=maxsorr;
-	    main_tribut_disch=0; main_tribut_slope=0; main_tribut_alt=0;
-	    for(int i=0; i<NDERS; i++) {
-	    	    if (IN_DOMAIN(ro[i],co[i])) {
-	    		    if (drainage[ro[i]][co[i]].dr_row == row && drainage[ro[i]][co[i]].dr_col == col) {
-	    			    if (drainage[ro[i]][co[i]].discharge>main_tribut_disch) {
-	    				    float dist;
-	    				    switch (i) {
-	    					    case 0: case 2: dist=dy;  break;   /*N,S*/
-	    					    case 1: case 3: dist=dx;  break;   /*E,W*/
-	    					    default:	    dist=dxy; break;   /*others*/
-	    				    }
-	    				    main_tribut_disch = drainage[ro[i]][co[i]].discharge;
-	    				    main_tribut_slope = (topo[row][col]-topo[ro[i]][co[i]])/dist;
-	    				    main_tribut_alt   = topo[ro[i]][co[i]];
-	    			    }
-	    			    minsorr_trib = MIN_2(minsorr_trib, topo[ro[i]][co[i]]);
-	    		    }
-	    	    }
-	    }
+		/*Calculate max and min height in the 8 sorrounding points:*/
+		maxsorr=minsorr=topo[row][col];
+		for(int i=0; i<NDERS; i++) {
+				if (IN_DOMAIN(ro[i],co[i])) {
+					minsorr = MIN_2(minsorr, topo[ro[i]][co[i]]);
+					maxsorr = MAX_2(maxsorr, topo[ro[i]][co[i]]);
+				}
+		}
+		/*
+		  Finds the height of the minimum sorrounding contributor
+		  and the slope of the main contributor
+		*/
+		minsorr_trib=maxsorr;
+		main_tribut_disch=0; main_tribut_slope=0; main_tribut_alt=0;
+		for(int i=0; i<NDERS; i++) {
+				if (IN_DOMAIN(ro[i],co[i])) {
+					if (drainage[ro[i]][co[i]].dr_row == row && drainage[ro[i]][co[i]].dr_col == col) {
+						if (drainage[ro[i]][co[i]].discharge>main_tribut_disch) {
+							float dist;
+							switch (i) {
+								case 0: case 2: dist=dy;  break;   /*N,S*/
+								case 1: case 3: dist=dx;  break;   /*E,W*/
+								default:		dist=dxy; break;   /*others*/
+							}
+							main_tribut_disch = drainage[ro[i]][co[i]].discharge;
+							main_tribut_slope = (topo[row][col]-topo[ro[i]][co[i]])/dist;
+							main_tribut_alt   = topo[ro[i]][co[i]];
+						}
+						minsorr_trib = MIN_2(minsorr_trib, topo[ro[i]][co[i]]);
+					}
+				}
+		}
 
-	    /*
-	      Calculates the potential mass increment d_mass (kg) due to river dynamics 
-	      in this cell (erosion or sedimentation): 
-	    */
-	    switch (drainage[row][col].type) {
-	    	float dist, slope, transp_capacity_eq;
-	    	case 'L':
-	    	    /*Sedimentation will be done in Lake_Fill().*/
-	    	    d_mass  = 0;
-	    	    break;
-	    	case 'R':
-	    	case 'E':
-	    	    /*Calculate distance to the output node*/
-	    	    if (IN_DOMAIN(drow,dcol)) {
-				    int ild = drainage[drow][dcol].lake;
-		    		dist = sqrt(dy*(drow-row)*dy*(drow-row) + dx*(dcol-col)*dx*(dcol-col));
-				    if (ild) slope = - (Lake[ild].alt    - topo[row][col]) / dist;
-				    else	 slope = - (topo[drow][dcol] - topo[row][col]) / dist;
-		   	    }
-	    	    else {
-	    		    dist = dxy;
+		/*
+		  Calculates the potential mass increment d_mass (kg) due to river dynamics 
+		  in this cell (erosion or sedimentation): 
+		*/
+		switch (drainage[row][col].type) {
+			float dist, slope, transp_capacity_eq;
+			case 'L':
+				/*Sedimentation will be done in Lake_Fill().*/
+				d_mass  = 0;
+				break;
+			case 'R':
+			case 'E':
+				/*Calculate distance to the output node*/
+				if (IN_DOMAIN(drow,dcol)) {
+					int ild = drainage[drow][dcol].lake;
+					dist = sqrt(dy*(drow-row)*dy*(drow-row) + dx*(dcol-col)*dx*(dcol-col));
+					if (ild) slope = - (Lake[ild].alt	- topo[row][col]) / dist;
+					else	 slope = - (topo[drow][dcol] - topo[row][col]) / dist;
+		   		}
+				else {
+					dist = dxy;
 					slope = main_tribut_slope;
-	    	    }
+				}
 
-		    switch (erosed_model) {
+			switch (erosed_model) {
 #define ERODED_ERODIBILITY   /*Takes a mean erodibility*/ float depth2average=10., dh, weight, totalweight=0, basedepth=0, erodibility_aux=0;\
 				for (int i=numBlocks-1; i>=0; i--) {\
 					basedepth+=Blocks[i].thick[row][col];\
@@ -1144,237 +1181,237 @@ int Fluvial_Transport(struct GRIDNODE *sortcell, float dt_st, int erosed_model, 
 				if (totalweight) erodibility_aux/=totalweight; if (!erodibility_aux) erodibility_aux=erodibility;\
 				/*PRINT_ERROR("XXX erodibil: %.2e", erodibility_aux);*/
 #define TRANSPORT_BOUNDARY_CONDITIONS \
-		    	if (AT_BORDER(row,col)) {\
-		    	    switch (eros_bound_cond[BORDER_INDEX(row,col)]) {\
-		    		case '1':\
-		    		case '2':\
-		    		case 'c':				    break;\
-		    		case '0':   transp_capacity_eq = 0;	    break;\
-		    		case '3':   transp_capacity_eq /= 2;	    break;\
-		    	}}
-		      case 2:
-		    	/*Beaumont et al. (1992) stream power law ('uncercapacity'):*/
-		    	/*Transport capacity in equilibrium [kg/s]. Whipple & Tucker, 2002 conclude m'=n'=1*/
-		    	transp_capacity_eq = K_river_cap * drainage[row][col].discharge * slope;	/*Eq. 16 of Tucker&Slingerland, 1996*/
+				if (AT_BORDER(row,col)) {\
+					switch (eros_bound_cond[BORDER_INDEX(row,col)]) {\
+					case '1':\
+					case '2':\
+					case 'c':					break;\
+					case '0':   transp_capacity_eq = 0;		break;\
+					case '3':   transp_capacity_eq /= 2;		break;\
+				}}
+			  case 2:
+				/*Beaumont et al. (1992) stream power law ('uncercapacity'):*/
+				/*Transport capacity in equilibrium [kg/s]. Whipple & Tucker, 2002 conclude m'=n'=1*/
+				transp_capacity_eq = K_river_cap * drainage[row][col].discharge * slope;	/*Eq. 16 of Tucker&Slingerland, 1996*/
 			TRANSPORT_BOUNDARY_CONDITIONS;
 			/*EROSION*/
 			if (transp_capacity_eq >= drainage[row][col].masstr) {
-			    ERODED_ERODIBILITY;
-			    /*!!dxy instead of dist does not help to promote non-diagonal drainage (along x,y) (see cone_postectonic)*/
-			    d_mass  =  dist / erodibility_aux * (transp_capacity_eq - drainage[row][col].masstr) * dt_st;
+				ERODED_ERODIBILITY;
+				/*!!dxy instead of dist does not help to promote non-diagonal drainage (along x,y) (see cone_postectonic)*/
+				d_mass  =  dist / erodibility_aux * (transp_capacity_eq - drainage[row][col].masstr) * dt_st;
 			}
 			/*SEDIMENTATION*/
 			else {
-			    d_mass  =  dist / l_fluv_sedim   *  (transp_capacity_eq - drainage[row][col].masstr) * dt_st;
+				d_mass  =  dist / l_fluv_sedim   *  (transp_capacity_eq - drainage[row][col].masstr) * dt_st;
 			}
 			break;
-		      case 3:
-		        /*Tucker & Slingerland (1996) hybrid stream power:*/
-		        transp_capacity_eq = K_river_cap * drainage[row][col].discharge * slope;	/*Eq. 16 of Tucker&Slingerland, 1996*/
+			  case 3:
+				/*Tucker & Slingerland (1996) hybrid stream power:*/
+				transp_capacity_eq = K_river_cap * drainage[row][col].discharge * slope;	/*Eq. 16 of Tucker&Slingerland, 1996*/
 			TRANSPORT_BOUNDARY_CONDITIONS;
-		        if (transp_capacity_eq >= drainage[row][col].masstr) {
-			    spl_m = 1/3;
-			    spl_n = 2/3;
-			    ERODED_ERODIBILITY;
-	    		    /*bedrock channel incision*/
-	    		    dh = erodibility_aux	    /*Eq. 11 of T&S*/
-	    			    * pow((double)drainage[row][col].discharge, (double)spl_m)
-	    			    * pow((double)slope,			(double)spl_n)
-	    			    * dt_st;
-	    		    d_mass = THICK2SEDMASS(dh);
-	    		}
-	    		else{
-	    		    /*alluvial channel aggradation: sediment the excess*/
-	    		    d_mass =				    /*Eqs. 18 & 10 of T&S*/
-	    			    (transp_capacity_eq - drainage[row][col].masstr)
-	    			    * dt_st;
-	    		}
-	    		break;
-	    	      case 4:
-		    	/*Modified stream power used by Davy's group (see Loget et al., 2006, Gibraltar), similar to Beaumont's and Kooi's:*/
-		    	/*Transport capacity in equilibrium [kg/s].*/
-		    	transp_capacity_eq = K_river_cap * pow(drainage[row][col].discharge, 1.5) * slope;
-			TRANSPORT_BOUNDARY_CONDITIONS;
-			/*EROSION*/
-			if (transp_capacity_eq >= drainage[row][col].masstr) {
-			    ERODED_ERODIBILITY;
-			    d_mass  =  dist / erodibility_aux * (transp_capacity_eq - drainage[row][col].masstr) * dt_st;
-			}
-			/*SEDIMENTATION*/
-			else {
-			    d_mass  =  dist / l_fluv_sedim   *  (transp_capacity_eq - drainage[row][col].masstr) * dt_st;
-			}
-	    		break;
-		      case 5:
-		    	/*Undercapacity of Beaumont incorporating width by van der Beek & Bishop, 2003 (described in Cowie et al., 2006), modifies Beaumont's*/
-		    	/*Transport capacity in equilibrium [kg/s].*/
-		    	transp_capacity_eq = K_river_cap * drainage[row][col].discharge * slope;	    /*Eq. 16 of Tucker&Slingerland, 1996*/
+				if (transp_capacity_eq >= drainage[row][col].masstr) {
+				spl_m = 1/3;
+				spl_n = 2/3;
+				ERODED_ERODIBILITY;
+					/*bedrock channel incision*/
+					dh = erodibility_aux		/*Eq. 11 of T&S*/
+						* pow((double)drainage[row][col].discharge, (double)spl_m)
+						* pow((double)slope,			(double)spl_n)
+						* dt_st;
+					d_mass = THICK2SEDMASS(dh);
+				}
+				else{
+					/*alluvial channel aggradation: sediment the excess*/
+					d_mass =					/*Eqs. 18 & 10 of T&S*/
+						(transp_capacity_eq - drainage[row][col].masstr)
+						* dt_st;
+				}
+				break;
+				  case 4:
+				/*Modified stream power used by Davy's group (see Loget et al., 2006, Gibraltar), similar to Beaumont's and Kooi's:*/
+				/*Transport capacity in equilibrium [kg/s].*/
+				transp_capacity_eq = K_river_cap * pow(drainage[row][col].discharge, 1.5) * slope;
 			TRANSPORT_BOUNDARY_CONDITIONS;
 			/*EROSION*/
 			if (transp_capacity_eq >= drainage[row][col].masstr) {
-			    ERODED_ERODIBILITY;
-			    d_mass = dist / erodibility_aux / pow(drainage[row][col].discharge, .5) * (transp_capacity_eq - drainage[row][col].masstr) * dt_st;
+				ERODED_ERODIBILITY;
+				d_mass  =  dist / erodibility_aux * (transp_capacity_eq - drainage[row][col].masstr) * dt_st;
 			}
 			/*SEDIMENTATION*/
 			else {
-			    d_mass  =  dist / l_fluv_sedim * (transp_capacity_eq - drainage[row][col].masstr) * dt_st;
+				d_mass  =  dist / l_fluv_sedim   *  (transp_capacity_eq - drainage[row][col].masstr) * dt_st;
+			}
+				break;
+			  case 5:
+				/*Undercapacity of Beaumont incorporating width by van der Beek & Bishop, 2003 (described in Cowie et al., 2006), modifies Beaumont's*/
+				/*Transport capacity in equilibrium [kg/s].*/
+				transp_capacity_eq = K_river_cap * drainage[row][col].discharge * slope;		/*Eq. 16 of Tucker&Slingerland, 1996*/
+			TRANSPORT_BOUNDARY_CONDITIONS;
+			/*EROSION*/
+			if (transp_capacity_eq >= drainage[row][col].masstr) {
+				ERODED_ERODIBILITY;
+				d_mass = dist / erodibility_aux / pow(drainage[row][col].discharge, .5) * (transp_capacity_eq - drainage[row][col].masstr) * dt_st;
+			}
+			/*SEDIMENTATION*/
+			else {
+				d_mass  =  dist / l_fluv_sedim * (transp_capacity_eq - drainage[row][col].masstr) * dt_st;
 			}
 			break;
-		      case 6:
-		        /*Garcia-Castellanos & Villasenor (2011, Nature) basal shear stress approach:*/
-		        transp_capacity_eq = K_river_cap * drainage[row][col].discharge * slope;	    /*Eq. 16 of Tucker&Slingerland, 1996*/
+			  case 6:
+				/*Garcia-Castellanos & Villasenor (2011, Nature) basal shear stress approach:*/
+				transp_capacity_eq = K_river_cap * drainage[row][col].discharge * slope;		/*Eq. 16 of Tucker&Slingerland, 1996*/
 			TRANSPORT_BOUNDARY_CONDITIONS;
-		        if (transp_capacity_eq >= drainage[row][col].masstr) {
-			    float a=1.5, Kw=1.1, aw=0.5;
-			    spl_m = 3*a*(1-aw)/5;
-			    spl_n = 7*a/10;
-	    		    /*bedrock channel incision*/
-			    ERODED_ERODIBILITY;
-	    		    dh = erodibility_aux/secsperyr * pow(1020*g, a)
-	    			    * pow((double).05/Kw, (double) 3*a/5)
-				    * pow((double)drainage[row][col].discharge, (double)spl_m) 
-				    * pow((double)slope,			(double)spl_n)
-	    			    * dt_st;
-			    if (transp_capacity_eq) dh *= (transp_capacity_eq-drainage[row][col].masstr)/transp_capacity_eq;
-			    d_mass = THICK2SEDMASS(dh);
-	    		}
-	    		else{
-	    		    /*alluvial channel aggradation: sediment the excess*/
-	    		    d_mass = 
-	    			    dist / l_fluv_sedim * (transp_capacity_eq - drainage[row][col].masstr)
-	    			    * dt_st;
-	    		}
-	    		break;
-		      case 7:
-		        /*Ferrier et al. (2013, Nature) unit stream power approach:*/
-		        transp_capacity_eq = K_river_cap * drainage[row][col].discharge * slope;	    /*Eq. 16 of Tucker&Slingerland, 1996*/
+				if (transp_capacity_eq >= drainage[row][col].masstr) {
+				float a=1.5, Kw=1.1, aw=0.5;
+				spl_m = 3*a*(1-aw)/5;
+				spl_n = 7*a/10;
+					/*bedrock channel incision*/
+				ERODED_ERODIBILITY;
+					dh = erodibility_aux/secsperyr * pow(1020*g, a)
+						* pow((double).05/Kw, (double) 3*a/5)
+					* pow((double)drainage[row][col].discharge, (double)spl_m) 
+					* pow((double)slope,			(double)spl_n)
+						* dt_st;
+				if (transp_capacity_eq) dh *= (transp_capacity_eq-drainage[row][col].masstr)/transp_capacity_eq;
+				d_mass = THICK2SEDMASS(dh);
+				}
+				else{
+					/*alluvial channel aggradation: sediment the excess*/
+					d_mass = 
+						dist / l_fluv_sedim * (transp_capacity_eq - drainage[row][col].masstr)
+						* dt_st;
+				}
+				break;
+			  case 7:
+				/*Ferrier et al. (2013, Nature) unit stream power approach:*/
+				transp_capacity_eq = K_river_cap * drainage[row][col].discharge * slope;		/*Eq. 16 of Tucker&Slingerland, 1996*/
 			TRANSPORT_BOUNDARY_CONDITIONS;
-		        if (transp_capacity_eq >= drainage[row][col].masstr) {
-			    float a=1, Kw=1.1, aw=0.5;
-			    spl_m = (1-aw);
-			    spl_n = a;
-	    		    /*bedrock channel incision*/
-			    ERODED_ERODIBILITY;
-	    		    dh = erodibility_aux/secsperyr * pow(1020*g, a) / Kw 
-	    			    * pow((double)drainage[row][col].discharge, (double)spl_m) 
-				    * pow((double)slope, 			(double)spl_n) 
-	    			    * dt_st;
-			    if (transp_capacity_eq) dh *= (transp_capacity_eq-drainage[row][col].masstr)/transp_capacity_eq;
-			    d_mass = THICK2SEDMASS(dh);
-	    		}
-	    		else{
-	    		    /*alluvial channel aggradation: sediment the excess*/
-	    		    d_mass = 
-	    			    dist / l_fluv_sedim * (transp_capacity_eq - drainage[row][col].masstr)
-	    			    * dt_st;
-	    		}
-	    		break;
-	    	    }
-	    	    break;
-	    	default:
-	    	    PRINT_ERROR("[%d][%d] has no defined drainage type.", row, col);
-	    }
-	    
-	    if (AT_BORDER(row,col)) if (eros_bound_cond[BORDER_INDEX(row,col)]=='2') d_mass = 0;
-	    
-	    /*Limit d_mass with the sorrounding topo*/
-	    switch (drainage[row][col].type) {
-	      float Dhsed;
-	      case 'L':
-	    	    /*Sedimentation will be done in Lake_Fill().*/
-	    	    d_mass = 0;
-	    	    break;
-	      case 'R':
-	    	    /*RIVER EROSION/SEDIMENTATION*/
-	    	    Dhsed = -MASS2SEDTHICK(d_mass);
-	    	    /*Sedimentation*/		    /*minsorr_trib??  main_tribut_alt??*/
-	    	    if (Dhsed>0) Dhsed = MIN_2(Dhsed, MAX_2(minsorr_trib - topo[row][col]-1, 0));
-	    	    /*Erosion*/
-	    	    if (Dhsed<0) Dhsed = MAX_2(Dhsed, MIN_2(minsorr	 - topo[row][col]+1, 0));
-	    	    /*limit*/
-	    	    d_mass = -THICK2SEDMASS(Dhsed);
-	    	    break;
-	      case 'E':
-	    	    /*OUTLET RIVER-LIKE EROSION*/
-		    /*If not the sea*/
-	    	    if (topo[row][col]>sea_level || !AT_BORDER(row,col)) {
-	    		    Dhsed = -MASS2SEDTHICK(d_mass);
-	    		    if (Dhsed>0./*meters*/) {
-			    	if (Dhsed/dt_st*secsperMa/1e3>.5) PRINT_DEBUG("[%d][%d] (topo=%.1f) outlet of lake (%d nodes) but deposits %.1f mm/yr.", row, col, topo[row][col], Lake[drainage[row][col].lake].n, Dhsed/dt_st*secsperMa/1e3); 
+				if (transp_capacity_eq >= drainage[row][col].masstr) {
+				float a=1, Kw=1.1, aw=0.5;
+				spl_m = (1-aw);
+				spl_n = a;
+					/*bedrock channel incision*/
+				ERODED_ERODIBILITY;
+					dh = erodibility_aux/secsperyr * pow(1020*g, a) / Kw 
+						* pow((double)drainage[row][col].discharge, (double)spl_m) 
+					* pow((double)slope, 			(double)spl_n) 
+						* dt_st;
+				if (transp_capacity_eq) dh *= (transp_capacity_eq-drainage[row][col].masstr)/transp_capacity_eq;
+				d_mass = THICK2SEDMASS(dh);
+				}
+				else{
+					/*alluvial channel aggradation: sediment the excess*/
+					d_mass = 
+						dist / l_fluv_sedim * (transp_capacity_eq - drainage[row][col].masstr)
+						* dt_st;
+				}
+				break;
+				}
+				break;
+			default:
+				PRINT_ERROR("[%d][%d] has no defined drainage type.", row, col);
+		}
+		
+		if (AT_BORDER(row,col)) if (eros_bound_cond[BORDER_INDEX(row,col)]=='2') d_mass = 0;
+		
+		/*Limit d_mass with the sorrounding topo*/
+		switch (drainage[row][col].type) {
+		  float Dhsed;
+		  case 'L':
+				/*Sedimentation will be done in Lake_Fill().*/
+				d_mass = 0;
+				break;
+		  case 'R':
+				/*RIVER EROSION/SEDIMENTATION*/
+				Dhsed = -MASS2SEDTHICK(d_mass);
+				/*Sedimentation*/			/*minsorr_trib??  main_tribut_alt??*/
+				if (Dhsed>0) Dhsed = MIN_2(Dhsed, MAX_2(minsorr_trib - topo[row][col]-1, 0));
+				/*Erosion*/
+				if (Dhsed<0) Dhsed = MAX_2(Dhsed, MIN_2(minsorr	 - topo[row][col]+1, 0));
+				/*limit*/
+				d_mass = -THICK2SEDMASS(Dhsed);
+				break;
+		  case 'E':
+				/*OUTLET RIVER-LIKE EROSION*/
+			/*If not the sea*/
+				if (topo[row][col]>sea_level || !AT_BORDER(row,col)) {
+					Dhsed = -MASS2SEDTHICK(d_mass);
+					if (Dhsed>0./*meters*/) {
+					if (Dhsed/dt_st*secsperMa/1e3>.5) PRINT_DEBUG("[%d][%d] (topo=%.1f) outlet of lake (%d nodes) but deposits %.1f mm/yr.", row, col, topo[row][col], Lake[drainage[row][col].lake].n, Dhsed/dt_st*secsperMa/1e3); 
 				Dhsed=0; /*!!*/
-			    }
-	    		    if (Dhsed<=0) Dhsed = MAX_2(Dhsed, MIN_2(minsorr-topo[row][col]+1, 0));
-	    		    d_mass = -THICK2SEDMASS(Dhsed);
-	    	    }
-	    	    /*Else, sea outlets (border nodes below sea_level) are already sedimented in Lake_Fill*/
-	    	    else
-	    		    d_mass = 0;
-	    	    break;
-	      default:
-	    	    PRINT_ERROR("[%d][%d] has no defined drainage type.", row, col);
-	    }
+				}
+					if (Dhsed<=0) Dhsed = MAX_2(Dhsed, MIN_2(minsorr-topo[row][col]+1, 0));
+					d_mass = -THICK2SEDMASS(Dhsed);
+				}
+				/*Else, sea outlets (border nodes below sea_level) are already sedimented in Lake_Fill*/
+				else
+					d_mass = 0;
+				break;
+		  default:
+				PRINT_ERROR("[%d][%d] has no defined drainage type.", row, col);
+		}
 
-	    /*Adds results to the topo and the next load Dq and removes/adds material to the Blocks*/
-	    if (d_mass<0) {
-	    	    /*SEDIMENTATION, limit d_mass with the masstr in this node*/
-	    	    d_mass = MAX_2(d_mass, -drainage[row][col].masstr*dt_st);
-	    	    Sediment (-d_mass, row, col);
-	    }
-	    if (d_mass>0) {
-	    	    /*EROSION.*/
-	    	    Erode    ( d_mass, row, col);
-	    }
+		/*Adds results to the topo and the next load Dq and removes/adds material to the Blocks*/
+		if (d_mass<0) {
+				/*SEDIMENTATION, limit d_mass with the masstr in this node*/
+				d_mass = MAX_2(d_mass, -drainage[row][col].masstr*dt_st);
+				Sediment (-d_mass, row, col);
+		}
+		if (d_mass>0) {
+				/*EROSION.*/
+				Erode	( d_mass, row, col);
+		}
 
-	    /*Adds the mass increment to the transferring mass contained in this cell: */
-	    drainage[row][col].masstr += d_mass/dt_st;
-	    /*Transfers suspended solid mass.*/
-	    if (IN_DOMAIN(drow,dcol)) {
+		/*Adds the mass increment to the transferring mass contained in this cell: */
+		drainage[row][col].masstr += d_mass/dt_st;
+		/*Transfers suspended solid mass.*/
+		if (IN_DOMAIN(drow,dcol)) {
 		int ild = drainage[drow][dcol].lake;
 		float hl;
 		switch (drainage[drow][dcol].type) {
-		    case 'L':
+			case 'L':
 			drainage[drow][dcol].masstr += drainage[row][col].masstr;
 			/*If draining to an OPEN lake:*/
 			if (Lake[ild].n_sd) {
-			    float diff; 
-			    /*Check: this can happen when a node transferring to a lake is eroded below the lake level or when the lake node was already deposited and became higher than the tributary node. See Lake_Fill at Dhsed=...*/
-			    if (IN_DOMAIN(drainage[drow][dcol].dr_row, drainage[drow][dcol].dr_col))  if (diff=(topo[drainage[drow][dcol].dr_row][drainage[drow][dcol].dr_col] - topo[row][col]) > 0)
-				    if (fabs(diff)>2 || verbose_level>=3) PRINT_ERROR("[%d][%d] transferring mass to lake in [%d][%d] is < than outlet [%d][%d] by %.1f m.", row, col, drow, dcol, drainage[drow][dcol].dr_row, drainage[drow][dcol].dr_col, diff);
-			    /*
+				float diff; 
+				/*Check: this can happen when a node transferring to a lake is eroded below the lake level or when the lake node was already deposited and became higher than the tributary node. See Lake_Fill at Dhsed=...*/
+				if (IN_DOMAIN(drainage[drow][dcol].dr_row, drainage[drow][dcol].dr_col))  if (diff=(topo[drainage[drow][dcol].dr_row][drainage[drow][dcol].dr_col] - topo[row][col]) > 0)
+					if (fabs(diff)>2 || verbose_level>=3) PRINT_ERROR("[%d][%d] transferring mass to lake in [%d][%d] is < than outlet [%d][%d] by %.1f m.", row, col, drow, dcol, drainage[drow][dcol].dr_row, drainage[drow][dcol].dr_col, diff);
+				/*
 				hl = topo[Lake[ild].row_sd[0]][Lake[ild].col_sd[0]] + 1;
 				if (topo[Lake[ild].row_sd[0]][Lake[ild].col_sd[0]] < sea_level && AT_BORDER(Lake[ild].row_sd[0], Lake[ild].col_sd[0]))
 					hl = sea_level;
-			    */
-			    hl = topo[row][col];  /*MIN_2 (Lake[ild].alt+1., topo[row][col]-1.);??*/
-			    Lake_Fill (Lake, drow, dcol, hl, dt_st, lake_instant_fill);
-			    if (IN_DOMAIN(drainage[drow][dcol].dr_row, drainage[drow][dcol].dr_col))
-			    	    /*Next line commented in tAo!!*/
-				    drainage[drainage[drow][dcol].dr_row][drainage[drow][dcol].dr_col].masstr += drainage[drow][dcol].masstr;
-			    else
-				    *total_lost_sed_mass += drainage[row][col].masstr * dt_st;
+				*/
+				hl = topo[row][col];  /*MIN_2 (Lake[ild].alt+1., topo[row][col]-1.);??*/
+				Lake_Fill (Lake, drow, dcol, hl, dt_st, lake_instant_fill);
+				if (IN_DOMAIN(drainage[drow][dcol].dr_row, drainage[drow][dcol].dr_col))
+						/*Next line commented in tAo!!*/
+					drainage[drainage[drow][dcol].dr_row][drainage[drow][dcol].dr_col].masstr += drainage[drow][dcol].masstr;
+				else
+					*total_lost_sed_mass += drainage[row][col].masstr * dt_st;
 			}
 			/*If draining to an CLOSED (endorheic) lake:*/
 			else {
-			    hl = topo[row][col];
-			    Lake_Fill (Lake, drow, dcol, hl, dt_st, lake_instant_fill);
-			    /*Check: should be no sediment left.*/
-			    if (drainage[drow][dcol].masstr > .1)
+				hl = topo[row][col];
+				Lake_Fill (Lake, drow, dcol, hl, dt_st, lake_instant_fill);
+				/*Check: should be no sediment left.*/
+				if (drainage[drow][dcol].masstr > .1)
 				PRINT_ERROR("[%d][%d] transferring to a closed lake %d in [%d][%d] returns %.1f kg/s.",
-				    row, col, ild, drow, dcol, drainage[drow][dcol].masstr);
+					row, col, ild, drow, dcol, drainage[drow][dcol].masstr);
 			}
 			/*Next line commented in tAo!!*/
 			drainage[drow][dcol].masstr = 0;
 			break;
-		    case 'R':
-		    case 'E':
+			case 'R':
+			case 'E':
 			drainage[drow][dcol].masstr += drainage[row][col].masstr;
 			break;
 		 }
-	    }
-	    else {
-		    /*Transfers out of model.*/
-		    *total_lost_sed_mass += drainage[row][col].masstr * dt_st;
-	    }
+		}
+		else {
+			/*Transfers out of model.*/
+			*total_lost_sed_mass += drainage[row][col].masstr * dt_st;
+		}
 	}
 	return(1);
 }
@@ -1416,14 +1453,14 @@ int Ice_Flow(float **ice_velx_sl, float **ice_vely_sl, float **ice_velx_df, floa
 		for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) {
 			float 	kc = 1e5 /*[m]*/,
 				A_ice_rheo = 2.5e-16/secsperyr /*Pa-3/s*/, /*See Knap et al., 1996; Values are identical to Tomkin's, just different units (seconds and years)*/
-				A_sl       = 1.9e-10/secsperyr /*Pa-3/s/m2*/,
+				A_sl	   = 1.9e-10/secsperyr /*Pa-3/s/m2*/,
 				vel, vel_limit, curvtopoxx, curvtopoyy, curvtopoxy, curvtopograd,
 				beta, gradicetopox, gradicetopoy, modgradicetopo, D_df, D_sl;
 			int 	il, jl,
 				n_ice_rheo=3;
 			il=i; jl=j;
-			if (il==0)    il = 1;		if (il==Ny-1) il = Ny-2;
-			if (jl==0)    jl = 1;		if (jl==Nx-1) jl = Nx-2;
+			if (il==0)	il = 1;		if (il==Ny-1) il = Ny-2;
+			if (jl==0)	jl = 1;		if (jl==Nx-1) jl = Nx-2;
 			/*gradient of bedrock topography and curvature of ice surface topography.*/
 			gradicetopox = (icetopo[il][jl+1]-icetopo[il][jl-1]) /2/dx;
 			gradicetopoy = (icetopo[il-1][jl]-icetopo[il+1][jl]) /2/dy;
@@ -1434,8 +1471,8 @@ int Ice_Flow(float **ice_velx_sl, float **ice_vely_sl, float **ice_velx_df, floa
 			/*ice constriction factor depending on the topo curvature perpendicular to ice flow.*/
 			if (modgradicetopo)
 				curvtopograd =  pow(gradicetopoy/modgradicetopo,2)*curvtopoxx
-					      + pow(gradicetopox/modgradicetopo,2)*curvtopoyy
-					      + 2*gradicetopox*gradicetopoy/modgradicetopo/modgradicetopo*curvtopoxy;
+						  + pow(gradicetopox/modgradicetopo,2)*curvtopoyy
+						  + 2*gradicetopox*gradicetopoy/modgradicetopo/modgradicetopo*curvtopoxy;
 			else	curvtopograd = 0;
 			curvtopograd = MAX_2(curvtopograd, -.9/kc);
 			beta = 1 / (1+kc*curvtopograd);
@@ -1444,7 +1481,7 @@ int Ice_Flow(float **ice_velx_sl, float **ice_vely_sl, float **ice_velx_df, floa
 			  Tomkin's thesis has mistakes, and there D includes the ice_thickness required to convert velocity into flow.
 			*/
 			D_df =  -2*A_ice_rheo/(n_ice_rheo+2) * beta*pow(densice*g*ice_thickness[i][j],n_ice_rheo) * pow(modgradicetopo,n_ice_rheo-1) * ice_thickness[i][j];
-			D_sl =  -A_sl/.8                     * beta*pow(densice*g*ice_thickness[i][j],n_ice_rheo) * pow(modgradicetopo,n_ice_rheo-1) ;
+			D_sl =  -A_sl/.8					 * beta*pow(densice*g*ice_thickness[i][j],n_ice_rheo) * pow(modgradicetopo,n_ice_rheo-1) ;
 
 			melt_temp = melt_temp_per_depth*ice_thickness[i][j];
 			/*No slip if ice bottom is frozen (apply a gradual change around the melting temperature)*/
@@ -1498,9 +1535,9 @@ int Ice_Flow(float **ice_velx_sl, float **ice_vely_sl, float **ice_velx_df, floa
 			if (i>0)	q_up  = ( D_coeff[i-1][j]*ice_thickness[i-1][j] + D_coeff[i][j]*ice_thickness[i][j] )/2  *  (+icetopo[i-1][j] - icetopo[i][j]) / dy;
 			if (i<Ny-1)	q_dw  = ( D_coeff[i+1][j]*ice_thickness[i+1][j] + D_coeff[i][j]*ice_thickness[i][j] )/2  *  (-icetopo[i+1][j] + icetopo[i][j]) / dy;
 
-			if (i>0    && j<Nx-1)	q_ru  = ( D_coeff[i-1][j+1]*ice_thickness[i-1][j+1] + D_coeff[i][j]*ice_thickness[i][j] )/2  *  (+icetopo[i-1][j+1] - icetopo[i][j]) / dx;
+			if (i>0	&& j<Nx-1)	q_ru  = ( D_coeff[i-1][j+1]*ice_thickness[i-1][j+1] + D_coeff[i][j]*ice_thickness[i][j] )/2  *  (+icetopo[i-1][j+1] - icetopo[i][j]) / dx;
 			if (i<Ny-1 && j<Nx-1)	q_rd  = ( D_coeff[i+1][j+1]*ice_thickness[i+1][j+1] + D_coeff[i][j]*ice_thickness[i][j] )/2  *  (+icetopo[i+1][j+1] - icetopo[i][j]) / dx;
-			if (i>0    && j>0   )	q_lu  = ( D_coeff[i-1][j-1]*ice_thickness[i-1][j-1] + D_coeff[i][j]*ice_thickness[i][j] )/2  *  (-icetopo[i-1][j-1] + icetopo[i][j]) / dy;
+			if (i>0	&& j>0   )	q_lu  = ( D_coeff[i-1][j-1]*ice_thickness[i-1][j-1] + D_coeff[i][j]*ice_thickness[i][j] )/2  *  (-icetopo[i-1][j-1] + icetopo[i][j]) / dy;
 			if (i<Ny-1 && j>0)	q_ld  = ( D_coeff[i+1][j-1]*ice_thickness[i+1][j-1] + D_coeff[i][j]*ice_thickness[i][j] )/2  *  (-icetopo[i+1][j-1] + icetopo[i][j]) / dy;
 
 			/*Sedim. load flow qs.*/
@@ -1559,16 +1596,16 @@ int Ice_Flow(float **ice_velx_sl, float **ice_vely_sl, float **ice_velx_df, floa
 
 			/*Limit the amount of thickening to the available upflow ice thickness*/
 			if (dh[i][j]>0 && ice_thickness[i][j]) {
-			    float maxdh, vel_df_abs;
-			    int il, jl;
-			    vel_df_abs = fabs(ice_velx_df[i][j])+fabs(ice_vely_df[i][j]);
-			    if (ice_velx_df[i][j]>0) 	{jl=MAX_2(j-1,0);   }
-			    else  			{jl=MIN_2(j+1,Nx-1);}
-			    if (ice_vely_df[i][j]>0) 	{il=MIN_2(i+1,Ny-1);}
-			    else  			{il=MAX_2(i-1,0);   }
-			    if (vel_df_abs) maxdh = (fabs(ice_velx_df[i][j])*ice_thickness[i][jl] + fabs(ice_vely_df[i][j])*ice_thickness[il][j]) / vel_df_abs;
-			    else maxdh = 1e23;
-			    dh[i][j]  = MIN_2(dh[i][j],  maxdh);
+				float maxdh, vel_df_abs;
+				int il, jl;
+				vel_df_abs = fabs(ice_velx_df[i][j])+fabs(ice_vely_df[i][j]);
+				if (ice_velx_df[i][j]>0) 	{jl=MAX_2(j-1,0);   }
+				else  			{jl=MIN_2(j+1,Nx-1);}
+				if (ice_vely_df[i][j]>0) 	{il=MIN_2(i+1,Ny-1);}
+				else  			{il=MAX_2(i-1,0);   }
+				if (vel_df_abs) maxdh = (fabs(ice_velx_df[i][j])*ice_thickness[i][jl] + fabs(ice_vely_df[i][j])*ice_thickness[il][j]) / vel_df_abs;
+				else maxdh = 1e23;
+				dh[i][j]  = MIN_2(dh[i][j],  maxdh);
 			}
 
 			ice_def_vol_incr += dh[i][j];
@@ -1604,14 +1641,14 @@ int Ice_Flow(float **ice_velx_sl, float **ice_vely_sl, float **ice_velx_df, floa
 
 			/*Transfer melt water to river network*/
 			if (drainage[i][j].type == 'L') {
-			    if (IN_DOMAIN(drainage[i][j].dr_row, drainage[i][j].dr_col)) {
+				if (IN_DOMAIN(drainage[i][j].dr_row, drainage[i][j].dr_col)) {
 				drainage[drainage[i][j].dr_row][drainage[i][j].dr_col].discharge += ice_melt*dx*dy / n_iters;
-			    }
-			    else {
-			    	if (AT_BORDER(i,j))
+				}
+				else {
+					if (AT_BORDER(i,j))
 					*total_lost_water += ice_melt*dx*dy / n_iters;
 				else 	*total_evap_water += ice_melt*dx*dy / n_iters;
-			    }
+				}
 			}
 			else {
 				drainage[i][j].discharge += ice_melt*dx*dy / n_iters;
@@ -1623,15 +1660,15 @@ int Ice_Flow(float **ice_velx_sl, float **ice_vely_sl, float **ice_velx_df, floa
 			float ice_sed_vol_incr=0, ice_sed_vol_incr_corr=0, ice_sed_vol=0;  
 			int numpositive=0;
 			for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) {
-			    ice_sed_vol_incr += dhl[i][j];
-			    ice_sed_vol += ice_sedm_load[i][j];
+				ice_sed_vol_incr += dhl[i][j];
+				ice_sed_vol += ice_sedm_load[i][j];
 			}
 			for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) {
-			    if (ice_sedm_load[i][j]>ice_sed_vol_incr/Nx/Ny) numpositive++;
+				if (ice_sedm_load[i][j]>ice_sed_vol_incr/Nx/Ny) numpositive++;
 			}
 			for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) {
-			    if (ice_sedm_load[i][j]>ice_sed_vol_incr/Nx/Ny) dhl[i][j] -= ice_sed_vol_incr/numpositive;
-			    ice_sed_vol_incr_corr += dhl[i][j];
+				if (ice_sedm_load[i][j]>ice_sed_vol_incr/Nx/Ny) dhl[i][j] -= ice_sed_vol_incr/numpositive;
+				ice_sed_vol_incr_corr += dhl[i][j];
 			}
 			ice_sed_vol *= dx*dy;
 			ice_sed_vol_incr_corr *= dx*dy;
@@ -1655,7 +1692,7 @@ int Ice_Flow(float **ice_velx_sl, float **ice_vely_sl, float **ice_velx_df, floa
 		/*{
 			float max_abs_dh=0;
 			for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) {
-			    max_abs_dh = MAX_2(max_abs_dh, fabs(dh[i][j]));
+				max_abs_dh = MAX_2(max_abs_dh, fabs(dh[i][j]));
 			}
 			max_abs_dh /= (dt_ice/secsperyr);
 			if (verbose_level>=3) fprintf(stdout, "\tmax.change: %.3f m/yr", max_abs_dh);
@@ -1772,35 +1809,35 @@ int Lake_Fill (
 
 	/*Propagate 1 cell per loop:*/
 	for (;;) {
-	    int n_prop=1, n_to_do=0; 
-	    /*Count the n_to_do untreated lake nodes that are next to the n_done already treated lake nodes*/
-	    n_prop; n_to_do; total_weight_distr=0;
-	    for (int m=0; m<n_done; m++) {
-	    	int i=done[m].row, j=done[m].col;
+		int n_prop=1, n_to_do=0; 
+		/*Count the n_to_do untreated lake nodes that are next to the n_done already treated lake nodes*/
+		n_prop; n_to_do; total_weight_distr=0;
+		for (int m=0; m<n_done; m++) {
+			int i=done[m].row, j=done[m].col;
 		ro[0]=i-1, ro[1]=i,   ro[2]=i+1, ro[3]=i,   ro[4]=i-1, ro[5]=i+1, ro[6]=i+1, ro[7]=i-1;
 		co[0]=j,   co[1]=j+1, co[2]=j,   co[3]=j-1, co[4]=j+1, co[5]=j+1, co[6]=j-1, co[7]=j-1;
 		for (int k=0; k<NDERS; k++) {
-		    /*if it's in the lake but not treated*/
-		    if (IN_DOMAIN(ro[k],co[k])) {
+			/*if it's in the lake but not treated*/
+			if (IN_DOMAIN(ro[k],co[k])) {
 			if (drainage[ro[k]][co[k]].lake == il) {
-			    if (!done_grid[ro[k]][co[k]]) {
+				if (!done_grid[ro[k]][co[k]]) {
 				to_do[n_to_do].row = ro[k];
 				to_do[n_to_do].col = co[k];
 				n_to_do++;
-			    }
-			    if (k<4) {total_weight_distr += 1;        done_grid[ro[k]][co[k]] += 1;}
-			    else     {total_weight_distr += 1/1.4142; done_grid[ro[k]][co[k]] += 1/1.4142;}
+				}
+				if (k<4) {total_weight_distr += 1;		done_grid[ro[k]][co[k]] += 1;}
+				else	 {total_weight_distr += 1/1.4142; done_grid[ro[k]][co[k]] += 1/1.4142;}
 			}
-		    }
+			}
 		}
-	    }
-	    if (!n_to_do || drainage[row][col].masstr<.001) break;
-	    d_mass_now = dxy / l_fluv_sedim_aux * (0 - drainage[row][col].masstr) * dt_st;
-	    d_mass_now = MAX_2(d_mass_now, -drainage[row][col].masstr*dt_st);
-	    d_mass_now /= total_weight_distr;
-	    /*Sediment in the counted n_to_do untreated lake nodes*/
-	    n_done=0; n_prop++;
-	    for (int i=0; i<n_to_do; i++) {
+		}
+		if (!n_to_do || drainage[row][col].masstr<.001) break;
+		d_mass_now = dxy / l_fluv_sedim_aux * (0 - drainage[row][col].masstr) * dt_st;
+		d_mass_now = MAX_2(d_mass_now, -drainage[row][col].masstr*dt_st);
+		d_mass_now /= total_weight_distr;
+		/*Sediment in the counted n_to_do untreated lake nodes*/
+		n_done=0; n_prop++;
+		for (int i=0; i<n_to_do; i++) {
 		/*Limit d_mass with the lake height and with a small slope from the outlet towards the lake*/
 		/*Removing the 1. in "MAX_2(hl+1.-(..." leads to formation of Mississippi-like levees in deltas*/
 		Dhsedmax = MAX_2(hl+1.-(float)n_prop*(dx+dy)/2*.001-topo[to_do[i].row][to_do[i].col], 0);
@@ -1820,8 +1857,8 @@ int Lake_Fill (
 		done[i].col = to_do[i].col;
 		n_total_done++;
 		n_done++;
-	    }
-	    if (n_done != n_to_do) PRINT_ERROR("n_done (%d) != n_to_do (%d).", n_done, n_to_do);
+		}
+		if (n_done != n_to_do) PRINT_ERROR("n_done (%d) != n_to_do (%d).", n_done, n_to_do);
 	}
 
 	/*
@@ -1878,9 +1915,9 @@ int Landslide_Transport (float critical_slope, float dt, float dt_eros)
 	PRINT_INFO("n_iters=%3d", n_iters);
 
 	for (int k=0; k<n_iters; k++) {
- 	    /*Adds results to the height and the next load Dq and removes material from the Blocks*/
- 	    for(int i=0; i<Ny; i++)  for(int j=0; j<Nx; j++)  {
-	    	int ro[NDERS], co[NDERS], imaxslope, l;
+ 		/*Adds results to the height and the next load Dq and removes material from the Blocks*/
+ 		for(int i=0; i<Ny; i++)  for(int j=0; j<Nx; j++)  {
+			int ro[NDERS], co[NDERS], imaxslope, l;
 		float maxdiff, dl;
 		ro[0]=i-1, ro[1]=i,   ro[2]=i+1, ro[3]=i,   ro[4]=i-1, ro[5]=i+1, ro[6]=i+1, ro[7]=i-1;
 		co[0]=j,   co[1]=j+1, co[2]=j,   co[3]=j-1, co[4]=j+1, co[5]=j+1, co[6]=j-1, co[7]=j-1;
@@ -1897,15 +1934,15 @@ int Landslide_Transport (float critical_slope, float dt, float dt_eros)
 		}
 
 		if (imaxslope>=0) {
-    		    dl = sqrt(pow(dy*(ro[imaxslope]-i),2)+pow(dx*(co[imaxslope]-j),2));
-    		    if (critical_slope < maxdiff/dl) {
-			    /*it should preserve mass instead of using denscrust!!*/
-    			    Dheros = maxdiff/4; /*reduces slope by 1/2*/
-			    Erode    (Dheros*dx*dy*denscrust, i, j);
-			    Sediment (Dheros*dx*dy*denscrust, ro[imaxslope], co[imaxslope]);
-    		    }
+				dl = sqrt(pow(dy*(ro[imaxslope]-i),2)+pow(dx*(co[imaxslope]-j),2));
+				if (critical_slope < maxdiff/dl) {
+				/*it should preserve mass instead of using denscrust!!*/
+					Dheros = maxdiff/4; /*reduces slope by 1/2*/
+				Erode	(Dheros*dx*dy*denscrust, i, j);
+				Sediment (Dheros*dx*dy*denscrust, ro[imaxslope], co[imaxslope]);
+				}
 		}
-	    }
+		}
 	}
 
 	return (1);
@@ -1988,8 +2025,8 @@ int Damn_River_Node (
 	int i,  int j)  	/* node of the river to which ia,ja must drain*/
 {
 	/*
-	    Damns the previous (upper) node ia,ja, belonging to the river 
-	    so that it drains to this i,j river node.
+		Damns the previous (upper) node ia,ja, belonging to the river 
+		so that it drains to this i,j river node.
 	*/
 
 	/*Rise the 8 sorrounding damn nodes clockwise:*/
@@ -2243,7 +2280,7 @@ int Delete_Node_From_Lake (int row, int col)
 		switch (k) {
 			case 1: case 6: dist=dy;  break;   /*N,S*/
 			case 3: case 4: dist=dx;  break;   /*E,W*/
-			default:        dist=dxy; break;   /*others*/
+			default:		dist=dxy; break;   /*others*/
 		}
 		if (IN_DOMAIN(ro[k],co[k])) {
 			deriv = (topo[ro[k]][co[k]]-topo[i][j])/dist;
@@ -2284,42 +2321,42 @@ int Delete_Node_From_Lake (int row, int col)
 		/*Remove and deallocate outlet*/
 		Lake[il].n_sd--;
 		for (i=i_outlet; i<Lake[il].n_sd; i++) {
-		    Lake[il].row_sd[i] = Lake[il].row_sd[i+1];
-		    Lake[il].col_sd[i] = Lake[il].col_sd[i+1];
+			Lake[il].row_sd[i] = Lake[il].row_sd[i+1];
+			Lake[il].col_sd[i] = Lake[il].col_sd[i+1];
 		}
 		Lake[il].row_sd = realloc(Lake[il].row_sd, Lake[il].n_sd*sizeof(int));
 		Lake[il].col_sd = realloc(Lake[il].col_sd, Lake[il].n_sd*sizeof(int));
 		/*Rearrange drainage in lake*/
 		if (Lake[il].n_sd) {
-		    /*Lake nodes draining to this outlet should drain to the another (nearest) outlet:*/
-		    for (i=0; i<Lake[il].n; i++) {
-		    	lrow = Lake[il].row[i]; lcol = Lake[il].col[i];
-		    	if (drainage[lrow][lcol].dr_row == row && drainage[lrow][lcol].dr_col == col) {
-		    	    int imindist2=-1;
-			    float mindist2=1e24, distx, disty, dist2;
-		    	    for (k=0; k<Lake[il].n_sd; k++) {
-		    		distx = (Lake[il].col_sd[k]-lcol) * dxdivdy;
-		    		disty = (Lake[il].row_sd[k]-lrow);
-		    		dist2 = distx*distx + disty*disty;
-		    		if (dist2 < mindist2) {imindist2=k; mindist2=dist2;}
-		    	    }
-		    	    drainage[lrow][lcol].dr_row = Lake[il].row_sd[imindist2];
-		    	    drainage[lrow][lcol].dr_col = Lake[il].col_sd[imindist2];
-		    	    drainage[row][col].discharge -= drainage[lrow][lcol].discharge;
-		    	    drainage[drainage[lrow][lcol].dr_row][drainage[lrow][lcol].dr_col].discharge += drainage[lrow][lcol].discharge;
-		    	}
-		    	if (drainage[lrow][lcol].lake != il)
-		    	    PRINT_ERROR("'Lake' %d (%dth of %d) and 'drainage' %d don't match in node [%d][%d].", il, i, Lake[il].n, drainage[lrow][lcol].lake, lrow, lcol);
-		    }
+			/*Lake nodes draining to this outlet should drain to the another (nearest) outlet:*/
+			for (i=0; i<Lake[il].n; i++) {
+				lrow = Lake[il].row[i]; lcol = Lake[il].col[i];
+				if (drainage[lrow][lcol].dr_row == row && drainage[lrow][lcol].dr_col == col) {
+					int imindist2=-1;
+				float mindist2=1e24, distx, disty, dist2;
+					for (k=0; k<Lake[il].n_sd; k++) {
+					distx = (Lake[il].col_sd[k]-lcol) * dxdivdy;
+					disty = (Lake[il].row_sd[k]-lrow);
+					dist2 = distx*distx + disty*disty;
+					if (dist2 < mindist2) {imindist2=k; mindist2=dist2;}
+					}
+					drainage[lrow][lcol].dr_row = Lake[il].row_sd[imindist2];
+					drainage[lrow][lcol].dr_col = Lake[il].col_sd[imindist2];
+					drainage[row][col].discharge -= drainage[lrow][lcol].discharge;
+					drainage[drainage[lrow][lcol].dr_row][drainage[lrow][lcol].dr_col].discharge += drainage[lrow][lcol].discharge;
+				}
+				if (drainage[lrow][lcol].lake != il)
+					PRINT_ERROR("'Lake' %d (%dth of %d) and 'drainage' %d don't match in node [%d][%d].", il, i, Lake[il].n, drainage[lrow][lcol].lake, lrow, lcol);
+			}
 		}
  		/*If this was the last outlet then change drainage of all lake nodes*/
 		else {
-		    for (i=0; i<Lake[il].n; i++) {
-		    	lrow = Lake[il].row[i]; lcol = Lake[il].col[i];
-		    	drainage[lrow][lcol].dr_row = SIGNAL;
-		    	drainage[lrow][lcol].dr_col = SIGNAL;
-		    	drainage[row][col].discharge -= drainage[lrow][lcol].discharge;
-		    }
+			for (i=0; i<Lake[il].n; i++) {
+				lrow = Lake[il].row[i]; lcol = Lake[il].col[i];
+				drainage[lrow][lcol].dr_row = SIGNAL;
+				drainage[lrow][lcol].dr_col = SIGNAL;
+				drainage[row][col].discharge -= drainage[lrow][lcol].discharge;
+			}
 		}
 	}
 
@@ -2375,28 +2412,28 @@ int Divide_Lake (int row, int col /*lake node to be removed*/)
 	local_num_lakes=1;
 	/*Check by pairs excluding row,col*/
 	for (i=0; i<Lake[il].n; i++)  if (i!=i_node) {
-	    for (j=0; j<i; j++)  if (j!=i_node) {
+		for (j=0; j<i; j++)  if (j!=i_node) {
 		if (NEIGHBOURS(Lake[il].row[i],Lake[il].col[i], Lake[il].row[j],Lake[il].col[j])) {
-		    if (!new_lake_num[i]) new_lake_num[i] = new_lake_num[j];
-		    else if (new_lake_num[i] != new_lake_num[j]) {
-			    /*Unify two local lakes by removing new_lake_num[i]:*/
-			    int dying_lake_num=new_lake_num[i];
-			    int surviving_lake_num=new_lake_num[j];
-			    //if (surviving_lake_num>dying_lake_num) surviving_lake_num--;
-			    for (k=0; k<=i; k++) {
-				    if (new_lake_num[k]==dying_lake_num)
-					    new_lake_num[k]=surviving_lake_num;
-				    if (new_lake_num[k]>dying_lake_num)
-					    new_lake_num[k]--;
-			    }
-			    local_num_lakes --;
-		    }
+			if (!new_lake_num[i]) new_lake_num[i] = new_lake_num[j];
+			else if (new_lake_num[i] != new_lake_num[j]) {
+				/*Unify two local lakes by removing new_lake_num[i]:*/
+				int dying_lake_num=new_lake_num[i];
+				int surviving_lake_num=new_lake_num[j];
+				//if (surviving_lake_num>dying_lake_num) surviving_lake_num--;
+				for (k=0; k<=i; k++) {
+					if (new_lake_num[k]==dying_lake_num)
+						new_lake_num[k]=surviving_lake_num;
+					if (new_lake_num[k]>dying_lake_num)
+						new_lake_num[k]--;
+				}
+				local_num_lakes --;
+			}
 		}
-	    }
-	    if (!new_lake_num[i]) {
-	    	local_num_lakes ++;
-	    	new_lake_num[i] = local_num_lakes;
-	    }
+		}
+		if (!new_lake_num[i]) {
+			local_num_lakes ++;
+			new_lake_num[i] = local_num_lakes;
+		}
 	}
 
 	/*If the lake remains fully connected, then exit the routine*/
@@ -2416,26 +2453,26 @@ int Divide_Lake (int row, int col /*lake node to be removed*/)
 
 	/*Substract to row,col the drainage comming from the lake (only has sense for outlets)*/
 	if (i_outlet>=0) {
-	    int drow, dcol;
-	    for (i=0; i<Lake[il].n; i++) {
-	    	drow = drainage[Lake[il].row[i]][Lake[il].col[i]].dr_row;
-	    	dcol = drainage[Lake[il].row[i]][Lake[il].col[i]].dr_col;
+		int drow, dcol;
+		for (i=0; i<Lake[il].n; i++) {
+			drow = drainage[Lake[il].row[i]][Lake[il].col[i]].dr_row;
+			dcol = drainage[Lake[il].row[i]][Lake[il].col[i]].dr_col;
 		if (drow==row && dcol==col) 
 			drainage[row][col].discharge -= drainage[Lake[il].row[i]][Lake[il].col[i]].discharge;
-	    }
+		}
 	}
 
 	/*Distribute the nodes among the new lakes and delete the original lake*/
 	for (i=1, k=0; i<=local_num_lakes; i++) {
-	    int new_lake;
-	    new_lake = New_Lake();
- 	    for (j=0; j<Lake[il].n; j++)
+		int new_lake;
+		new_lake = New_Lake();
+ 		for (j=0; j<Lake[il].n; j++)
  		if (new_lake_num[j]==i) {
-		    k++;
-		    Add_Node_To_Lake   (Lake[il].row[j], Lake[il].col[j], new_lake);
-		    if (drainage[Lake[il].row[j]][Lake[il].col[j]].type=='E') {
-			    Add_Outlet_To_Lake (Lake[il].row[j], Lake[il].col[j], drainage[Lake[il].row[j]][Lake[il].col[j]].dr_row, drainage[Lake[il].row[j]][Lake[il].col[j]].dr_col, new_lake);
-		    }
+			k++;
+			Add_Node_To_Lake   (Lake[il].row[j], Lake[il].col[j], new_lake);
+			if (drainage[Lake[il].row[j]][Lake[il].col[j]].type=='E') {
+				Add_Outlet_To_Lake (Lake[il].row[j], Lake[il].col[j], drainage[Lake[il].row[j]][Lake[il].col[j]].dr_row, drainage[Lake[il].row[j]][Lake[il].col[j]].dr_col, new_lake);
+			}
  		}
 	}
 	if (k!=Lake[il].n-1) PRINT_ERROR("%d new-lake nodes were expected rather than %d", Lake[il].n-1, k);
@@ -2451,35 +2488,35 @@ int Divide_Lake (int row, int col /*lake node to be removed*/)
 		Define_Lake(i);
 		/*Substract in the outlets the water that came from nodes that now are in another lake*/
 		/*for (j=0; j<Lake[i].n; j++) {
-		    	drow = drainage[Lake[i].row[j]][Lake[i].col[j]].dr_row;
-		    	dcol = drainage[Lake[i].row[j]][Lake[i].col[j]].dr_col;
+				drow = drainage[Lake[i].row[j]][Lake[i].col[j]].dr_row;
+				dcol = drainage[Lake[i].row[j]][Lake[i].col[j]].dr_col;
 			if (drainage[drow][dcol].lake!=i && drainage[drow][dcol].type=='E') 
 				drainage[drow][dcol].discharge -= drainage[Lake[i].row[j]][Lake[i].col[j]].discharge;
 		}*/
 		for (j=0; j<Lake[i].n; j++) lake_evap += dx*dy * evaporation[Lake[i].row[j]][Lake[i].col[j]];
 		PRINT_DEBUGPLUS("Inputwater, Evap: %f,%f  lake %d: n=%d", Lake_Input_Discharge(i), lake_evap, i, Lake[i].n);
-	    	/*
-	    	  If now it is open then the node must not be deleted, 
-	    	  but it must be the outlet of the new merged open lakes
-	    	  towards the endorheic lake(s).
-	    	*/
-	    	if (lake_evap < Lake_Input_Discharge(i)) {
+			/*
+			  If now it is open then the node must not be deleted, 
+			  but it must be the outlet of the new merged open lakes
+			  towards the endorheic lake(s).
+			*/
+			if (lake_evap < Lake_Input_Discharge(i)) {
 			/*open sublake*/
-	    		n_became_open++;
-	    		if (n_became_open == 1) {
-	    			first_open = i;	    			
-	    		}
+				n_became_open++;
+				if (n_became_open == 1) {
+					first_open = i;					
+				}
 /*??, pero importa !!*/	else if (first_endorheic || i<nlakes) {
-		    		/*If it is not the first open, then unify it with the first one. But at least one lake must remain endorheic.*/
-    				Unify_Lakes(first_open, i); 
-    				i--;
-    			}
-	    	}
-	    	else {
-		    	/*At least there should be one endorheic lake.*/
-	    		if (!first_endorheic) first_endorheic = i;
-	    	}
-	    	i++;
+					/*If it is not the first open, then unify it with the first one. But at least one lake must remain endorheic.*/
+					Unify_Lakes(first_open, i); 
+					i--;
+				}
+			}
+			else {
+				/*At least there should be one endorheic lake.*/
+				if (!first_endorheic) first_endorheic = i;
+			}
+			i++;
 	}
 	if (n_became_open>local_num_lakes) PRINT_ERROR("%d lakes became open among %d. At least lake %d remains endorheic.", n_became_open, local_num_lakes, first_endorheic);
 	if (!first_endorheic) {
@@ -2497,7 +2534,7 @@ int Divide_Lake (int row, int col /*lake node to be removed*/)
 		switch (k) {
 			case 1: case 6: dist=dy;  break;   /*N,S*/
 			case 3: case 4: dist=dx;  break;   /*E,W*/
-			default:        dist=dxy; break;   /*others*/
+			default:		dist=dxy; break;   /*others*/
 		}
 		if (IN_DOMAIN(ro[k],co[k])) {
 			deriv = (topo[ro[k]][co[k]]-topo[i][j])/dist;
@@ -2654,7 +2691,7 @@ float Minimum_Neg_Slope (int i, int j, int *dr_row, int *dr_col)
 		switch (k) {
 			case 0: case 2: dist=dy;  break;   /*N,S*/
 			case 1: case 3: dist=dx;  break;   /*E,W*/
-			default:        dist=dxy; break;   /*others*/
+			default:		dist=dxy; break;   /*others*/
 		}
 		if (IN_DOMAIN(ro[k],co[k])) {
 			deriv = (topo[ro[k]][co[k]]-topo[i][j])/dist;
@@ -2714,60 +2751,60 @@ int Unify_Lakes (int i_lake, int i_lake_to_delete)
 
 	PRINT_DEBUGPLUS("Unifying lakes %d (%d nodes, %d exits) and %d (%d nodes, %d exits, this lake will be deleted) out of %d.", i_lake, Lake[il].n, Lake[il].n_sd, i_lake_to_delete, Lake[ild].n, Lake[ild].n_sd, nlakes);
 
-	Lake[il].n    += Lake[ild].n;
+	Lake[il].n	+= Lake[ild].n;
 	Lake[il].n_sd += Lake[ild].n_sd;
-	Lake[il].row    = realloc(Lake[il].row, Lake[il].n*sizeof(int));
-	Lake[il].col    = realloc(Lake[il].col, Lake[il].n*sizeof(int));
+	Lake[il].row	= realloc(Lake[il].row, Lake[il].n*sizeof(int));
+	Lake[il].col	= realloc(Lake[il].col, Lake[il].n*sizeof(int));
 	Lake[il].row_sd = realloc(Lake[il].row_sd, Lake[il].n_sd*sizeof(int));
 	Lake[il].col_sd = realloc(Lake[il].col_sd, Lake[il].n_sd*sizeof(int));
 	/*Resort nodes and saddles in increasing order of altitude, it's sometimes used!*/
 	/*This algorithm assumes that both unifying lakes had already their nodes and exits sorted by elevation in the Lake structure*/
 	for (i=0; i<Lake[ild].n; i++) {
-	    if (Lake[il].n!=Lake[ild].n) for (j=0; j<Lake[il].n-Lake[ild].n+i; j++) {
+		if (Lake[il].n!=Lake[ild].n) for (j=0; j<Lake[il].n-Lake[ild].n+i; j++) {
 		if (topo[Lake[ild].row[i]][Lake[ild].col[i]] < topo[Lake[il].row[j]][Lake[il].col[j]]) {
-		    /*Shift upwards the lake nodes above this one to make romm for it*/
-		    for (k=Lake[il].n-Lake[ild].n+i; k>j; k--) {
-		    	Lake[il].row[k] = Lake[il].row[k-1];
+			/*Shift upwards the lake nodes above this one to make romm for it*/
+			for (k=Lake[il].n-Lake[ild].n+i; k>j; k--) {
+				Lake[il].row[k] = Lake[il].row[k-1];
 			Lake[il].col[k] = Lake[il].col[k-1];
-		    }
-		    /*Now transfer the deleted-lake node to that place*/
-		    Lake[il].row[j] = Lake[ild].row[i];
-		    Lake[il].col[j] = Lake[ild].col[i];
-		    break;
+			}
+			/*Now transfer the deleted-lake node to that place*/
+			Lake[il].row[j] = Lake[ild].row[i];
+			Lake[il].col[j] = Lake[ild].col[i];
+			break;
 		}
 		else if (j==Lake[il].n-Lake[ild].n+i-1) {
-		    Lake[il].row[j+1] = Lake[ild].row[i];
-		    Lake[il].col[j+1] = Lake[ild].col[i];		    
+			Lake[il].row[j+1] = Lake[ild].row[i];
+			Lake[il].col[j+1] = Lake[ild].col[i];			
 		}
-	    } 
-	    else {
-	    	Lake[il].row[i] = Lake[ild].row[i];
-	    	Lake[il].col[i] = Lake[ild].col[i];
-	    }
+		} 
+		else {
+			Lake[il].row[i] = Lake[ild].row[i];
+			Lake[il].col[i] = Lake[ild].col[i];
+		}
 	}
 	for (i=0; i<Lake[ild].n_sd; i++) {
-	    if (Lake[il].n_sd!=Lake[ild].n_sd) for (j=0; j<Lake[il].n_sd-Lake[ild].n_sd+i; j++) {
+		if (Lake[il].n_sd!=Lake[ild].n_sd) for (j=0; j<Lake[il].n_sd-Lake[ild].n_sd+i; j++) {
 		if (OUT_DOMAIN(Lake[il].row_sd[j], Lake[il].col_sd[j])) PRINT_DEBUG("\a$$$$$$$$$$$$$$$$$$$$ %d   %d  %d   [%d][%d]", il, j, Lake[il].n_sd, Lake[il].row_sd[j], Lake[il].col_sd[j]);
 		if (topo[Lake[ild].row_sd[i]][Lake[ild].col_sd[i]] < topo[Lake[il].row_sd[j]][Lake[il].col_sd[j]]) {
-		    /*Shift upwards the lake nodes above this one to make room for it*/
-		    for (k=Lake[il].n_sd-Lake[ild].n_sd+i; k>j; k--) {
-		    	Lake[il].row_sd[k] = Lake[il].row_sd[k-1];
+			/*Shift upwards the lake nodes above this one to make room for it*/
+			for (k=Lake[il].n_sd-Lake[ild].n_sd+i; k>j; k--) {
+				Lake[il].row_sd[k] = Lake[il].row_sd[k-1];
 			Lake[il].col_sd[k] = Lake[il].col_sd[k-1];
-		    }
-		    /*Now transfer the deleted-lake node to that place*/
-		    Lake[il].row_sd[j] = Lake[ild].row_sd[i];
-		    Lake[il].col_sd[j] = Lake[ild].col_sd[i];
-		    break;
+			}
+			/*Now transfer the deleted-lake node to that place*/
+			Lake[il].row_sd[j] = Lake[ild].row_sd[i];
+			Lake[il].col_sd[j] = Lake[ild].col_sd[i];
+			break;
 		}
 		else if (j==Lake[il].n_sd-Lake[ild].n_sd+i-1) {
-		    Lake[il].row_sd[j+1] = Lake[ild].row_sd[i];
-		    Lake[il].col_sd[j+1] = Lake[ild].col_sd[i];		    
+			Lake[il].row_sd[j+1] = Lake[ild].row_sd[i];
+			Lake[il].col_sd[j+1] = Lake[ild].col_sd[i];			
 		}
-	    }
-	    else {
-	    	Lake[il].row_sd[i] = Lake[ild].row_sd[i];
-	    	Lake[il].col_sd[i] = Lake[ild].col_sd[i];
-	    }
+		}
+		else {
+			Lake[il].row_sd[i] = Lake[ild].row_sd[i];
+			Lake[il].col_sd[i] = Lake[ild].col_sd[i];
+		}
 	}
 
 	/*Changes the associated drainage lake signal*/
@@ -2806,76 +2843,76 @@ int Calculate_Precipitation_Evaporation ()
  	PRINT_DEBUG("Calculating precipitation");
 	for (row=0; row<Ny; row++) for (col=0; col<Nx; col++) {precipitation[row][col]=0; precipitation_snow[row][col]=0; evaporation[row][col]=evaporation_ct;}
 	switch (hydro_model) {
-	    case 1: {
+		case 1: {
 		float altitude; int il;
 		for (row=0; row<Ny; row++) for (col=0; col<Nx; col++) {
- 		    if (precipitation_file[row][col]>=0) {
+ 			if (precipitation_file[row][col]>=0) {
  			precipitation[row][col] = precipitation_file[row][col];
- 		    }
- 		    else {
+ 			}
+ 			else {
  			altitude = topo[row][col];
  			il=drainage[row][col].lake;
  			if (il) {
- 			    altitude = topo[Lake[il].row[Lake[il].n-1]][Lake[il].col[Lake[il].n-1]];
- 			    /*Sea*/
- 			    IF_LAKE_IS_SEA(il) altitude = sea_level;
+ 				altitude = topo[Lake[il].row[Lake[il].n-1]][Lake[il].col[Lake[il].n-1]];
+ 				/*Sea*/
+ 				IF_LAKE_IS_SEA(il) altitude = sea_level;
  			}
  			precipitation[row][col] = MAX_2((rain+Krain*altitude),  0);
  			if (CXrain) precipitation[row][col] *= MAX_2 (0, 1 + (xmin+col*dx-(xmax+xmin)/2)/CXrain);
  			if (CYrain) precipitation[row][col] *= MAX_2 (0, 1 + (ymax-row*dy-(ymax+ymin)/2)/CYrain);
- 		    }
+ 			}
 		}
 		break;
-	    }
-	    case 2: {
+		}
+		case 2: {
 		for (row=0; row<Ny; row++) for (col=0; col<Nx; col++) {
-     		    precipitation[row][col] = Orographic_Precipitation_with_local_slope(row, col, Krain, windazimut);
+	 			precipitation[row][col] = Orographic_Precipitation_with_local_slope(row, col, Krain, windazimut);
 		}
  		break;
-   	    }
-    	    case 3: {
-    		Orographic_Precipitation_Evaporation_conservative (Krain, windazimut, relative_humidity);
+   		}
+			case 3: {
+			Orographic_Precipitation_Evaporation_conservative (Krain, windazimut, relative_humidity);
 		break;
-	    }
+		}
 	}
 
 	/*Smooth out rain (based on upwind rain)*/
-    	if (hydro_model == 2 || hydro_model == 3) if (CXrain) {
-    	    float windvel=Krain, windvelx, windvely /*[m/s]*/, DL=CXrain, factor, precip_here;
-    	    int i, j;
-	    float **precipitation_aux;
-	    precipitation_aux = alloc_matrix(Ny, Nx);
-    	    windvelx = windvel*sin(windazimut/180*3.1415927);
-    	    windvely = windvel*cos(windazimut/180*3.1415927);
-    	    factor = 2/DL/sqrt(3.1415927);
-	    for (row=0; row<Ny; row++) for (col=0; col<Nx; col++) {
-	        precip_here=0;
+		if (hydro_model == 2 || hydro_model == 3) if (CXrain) {
+			float windvel=Krain, windvelx, windvely /*[m/s]*/, DL=CXrain, factor, precip_here;
+			int i, j;
+		float **precipitation_aux;
+		precipitation_aux = alloc_matrix(Ny, Nx);
+			windvelx = windvel*sin(windazimut/180*3.1415927);
+			windvely = windvel*cos(windazimut/180*3.1415927);
+			factor = 2/DL/sqrt(3.1415927);
+		for (row=0; row<Ny; row++) for (col=0; col<Nx; col++) {
+			precip_here=0;
  		/*integrates upwind to smooth (see Roe et al., 2003, JGR)*/
  		if (fabs(windvelx)>fabs(windvely)) {
- 		    for (j=col; ; ) {
+ 			for (j=col; ; ) {
  			i  = row - (int) ((float)(j-col)*windvely/windvelx);
  			if (OUT_DOMAIN(i,j)) break;
  			precip_here += precipitation[row][col] * exp(-pow((j-col)*dx/DL, 2)-pow((i-row)*dy/DL, 2)) * sqrt(dx*dx+dy*dy*cos(windazimut/180*3.1415927)*cos(windazimut/180*3.1415927));
 			j -= windvelx/fabs(windvelx);
-		    }
+			}
  		}
  		else {
- 		    for (i=row; ; ) {
+ 			for (i=row; ; ) {
  			j  = col - (int) ((float)(i-row)*windvelx/windvely);
  			if (OUT_DOMAIN(i,j)) break;
 			precip_here += precipitation[row][col] * exp(-pow((j-col)*dx/DL, 2)-pow((i-row)*dy/DL, 2)) * sqrt(dx*dx*sin(windazimut/180*3.1415927)*sin(windazimut/180*3.1415927)+dy*dy);
  			i += windvely/fabs(windvely);
-		    }
+			}
  		}
  		precipitation_aux[row][col] = precip_here * factor;
-	    }
- 	    for (row=0; row<Ny; row++) for (col=0; col<Nx; col++) {precipitation[row][col]=precipitation_aux[row][col];}
-	    free_matrix(precipitation_aux, Ny);
+		}
+ 		for (row=0; row<Ny; row++) for (col=0; col<Nx; col++) {precipitation[row][col]=precipitation_aux[row][col];}
+		free_matrix(precipitation_aux, Ny);
 	}
 
 	/*Separate snow and rain according to ground temperature*/
 	if (K_ice_eros) {
-	    for (row=0; row<Ny; row++) for (col=0; col<Nx; col++) {
+		for (row=0; row<Ny; row++) for (col=0; col<Nx; col++) {
  		float precip_here, Ts, temp_gradual_change=3 /*C*/;
  		precip_here = precipitation[row][col];
 		Ts =  TEMPERATURE_ICE(topo[row][col]+ice_thickness[row][col]) - TEMP_FREEZE_WATER;
@@ -2891,7 +2928,7 @@ int Calculate_Precipitation_Evaporation ()
  			precipitation[row][col] = precip_here;
  			precipitation_snow[row][col] = 0;
 		}
- 	    }
+ 		}
 	}
 	
 	{
@@ -2918,10 +2955,10 @@ float Orographic_Precipitation_with_local_slope (int i, int j, float windvel, fl
 	float 	es0=6.1078 /*mb*/, a=17.27, b=35.86 /*centigrades*/, 
 		vapor_convergence, alpha0, alpha1=110 /*m yr-1 / (m s-1)*/, Ts, 
 		slopex, slopey, esat, DX = 10e3 /*m*/, topoC;
-    	float	windvelx, windvely /*[m/s]*/;
+		float	windvelx, windvely /*[m/s]*/;
 	int 	il, li, lj;
-    	windvelx = windvel*sin(windazimut/180*3.1415927);
-    	windvely = windvel*cos(windazimut/180*3.1415927);
+		windvelx = windvel*sin(windazimut/180*3.1415927);
+		windvely = windvel*cos(windazimut/180*3.1415927);
 
 	/*Calculate the maximum between topogrpahy and water surface:*/
 	topoC = topo[i][j];   
@@ -2958,8 +2995,11 @@ int Orographic_Precipitation_Evaporation_conservative (float windvel, float wind
 {
 	/*
 	  Returns precipitation and evaporation in m/s.
-	  Based on Roe et al., 2003, JGR, modified by Garcia-Castellanos, 2007, EPSL. See also Masek et al., 1994, JGR.
-	  It calculates the max. water content in every column as a function of temperature. Evaporation depends on wind velocity
+	  Inspired on Roe et al. (2003, JGR) and Masek et al. (1994, JGR). 
+	  Modified by Garcia-Castellanos, 2007, EPSL. 
+	  Improved water-conservative version described in Garcia-Castellanos & Jimenez-Munt, 2015.
+	  It calculates the max. water content in every column as a function of temperature. 
+	  Evaporation depends on wind velocity.
 	*/
 	int 	i, j, ib, jb, istart=0, iincr=0, jstart=0, jincr=0;
 	float 	Wcol, Wmax, 	/*Precipitable Water content in a column, and maximum precipitable water content usually in the order of mm and cm*/
@@ -2978,8 +3018,8 @@ int Orographic_Precipitation_Evaporation_conservative (float windvel, float wind
 		dtwind = dx/fabs(windvelx); 
 	else
 		dtwind = dy/fabs(windvely); 
-	if (windvelx>0)	{jstart=0;    jincr=+1;} else {jstart=Nx-1; jincr=-1;}
-	if (windvely<0)	{istart=0;    iincr=+1;} else {istart=Ny-1; iincr=-1;}
+	if (windvelx>0)	{jstart=0;	jincr=+1;} else {jstart=Nx-1; jincr=-1;}
+	if (windvely<0)	{istart=0;	iincr=+1;} else {istart=Ny-1; iincr=-1;}
 	
 	/*Start from all upwind (windward) boundary cells*/
 	/*vertical boundary*/
@@ -2988,19 +3028,19 @@ int Orographic_Precipitation_Evaporation_conservative (float windvel, float wind
 		Wcol = relative_humidity * max_water_in_air_colum(ib,jstart);
 		/*Go downwind (leeward) from each cell in the vertical boundary*/
 		if (fabs(windvelx)>fabs(windvely)) 
-		    for (j=jstart; j>=0 && j<Nx; j+=jincr) {
+			for (j=jstart; j>=0 && j<Nx; j+=jincr) {
 			i = ib - rint((j-jstart)/windvelx*windvely);
 			if OUT_DOMAIN(i,j) break;
 			if (!done[i][j]) Precipitation_Evaporation_at_cell (i, j, &Wcol, windvel, dtwind);
 			done[i][j]=1;
- 		    }
+ 			}
 		else 
-		    for (i=ib; i>=0 && i<Ny; i+=iincr) {
+			for (i=ib; i>=0 && i<Ny; i+=iincr) {
 			j = jstart - rint((i-ib)/windvely*windvelx);
 			if OUT_DOMAIN(i,j) break;
 			if (!done[i][j]) Precipitation_Evaporation_at_cell (i, j, &Wcol, windvel, dtwind);
 			done[i][j]=1;
-		    }
+			}
 	}
 	/*horizontal boundary (DO NOT REPEAT i,j=0,0)!*/
 	for (jb=jstart; jb>=0 && jb<Nx; jb+=jincr) {
@@ -3008,19 +3048,19 @@ int Orographic_Precipitation_Evaporation_conservative (float windvel, float wind
 		Wcol = relative_humidity * max_water_in_air_colum(istart,jb);
 		/*Go downwind (leeward) from each cells in the horizontal boundary*/
 		if (fabs(windvelx)>fabs(windvely)) 
-		    for (j=jb; j>=0 && j<Nx; j+=jincr) {
+			for (j=jb; j>=0 && j<Nx; j+=jincr) {
 			i = istart - rint((j-jb)/windvelx*windvely);
 			if OUT_DOMAIN(i,j) break;
 			if (!done[i][j]) Precipitation_Evaporation_at_cell (i, j, &Wcol, windvel, dtwind);
  			done[i][j]=1;
-		    }
+			}
 		else 
-		    for (i=istart; i>=0 && i<Ny; i+=iincr) {
+			for (i=istart; i>=0 && i<Ny; i+=iincr) {
 			j = jb - rint((i-istart)/windvely*windvelx);
 			if OUT_DOMAIN(i,j) break;
 			if (!done[i][j]) Precipitation_Evaporation_at_cell (i, j, &Wcol, windvel, dtwind);
 			done[i][j]=1;
-		    }
+			}
 	}
 	/*Check results*/
 	for(i=0; i<Ny; i++)  for(j=0; j<Nx; j++) {
@@ -3046,31 +3086,31 @@ int Precipitation_Evaporation_at_cell (int i, int j, float *Wcol, float windvel,
 
 	PRINT_DEBUG("[%d][%d]  rain=%.2e mm/yr, Wmax=%.2e  Wcol=%.2e m", i, j, rain*secsperyr*1e3, Wmax, *Wcol);
 	if (Wmax>1e-5) {
-    	    /*Precipitation is proportional to the quotient between the water Wcol coming into this column from the upwind column and the Wmax*/
-    	    precipitation[i][j] = rain * (*Wcol) / Wmax;
+			/*Precipitation is proportional to the quotient between the water Wcol coming into this column from the upwind column and the Wmax*/
+			precipitation[i][j] = rain * (*Wcol) / Wmax;
 
-    	    /*limit precipitation to at least 0*/
-    	    precipitation[i][j] = MAX_2(0, precipitation[i][j]);
-    	    /*limit precipitation to at least the excess water*/
-    	    precipitation[i][j] = MAX_2((*Wcol-Wmax)/dtwind, precipitation[i][j]);
-     	    /*limit precipitation to at most the available water in column*/
-   	    precipitation[i][j] = MIN_2(*Wcol/dtwind, precipitation[i][j]);
+			/*limit precipitation to at least 0*/
+			precipitation[i][j] = MAX_2(0, precipitation[i][j]);
+			/*limit precipitation to at least the excess water*/
+			precipitation[i][j] = MAX_2((*Wcol-Wmax)/dtwind, precipitation[i][j]);
+	 		/*limit precipitation to at most the available water in column*/
+   		precipitation[i][j] = MIN_2(*Wcol/dtwind, precipitation[i][j]);
 
-   	    /*Evaporation is proportional to water deficit and windvel*/
-    	    evaporation[i][j] = evaporation_ct * (1+beta*windvel) * (Wmax-*Wcol)/Wmax;
+   		/*Evaporation is proportional to water deficit and windvel*/
+			evaporation[i][j] = evaporation_ct * (1+beta*windvel) * (Wmax-*Wcol)/Wmax;
 
-    	    /*limit evaporation to at least 0*/
-    	    evaporation[i][j] = MAX_2(0, evaporation[i][j]);
+			/*limit evaporation to at least 0*/
+			evaporation[i][j] = MAX_2(0, evaporation[i][j]);
 
-    	    /*calculate change in water content in column (in m of water)*/
-    	    *Wcol -= precipitation[i][j] * dtwind;
-    	    if (lake_former_step[i][j]) {
-    		*Wcol += evaporation[i][j] * dtwind;
-    	    }
+			/*calculate change in water content in column (in m of water)*/
+			*Wcol -= precipitation[i][j] * dtwind;
+			if (lake_former_step[i][j]) {
+			*Wcol += evaporation[i][j] * dtwind;
+			}
 	}
 	else {
-	    precipitation[i][j] = 0;
-	    evaporation[i][j] = evaporation_ct * (1+beta*windvel);
+		precipitation[i][j] = 0;
+		evaporation[i][j] = evaporation_ct * (1+beta*windvel);
 	}
 	if (fabs(evaporation[i][j]*secsperyr)>1e3 || fabs(evaporation[i][j]*secsperyr)>1e3 || isnan(precipitation[i][j]) || isnan(evaporation[i][j])) 
 		PRINT_ERROR("\aPrecipitation: [%d][%d] P,E = %.4f , %.4f m/yr  %.2f h  windvel=%.2f m/s, %.2f m/yr, Wmax=%f m", i, j, precipitation[i][j]*secsperyr, evaporation[i][j]*secsperyr, dtwind/3600, windvel, rain*secsperyr, Wmax);
@@ -3099,13 +3139,13 @@ float max_water_in_air_colum (int i, int j)
 	else topoC = MAX_2(topoC, sea_level);
 
 	for (z=0; z<10000; z+=dz) {
-	    float temp_air;
-	    temp_air = TEMPERATURE_AIR(topoC, z);
-	    L = 2.4995e6+(temp_air-TEMP_FREEZE_WATER)*2359;
-	    esat = es0*exp(L/Rv*(1/TEMP_FREEZE_WATER - 1/temp_air));
-	    Wmax += esat/temp_air/Rv/denswater*dz; /*Blocks: m of water*/
-	    if (isinf(Wmax)) PRINT_ERROR("Wmax is infinite. %d topoC=%.2f %.2f esat=%.2e temp_air=%.2e %.2e %.2e %.2e ", il, topoC, z, esat, temp_air, L, Rv, denswater);
-	    if (isinf(Wmax) && il) PRINT_ERROR("Lake.alt=%.2f m", Lake[il].alt);
+		float temp_air;
+		temp_air = TEMPERATURE_AIR(topoC, z);
+		L = 2.4995e6+(temp_air-TEMP_FREEZE_WATER)*2359;
+		esat = es0*exp(L/Rv*(1/TEMP_FREEZE_WATER - 1/temp_air));
+		Wmax += esat/temp_air/Rv/denswater*dz; /*Blocks: m of water*/
+		if (isinf(Wmax)) PRINT_ERROR("Wmax is infinite. %d topoC=%.2f %.2f esat=%.2e temp_air=%.2e %.2e %.2e %.2e ", il, topoC, z, esat, temp_air, L, Rv, denswater);
+		if (isinf(Wmax) && il) PRINT_ERROR("Lake.alt=%.2f m", Lake[il].alt);
 	}
 	if (Wmax<1e-5) PRINT_DEBUG("Water content in column only Wmax=%.2e m; topo=%.2f", Wmax, topoC);
 	if (Wmax>1e-1) PRINT_WARNING("Water content in column is too high: Wmax=%.2e m", Wmax);

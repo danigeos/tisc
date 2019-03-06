@@ -5,6 +5,7 @@ INCLUDE FILE FOR tisc.c
 //#include <stdio.h>
 #include "geomodel.h"		/*General definitions and types for geophysical models*/
 
+#define AUTHORSHIP		{ fprintf(stderr, "\n\t\t\t1995-2018, Daniel Garcia-Castellanos\n");}
 #define	NmaxBlocks	250	/*Max number of Blocks*/
 #undef	MATHLIB_SOLVER		/*Indicates whether linkage with MathLib will be done (define) or not (undef)*/
 

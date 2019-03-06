@@ -16,7 +16,8 @@ float
 	denswater = 1020, 		/*Water density*/
 	E	= 7E+10, 			/*Young modulus [N/m2]; Gerbault, 2000. At what stress level is the central Indian Ocean lithosphere buckling? EPSL, 178; Panteleyev, A. N.  & M. Diament, 2007. GJI 114-220. Influence of Some Rheological Parameters On Flexure of the Oceanic Lithosphere; Other authors use 1e11 (e.g., Minshull)*/
 	nu	= .25, 				/*Poisson coefficient*/
-	Rearth	= 6378e3 ;		/*Earth's radius*/
+	Rearth	= 6378e3,		/*Earth's radius*/
+	viscwater = 8.9e-4 ; 	/*Water viscosity [Pa·s]*/
 
 
 int	

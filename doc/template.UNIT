@@ -78,7 +78,8 @@ insert		0	[0/1]	Do not put this load on the top of the Blocks,  but
 					insert it as the lowest load.
 top		0	[0/1]	Put this load on the top of the Blocks, but as  the highest
 					load.
-topoest		0	[0/1]	1 means topographic load, i.e., the load is  vertically
+#densenv	0	[0/1]	to change the density of the environment (air or water).
+topoest		0	[0/1]	1 means topographic load, i.e., the load is vertically
 					fixed and does not subside  but the deflection is filled
 					with a  Block of 'densinfill' density. This is  equivalent
 					to switch_topoest=1 in the  parameters file.

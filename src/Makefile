@@ -89,9 +89,9 @@ tisc.o: tisc.c tisclib.c tiscio.c
 	@echo OP. SYSTEM=$(OS);  echo User home: $(HOME_DIR); 
 	@echo You are currently $(shell whoami)	using the shell $(SHELL) ; echo
 	$(CC) $(OPTS) -o tisc.o -DTISCDIR=$(tisc_DIR) -I$(INCL) -c tisc.c $(DEFS)
-	if [ -f /usr/bin/ctags ]; then \
-		ctags *.c ../lib/thin_sheet.f ../lib/libreria.c ../include/*.h ;\
-		mv -f tags tisc.tags; echo tags file produced.;\
+	if [ -f /usr/local/bin/ctags ]; then \
+		/usr/local/bin/ctags *.c ../lib/thin_sheet.f ../lib/libreria.c ../include/*.h ;\
+		echo tags file produced.;\
 	fi
 
 call_tisc.o : call_tisc.c

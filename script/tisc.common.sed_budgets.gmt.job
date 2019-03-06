@@ -1,18 +1,18 @@
 if (-r $prj.INT) then 
 	grd2xyz $tmp.sed.grd.tmp | outin $prj.INT | \
-		awk -v dx=$dx -v dy=$dy '{if ($1=="1") {seds_in+=$4*dx*dy;}} END{printf("\nSediments in region 1: %.1f km3", seds_in);}'
+		awk -v dx=$dx -v dy=$dy '{if ($1=="1") {seds_in+=$4*dx*dy;}} END{printf("\nSediment_region_1: %.1f km3", seds_in);}'
 endif
 if (-r $prj.INT2) then 
 	grd2xyz $tmp.sed.grd.tmp | outin $prj.INT2 | \
-		awk -v dx=$dx -v dy=$dy '{if ($1=="1") {seds_in+=$4*dx*dy;}} END{printf("\nSediments in region 2: %.1f km3", seds_in);}'
+		awk -v dx=$dx -v dy=$dy '{if ($1=="1") {seds_in+=$4*dx*dy;}} END{printf("\nSediment_region_2: %.1f km3", seds_in);}'
 endif
 if (-r $prj.INT3) then 
 	grd2xyz $tmp.sed.grd.tmp | outin $prj.INT3 | \
-		awk -v dx=$dx -v dy=$dy '{if ($1=="1") {seds_in+=$4*dx*dy;}} END{printf("\nSediments in region 3: %.1f km3", seds_in);}'
+		awk -v dx=$dx -v dy=$dy '{if ($1=="1") {seds_in+=$4*dx*dy;}} END{printf("\nSediment_region_3: %.1f km3", seds_in);}'
 endif
 if (-r $prj.INT4) then 
 	grd2xyz $tmp.sed.grd.tmp | outin $prj.INT4 | \
-		awk -v dx=$dx -v dy=$dy '{if ($1=="1") {seds_in+=$4*dx*dy;}} END{printf("\nSediments in region 4: %.1f km3", seds_in);}'
+		awk -v dx=$dx -v dy=$dy '{if ($1=="1") {seds_in+=$4*dx*dy;}} END{printf("\nSediment_region_4: %.1f km3", seds_in);}'
 endif
 if (-r $prj.INT_ROSE) then 
 	cat $prj.st | outin $prj.INT_ROSE | \

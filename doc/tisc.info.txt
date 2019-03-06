@@ -187,13 +187,14 @@
 	also somewhat explained in the incude file 'tisc.h'.
 	xmin, xmax, ymin, ymax give the coordinates of the center of the 
 	boundary cells or pixels (i.e., the location of their associated nodes).
+	Equivalent to node-registration mode in GMT or NETCDF.
 	The conceptual limit of the model is at xmin-dx/2, ymax+dx/2, ... 
 	For example, if the resolution of a model is needed to be reduced to 
 	dx/2,dy/2 keeping the same domain parameters, then the new Nx,Ny should 
-	not be Nx*2,Ny*2, but (Nx-1)*2+1,(Ny-1)*2+1.
-	If  (switch_topoest != 0) then the load will rest at zero level 
-	and plate subsidence will be filled with 'densinfill' material. Do 
-	not use it with erosion model.
+	not be Nx*2,Ny*2, but (Nx-1)*2+1,(Ny-1)*2+1. 
+	If (topoest != 0) then the load will rest at zero level and plate 
+	subsidence will be filled with 'densinfill' material. Do not combine it 
+	with erosion.
 
   'projectN.UNIT' 
 	File modifying the geometry/architecture of the model (i.e, introducing
@@ -332,13 +333,15 @@
   	This file defines x-y polygons (in km) separated with a '>', used 
 	only to be plotted in the postscript image, called from graphic script
 	like script/tao.gmt.job, just for comparison with model results.
+	No effect on the model results. 
 
   'project.INT' 
 	This file defines a x-y polygon (in km) of interest where certain 
-	statistics should be performed during the execution of graphic scripts. 
-	Used only to be plotted in the postscript image, called from graphic
-	script like script/tao.gmt.job, just for comparison with model
-	results.No effect on model results. 
+	statistics should be calculated during the execution of graphic scripts, 
+	such as the volume of sediment. 'project.INT2' 'project.INT3' etc are 
+	also read.
+	Used only during the image script (script/tisc.gmt.job) after tisc, 
+	just post-processing. No effect on the model results. 
 
 
   Interpolation:
@@ -651,11 +654,14 @@ No. Density Age Volume Surf.  Vel_x Vel_y Shft_x Shft_y erosL
     Water divides: TISC now writes the swimming distance between neigbouring 
     cells in column #14 of drainage file *.xyw.
   TISC_2017-05-19
-	Changed UNIT1D and Units structure to BLOCK1D and Blocks, to avoid confusion 
-	with input files (UNITS). 
+	Changed UNIT1D and Units structure to BLOCK1D and Blocks, to avoid 
+	confusion with input files (UNITS). 
   TISC_2018-07-13
 	Gradual sediment compaction now implemented (see new parameter 
-	compact_depth). Bug solved for erosed_model 6. 
+	compact_depth). Bug solved for erosed_model 6 (surf_proc.c around line 1120),
+	erosion was overestimated (or erodability underestimated) by about a factor 2.
+  TISC_2019-
+  	Underground water flow now implemented (see new parameter 'permeability').
     
     
 
