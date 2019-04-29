@@ -49,7 +49,9 @@ extern float 	Time,
 	total_bedrock_eros_mass,
 	total_sed_mass,
 	viscwater, 
-	xmin, xmax, ymin, ymax;
+	xmin, xmax, ymin, ymax,
+	tau_c, 	//mberry
+	diff_loss;	//mberry
 
 extern float 	
 	**Dq, 
@@ -429,6 +431,17 @@ int Calculate_Discharge (struct GRIDNODE *sortcell, float *total_lost_water, flo
 
 			/*Transfers water.*/
 			if (IN_DOMAIN(drow, dcol)) {
+				/* loss rate of river dependant on river width (assuming a relationship with river width and riparian width) in Berry et al 2019
+				if (diff_loss) {
+					float  Kw=1.1, aw=0.5, kr = 16, ar = 0.9;
+					double Q_loss = kr * pow(Kw,ar)*pow(drainage[row][col].discharge,aw*ar)*dd*evaporation_ct;
+					*total_evap_water		     += Q_loss;
+					drainage[row][col].discharge     -= Q_loss;
+				}
+				else {
+    		   			*total_evap_water		     += drainage[row][col].discharge * MIN_2(lost_rate*dd, 1);
+    		   			drainage[row][col].discharge     -= drainage[row][col].discharge * MIN_2(lost_rate*dd, 1);
+				}
 				/*Remove evapotranspirated water from the rivers*/
 				*total_evap_water			 	+= drainage[row][col].discharge * MIN_2(lost_rate*dd, 1);
 				drainage[row][col].discharge	-= drainage[row][col].discharge * MIN_2(lost_rate*dd, 1);
@@ -1306,6 +1319,36 @@ int Fluvial_Transport(struct GRIDNODE *sortcell, float dt_st, int erosed_model, 
 						* dt_st;
 				}
 				break;
+			  case 8:
+				/*Berry et al. 2019 (in revision) basal shear stress similar to case 6, but with sediment scaling curve*/
+				transp_capacity_eq = K_river_cap * drainage[row][col].discharge * slope;                /*Eq. 16 of Tucker&Slingerland, 1996*/
+                        TRANSPORT_BOUNDARY_CONDITIONS;
+                                if (transp_capacity_eq >= drainage[row][col].masstr) {
+                                float a=1.5, Kw=1.1, aw=0.5;
+                                
+				/*bedrock channel incision, same as #6 with tau_c (critical shear stress) and pulled exp out of individual powers*/
+				ERODED_ERODIBILITY;
+                                double in_eqn = 1020 * g * pow((double).05/Kw,(double) 3/5) *
+				pow((double)drainage[row][col].discharge, (double)(3*(1-aw))/5) *
+				pow((double)slope, (double)7/10) - tau_c ;
+
+				dh = erodibility_aux/secsperyr * pow((double) in_eqn, a) * dt_st;
+				/*sediment scaling curve*/
+				
+				if (transp_capacity_eq) dh *= (double)(0.64)*
+				(-4*pow(((double)drainage[row][col].masstr/(double)transp_capacity_eq),2)
+				+3*((double)drainage[row][col].masstr/(double)transp_capacity_eq)+1);
+
+				
+                                d_mass = THICK2SEDMASS(dh);
+                                }
+                                else{   
+                                        /*alluvial channel aggradation: sediment the excess*/
+                                        d_mass = 
+                                                dist / l_fluv_sedim * (transp_capacity_eq - drainage[row][col].masstr)
+                                                * dt_st;
+                                }
+                                break;
 				}
 				break;
 			default:
