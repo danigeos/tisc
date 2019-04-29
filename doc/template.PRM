@@ -26,6 +26,7 @@ zini		0	Initial altitude [m] above sea level (added to the initial
 random_topo	0	Adds noise to initial topo between -random_topo/2 and 
 				+random_topo/2 [m]. The computation of lake drainage can become
 				much slower using a high value.
+switch_random_time      0       1 to query the CPU clock for random seed
 
 #DENSITIES [kg/m3]:
 densasthen	3200	Density beneath the lithospheric plate, at the isostatic
@@ -150,20 +151,20 @@ erosed_model	0	Defines the erosion/sedimentation model.
 			#1: constant-rate scheme + hillslope diffusion + landsliding. Non 
 				conservative.
 			#2: As #1 + rivers following undercapacity model (Beaumont et al.,
-				1992): qeq=K_river_cap稱稴 and dq/dl=1/erodability*(q-qeq)
+				1992): qeq=K_river_cap路Q路S and dq/dl=1/erodability*(q-qeq)
 				(reaction equation).
 			#3: As #1 + rivers following Tucker&Slingerland(1996) model.
 				Incision rate under equilibrium capacity (q<qeq):
-				dh/dt=erodibility稱^(1/3)稴^(2/3) with qeq=K_river_cap稱稴 
-			#4: As #2 but m/n=1.5 in the eq. transport capacity: qeq=K稱^m稴^n
+				dh/dt=erodibility路Q^(1/3)路S^(2/3) with qeq=K_river_cap路Q路S 
+			#4: As #2 but m/n=1.5 in the eq. transport capacity: qeq=K路Q^m路S^n
 			#5: As #1 + rivers following undercapacity model (van der Beek &
 				Bishop, 2003; also described in Cowie et al., 2006),
-				implementing channel width in Beaumont's. qeq=K/W稱^m稴^n
+				implementing channel width in Beaumont's. qeq=K/W路Q^m路S^n
 			#6: As #1 + rivers following hybrid detachment+transport limited
 				model, based on the basal shear stress law (formulation and
 				values in Garcia-Castellanos & Jimenez-Munt, PlosONE, 2015), accounting
-				for channel width: dh/dt=K'稱^m稴^n if q<qeq,
-				qeq=K_river_cap稱稴 where K' is a function of K in dh/dz =
+				for channel width: dh/dt=K'路Q^m路S^n if q<qeq,
+				qeq=K_river_cap路Q路S where K' is a function of K in dh/dz =
 				K*tau^1.5 and K is given through 'erodibility'. Erosion
 				gradually decreases to 0 when approaching the eq. capacity
 				defined in #2.
@@ -171,7 +172,7 @@ erosed_model	0	Defines the erosion/sedimentation model.
 				w=rho*g*Q*S/W, with w in [W/m^2], e in mm/yr (Ferrier et al.,
 				2013, Nature).
 				
-Keroseol	.0	Continental background erosion rate (ratio per My, [m/(m稭y)]).
+Keroseol	.0	Continental background erosion rate (ratio per My, [m/(m路My)]).
 Ksedim  	0e2	Additional sedimentation rate below sea level [m/My].
 Kerosdif   	.00	Diffusive transport coefficient [m2/yr] (e.g., Ks in 
 				Kooi&Beaumont,1994,p12193). Tucker&Bras(1998, WaterRes);
@@ -230,6 +231,8 @@ K_ice_eros	0	Constant of ice incision rate relating ice sliding velocity to
 				Processes, David Drewry, 1987), imply [.05e-3-.2e-3]. Tomkin's
 				thesis and Braun et al., 2001, J. Climatology, use [2.5e-3 -
 				.1e-3].
+				
+tau_c           0       critical basal shear required for incision (Case #8)
 
 #INPUT/OUTPUT:
 verbose_level	1	Specify the level of runtime prints in stdout:
@@ -244,6 +247,11 @@ switch_files	1	For extra file output: see files *.bas *.all *.lakes in
 mode_interp	4	Default interpolation mode for input files. See
 				doc/template.UNIT.
 switch_ps	1	For postscript graphic output (uses GMT4 shell scripts).
+switch_3dtopo   0       For postscript graphic output to make 3D topography (Uses GMT4 shell script) tisc.topo3D.gmt.job should be in directory
+switch_profile  0       For postscript graphic output to make 2D river longitudinal profile (uses GMT4 shell scripts) tisc.river_profile.gmt.job should be in directory
+
+write_file_topo 0       1 to print topography file every dt (.xyz file)
+switch_basin_out 0      1 to print drainage network every dt (creates .qwqs file, pulls from .xyw file, the -Pc flag must in the commandline)
 
 
 
