@@ -584,7 +584,12 @@ int read_file_resume(char *filename)
 	fread(&switch_topoest, 		sizeof(BOOL),		1, 	file);
 	fread(&switch_write_file_Blocks, sizeof(BOOL),		1, 	file);
 	fread(&deform_sed, sizeof(BOOL),		1, 	file);
-
+	fread(&tau_c, sizeof(float),       1,      file); //added by mberry
+        fread(&switch_profile, sizeof(BOOL), 1, file); // M BERRY
+        fread(&switch_basin_out, sizeof(BOOL), 1, file); // M BERRY
+        fread(&switch_3dtopo, sizeof(BOOL), 1, file); // M BERRY
+        fread(&diff_loss, sizeof(BOOL), 1, file); // M Berry
+        fread(&switch_rand_time, sizeof(BOOL), 1, file); // M Berry	
 
 	/*Defined in tisc.h:*/
 	fread(&erosed_model, 		sizeof(int),		1, 	file);
@@ -1377,9 +1382,19 @@ int write_file_drainage ()
 	}
 	fclose(file);
 #endif
+
+//new code by m berry
+	if (switch_basin_out){
+		char 	command[300];
+		if (n_image >= 1){
+		sprintf(command, "awk '{print $1, $2, $7, $8, $3, $4}' %s.xyw > %s_%03d.qwqs", projectname, projectname,n_image);
+//x , y, x-to, y-to, q_w, q_s
+		system(command);
+		}
+	}
+	/*end of new code */
 	return (1);
 }
-
 
 
 
@@ -1671,7 +1686,12 @@ int write_file_resume()
 	fwrite(&switch_topoest, 		sizeof(BOOL),		1, 	file);
 	fwrite(&switch_write_file_Blocks, sizeof(BOOL),		1, 	file);
 	fwrite(&deform_sed, sizeof(BOOL),		1, 	file);
-
+	fwrite(&tau_c, sizeof(float),   1,      file);				// M BERRY
+        fwrite(&switch_profile, sizeof(BOOL), 1, file); 			// M BERRY
+        fwrite(&switch_3dtopo, sizeof(BOOL), 1, file);				// M BERRY
+        fwrite(&switch_basin_out, sizeof(BOOL), 1, file);			// M BERRY
+        fwrite(&diff_loss, sizeof(BOOL), 1, file); 				// M BERRY
+        fwrite(&switch_rand_time, sizeof(BOOL), 1, file); 			// M BERRY	
 
 	/*Defined in tisc.h:*/
 	fwrite(&erosed_model, 	sizeof(int),		1, 	file);
@@ -1908,6 +1928,27 @@ int write_file_deflection ()
 	return (1);
 }
 
+/*== write topo file every tectonic iteration (M Berry)===*/
+int write_file_topo()
+{
+	int 	i, j;
+	FILE 	*file;
+	Write_Open_Filename_Return(".xyz","wt",!switch_write_file_Blocks);
+
+
+ //fprintf(file, "#TISC output: topo surface at Time: %.2f My.\n #x(km) y(km) topo[m]\n", Time/Matosec);
+	for (i=0; i<Ny; i++) for (j=0; j<Nx; j++) {
+ 		fprintf(file, "%7.2f\t%7.2f\t%.1f\n",
+			(xmin+j*dx)/1000, (ymax-i*dy)/1000,
+			topo[i][j]);
+		}
+		fclose(file);
+		char command2[300];
+		sprintf(command2, "cp %s.xyz %s%03d.xyz", projectname, projectname, n_image);
+		system(command2);
+		//$$
+		return (1);
+}
 
 
 int write_file_velocity_field ()
