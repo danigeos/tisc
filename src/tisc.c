@@ -283,6 +283,9 @@ int inputs (int argc, char **argv)
 	read_file_rain(precipitation_file);
 
 	switch_initial_geom = read_file_initial_deflection(w) + read_file_initial_topo(topo) ;
+	if (switch_rand_time)
+		srand(time(NULL)); // pulls random seed generator from CPU clock, makes every topography unique (M Berry)
+
 	for (i=0; i<Ny; i++)  for (j=0; j<Nx; j++)  
 		topo[i][j] += random_topo * ((((float) rand()) / ((float) RAND_MAX)) -.5);
 	read_file_initial_rivers();
@@ -1412,6 +1415,9 @@ int Write_Ouput()
 	write_file_lakes();
 	write_file_velocity_field();
 	write_file_resume();
+	if (switch_topo_out){  /*M Berry*/
+		write_file_topo();
+	 }
 
 	/*Make GMT Postscript*/
 	if (switch_ps) {
@@ -1430,6 +1436,30 @@ int Write_Ouput()
 			if (verbose_level>=3)
 				fprintf(stdout, "\n%s\n", command) ;
 			system(command);
+			
+			/* new code by m berry */
+
+			if (switch_3dtopo) {
+				if (n_image >= 1){
+				sprintf(command, "./tisc.topo3D.gmt.job %s", projectname);
+			  //execve("./tisc.river_profile.gmt.job", [projectname], []);
+				system(command);
+				sprintf(command, "convert -density 200 %s.ps -interlace NONE  %s_3Dtopo%03d.jpg",
+				projectname, projectname, n_image);
+				system(command);
+				}
+			}
+			if (switch_profile) {
+				if (n_image >= 1){
+				sprintf(command, "./tisc.river_profile.gmt.job %s", projectname);
+				//execve("./tisc.river_profile.gmt.job", [projectname], []);
+				system(command);
+				sprintf(command, "convert -density 200 %s.ps -interlace NONE  %s_prof%03d.jpg",
+				projectname, projectname, n_image);
+				system(command);
+				}
+			}
+			/*end of new code */
 			n_image++;
 		}
 	}
