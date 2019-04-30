@@ -399,31 +399,44 @@ int Calculate_Discharge (struct GRIDNODE *sortcell, float *total_lost_water, flo
 			}
 
 			/*Underground seepage of part of the water to lower nodes*/
-			int ru=25; //Half-width of the rectangle of underground flow calculation (in cells)
 			if (permeability) {
-				if ((((float) rand())/((float) RAND_MAX))-.5 > 0) {
-					for (int i=row-ru; i<=row+ru; i++) for (int j=col-ru; j<=col+ru; j++) if (IN_DOMAIN(i, j)) if (i!=row || j!=col) {
-						float dist, underground_water_flow;
-						dist=sqrt((i-row)*(i-row)*dy*dy+(j-col)*(j-col)*dx*dx);
-						/*Darcy's law (isotropic porous medium): fluid_velocity = perm/visc * pressure_diff/distance */
-						/*Need to account for the 3D effect properly*/
-						underground_water_flow = (topo[row][col]>topo[i][j])? MIN_2(drainage[row][col].discharge, dxy*dxy*dx*dy/dist/dist*permeability/viscwater*denswater*g*(topo[row][col]-topo[i][j])/dist) : 0;
-						drainage[row][col].discharge -= underground_water_flow;
-						drainage[i][j].discharge     += underground_water_flow;
-						*total_underground_water     += underground_water_flow;
-					}
-				}
+				float rndi, rndj;
+				int ru=25; //Half-width of the rectangle of underground flow calculation (in cells)
+				int i_ini, i_end, i_inc, j_ini, j_end, j_inc;
+				rndi=(((float) rand())/((float) RAND_MAX));
+				rndj=(((float) rand())/((float) RAND_MAX));
+//PRINT_ERROR(">>>>>>>>>>> %.3f %.3f", rndi, rndj)
+				if (rndi >= .5) {
+					i_ini=row-ru;
+					i_end=row+ru;
+					i_inc=+1;
+				} 
 				else {
-					for (int i=row+ru; i<=row-ru; i--) for (int j=col+ru; j<=col-ru; j--) if (IN_DOMAIN(i, j)) if (i!=row || j!=col) {
-						float dist, underground_water_flow;
-						dist=sqrt((i-row)*(i-row)*dy*dy+(j-col)*(j-col)*dx*dx);
-						/*Darcy's law (isotropic porous medium): fluid_velocity = perm/visc * pressure_diff/distance */
-						/*Need to account for the 3D effect properly*/
-						underground_water_flow = (topo[row][col]>topo[i][j])? MIN_2(drainage[row][col].discharge, dxy*dxy*dx*dy/dist/dist*permeability/viscwater*denswater*g*(topo[row][col]-topo[i][j])/dist) : 0;
-						drainage[row][col].discharge -= underground_water_flow;
-						drainage[i][j].discharge     += underground_water_flow;
-						*total_underground_water     += underground_water_flow;
-					}
+					i_ini=row+ru;
+					i_end=row-ru;
+					i_inc=-1;
+				}
+				if (rndj >= .5) {
+					j_ini=col-ru;
+					j_end=col+ru;
+					j_inc=+1;
+				} 
+				else {
+					j_ini=col+ru;
+					j_end=col-ru;
+					j_inc=-1;
+				}
+				for (int i=i_ini; i>=i_ini && i<=i_end && drainage[row][col].discharge>0; i+=i_inc) 
+					for (int j=j_ini; j>=j_ini && j<=j_end && drainage[row][col].discharge>0; j+=j_inc) 
+						if (IN_DOMAIN(i, j)) if (i!=row || j!=col) {
+							float dist, underground_water_flow;
+							dist=sqrt((i-row)*(i-row)*dy*dy+(j-col)*(j-col)*dx*dx);
+							/*Darcy's law (isotropic porous medium): fluid_velocity = perm/visc * pressure_diff/distance */
+							/*Need to account for the 3D effect properly*/
+							underground_water_flow = (topo[row][col]>topo[i][j])? MIN_2(drainage[row][col].discharge, dxy*dxy*dx*dy/dist/dist*permeability/viscwater*denswater*g*(topo[row][col]-topo[i][j])/dist) : 0;
+							drainage[row][col].discharge -= underground_water_flow;
+							drainage[i][j].discharge     += underground_water_flow;
+							*total_underground_water     += underground_water_flow;
 				}
 			}
 
