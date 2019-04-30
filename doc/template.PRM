@@ -171,6 +171,8 @@ erosed_model	0	Defines the erosion/sedimentation model.
 			#7: As #1 + river incision following unit stream power e=k_b*w^1;
 				w=rho*g*Q*S/W, with w in [W/m^2], e in mm/yr (Ferrier et al.,
 				2013, Nature).
+			#8: Similar to #6 adds uses tau_c for critical shear stress needed for incision and incorporates a 
+				Sklar-like abrasion curve that both aides or inhibits erosion (Berry et al., 2019, in revision)
 				
 Keroseol	.0	Continental background erosion rate (ratio per My, [m/(m·My)]).
 Ksedim  	0e2	Additional sedimentation rate below sea level [m/My].
