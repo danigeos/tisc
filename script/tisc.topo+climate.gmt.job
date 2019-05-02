@@ -19,6 +19,8 @@ source $tisc_dir/script/tisc.common.topo+drainage.gmt.job
 
 #PRECIPITATION
 if (-r $prj.xyw) then 
+set min_rain = 1.8
+echo min_rain = $min_rain
 source $tisc_dir/script/tisc.common.rain.gmt.job
 endif
 

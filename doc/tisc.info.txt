@@ -662,8 +662,10 @@ No. Density Age Volume Surf.  Vel_x Vel_y Shft_x Shft_y erosL
 	erosion was overestimated (or erodability underestimated) by about a factor 2.
   TISC_2019-
   	Underground water flow now implemented (see new parameter 'permeability').
-    
-    
+  	Sklar & Dietrich's (1994) erosion dependence on sediment load added by Michael 
+  	Berry (UNM, Socorro), new erosed_model #8. Critical stress for sediemnt 
+  	mobilisation.
+
 
 11.- MODEL LIMITATIONS
   Blocks move only an entire number of nodes at each time step. Block deformation

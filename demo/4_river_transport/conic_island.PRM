@@ -54,13 +54,14 @@ evaporation	00	Evaporation rate at lakes [l/m2/a]=[mm/a].
 lost_rate	0	Surface water lost per unit length [%/km]
 
 #Surface transport:
-erosed_model	2	To switch erosion/sedimentation processes
+erosed_model	8	To switch erosion/sedimentation processes
 Kerosdif   	0	Diffusive transport erosion coefficient [m2/a]
 Keroseol 	.0
 K_river_cap	50	Constant of river transport capacity [kg/m3]
-l_fluv_eros	25e3	Length scale of fluvial erosion	[m] 
-l_fluv_eros_sed	20e3	Length scale of fluvial erosion	[m] (for sediments)
+l_fluv_eros	1e-7	Length scale of fluvial erosion	[m] 
+l_fluv_eros_sed	1e-6	Length scale of fluvial erosion	[m] (for sediments)
 l_fluv_sedim	25e3	Length scale of fluvial sedimentation [m]
+tau_c 0
 
 #Interpolation:
 mode_interp 	4	Default interpolation mode for input files (if not specified in the files):

@@ -608,6 +608,7 @@ int read_file_resume(char *filename)
 	fread(&K_ice_eros, 	sizeof(float),		1, 	file);
 	fread(&erodibility, 	sizeof(float),		1, 	file);
 	fread(&erodibility_sed, 	sizeof(float),		1, 	file);
+	fread(&tau_c, 	sizeof(float),		1, 	file);
 	fread(&l_fluv_sedim, 	sizeof(float),		1, 	file);
 	fread(&lost_rate, 	sizeof(float),		1, 	file);
 	fread(&permeability, 	sizeof(float),		1, 	file);
@@ -1695,6 +1696,7 @@ int write_file_resume()
 	fwrite(&K_ice_eros, 	sizeof(float),		1, 	file);
 	fwrite(&erodibility, 	sizeof(float),		1, 	file);
 	fwrite(&erodibility_sed, 	sizeof(float),		1, 	file);
+	fwrite(&tau_c, 	sizeof(float),		1, 	file);
 	fwrite(&l_fluv_sedim, 	sizeof(float),		1, 	file);
 	fwrite(&lost_rate, 	sizeof(float),		1, 	file);
 	fwrite(&permeability, 	sizeof(float),		1, 	file);

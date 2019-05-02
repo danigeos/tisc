@@ -161,8 +161,8 @@ erosed_model	0	Defines the erosion/sedimentation model.
 				implementing channel width in Beaumont's. qeq=K/W想^m惹^n
 			#6: As #1 + rivers following hybrid detachment+transport limited
 				model, based on the basal shear stress law (formulation and
-				values in Garcia-Castellanos & Jimenez-Munt, PlosONE, 2015), accounting
-				for channel width: dh/dt=K'想^m惹^n if q<qeq,
+				values in Garcia-Castellanos & Jimenez-Munt, PlosONE, 2015), 
+				accounting for channel width: dh/dt=K'想^m惹^n if q<qeq,
 				qeq=K_river_cap想惹 where K' is a function of K in dh/dz =
 				K*tau^1.5 and K is given through 'erodibility'. Erosion
 				gradually decreases to 0 when approaching the eq. capacity
@@ -170,6 +170,9 @@ erosed_model	0	Defines the erosion/sedimentation model.
 			#7: As #1 + river incision following unit stream power e=k_b*w^1;
 				w=rho*g*Q*S/W, with w in [W/m^2], e in mm/yr (Ferrier et al.,
 				2013, Nature).
+			#8: Similar to #6 adds uses tau_c for critical shear stress needed for 
+				incision and incorporates a Sklar-like abrasion curve that both 
+				aides or inhibits erosion (Berry et al., 2019, in revision)
 				
 Keroseol	.0	Continental background erosion rate (ratio per My, [m/(m愚y)]).
 Ksedim  	0e2	Additional sedimentation rate below sea level [m/My].
@@ -212,9 +215,7 @@ l_fluv_sedim	10e3	Sedimentation decay distance [m] (fluvial aggradation
 				relevant for delta sedimentation at the sea and lakes. Larger
 				values imply wider deltas and a more gradual transition from
 				river incision to river aggradation.
-deform_sed	1	0 means that sediment units will remain steady (velocity =0); 1
-				means that sediment will be automatically deformed by the
-				motion of Blocks. 
+tau_c           0       critical basal shear required for incision (Case #8)
 eros_bound_cond	0000	Boundary Conditions for surface processes at the N, S,
 				E, W boundaries of the model (4 characters):
 			#0: means river has 0 equilibrium capacity (q_eq in 
@@ -230,6 +231,9 @@ K_ice_eros	0	Constant of ice incision rate relating ice sliding velocity to
 				Processes, David Drewry, 1987), imply [.05e-3-.2e-3]. Tomkin's
 				thesis and Braun et al., 2001, J. Climatology, use [2.5e-3 -
 				.1e-3].
+deform_sed	1	0 means that sediment units will remain steady (velocity =0); 1
+				means that sediment will be automatically deformed by the
+				motion of Blocks. 
 
 #INPUT/OUTPUT:
 verbose_level	1	Specify the level of runtime prints in stdout:
