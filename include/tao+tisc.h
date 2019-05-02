@@ -78,6 +78,7 @@ float	Kerosdif, 		/*Diffusive erosion rate in m2/Ma, (e. g. D. Waltham & S. Hard
 	K_river_cap, 		/*Constant of river transport capacity [kg/m3].*/
 	erodibility, 		
 	erodibility_sed, 	
+	tau_c, 				/*shear stress for grain mobilisation*/
 	spl_m, spl_n, 		/*exponents of the stream power law over Q and S; m/n is ca. 0.5*/
 	l_fluv_sedim, 		/*Length scale of fluvial sedimentation */
 	lost_rate, 		/*Percent of lost water per unit length */

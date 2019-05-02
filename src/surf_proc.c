@@ -37,6 +37,7 @@ extern float 	Time,
 	K_ice_eros, 
 	erodibility, 		/*Default length scale of fluvial erosion */
 	erodibility_sed, 	/*Length scale of fluvial erosion of sediment Blocks*/
+	tau_c, 
 	spl_m, spl_n, 
 	l_fluv_sedim, 		/*Length scale of fluvial sedimentation */
 	lost_rate, 		/*Percent of lost water per unit length */
@@ -1153,8 +1154,8 @@ int Fluvial_Transport(struct GRIDNODE *sortcell, float dt_st, int erosed_model, 
 		}
 
 		/*
-		  Calculates the potential mass increment d_mass (kg) due to river dynamics 
-		  in this cell (erosion or sedimentation): 
+		  Calculates the potential sediment mass increment in this cell d_mass (kg) due to 
+		  river erosion in this cell (erosion or sedimentation): 
 		*/
 		switch (drainage[row][col].type) {
 			float dist, slope, transp_capacity_eq;
@@ -1176,153 +1177,183 @@ int Fluvial_Transport(struct GRIDNODE *sortcell, float dt_st, int erosed_model, 
 					slope = main_tribut_slope;
 				}
 
-			switch (erosed_model) {
+				switch (erosed_model) {
 #define ERODED_ERODIBILITY   /*Takes a mean erodibility*/ float depth2average=10., dh, weight, totalweight=0, basedepth=0, erodibility_aux=0;\
-				for (int i=numBlocks-1; i>=0; i--) {\
-					basedepth+=Blocks[i].thick[row][col];\
-					basedepth=MIN_2(basedepth,depth2average+.1);\
-					weight=Blocks[i].thick[row][col]/(basedepth+1.); totalweight+=weight;\
-					erodibility_aux+=weight*Blocks[i].erodibility; \
-					/*PRINT_ERROR("xxx %.2e %.2e %.2e %.2e", Blocks[i].erodibility, erodibility_aux, basedepth, weight);*/\
-					if (basedepth>=depth2average) break;\
-				};\
-				if (basedepth<=depth2average) {\
-					weight=(depth2average-basedepth)/(depth2average+1); totalweight+=weight;\
-					erodibility_aux+=weight*erodibility;\
-					/*PRINT_ERROR("XXX %.2e %.2e %.2e %.2e", erodibility, erodibility_aux, basedepth, weight);*/\
-				}\
-				if (totalweight) erodibility_aux/=totalweight; if (!erodibility_aux) erodibility_aux=erodibility;\
-				/*PRINT_ERROR("XXX erodibil: %.2e", erodibility_aux);*/
+					for (int i=numBlocks-1; i>=0; i--) {\
+						basedepth+=Blocks[i].thick[row][col];\
+						basedepth=MIN_2(basedepth,depth2average+.1);\
+						weight=Blocks[i].thick[row][col]/(basedepth+1.); totalweight+=weight;\
+						erodibility_aux+=weight*Blocks[i].erodibility; \
+						/*PRINT_ERROR("xxx %.2e %.2e %.2e %.2e", Blocks[i].erodibility, erodibility_aux, basedepth, weight);*/\
+						if (basedepth>=depth2average) break;\
+					};\
+					if (basedepth<=depth2average) {\
+						weight=(depth2average-basedepth)/(depth2average+1); totalweight+=weight;\
+						erodibility_aux+=weight*erodibility;\
+						/*PRINT_ERROR("XXX %.2e %.2e %.2e %.2e", erodibility, erodibility_aux, basedepth, weight);*/\
+					}\
+					if (totalweight) erodibility_aux/=totalweight; if (!erodibility_aux) erodibility_aux=erodibility;\
+					/*PRINT_ERROR("XXX erodibil: %.2e", erodibility_aux);*/
 #define TRANSPORT_BOUNDARY_CONDITIONS \
-				if (AT_BORDER(row,col)) {\
-					switch (eros_bound_cond[BORDER_INDEX(row,col)]) {\
-					case '1':\
-					case '2':\
-					case 'c':					break;\
-					case '0':   transp_capacity_eq = 0;		break;\
-					case '3':   transp_capacity_eq /= 2;		break;\
-				}}
-			  case 2:
-				/*Beaumont et al. (1992) stream power law ('uncercapacity'):*/
-				/*Transport capacity in equilibrium [kg/s]. Whipple & Tucker, 2002 conclude m'=n'=1*/
-				transp_capacity_eq = K_river_cap * drainage[row][col].discharge * slope;	/*Eq. 16 of Tucker&Slingerland, 1996*/
-			TRANSPORT_BOUNDARY_CONDITIONS;
-			/*EROSION*/
-			if (transp_capacity_eq >= drainage[row][col].masstr) {
-				ERODED_ERODIBILITY;
-				/*!!dxy instead of dist does not help to promote non-diagonal drainage (along x,y) (see cone_postectonic)*/
-				d_mass  =  dist / erodibility_aux * (transp_capacity_eq - drainage[row][col].masstr) * dt_st;
-			}
-			/*SEDIMENTATION*/
-			else {
-				d_mass  =  dist / l_fluv_sedim   *  (transp_capacity_eq - drainage[row][col].masstr) * dt_st;
-			}
-			break;
-			  case 3:
-				/*Tucker & Slingerland (1996) hybrid stream power:*/
-				transp_capacity_eq = K_river_cap * drainage[row][col].discharge * slope;	/*Eq. 16 of Tucker&Slingerland, 1996*/
-			TRANSPORT_BOUNDARY_CONDITIONS;
-				if (transp_capacity_eq >= drainage[row][col].masstr) {
-				spl_m = 1/3;
-				spl_n = 2/3;
-				ERODED_ERODIBILITY;
-					/*bedrock channel incision*/
-					dh = erodibility_aux		/*Eq. 11 of T&S*/
-						* pow((double)drainage[row][col].discharge, (double)spl_m)
-						* pow((double)slope,			(double)spl_n)
-						* dt_st;
-					d_mass = THICK2SEDMASS(dh);
-				}
-				else{
-					/*alluvial channel aggradation: sediment the excess*/
-					d_mass =					/*Eqs. 18 & 10 of T&S*/
-						(transp_capacity_eq - drainage[row][col].masstr)
-						* dt_st;
-				}
-				break;
-				  case 4:
-				/*Modified stream power used by Davy's group (see Loget et al., 2006, Gibraltar), similar to Beaumont's and Kooi's:*/
-				/*Transport capacity in equilibrium [kg/s].*/
-				transp_capacity_eq = K_river_cap * pow(drainage[row][col].discharge, 1.5) * slope;
-			TRANSPORT_BOUNDARY_CONDITIONS;
-			/*EROSION*/
-			if (transp_capacity_eq >= drainage[row][col].masstr) {
-				ERODED_ERODIBILITY;
-				d_mass  =  dist / erodibility_aux * (transp_capacity_eq - drainage[row][col].masstr) * dt_st;
-			}
-			/*SEDIMENTATION*/
-			else {
-				d_mass  =  dist / l_fluv_sedim   *  (transp_capacity_eq - drainage[row][col].masstr) * dt_st;
-			}
-				break;
-			  case 5:
-				/*Undercapacity of Beaumont incorporating width by van der Beek & Bishop, 2003 (described in Cowie et al., 2006), modifies Beaumont's*/
-				/*Transport capacity in equilibrium [kg/s].*/
-				transp_capacity_eq = K_river_cap * drainage[row][col].discharge * slope;		/*Eq. 16 of Tucker&Slingerland, 1996*/
-			TRANSPORT_BOUNDARY_CONDITIONS;
-			/*EROSION*/
-			if (transp_capacity_eq >= drainage[row][col].masstr) {
-				ERODED_ERODIBILITY;
-				d_mass = dist / erodibility_aux / pow(drainage[row][col].discharge, .5) * (transp_capacity_eq - drainage[row][col].masstr) * dt_st;
-			}
-			/*SEDIMENTATION*/
-			else {
-				d_mass  =  dist / l_fluv_sedim * (transp_capacity_eq - drainage[row][col].masstr) * dt_st;
-			}
-			break;
-			  case 6:
-				/*Garcia-Castellanos & Villasenor (2011, Nature) basal shear stress approach:*/
-				transp_capacity_eq = K_river_cap * drainage[row][col].discharge * slope;		/*Eq. 16 of Tucker&Slingerland, 1996*/
-			TRANSPORT_BOUNDARY_CONDITIONS;
-				if (transp_capacity_eq >= drainage[row][col].masstr) {
-				float a=1.5, Kw=1.1, aw=0.5;
-				spl_m = 3*a*(1-aw)/5;
-				spl_n = 7*a/10;
-					/*bedrock channel incision*/
-				ERODED_ERODIBILITY;
-					dh = erodibility_aux/secsperyr * pow(1020*g, a)
-						* pow((double).05/Kw, (double) 3*a/5)
-					* pow((double)drainage[row][col].discharge, (double)spl_m) 
-					* pow((double)slope,			(double)spl_n)
-						* dt_st;
-				if (transp_capacity_eq) dh *= (transp_capacity_eq-drainage[row][col].masstr)/transp_capacity_eq;
-				d_mass = THICK2SEDMASS(dh);
-				}
-				else{
-					/*alluvial channel aggradation: sediment the excess*/
-					d_mass = 
-						dist / l_fluv_sedim * (transp_capacity_eq - drainage[row][col].masstr)
-						* dt_st;
-				}
-				break;
-			  case 7:
-				/*Ferrier et al. (2013, Nature) unit stream power approach:*/
-				transp_capacity_eq = K_river_cap * drainage[row][col].discharge * slope;		/*Eq. 16 of Tucker&Slingerland, 1996*/
-			TRANSPORT_BOUNDARY_CONDITIONS;
-				if (transp_capacity_eq >= drainage[row][col].masstr) {
-				float a=1, Kw=1.1, aw=0.5;
-				spl_m = (1-aw);
-				spl_n = a;
-					/*bedrock channel incision*/
-				ERODED_ERODIBILITY;
-					dh = erodibility_aux/secsperyr * pow(1020*g, a) / Kw 
+					if (AT_BORDER(row,col)) {\
+						switch (eros_bound_cond[BORDER_INDEX(row,col)]) {\
+						case '1':\
+						case '2':\
+						case 'c':					break;\
+						case '0':   transp_capacity_eq = 0;		break;\
+						case '3':   transp_capacity_eq /= 2;		break;\
+					}}
+				  case 2:
+					/*Beaumont et al. (1992) stream power law ('uncercapacity'):*/
+					/*Transport capacity in equilibrium [kg/s]. Whipple & Tucker, 2002 conclude m'=n'=1*/
+					transp_capacity_eq = K_river_cap * drainage[row][col].discharge * slope;	/*Eq. 16 of Tucker&Slingerland, 1996*/
+					TRANSPORT_BOUNDARY_CONDITIONS;
+					/*EROSION*/
+					if (transp_capacity_eq >= drainage[row][col].masstr) {
+						ERODED_ERODIBILITY;
+						/*!!dxy instead of dist does not help to promote non-diagonal drainage (along x,y) (see cone_postectonic)*/
+						d_mass  =  dist / erodibility_aux * (transp_capacity_eq - drainage[row][col].masstr) * dt_st;
+					}
+					/*SEDIMENTATION*/
+					else {
+						d_mass  =  dist / l_fluv_sedim   *  (transp_capacity_eq - drainage[row][col].masstr) * dt_st;
+					}
+					break;
+				  case 3:
+					/*Tucker & Slingerland (1996) hybrid stream power:*/
+					transp_capacity_eq = K_river_cap * drainage[row][col].discharge * slope;	/*Eq. 16 of Tucker&Slingerland, 1996*/
+					TRANSPORT_BOUNDARY_CONDITIONS;
+					if (transp_capacity_eq >= drainage[row][col].masstr) {
+						spl_m = 1/3;
+						spl_n = 2/3;
+						ERODED_ERODIBILITY;
+						/*bedrock channel incision*/
+						dh = erodibility_aux		/*Eq. 11 of T&S*/
+							* pow((double)drainage[row][col].discharge, (double)spl_m)
+							* pow((double)slope,			(double)spl_n)
+							* dt_st;
+						d_mass = THICK2SEDMASS(dh);
+					}
+					else{
+						/*alluvial channel aggradation: sediment the excess*/
+						d_mass =					/*Eqs. 18 & 10 of T&S*/
+							(transp_capacity_eq - drainage[row][col].masstr)
+							* dt_st;
+					}
+					break;
+					  case 4:
+					/*Modified stream power used by Davy's group (see Loget et al., 2006, Gibraltar), similar to Beaumont's and Kooi's:*/
+					/*Transport capacity in equilibrium [kg/s].*/
+					transp_capacity_eq = K_river_cap * pow(drainage[row][col].discharge, 1.5) * slope;
+					TRANSPORT_BOUNDARY_CONDITIONS;
+					/*EROSION*/
+					if (transp_capacity_eq >= drainage[row][col].masstr) {
+						ERODED_ERODIBILITY;
+						d_mass  =  dist / erodibility_aux * (transp_capacity_eq - drainage[row][col].masstr) * dt_st;
+					}
+					/*SEDIMENTATION*/
+					else {
+						d_mass  =  dist / l_fluv_sedim   *  (transp_capacity_eq - drainage[row][col].masstr) * dt_st;
+					}
+					break;
+				  case 5:
+					/*Undercapacity of Beaumont incorporating width by van der Beek & Bishop, 2003 (described in Cowie et al., 2006), modifies Beaumont's*/
+					/*Transport capacity in equilibrium [kg/s].*/
+					transp_capacity_eq = K_river_cap * drainage[row][col].discharge * slope;		/*Eq. 16 of Tucker&Slingerland, 1996*/
+					TRANSPORT_BOUNDARY_CONDITIONS;
+					/*EROSION*/
+					if (transp_capacity_eq >= drainage[row][col].masstr) {
+						ERODED_ERODIBILITY;
+						d_mass = dist / erodibility_aux / pow(drainage[row][col].discharge, .5) * (transp_capacity_eq - drainage[row][col].masstr) * dt_st;
+					}
+					/*SEDIMENTATION*/
+					else {
+						d_mass  =  dist / l_fluv_sedim * (transp_capacity_eq - drainage[row][col].masstr) * dt_st;
+					}
+					break;
+				  case 6:
+					/*Garcia-Castellanos & Villasenor (2011, Nature) basal shear stress approach:*/
+					transp_capacity_eq = K_river_cap * drainage[row][col].discharge * slope;		/*Eq. 16 of Tucker&Slingerland, 1996*/
+					TRANSPORT_BOUNDARY_CONDITIONS;
+					if (transp_capacity_eq >= drainage[row][col].masstr) {
+					float a=1.5, Kw=1.1, aw=0.5;
+					spl_m = 3*a*(1-aw)/5;
+					spl_n = 7*a/10;
+						/*bedrock channel incision*/
+					ERODED_ERODIBILITY;
+						dh = erodibility_aux/secsperyr * pow(1020*g, a)
+							* pow((double).05/Kw, (double) 3*a/5)
 						* pow((double)drainage[row][col].discharge, (double)spl_m) 
-					* pow((double)slope, 			(double)spl_n) 
-						* dt_st;
-				if (transp_capacity_eq) dh *= (transp_capacity_eq-drainage[row][col].masstr)/transp_capacity_eq;
-				d_mass = THICK2SEDMASS(dh);
-				}
-				else{
-					/*alluvial channel aggradation: sediment the excess*/
-					d_mass = 
-						dist / l_fluv_sedim * (transp_capacity_eq - drainage[row][col].masstr)
-						* dt_st;
-				}
-				break;
+						* pow((double)slope,			(double)spl_n)
+							* dt_st;
+					if (transp_capacity_eq) dh *= (transp_capacity_eq-drainage[row][col].masstr)/transp_capacity_eq;
+						d_mass = THICK2SEDMASS(dh);
+					}
+					else{
+						/*alluvial channel aggradation: sediment the excess*/
+						d_mass = 
+							dist / l_fluv_sedim * (transp_capacity_eq - drainage[row][col].masstr)
+							* dt_st;
+					}
+					break;
+				  case 7:
+					/*Ferrier et al. (2013, Nature) unit stream power approach:*/
+					transp_capacity_eq = K_river_cap * drainage[row][col].discharge * slope;		/*Eq. 16 of Tucker&Slingerland, 1996*/
+					TRANSPORT_BOUNDARY_CONDITIONS;
+					if (transp_capacity_eq >= drainage[row][col].masstr) {
+						float a=1, Kw=1.1, aw=0.5;
+						spl_m = (1-aw);
+						spl_n = a;
+						/*bedrock channel incision*/
+						ERODED_ERODIBILITY;
+						dh = erodibility_aux/secsperyr * pow(1020*g, a) / Kw 
+							* pow((double)drainage[row][col].discharge, (double)spl_m) 
+							* pow((double)slope, 			(double)spl_n) 
+							* dt_st;
+						if (transp_capacity_eq) dh *= (transp_capacity_eq-drainage[row][col].masstr)/transp_capacity_eq;
+							d_mass = THICK2SEDMASS(dh);
+					}
+					else{
+						/*alluvial channel aggradation: sediment the excess*/
+						d_mass = 
+							dist / l_fluv_sedim * (transp_capacity_eq - drainage[row][col].masstr)
+							* dt_st;
+					}
+					break;
+				  case 8:
+					/*Berry et al. 2019 (in revision) basal shear stress similar to case 6, but with sediment scaling curve*/
+					transp_capacity_eq = K_river_cap * drainage[row][col].discharge * slope; /*Eq. 16 of Tucker&Slingerland, 1996*/
+	                TRANSPORT_BOUNDARY_CONDITIONS;
+	                if (transp_capacity_eq >= drainage[row][col].masstr) {
+		                float a=1.5, Kw=1.1, aw=0.5;
+		                                
+						/*bedrock channel incision, same as #6 with tau_c (critical shear stress) and pulled exp out of individual powers*/
+						ERODED_ERODIBILITY;
+						double in_eqn = 1020 * g * pow((double).05/Kw,(double) 3/5) *
+						pow((double)drainage[row][col].discharge, (double)(3*(1-aw))/5) *
+						pow((double)slope, (double)7/10) - (double) tau_c ;
+
+						dh = erodibility_aux/secsperyr * pow((double) in_eqn, a) * dt_st;
+						/*sediment scaling curve*/
+						
+						if (transp_capacity_eq) dh *= (double)(0.64)*
+							(-4*pow(((double)drainage[row][col].masstr/(double)transp_capacity_eq),2)
+							+3*((double)drainage[row][col].masstr/(double)transp_capacity_eq)+1);
+		                d_mass = THICK2SEDMASS(dh);
+					}
+	                else{
+	                		/*alluvial channel aggradation: sediment the excess*/
+	                		d_mass = 
+	                                dist / l_fluv_sedim * (transp_capacity_eq - drainage[row][col].masstr)
+	                                * dt_st;
+	                }
+	                break;
+       			  default:
+       			  	break;
 				}
 				break;
 			default:
-				PRINT_ERROR("[%d][%d] has no defined drainage type.", row, col);
+			PRINT_ERROR("[%d][%d] has no defined drainage type.", row, col);
 		}
 		
 		if (AT_BORDER(row,col)) if (eros_bound_cond[BORDER_INDEX(row,col)]=='2') d_mass = 0;
