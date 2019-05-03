@@ -98,7 +98,7 @@ int inputs (int argc, char **argv)
 
 	/*Version of TISC is matched against the parameters file *.PRM*/
 	/*¡¡ UPDATE template.PRM !!*/
-	strcpy(version, "TISC_2018-07-13");
+	strcpy(version, "TISC_2019-05-03");
 
 	/*Default parameter values are read from ./tisc/doc/template.PRM:*/
 	sprintf(projectname, "%s/doc/template", TISCDIR);

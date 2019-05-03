@@ -58,5 +58,6 @@ upload:
 	#for initialization:  
 	#git init; git remote add tisc https://github.com/danigeos/tisc; git add Makefile README config.mk bin demo doc include lib script src; git rm --cached doc/.first_compilation.txt
 	git commit -a 
+	#add --force to pass by the remote version 
 	git push tisc master
 
