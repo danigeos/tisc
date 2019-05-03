@@ -660,10 +660,10 @@ No. Density Age Volume Surf.  Vel_x Vel_y Shft_x Shft_y erosL
 	Gradual sediment compaction now implemented (see new parameter 
 	compact_depth). Bug solved for erosed_model 6 (surf_proc.c around line 1120),
 	erosion was overestimated (or erodability underestimated) by about a factor 2.
-  TISC_2019-
+  TISC_2019-05-03
   	Underground water flow now implemented (see new parameter 'permeability').
   	Sklar & Dietrich's (1994) erosion dependence on sediment load added by Michael 
-  	Berry (UNM, Socorro), new erosed_model #8. Critical stress for sediemnt 
+  	Berry (UNM, Socorro), new erosed_model #8. Critical stress for sediment 
   	mobilisation.
 
 
@@ -788,7 +788,7 @@ No. Density Age Volume Surf.  Vel_x Vel_y Shft_x Shft_y erosL
 
 
 14.- AUTHORSHIP, CREDITS
-	TISC is a program developed since Sept. 1994 by Daniel Garcia-Castellanos, with small contributions from others, cited in the code and the GitHub   repository.
+	TISC is a program developed since Sept. 1994 by Daniel Garcia-Castellanos with some contributions from others, cited in the code and the GitHub repository.
 
     Details on copyright are in the tisc/doc/ directory.
 	Please, contact the author if you will use the program.
@@ -803,7 +803,9 @@ No. Density Age Volume Surf.  Vel_x Vel_y Shft_x Shft_y erosL
 
 
 15.- ACKNOWLEDGEMENTS
-	TISC has been developed mainly in the Instituto de Ciencias de la Tierra Jaume Almera (Barcelona) and the Vrije Universiteit (Amsterdam), but stages at the Dalhousie University (Halifax, Canada) and the Australia National University (Canberra) have also been helpful. Most funding comes from public research institutions. Feedback with users has been essential and special mention must be made to: Mihai Tarapoanca, Jorge Gaspar-Escribano, Juan Alvarez, Chiara Barbieri, Jeroen Bartol, Karen Leever, Javier Fullea, Gradmann Sofie, Ronald van Balen, Charlotte Fillon.
+	TISC has been developed mainly in the Instituto de Ciencias de la Tierra Jaume Almera (CSIC, Barcelona) and the Vrije Universiteit (Amsterdam), but stages at the Dalhousie University (Halifax, Canada) and the Australia National University (Canberra) have also been helpful. 
+	Marked parts of the code have been supplied by Michael Berry (UNM, Socorro) and others.
+	Most funding comes from public research institutions. Feedback with users has been essential and special mention must be made to: Mihai Tarapoanca, Jorge Gaspar-Escribano, Juan Alvarez, Chiara Barbieri, Jeroen Bartol, Karen Leever, Javier Fullea, Gradmann Sofie, Ronald van Balen, Charlotte Fillon.
 
 16.- DISCLAIMER 
 	TISC is a tool developed for my own research with no professional programmers involved, the code is thus not so user-friendly, and I cannot always guarantee my assistance in case of trouble. See other warnings in the license file tisc/doc/LICENSE.txt.

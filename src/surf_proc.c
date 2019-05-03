@@ -1330,22 +1330,24 @@ int Fluvial_Transport(struct GRIDNODE *sortcell, float dt_st, int erosed_model, 
 						/*bedrock channel incision, same as #6 with tau_c (critical shear stress) and pulled exp out of individual powers*/
 						ERODED_ERODIBILITY;
 						double in_eqn = 1020 * g * pow((double).05/Kw,(double) 3/5) *
-						pow((double)drainage[row][col].discharge, (double)(3*(1-aw))/5) *
-						pow((double)slope, (double)7/10) - (double) tau_c ;
+							pow((double)drainage[row][col].discharge, (double)(3*(1-aw))/5) *
+							pow((double)slope, (double)7/10) - (double) tau_c ;
 
 						dh = erodibility_aux/secsperyr * pow((double) in_eqn, a) * dt_st;
 						/*sediment scaling curve*/
-						
-						if (transp_capacity_eq) dh *= (double)(0.64)*
-							(-4*pow(((double)drainage[row][col].masstr/(double)transp_capacity_eq),2)
-							+3*((double)drainage[row][col].masstr/(double)transp_capacity_eq)+1);
+
+						/*Sklar & Dietrich, 1994; Whipple & Tucker, 2002; Equation 11 in Berry et al., 2019*/
+						if (transp_capacity_eq) 
+							dh *= (double)(0.64)*
+								(-4*pow(((double)drainage[row][col].masstr/(double)transp_capacity_eq),2)
+								+3*((double)drainage[row][col].masstr/(double)transp_capacity_eq)+1);
 		                d_mass = THICK2SEDMASS(dh);
 					}
 	                else{
-	                		/*alluvial channel aggradation: sediment the excess*/
-	                		d_mass = 
-	                                dist / l_fluv_sedim * (transp_capacity_eq - drainage[row][col].masstr)
-	                                * dt_st;
+	                	/*alluvial channel aggradation: sediment the excess*/
+	                	d_mass = 
+	        				dist / l_fluv_sedim * (transp_capacity_eq - drainage[row][col].masstr)
+	                           * dt_st;
 	                }
 	                break;
        			  default:
