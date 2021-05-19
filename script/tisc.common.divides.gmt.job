@@ -3,9 +3,10 @@ echo -n plotting DIVIDES...
 awk '{if ($6<0) sd=0; else sd=$14; print($1,$2,sd)}' $prj.xyw |\
 	xyz2grd	-G$tmp.swimdist.grd.tmp -I$dx/$dy -R -H2
 
-set max4cpt = `awk -v number=$Lxy 'BEGIN{number*=1.; print (int(number/10^(int(log(number)/log(10)))*10)+1)*10^(int(log(number)/log(10)))/10}'`
-set inc4cpt = `awk -v number=$Lxy 'BEGIN{number*=.1; print (int(number/10^(int(log(number)/log(10)))*10)+1)*10^(int(log(number)/log(10)))/10}'`
-makecpt -Crainbow -T0/$max4cpt/$inc4cpt -Z > $tmp.cpt.tmp
+set max4cpt = `awk -v number=$Lxy 'BEGIN{number*=2.5; print (int(number/10^(int(log(number)/log(10)))*10)+1)*10^(int(log(number)/log(10)))/10}'`
+set inc4cpt = `awk -v number=$Lxy 'BEGIN{number*=.25; print (int(number/10^(int(log(number)/log(10)))*10)+1)*10^(int(log(number)/log(10)))/10}'`
+makecpt -D -Cdrywet -I -T0/$max4cpt/$inc4cpt > $tmp.cpt.tmp
+#grd2cpt -D -Cdrywet -I -L0/$max4cpt -E11 $tmp.swimdist.grd.tmp > $tmp.cpt.tmp
 
 grdimage $tmp.swimdist.grd.tmp -C$tmp.cpt.tmp -Q -JX -R -K -O >> $ps
 

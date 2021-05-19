@@ -57,6 +57,7 @@ dt_record	5	Time lag between records of sedimentary horizons (time lines)
 				and deflection evolution (written in '*.xyzt'). If =0, will be
 				recorded only at the times of *.UNIT files, and at those times
 				specified in the '*.REC' file. (>0)
+_______________________________________________________________________________
 
 #FLEXURE:
 isost_model	1	Isostasy mechanism: 
@@ -83,6 +84,8 @@ topoest		0	If 1 then the final topography (instead of load thickness)
 Px		0e12	Horizontal tectonic force in x (compressive => >0)
 Py		0e12	Horizontal tectonic force in y
 Pxy		0e12	Horizontal tectonic shear force xy
+_______________________________________________________________________________
+
 
 #CLIMATE AND SURFACE WATER FLOW (params. used only if hydro_model=1):
 hydro_model	0	Defines the hydrological (climate&drainage) model. 
@@ -142,6 +145,8 @@ permeability	0 [m2] for underground flow. 0 means no underground flow.
 				Typical values for sandstone and shale: 1e-18 to 1e-12.
 temp_sea_level	8	If hydro_model>=2 or K_ice_eros>0: Temperature at sea level
 				[C]. 
+_______________________________________________________________________________
+
 
 #EROSION/SEDIMENTATION PARAMETERS (params. used only if erosed_model=1):
 erosed_model	0	Defines the erosion/sedimentation model.
@@ -162,11 +167,13 @@ erosed_model	0	Defines the erosion/sedimentation model.
 			#6: As #1 + rivers following hybrid detachment+transport limited
 				model, based on the basal shear stress law (formulation and
 				values in Garcia-Castellanos & Jimenez-Munt, PlosONE, 2015), 
-				accounting for channel width: dh/dt=K'·Q^m·S^n if q<qeq,
-				qeq=K_river_cap·Q·S where K' is a function of K in dh/dz =
-				K*tau^1.5 and K is given through 'erodibility'. Erosion
-				gradually decreases to 0 when approaching the eq. capacity
-				defined in #2.
+				accounting for channel width: dh/dt=K'·Q^m·S^n · (qeq-q)/qeq 
+				where K' is a function of K in dh/dz = K*tau^1.5, K is 
+				given through 'erodibility' and qeq=K_river_cap·Q·S is the 
+				equilibrium capacity. This implies a gradual decrease to 
+				0 erosion rate when sediment load q approaches qeq). 
+				If qeq<q then q is sedimented at a rate proportional to 
+				(q-qeq)/l_fluv_sedim.
 			#7: As #1 + river incision following unit stream power e=k_b*w^1;
 				w=rho*g*Q*S/W, with w in [W/m^2], e in mm/yr (Ferrier et al.,
 				2013, Nature).
@@ -215,7 +222,8 @@ l_fluv_sedim	10e3	Sedimentation decay distance [m] (fluvial aggradation
 				relevant for delta sedimentation at the sea and lakes. Larger
 				values imply wider deltas and a more gradual transition from
 				river incision to river aggradation.
-tau_c           0       critical basal shear required for incision (Case #8)
+critical_stress	0	critical basal shear (tau_c) required for incision (Case #8). 
+				Values range from 1 to 100 N m-2 (Snyder et al., 2003). 
 eros_bound_cond	0000	Boundary Conditions for surface processes at the N, S,
 				E, W boundaries of the model (4 characters):
 			#0: means river has 0 equilibrium capacity (q_eq in 
@@ -234,6 +242,9 @@ K_ice_eros	0	Constant of ice incision rate relating ice sliding velocity to
 deform_sed	1	0 means that sediment units will remain steady (velocity =0); 1
 				means that sediment will be automatically deformed by the
 				motion of Blocks. 
+_______________________________________________________________________________
+
+
 
 #INPUT/OUTPUT:
 verbose_level	1	Specify the level of runtime prints in stdout:
@@ -248,6 +259,7 @@ switch_files	1	For extra file output: see files *.bas *.all *.lakes in
 mode_interp	4	Default interpolation mode for input files. See
 				doc/template.UNIT.
 switch_ps	1	For postscript graphic output (uses GMT4 shell scripts).
+_______________________________________________________________________________
 
 
 

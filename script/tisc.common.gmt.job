@@ -157,11 +157,11 @@ set color_sea      = 50/180/255
 set col_lake 	= 0/40/255
 set col_river	= 0/0/255
 set color_ice 	= 220/220/255
-set col_lin	= 4/255/0/120
+set col_lin	= 1/255/0/120ta
 set col_masstr	= 0/0/0
 
 set ticklabels 	= `awk -v meanL=$meanL 'BEGIN{if (meanL>=990) print "a500f50"; else if (meanL>=390) print "a200f50"; else if (meanL>=90) print "a50f10"; else print "a10f1";}'`
-set zticklabels	= `awk -v zmin=$zmin -v zmax=$zmax 'BEGIN{if (zmax-zmin>=30) print "a10f5g10"; else if (zmax-zmin>=10) print "a4f1g4"; else if (zmax-zmin>=3) print "a1f.5g1"; else print "a.5f.1g.1";}'`
+set zticklabels	= `awk -v zmin=$zmin -v zmax=$zmax 'BEGIN{if (zmax-zmin>=30) print "a10f5g10"; else if (zmax-zmin>=10) print "a4f1g4"; else if (zmax-zmin>=3) print "a1f.5g1"; else if (zmax-zmin>=1) print "a.4f.1g.2"; else print "a.1f.05g.1";}'`
 
 if (-r $prj.xyw) then
 	set sea_level = `awk '{if (NR==1) printf ("%.0f",$(NF-1)); exit;}' $prj.xyw`
@@ -265,20 +265,21 @@ cat - <<END>  $tmp.eet_cpt.tmp
 END
 
 cat - <<END>  $tmp.sed_cpt.tmp
-	0	255	255	255	1	255	255	0
-	1	255	255	0	2	255	255	0
-	2	255	190	0	4	255	190	0
-	4	255	120	0	6	255	120	0
-	6	255	0	0	8	255	0	0
-	8	155	0	0	10	155	0	0
+	0	255	255	255	.1	255	255	0
+	.1	255	255	0	.2	255	255	0
+	.2	255	190	0	.4	255	190	0
+	.4	255	120	0	.6	255	120	0
+	.6	255	0	0	.8	255	0	0
+	.8	155	0	0	1.0	155	0	0
 B	255 255 255
 F	30   30   30
 END
 
 cat - <<END>  $tmp.erosrate_cpt.tmp
-	-10	255	0	0	-1	150	190	0
-	-1	150	190	0	-.1	255	220	30
-	-.1	255	220	30	0	200	200	200
+	-10 180	0	0	-1 180	0	0
+	-1	255	0	0	-0.1	150	190	0
+	-0.1	150	190	0	-.01	255	220	30
+	-.01	255	220	30	0	200	200	200
 	0	200	200	200	.02	0	200	255
 	.02	0	200	255	.1	90	160	255
 	.1	128	127	255	1	128	127	255
@@ -287,10 +288,10 @@ END
 #makecpt -Ccool -T.1/10/1 -Qo -D >> $tmp.erosrate_cpt.tmp
 
 cat - <<END>  $tmp.eros_cumul_cpt.tmp
-	-8	150	0	200	-3	150	0	200
-	-3	70	0	255	-2	70	0	255
-	-2	0	60	255	-1	0	60	255
-	-1	30	140	255	0	255	255	255
+	-.8	150	0	200	-.3	150	0	200
+	-.3	70	0	255	-.2	70	0	255
+	-.2	0	60	255	-.1	0	60	255
+	-.1	30	140	255	0	255	255	255
 END
 cat $tmp.sed_cpt.tmp >>  $tmp.eros_cumul_cpt.tmp
 
@@ -314,25 +315,6 @@ cat - <<END>  $tmp.geol_palet.tmp
 B	30 30 30
 F	255 0 0
 END
-
-if (0) then 
-  #BLACK AND WHITE B/W pallette
-  set color_basement = 100/100/100
-  set color_thrust   = 120/120/120
-  set color_sediment = 200/200/200
-  set color_sea      = 255/255/255
-  set col_lin	  = 6/0
-  set col_river   = 0/0/0
-  set col_masstr  = 0/0/0
-  cat - <<END>  $tmp.geol_palet.tmp
-  	  500	  200	  200	  255	  1500    200	  200	  255
-  	  1500    200	  200	  200	  2500    200	  200	  200
-  	  2500    120	  120	  120	  2825    120	  120	  120
-  	  2825    100	  100	  100	  3500    100	  100	  100
-  B	  30 30 30
-  F	  255 0 0
-END
-endif
 
 
 #GRIDS:

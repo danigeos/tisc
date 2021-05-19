@@ -20,9 +20,9 @@ random_topo	100	Noise in initial relief [m]
 
 #Time variables [Ma]:
 Timeini		0	Initial time
-Timefinal	5	Final time
-dt 		.2	Time interval
-dt_eros		.01	Approximate dt for surface processes
+Timefinal	20	Final time
+dt 		.5	Time interval
+dt_eros		.001	Approximate dt for surface processes
 dtmemounit	5	Time between horizon record (0 means no horizons apart from those specified in '*.REC' file) and deflection evolution.
 tau		1	Relaxation time
 
@@ -58,10 +58,11 @@ erosed_model	8	To switch erosion/sedimentation processes
 Kerosdif   	0	Diffusive transport erosion coefficient [m2/a]
 Keroseol 	.0
 K_river_cap	50	Constant of river transport capacity [kg/m3]
-l_fluv_eros	1e-7	Length scale of fluvial erosion	[m] 
-l_fluv_eros_sed	1e-6	Length scale of fluvial erosion	[m] (for sediments)
+l_fluv_eros	2e-7	Length scale of fluvial erosion	[m] 
+l_fluv_eros_sed	2e-6	Length scale of fluvial erosion	[m] (for sediments)
 l_fluv_sedim	25e3	Length scale of fluvial sedimentation [m]
-tau_c 0
+critical_slope .0
+critical_stress 100
 
 #Interpolation:
 mode_interp 	4	Default interpolation mode for input files (if not specified in the files):

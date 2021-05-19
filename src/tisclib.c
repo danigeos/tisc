@@ -704,7 +704,7 @@ int Repare_Blocks()
 		float Block_volume=0;
 		for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++)  Block_volume += Blocks[i_Block].thick[i][j];
 		Block_volume *= dx*dy;
-		if (Block_volume<1e4 && Blocks[i_Block].type != 'H' && Blocks[i_Block].type != 'I') {
+		if (Block_volume<1e4 && Blocks[i_Block].type != 'G' && Blocks[i_Block].type != 'H' && Blocks[i_Block].type != 'I') {
 			PRINT_DEBUG("will remove Block %d (type %c) out of %d", i_Block, Blocks[i_Block].type, numBlocks);
 			Delete_Block(i_Block); i_Block--;
 		}
@@ -814,11 +814,11 @@ float calculate_sea_level()
 	if (n_sea_level_input_points) {
 	    int i;
 	    for (i=0; i<n_sea_level_input_points; i++) {
-		if (var_sea_level[i][0]>=Time) break;
-    	    }
-    	    if (i!=0 && i!=n_sea_level_input_points) {
-		sea_level = 	( (Time-var_sea_level[i-1][0])*var_sea_level[i][1] + 
-				  (var_sea_level[i][0]-Time)*var_sea_level[i-1][1] ) 
+			if (var_sea_level[i][0]>=Time) break;
+        }
+        if (i!=0 && i!=n_sea_level_input_points) {
+			sea_level = 	( (Time-var_sea_level[i-1][0])*var_sea_level[i][1] + 
+					  (var_sea_level[i][0]-Time)*var_sea_level[i-1][1] ) 
 				     / (var_sea_level[i][0]-var_sea_level[i-1][0]);
 	    }
  	    else {
@@ -827,6 +827,7 @@ float calculate_sea_level()
 	    }
 	}
 	else sea_level = 0;
+	PRINT_SUMLINE("sea_level: %.1f m", sea_level);
 	return(sea_level);
 }
 

@@ -2,6 +2,7 @@ density		2851
 mode_interp	4
 z_default	0
 gradual	1
+hidden 1
 time		3
 time_stop	5
 
