@@ -52,7 +52,9 @@ erodibility	100e3	[m]	erodibility of the unit.
 
 #Unit properties [0=NO, 1=YES]:
 gradual 	0	[0/1]	To distribute loading until the next load time.
-hidden		0	[0/1]	To hide the load.
+hidden		0	[0/1]	To hide the load (won't be plot and won't contribute to 
+					topography, will just add the corresponding load). Not
+					available for 'gradual' blocks.
 move		0	[0/1]	To move the load with 'vel_x,vel_y' (km/Ma)  till
 					'Time_stop' (Ma). 
 fault		0	[0/1]	Means that x-y points refer to the base of a  fault

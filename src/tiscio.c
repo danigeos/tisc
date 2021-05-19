@@ -412,6 +412,7 @@ int match_parameter (char *str1, char *str2, int show, int replace, char *line)
 	Match_Param_Replace_flt ( "K_river_cap",	K_river_cap,  	0 )
 	Match_Param_Replace_flt ( "erodibility",	erodibility,  	0 )
 	Match_Param_Replace_flt ( "erodibility_sed",	erodibility_sed,  	0 )
+	Match_Param_Replace_flt ( "critical_stress",	critical_stress,  	0 )
 	Match_Param_Replace_flt ( "l_fluv_sedim",	l_fluv_sedim,  	0 )
 	Match_Param_Replace_flt ( "temp_sea_level",	temp_sea_level,  	0 )
 	Match_Param_Replace_int ( "deform_sed",  	deform_sed, 	0 )
@@ -608,7 +609,7 @@ int read_file_resume(char *filename)
 	fread(&K_ice_eros, 	sizeof(float),		1, 	file);
 	fread(&erodibility, 	sizeof(float),		1, 	file);
 	fread(&erodibility_sed, 	sizeof(float),		1, 	file);
-	fread(&tau_c, 	sizeof(float),		1, 	file);
+	fread(&critical_stress, 	sizeof(float),		1, 	file);
 	fread(&l_fluv_sedim, 	sizeof(float),		1, 	file);
 	fread(&lost_rate, 	sizeof(float),		1, 	file);
 	fread(&permeability, 	sizeof(float),		1, 	file);
@@ -808,6 +809,7 @@ int read_file_sea_level()
 		}
 	}
 	free(aux1); free(aux2); free(aux3);
+	PRINT_INFO("Rows in sea level file '%d'.", n_sea_level_input_points);
 	return(1);
 }
 
@@ -827,7 +829,7 @@ int read_file_node_defs(float dt_st)
 
 	sprintf(filename, "%s.NDEF", projectname);
 	if ((file = fopen(filename, "rt")) == NULL) {
-		PRINT_WARNING("Cannot find file '%s' with node specifications", filename);
+		PRINT_DEBUG("Cannot find file '%s' with node specifications", filename);
 		return(0);
 	}
 	PRINT_DEBUG("Reading Node definitions at '%s'", filename);
@@ -1696,7 +1698,7 @@ int write_file_resume()
 	fwrite(&K_ice_eros, 	sizeof(float),		1, 	file);
 	fwrite(&erodibility, 	sizeof(float),		1, 	file);
 	fwrite(&erodibility_sed, 	sizeof(float),		1, 	file);
-	fwrite(&tau_c, 	sizeof(float),		1, 	file);
+	fwrite(&critical_stress, 	sizeof(float),		1, 	file);
 	fwrite(&l_fluv_sedim, 	sizeof(float),		1, 	file);
 	fwrite(&lost_rate, 	sizeof(float),		1, 	file);
 	fwrite(&permeability, 	sizeof(float),		1, 	file);

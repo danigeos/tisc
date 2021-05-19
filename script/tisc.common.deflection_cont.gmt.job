@@ -3,12 +3,12 @@ echo -n plotting DEFLECTION CONTOURS...
 #SUBSIDENCE
 grdcontour $tmp.subs.grd.tmp -JX -R -C100  -A500f7/255/255/255 -G5 -W1 \
 	-L0/2000  -O -K -T+0.5c/0.1c:UD >> $ps
-grdcontour $tmp.subs.grd.tmp -JX -R -C100 -A500f7/255/255/255 -G5 -W3 \
+grdcontour $tmp.subs.grd.tmp -JX -R -C100 -A500f7/255/255/255 -G5 -W2 \
 	-L0/100000  -O -K -T+0.5c/0.1c:UD >> $ps
 #UPLIFT
 grdcontour $tmp.subs.grd.tmp -JX -R -C100  -A500f7/255/255/255 -G5 -W1ta \
 	-L-2000/0 -O -K -T-0.5c/0.1c:UD >> $ps
-grdcontour $tmp.subs.grd.tmp -JX -R -C100 -A500f7/255/255/255 -G5 -W3ta \
+grdcontour $tmp.subs.grd.tmp -JX -R -C100 -A500f7/255/255/255 -G5 -W2ta \
 	-L-100000/0 -O -K -T-0.5c/0.1c:UD >> $ps
 
 #if (-r $prj.pfl) psxy $prj.pfl -JX -R$Region -M -W$col_lin -H2 -O -K >> $ps 

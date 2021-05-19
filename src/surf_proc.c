@@ -2,7 +2,7 @@
 	LIBRARY  FOR  SURFACE PROCESSES of tisc.c
 
 	1995-2018 Daniel Garcia-Castellanos
-	Check copyright and other information in tisc/doc/ 
+	Check license and other information in tisc/doc/ 
 */
 
 #include "types_n_defs.h"
@@ -37,7 +37,7 @@ extern float 	Time,
 	K_ice_eros, 
 	erodibility, 		/*Default length scale of fluvial erosion */
 	erodibility_sed, 	/*Length scale of fluvial erosion of sediment Blocks*/
-	tau_c, 
+	critical_stress, 
 	spl_m, spl_n, 
 	l_fluv_sedim, 		/*Length scale of fluvial sedimentation */
 	lost_rate, 		/*Percent of lost water per unit length */
@@ -1276,20 +1276,20 @@ int Fluvial_Transport(struct GRIDNODE *sortcell, float dt_st, int erosed_model, 
 					transp_capacity_eq = K_river_cap * drainage[row][col].discharge * slope;		/*Eq. 16 of Tucker&Slingerland, 1996*/
 					TRANSPORT_BOUNDARY_CONDITIONS;
 					if (transp_capacity_eq >= drainage[row][col].masstr) {
-					float a=1.5, Kw=1.1, aw=0.5;
-					spl_m = 3*a*(1-aw)/5;
-					spl_n = 7*a/10;
+						float a=1.5, Kw=1.1, aw=0.5;
+						spl_m = 3*a*(1-aw)/5;
+						spl_n = 7*a/10;
 						/*bedrock channel incision*/
-					ERODED_ERODIBILITY;
-						dh = erodibility_aux/secsperyr * pow(1020*g, a)
-							* pow((double).05/Kw, (double) 3*a/5)
-						* pow((double)drainage[row][col].discharge, (double)spl_m) 
-						* pow((double)slope,			(double)spl_n)
-							* dt_st;
-					if (transp_capacity_eq) dh *= (transp_capacity_eq-drainage[row][col].masstr)/transp_capacity_eq;
-						d_mass = THICK2SEDMASS(dh);
+						ERODED_ERODIBILITY;
+							dh = erodibility_aux/secsperyr * pow(1020*g, a)
+								* pow((double).05/Kw, (double) 3*a/5)
+								* pow((double)drainage[row][col].discharge, (double)spl_m) 
+								* pow((double)slope,			(double)spl_n)
+								* dt_st;
+						if (transp_capacity_eq) dh *= (transp_capacity_eq-drainage[row][col].masstr)/transp_capacity_eq;
+							d_mass = THICK2SEDMASS(dh);
 					}
-					else{
+					else {
 						/*alluvial channel aggradation: sediment the excess*/
 						d_mass = 
 							dist / l_fluv_sedim * (transp_capacity_eq - drainage[row][col].masstr)
@@ -1326,12 +1326,16 @@ int Fluvial_Transport(struct GRIDNODE *sortcell, float dt_st, int erosed_model, 
 	                TRANSPORT_BOUNDARY_CONDITIONS;
 	                if (transp_capacity_eq >= drainage[row][col].masstr) {
 		                float a=1.5, Kw=1.1, aw=0.5;
-		                                
+
 						/*bedrock channel incision, same as #6 with tau_c (critical shear stress) and pulled exp out of individual powers*/
 						ERODED_ERODIBILITY;
-						double in_eqn = 1020 * g * pow((double).05/Kw,(double) 3/5) *
-							pow((double)drainage[row][col].discharge, (double)(3*(1-aw))/5) *
-							pow((double)slope, (double)7/10) - (double) tau_c ;
+						double in_eqn = 1020 * g 
+							* pow((double).05/Kw,(double) 3/5) 
+							* pow((double)drainage[row][col].discharge, (double)(3*(1-aw))/5) 
+							* pow((double)slope, (double)7/10) 
+							- (double) critical_stress ;
+
+						in_eqn = MAX_2(in_eqn, 0);
 
 						dh = erodibility_aux/secsperyr * pow((double) in_eqn, a) * dt_st;
 						/*sediment scaling curve*/
@@ -1526,7 +1530,9 @@ int Ice_Flow(float **ice_velx_sl, float **ice_vely_sl, float **ice_velx_df, floa
 			  See Knap et al. (1996). My D's are everything in eqs. 2 and 3 except for the last 'grad(H+h)'.
 			  Tomkin's thesis has mistakes, and there D includes the ice_thickness required to convert velocity into flow.
 			*/
+			/*Internal deformation:*/
 			D_df =  -2*A_ice_rheo/(n_ice_rheo+2) * beta*pow(densice*g*ice_thickness[i][j],n_ice_rheo) * pow(modgradicetopo,n_ice_rheo-1) * ice_thickness[i][j];
+			/*Basal sliding:*/
 			D_sl =  -A_sl/.8					 * beta*pow(densice*g*ice_thickness[i][j],n_ice_rheo) * pow(modgradicetopo,n_ice_rheo-1) ;
 
 			melt_temp = melt_temp_per_depth*ice_thickness[i][j];

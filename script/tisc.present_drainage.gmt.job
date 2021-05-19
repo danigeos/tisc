@@ -56,7 +56,7 @@ source $tisc_dir/script/tisc.common.river_basin_chosen.gmt.job
 #set lmax = `awk -v Lxy=$Lxy 'BEGIN{print Lxy*.5}'`
 psbasemap -JX-6.8/2.3 -R0/$lmax/$zmin/$zmax \
 	-B$ticklabels\:"Distance (km)":/a.5f.1g1:"elevation, z (km)":nSEw \
-	-X$horz_shift -Y3.5 -K -O >> $ps
+	-X$horz_shift -Y2.0 -K -O >> $ps
 source $tisc_dir/script/tisc.common.river_profile.gmt.job
 #psscale -D-.3/1.25/2.1/.2 -L -C$tmp.erosrate_cpt.tmp -O -K -B:"@+sed./eros. (mm/yr)":s >> $ps 
 

@@ -1,9 +1,9 @@
 /*******************************************************************************
 *****                              TISC                                    *****
 ********************************************************************************
-	For compilation and installation check the file ../tisc/README
-	Main author since 1994 Daniel Garcia-Castellanos, danielgc@ictja.csic.es. 
-	Copyright details and other information in ../tisc/doc/ 
+	For compilation and installation check the file tisc/README
+	Main author: Daniel Garcia-Castellanos, danielgc@ictja.csic.es 
+	Copyright details and other information in tisc/doc/ 
 ********************************************************************************
 
 Memory debugging with: 
@@ -13,7 +13,7 @@ Memory debugging with:
 	-Edit here.
 	-Track sediment composition (carbonates, salt, and detrital grain size) in another class in structure Blocks. This to calculate grain size distribution in basin, and as a first step for sed-size dependent erosion, once transitory flow is implemented. 
 	-La flexion no es estable con cambios bruscos de Te (Mayo 2001).
-	-Implement grain size and sediment load effects on transport and erosion (Sklar). Test if climate variability from deltaO can explain erosion acceleration in Herman et al., 2013 Nature.
+	-DONE by M. Berry. Implement sediment load effects on transport and erosion (Sklar). 
 	-Implement transitory water flow. Interesting for acceleration of erosion during lake overtopping.
 	-DONE. Filter part of the surface water to the lowest surrounding node at 2-cell distance (16 candidates), to simulate underground that accelerates capture. -Alternative: smooth out the discharge grid to simulate underground flow.
 	-DONE. Solved bug in erosed_model 6.
@@ -206,12 +206,12 @@ int inputs (int argc, char **argv)
 				}
 				exit(0);
 			}
+			interpr_command_line_opts(argc, argv);
 			if (reformat) {
 				sprintf(projectname, "%s/doc/template", TISCDIR);
 				read_file_parameters(0, reformat);
 				exit(0);
 			}
-			interpr_command_line_opts(argc, argv);
 			break;
 	}
 
@@ -376,7 +376,8 @@ int interpr_command_line_opts(int argc, char **argv)
 					rain = atof(strtok(prm, "/"));
 					ptr=strtok(NULL, "/");
 					if (ptr != NULL) Krain = atof(ptr);
-					else Krain = 0;
+					ptr=strtok(NULL, "/");
+					if (ptr != NULL) evaporation_ct = atof(ptr);
 					break;
 				case 'q':
 					ptr = strtok(prm, "=");
@@ -951,12 +952,6 @@ int read_file_unit()
 
 	nloads++;
 
-	/*Check incompatibilities between unit file signals*/
-	if (switch_gradual && switch_move) {
-		PRINT_WARNING("Gradual & moving Blocks are not implemented. This one won't be gradual.");
-		switch_gradual = NO;
-	}
-
 	vel_x *= 1e3/Matosec;
 	vel_y *= 1e3/Matosec;
 	time_stop *= Matosec;
@@ -968,6 +963,17 @@ int read_file_unit()
 	if (fault) {
 		switch_move = YES;
 	}
+
+	/*Check incompatibilities between unit file signals*/
+	if (switch_gradual && switch_move) {
+		PRINT_WARNING("Gradual & moving Blocks are not compatible. This one won't be gradual.");
+		switch_gradual = NO;
+	}
+	if (switch_gradual && hidden) {
+		PRINT_WARNING("Gradual & hidden Blocks are not compatible. This one won't be hidden.");
+		hidden = NO;
+	}
+
 	/*Creates a Block of infill if switch_topoest; it will be filled later during Deflection*/
 	if (switch_topoest) {
 		insert_new_Block(i_first_Block_load);
@@ -1089,6 +1095,7 @@ int read_file_unit()
 		}
 	}
 	if (hidden) Blocks[i_Block_insert].type = 'H';
+	if (switch_gradual) Blocks[numBlocks-1].type = 'G';
 	if (thin_sheet) {
 		float default_viscTerm = .5e7; /*.1e7*/
 		char filename[MAXLENFILE];
@@ -1199,7 +1206,6 @@ int surface_processes (float **topo_ant)
 	int 	test;
 
 	total_sed_mass=total_bedrock_eros_mass=0;
-//sprintf("\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>%f %d",TimelastBlock, test);
 	if (!erosed_model && !hydro_model) return (0) ;
 	switch_topoest=NO;
 

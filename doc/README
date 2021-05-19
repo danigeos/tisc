@@ -1,10 +1,14 @@
 ********************************************************************************
-*************		      TISC README file   		****************
-*****	          PLANFORM MODELING OF GEOLOGICAL PROCESSES                *****
-*****		         USING FINITE DIFFERENCES                          *****
+*************                  TISC README file                 ****************
+*****             PLANFORM MODELING OF GEOLOGICAL PROCESSES                *****
+*****                    USING FINITE DIFFERENCES                          *****
 ********************************************************************************
 
-TISC is a program written in C under Linux to calculate the 2D (planform) flexure of the  lithosphere, fluvial transport along, and, in particular, to numerically simulate the formation of foreland basins. TISC is the 3D version of the cross-section (pseudo 2D) numerical model tAo, and uses the finite difference technique.
+TISC is a program written in C under Linux to calculate the 2D (planform) 
+flexure of the  lithosphere, fluvial transport along, and, in particular, to 
+numerically simulate the formation of foreland basins. TISC is the 3D version 
+of the cross-section (pseudo 2D) numerical model tAo, and uses the finite 
+difference technique.
 
 Main author: Daniel Garcia-Castellanos (CSIC)
 Details on authorship and citation in 'tisc/doc/tisc.info.txt'. 
@@ -37,3 +41,5 @@ you to be sure that the code is working properly. Check that the graphic
 output is correctly produced in the postscript output files (*.ps)
 
 -Read the 'doc/tisc.info.txt' file to know more about how to use TISC.
+
+-Note: upon installation, TISC will attempt to notify us by mail about your installation, but this usually fails, depending on your linux email configuration. Please send a brief email so that we can add you to our list and notify about any important bug that may arise (this never happend more than once per year, so far). 

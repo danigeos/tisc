@@ -19,6 +19,7 @@ BIN	= ../bin
 OBJ	= .
 LIB	= ../lib
 INCL	= ../include 
+MACOSX_DEPLOYMENT_TARGET = 10.9
 
 #Other things:
 BACKUPS	= $(HOME_DIR)/var/backups

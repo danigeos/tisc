@@ -222,9 +222,9 @@ float dist_2D(
 	if (switch_geograph_coor) {
 		/*returns meters*/
 		/*Spherical Earth*/
-		/*distance = Rearth * acos (sin(y0*pi/180)*sin(y1*pi/180) + cos(y0*pi/180)*cos(y1*pi/180)*cos((x1-x0)*pi/180));*/
+		distance = Rearth * acos (sin(y0*pi/180)*sin(y1*pi/180) + cos(y0*pi/180)*cos(y1*pi/180)*cos((x1-x0)*pi/180));
 		/*Ellipsoidal Earth*/
-		distance = distVincenty(y0, x0, y1, x1);
+		//distance = distVincenty(y0, x0, y1, x1);
 	}
 	else {
 		dx = x1-x0;  
@@ -232,7 +232,7 @@ float dist_2D(
 		distance = sqrt(dx*dx + dy*dy);
 	}
 
-	/*printf("\n#x0=%.2f   y0=%.2f   x1=%.2f   y1=%.2f   d=%.2f\n", x0, y0, x1, y1, distance);*/
+//	if (distance<0) printf("\n#x0=%.2f   y0=%.2f   x1=%.2f   y1=%.2f   d=%.2f\n", x0, y0, x1, y1, distance);
 
 	return (distance);
 }
@@ -254,8 +254,9 @@ float distVincenty(float lat1, float lon1, float lat2, float lon2) {
         double sinU2 = sin(U2), cosU2 = cos(U2);
 
         double lambda = L, lambdaP = 2*pi;
-        double iterLimit = 20;
-        while (fabs(lambda-lambdaP) > 1e-12 && --iterLimit>0) {
+        //CHANGE THIS!
+        int iterLimit = 1240; //Initially this was 40
+        while (fabs(lambda-lambdaP) > 1e-12 && --iterLimit>0) { //Initially the limit was 1e-12
           sinLambda = sin(lambda);
           cosLambda = cos(lambda);
           sinSigma = sqrt((cosU2*sinLambda) * (cosU2*sinLambda) +
