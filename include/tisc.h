@@ -28,10 +28,14 @@ int	erosed_model,
 	mode_interp, 		
 	nbasins, 
 	nlakes, 		/*number of lakes >= 0 */
+	n_ice_flow, 
 	n_image;
 
 float 	evaporation_ct, 		/*[m3/s/m2].*/
 	K_ice_eros, 
+	A_ice_rheo, 
+	A_ice_slide, 
+	dt_ice, 
 	total_rain, 
 	Px, Py, Pxy, 		/*Horizontal external load */
 	CYrain, windazimut, 	/*[m], [degrees]*/

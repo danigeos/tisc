@@ -6,7 +6,7 @@
 #Have a look at that one to better understand how this input works.
 
 #PARAMETER	VALUE	UNITS
-#----------------------------
+_______________________________________________________________________________
 z_default	0	[m] Default z-value (unit thickness/fault depth) in the nodes
 				where it is not  specified. z<0 downwards except if fault=1 (see
 				below). 
@@ -38,7 +38,7 @@ z_absol		0	[0/1]	For faults, 0 means z values are relative to initial
 				they will be used as absolute values.
 
 
-#Parameters of the new unit:
+_______________________________________________________________________________
 time		0	[Ma]	Time when this load/unit must be applied. Note  that
 					'time' in each unit file must be  larger than in the
 					previous unit file  (projectname'N-1'.UNIT).
@@ -88,6 +88,8 @@ topoest		0	[0/1]	1 means topographic load, i.e., the load is vertically
 #fill_up_to	0	[m]	If present, TISC fills with constant density  up to the
 					given height [m].  Distribution will not be read.
 
+
+_______________________________________________________________________________
 #Now the detph/thickness z of the unit. When not a fault, z>0 means the 
 #thickness of load emplaced; z<0 means the rock thickness excavated and removed.
 #For mode_interp=4, pass the z_value (thickness/fault_depth) for next polygon:

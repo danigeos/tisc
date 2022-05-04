@@ -237,8 +237,10 @@ int inputs (int argc, char **argv)
 	dx = (xmax-xmin) / (Nx-1);
 	dy = (ymax-ymin) / (Ny-1);
 	dxy = sqrt(dx*dx+dy*dy);
+	/*Change units*/
 	dt *= Matosec;
 	dt_eros *= Matosec;
+	dt_ice *= Matosec; 
 	tau *= Matosec;
 	dt_record *= Matosec;
 	Timefinal *= Matosec;
@@ -248,6 +250,8 @@ int inputs (int argc, char **argv)
 	Kerosdif *= 1e6/Matosec;
 	Keroseol /= Matosec;
 	Ksedim   /= Matosec;
+	A_ice_rheo /= secsperyr;
+	A_ice_slide /= secsperyr;
 	rain *= 1e6/Matosec/1e3;
 	if (hydro_model==1) Krain *= 1e6/Matosec/1e3/1e3;
 	evaporation_ct *= 1e6/Matosec/1e3;
@@ -305,7 +309,7 @@ int interpr_command_line_opts(int argc, char **argv)
 {
 	/*Interpretates the command line options*/
 
-	PRINT_INFO("Enetering command line interpretation.");
+	PRINT_INFO("Starting command line interpretation.");
 	for (int iarg=1; iarg<argc; iarg++) {
 		if (argv[iarg][0] == '-') {
 			float 	value, value2;
@@ -546,25 +550,25 @@ int Elastic_Deflection()
 	for (i=0; i<Ny; i++) for (j=0; j<Nx; j++) if (Dq[i][j]) load_changes = YES;
 	if (isost_model>0 && (load_changes || (Time==Timeini && (Px || Py || Pxy)))) {
     	    if (!Te_default) {
-    		/*LOCAL ISOSTASY*/
-    		float Krest;
-    		for (i=0; i<Ny; i++) for (j=0; j<Nx; j++)  {
-    		    GET_KREST(Krest, q, i,j)
-    		    Dw[i][j] = Dq[i][j] / Krest;
-    		}
+				/*LOCAL ISOSTASY*/
+				float Krest;
+				for (i=0; i<Ny; i++) for (j=0; j<Nx; j++)  {
+				    GET_KREST(Krest, q, i,j)
+				    Dw[i][j] = Dq[i][j] / Krest;
+				}
     	    }
     	    else {
-    	      /*REGIONAL ISOSTASY*/
-    	      switch (solver_type) {
+    	    	/*REGIONAL ISOSTASY*/
+    	    	switch (solver_type) {
     		case 'l':
     		    /*Requires 4*Nx*Ny*Ny cells*/
-    		    b = (double *) calloc (Neqs, sizeof(double));
-    		    A = alloc_matrix_dbl (Neqs, NDi+1+NDs);
-    		    defineLESalmostdiagonalmatrix(A, b, q, Dq, w, 0);
-    		    solveLESalmostdiagonal(A, b, Dw);
-    		    free_matrix_dbl (A, Neqs);
-    		    free(b);
-    		    break;
+    			b = (double *) calloc (Neqs, sizeof(double));
+				A = alloc_matrix_dbl (Neqs, NDi+1+NDs);
+    			defineLESalmostdiagonalmatrix(A, b, q, Dq, w, 0);
+    			solveLESalmostdiagonal(A, b, Dw);
+    			free_matrix_dbl (A, Neqs);
+    			free(b);
+    			break;
     		case 'm':
     		    NSP = 40*(6*Neqs+2+nonzeroes);
     		    PATH = 1;
@@ -634,7 +638,7 @@ int Elastic_Deflection()
 	}
 
 	/*Resets deflection and load grids*/
-	for (i=0; i<Ny; i++)  for (j=0; j<Nx; j++)  Dq[i][j]=Dw[i][j]=0;
+	for (i=0; i<Ny; i++)  for (j=0; j<Nx; j++)  Dq[i][j]=/*Dw[i][j]=*/0;
 
 	return(1);
 }

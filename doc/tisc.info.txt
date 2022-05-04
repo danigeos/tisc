@@ -51,8 +51,9 @@ INDEX
 		'u' to print an example of load file; 'i' (default) to print
 		this help file.
 	'-l' To artificially fill with sediment all lakes except sea.
-	'-M' Sets the plate model: 0 means no isostasy; 1 elastic plate (with
-		-T0 produces local isostasy); 2 for viscoelastic plate.
+	'-M' Sets the plate model (isost_model): 0 means no isostasy; 1 elastic 
+		plate (with -T0 produces local isostasy); 2 for viscoelastic plate 
+		(following Nadai , 1963).
 	'-N' To set Nx and Ny of gridding. Ny<Nx optimises computation time.
 	'-o' Redirects standard output to file projectname.out.
 	'-P' To produce a postscript graphic display using GMT. Append c to
