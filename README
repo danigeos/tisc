@@ -4,31 +4,31 @@
 *****                    USING FINITE DIFFERENCES                          *****
 ********************************************************************************
 
-TISC is a program written in C under Linux to calculate the 2D (planform) 
-flexure of the  lithosphere, fluvial transport along, and, in particular, to 
-numerically simulate the formation of foreland basins. TISC is the 3D version 
-of the cross-section (pseudo 2D) numerical model tAo, and uses the finite 
-difference technique.
+TISC is a program written in C under Linux (MacOS) to calculate the pseudo-3D 
+(planform) flexure of the lithosphere, fluvial transport along rivers, and 
+other surface and tectonic processes. In particular, TISC numerically 
+simulates the formation of sedimentary basins during tectonic compression 
+and extension. TISC is the 3D version of the cross-section (pseudo 2D) 
+numerical model tAo, and uses the finite difference technique.
 
 Main author: Daniel Garcia-Castellanos (CSIC)
 Details on authorship and citation in 'tisc/doc/tisc.info.txt'. 
 See license details in the documentation at tisc/doc/LICENSE.txt.
 
 
-TO INSTALL a Ubuntu Linux virtual machine with GMT4 (required for graphic output):
+Either a Mac or a Ubuntu Linux virtual machine including GMT4 (for graphic 
+output) are required:
 
     Install Virtualbox: https://www.virtualbox.org/wiki/Downloads
 
-	Download https://geo3bcnbox.geo3bcn.csic.es/index.php/s/mlQPch1DQDsY0ih/download
+	Download 
+	https://geo3bcnbox.geo3bcn.csic.es/index.php/s/mlQPch1DQDsY0ih/download
 
     Import VM with Ubuntu 20.04 + GMT 4.5.18.
 	Virtualbox > File > Import...
 
 
 TO INSTALL TISC:
-
-TISC has been developed in C under Linux, and is ready for compilation in a Mac 
-Linux environment.
 
 -Uncompress the downloaded file in a directory 'tisc/'.
 
