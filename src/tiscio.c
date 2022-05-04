@@ -417,6 +417,10 @@ int match_parameter (char *str1, char *str2, int show, int replace, char *line)
 	Match_Param_Replace_flt ( "temp_sea_level",	temp_sea_level,  	0 )
 	Match_Param_Replace_int ( "deform_sed",  	deform_sed, 	0 )
 	Match_Param_Replace_flt ( "K_ice_eros",	K_ice_eros,  	0 )
+	Match_Param_Replace_flt ( "dt_ice",	dt_ice,  	0 )
+	Match_Param_Replace_int ( "n_ice_flow",	n_ice_flow,  	0 )
+	Match_Param_Replace_flt ( "A_ice_rheo",	A_ice_rheo,  	0 )
+	Match_Param_Replace_flt ( "A_ice_slide",	A_ice_slide,  	0 )
 	Match_Param_Replace_chr ( "eros_bound_cond",	eros_bound_cond,  	0 )
 	Match_Param_Replace_flt ( "Timeini",	Timeini,  	0 )
 	Match_Param_Replace_flt ( "Timefinal",	Timefinal,  	0 )
@@ -607,6 +611,10 @@ int read_file_resume(char *filename)
 	fread(&critical_slope, 	sizeof(float),		1, 	file);
 	fread(&K_river_cap, 	sizeof(float),		1, 	file);
 	fread(&K_ice_eros, 	sizeof(float),		1, 	file);
+	fread(&dt_ice, 	sizeof(float),		1, 	file);
+	fread(&n_ice_flow, 	sizeof(int),		1, 	file);
+	fread(&A_ice_rheo, 	sizeof(float),		1, 	file);
+	fread(&A_ice_slide, 	sizeof(float),		1, 	file);
 	fread(&erodibility, 	sizeof(float),		1, 	file);
 	fread(&erodibility_sed, 	sizeof(float),		1, 	file);
 	fread(&critical_stress, 	sizeof(float),		1, 	file);
@@ -1186,13 +1194,12 @@ int write_file_cross_section ()
 	*/
 
 	CrossSection = (struct CS2D *) calloc(Nx2D, sizeof(struct CS2D));
-	for (i=0; i<Nx2D; i++)  CrossSection[i].horiz = (float *) calloc(numBlocks+2, sizeof(float));
+	for (i=0; i<Nx2D; i++)  CrossSection[i].horiz = (float *) calloc(numBlocks+3, sizeof(float));
 
 	switch_CrossSection = read_file_2D_CS(Blocks, CrossSection, Nx2D);
 
 	if (!switch_CrossSection) {for (i=0; i<Nx2D; i++)  free(CrossSection[i].horiz); free(CrossSection);}
 	Write_Open_Filename_Return (".pfl", "wt", !switch_CrossSection);
-
 	Calculate_2D_Cross_Section (Blocks, CrossSection, Nx2D);
 
 	fprintf(file, "# x(km)  \t y(km)  \t  long(km)\t   z(m)-->\n#\t\t\t\t  Densities->\t%8.0f", denscrust) ;
@@ -1574,14 +1581,14 @@ int write_file_ice ()
 #ifdef SURFACE_TRANSPORT
 	Write_Open_Filename_Return (".ice", "wt", !switch_write_file_Blocks || !hydro_model || !K_ice_eros || Time==Timeini);
 
-	fprintf(file, "#TISC output: ice flow.  sea_level: %.1f m\n# x(km) y(km) topo[m] ice_thick[m]  vx_sl vy_sl  vx_df vy_df  sol_prec[mm/y] ice_sed_load[m]\n", sea_level);
+	fprintf(file, "#TISC output: ice flow.  sea_level: %.1f m\n# x(km) y(km) topo[m] ice_thick[m]  vx_df vy_df[m/y]  vx_sl vy_sl  sol_prec[mm/y] ice_sed_load[m]\n", sea_level);
 	for (i=0; i<Ny; i++) for (j=0; j<Nx; j++) {
 		fprintf(file, "%7.2f\t%7.2f\t%.1f\t%.1f\t%.2f\t%.2f\t%.2f\t%.2f\t%.1f\t%.1f\n",
 			(xmin+j*dx)/1000, (ymax-i*dy)/1000,
 			topo[i][j], 
 			ice_thickness[i][j], 
-			ice_velx_sl[i][j]*secsperyr, ice_vely_sl[i][j]*secsperyr, 
 			ice_velx_df[i][j]*secsperyr, ice_vely_df[i][j]*secsperyr, 
+			ice_velx_sl[i][j]*secsperyr, ice_vely_sl[i][j]*secsperyr, 
 			precipitation[i][j]*secsperyr*1e3, 
 			ice_sedm_load[i][j]);
 	}
@@ -1696,6 +1703,10 @@ int write_file_resume()
 	fwrite(&critical_slope, 	sizeof(float),		1, 	file);
 	fwrite(&K_river_cap, 	sizeof(float),		1, 	file);
 	fwrite(&K_ice_eros, 	sizeof(float),		1, 	file);
+	fwrite(&dt_ice, 	sizeof(float),		1, 	file);
+	fwrite(&n_ice_flow, 	sizeof(int),		1, 	file);
+	fwrite(&A_ice_rheo, 	sizeof(float),		1, 	file);
+	fwrite(&A_ice_slide, 	sizeof(float),		1, 	file);
 	fwrite(&erodibility, 	sizeof(float),		1, 	file);
 	fwrite(&erodibility_sed, 	sizeof(float),		1, 	file);
 	fwrite(&critical_stress, 	sizeof(float),		1, 	file);
@@ -1903,10 +1914,10 @@ int write_file_deflection ()
 
 	Write_Open_Filename_Return (".xyzt", "wt", !isost_model || !switch_write_file_Blocks);
 
-	fprintf(file, "#TISC output deflection. Te_default: %.1f m\n# x(km)  y(km) w[m] topo[m]\n", Te_default);
+	fprintf(file, "#TISC output deflection. Te_default: %.1f m\n# x(km)  y(km) w[m] dw/dt[m/Myr] topo[m]\n", Te_default);
 	for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) {
-		fprintf(file, "%7.2f\t%7.2f\t%.1f\t%.1f\n",
-			(xmin+j*dx)/1000, (ymax-i*dy)/1000, w[i][j], topo[i][j]);
+		fprintf(file, "%7.2f\t%7.2f\t%.1f\t%.1f\t%.1f\n",
+			(xmin+j*dx)/1000, (ymax-i*dy)/1000, w[i][j], Dw[i][j]/dt*Matosec, topo[i][j]);
 	}
 	fclose(file);
 	return (1);

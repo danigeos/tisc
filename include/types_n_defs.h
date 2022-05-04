@@ -73,7 +73,8 @@
 #define TEMPERATURE_GROUND(topo)	(temp_sea_level - GAMMA_GROUND*(topo)) /*[K] air temperature at ground level*/
 #define TEMPERATURE_AIR(topo,height)	(TEMPERATURE_GROUND(topo) - GAMMA_AIR*(height)) /*[K] air temperature*/
 #define TEMPERATURE(altitude)	(temp_sea_level - GAMMA*(altitude)) /*[K]; "lapse rate constant" in K/m*/
-#define TEMPERATURE_ICE(altitude)	(temp_sea_level + 5*cos(Time/(100e3*secsperyr)*2*3.1415927) - GAMMA*(altitude)) /*in [K]; "lapse rate constant" in K/m*/
+//#define TEMPERATURE_ICE(altitude)	(temp_sea_level + 5*cos(Time/(100e3*secsperyr)*2*3.1415927) - GAMMA*(altitude)) /*in [K]; "lapse rate constant" in K/m*/
+#define TEMPERATURE_ICE(altitude)	(temp_sea_level - GAMMA*(altitude)) /*in [K]; "lapse rate constant" in K/m*/
 #define IF_LAKE_IS_SEA(il) 	if (il) if (Lake[il].n_sd) if (topo[Lake[il].row_sd[0]][Lake[il].col_sd[0]]<sea_level && AT_BORDER(Lake[il].row_sd[0], Lake[il].col_sd[0]))
 
 

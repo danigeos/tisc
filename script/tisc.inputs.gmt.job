@@ -39,11 +39,11 @@ awk -f $tmp.awk.tmp $prj\4.UNIT $prj\5.UNIT $prj\6.UNIT $prj\7.UNIT $prj\8.UNIT 
 	psxy -JX -R -M -L -W4/160/80/0 -O -K >> $ps
 awk -f $tmp.awk.tmp $prj\9.UNIT $prj\1[0-1].UNIT | \
 	psxy -JX -R -M -L -W1/80/40/0 -O -K >> $ps
-#awk -f $tmp.awk.tmp $prj\1[2-3].UNIT | \
-#	psxy -JX -R -M -L -W1/0 -O -K >> $ps
+awk -f $tmp.awk.tmp $prj\1[0-9].UNIT | \
+	psxy -JX -R -M -L -W1/0 -O -K >> $ps
 
-awk -f $tmp.awk.tmp $prj.EET #| \
-	#psxy -JX -R -L -M -W20/200/200/0t45_75:0 -K -O >> $ps
+awk -f $tmp.awk.tmp $prj.EET | \
+	psxy -JX -R -L -M -W20/255/00/0t45_75:0 -K -O >> $ps
 awk -f $tmp.awk.tmp  $prj.ZINI | \
 	psxy -JX -R -M -L -W2/0/0/255ta -O -K \
 		>> $ps

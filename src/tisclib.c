@@ -704,7 +704,7 @@ int Repare_Blocks()
 		float Block_volume=0;
 		for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++)  Block_volume += Blocks[i_Block].thick[i][j];
 		Block_volume *= dx*dy;
-		if (Block_volume<1e4 && Blocks[i_Block].type != 'G' && Blocks[i_Block].type != 'H' && Blocks[i_Block].type != 'I') {
+		if (Block_volume<1e4 && Blocks[i_Block].type != 'G' /*&& Blocks[i_Block].type != 'H'*/ && Blocks[i_Block].type != 'I') {
 			PRINT_DEBUG("will remove Block %d (type %c) out of %d", i_Block, Blocks[i_Block].type, numBlocks);
 			Delete_Block(i_Block); i_Block--;
 		}

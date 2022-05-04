@@ -23,6 +23,7 @@ extern int
 	erosed_model, 
 	Nx, Ny, 
 	nlakes, 		/*number of lakes >= 0 */
+	n_ice_flow, 
 	nbasins, 
 	numBlocks,
 	hydro_model, 
@@ -35,6 +36,9 @@ extern float 	Time,
 	evaporation_ct, 		/*[m3/s/m2].*/
 	K_river_cap, 		/*Constant of river transport capacity [kg/m3].*/
 	K_ice_eros, 
+	dt_ice, 
+	A_ice_rheo, 
+	A_ice_slide, 
 	erodibility, 		/*Default length scale of fluvial erosion */
 	erodibility_sed, 	/*Length scale of fluvial erosion of sediment Blocks*/
 	critical_stress, 
@@ -198,7 +202,7 @@ int Surface_Transport (float **topo, float **topo_ant, float dt, float dt_eros, 
 
 	/*Print relevant statistics*/
 	if (verbose_level>=1) {
-			float 	error;
+		float 	error;
 		PRINT_GRID_INFO (secsperyr*precipitation, "precipit.", "m/yr");
 		PRINT_GRID_INFO (secsperyr*evaporation,   "evaporat.", "m/yr");
 		PRINT_SUMLINE("rain_now : %+8.2e m3/s  evap_wat: %+8.2e m3/s outp_water: %+8.2e m3/s undergr_water: %+8.2e m3/s", total_rain, total_evap_water, total_lost_water, total_underground_water); 
@@ -224,7 +228,7 @@ int Surface_Transport (float **topo, float **topo_ant, float dt, float dt_eros, 
 			}
 		}
 		{
-				float 	error, incr_rate;
+			float 	error, incr_rate;
 			incr_rate = (newicevol-oldicevol)*dx*dy/dt;
 			PRINT_SUMLINE("snow_now : %+8.2e m3/s  melt_ice: %+8.2e m3/s ice_incr:   %+8.2e m3/s", total_ice_precip, total_ice_melt, incr_rate);
 			if (total_ice_precip) error=(total_ice_precip-total_ice_melt-incr_rate)/total_ice_precip*100; else error=(total_ice_melt+incr_rate)/total_ice_melt*100;
@@ -233,13 +237,13 @@ int Surface_Transport (float **topo, float **topo_ant, float dt, float dt_eros, 
 		}
 		PRINT_SUMLINE("temp.@sea: %.2f C;   @ 1000 m: %.2f C", TEMPERATURE(0)-TEMP_FREEZE_WATER, TEMPERATURE(1000)-TEMP_FREEZE_WATER);
 		PRINT_SUMLINE("ice	  :  max= %.0f m @ %.0f,%.0f km   vol= %.2e km3   vel_max(df,sl)= %.2f,%.2f m/yr", 
-			ice_thickness[imax][jmax], (jmax*dx+xmin)/1e3, (ymax-imax*dy)/1e3, newicevol*dx*dy/1e9, 
-			vel_dfmax*secsperyr,  vel_slmax*secsperyr);
+		ice_thickness[imax][jmax], (jmax*dx+xmin)/1e3, (ymax-imax*dy)/1e3, newicevol*dx*dy/1e9, 
+		vel_dfmax*secsperyr,  vel_slmax*secsperyr);
 		if (verbose_level>=3) fprintf(stdout, " @ %.0f,%.0f & %.0f,%.0f km", 
 			(j_vel_dfmax*dx+xmin)/1e3, (ymax-i_vel_dfmax*dy)/1e3,  
 			(j_vel_slmax*dx+xmin)/1e3, (ymax-i_vel_slmax*dy)/1e3);
 		{
-				float 	error, incr_rate;
+			float 	error, incr_rate;
 			incr_rate = (newicesedvol-oldicesedvol)*dx*dy*denscrust;
 			PRINT_SUMLINE("ice_eros : %+8.2e N	 ice_sedim: %+8.2e N   inc_glac_sd: %+8.2e N  ", total_ice_eros*g, total_ice_sedim*g, incr_rate*g);
 				if (total_ice_eros) error=-(total_ice_eros-total_ice_sedim-incr_rate)/total_ice_eros*100; else error=(incr_rate-total_ice_sedim)/incr_rate*100;
@@ -1476,9 +1480,7 @@ int Ice_Flow(float **ice_velx_sl, float **ice_vely_sl, float **ice_velx_df, floa
 	*/
 	int	n_iters;
 	float 	**dh, **dhl, **D_coeff, **icetopo, ice_vol=0, ice_def_vol_incr=0, 
-			dt_ice=.5*secsperyr, 
-			melt_temp_per_depth = 8.7e-4, melt_temp, 
-			melt_temp_range = 2 /*K*/;
+			melt_temp_per_depth = 8.7e-4; /*Change of the melting temperature at the base of ice depending on ice thickness*/;
 
 	if (!K_ice_eros) return(0);
 
@@ -1502,12 +1504,9 @@ int Ice_Flow(float **ice_velx_sl, float **ice_vely_sl, float **ice_velx_df, floa
 		/*Determine coefficients D_coeff and a temptative ice velocity field*/
 		for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) {
 			float 	kc = 1e5 /*[m]*/,
-				A_ice_rheo = 2.5e-16/secsperyr /*Pa-3/s*/, /*See Knap et al., 1996; Values are identical to Tomkin's, just different units (seconds and years)*/
-				A_sl	   = 1.9e-10/secsperyr /*Pa-3/s/m2*/,
-				vel, vel_limit, curvtopoxx, curvtopoyy, curvtopoxy, curvtopograd,
+				curvtopoxx, curvtopoyy, curvtopoxy, curvtopograd,
 				beta, gradicetopox, gradicetopoy, modgradicetopo, D_df, D_sl;
-			int 	il, jl,
-				n_ice_rheo=3;
+			int 	il, jl;
 			il=i; jl=j;
 			if (il==0)	il = 1;		if (il==Ny-1) il = Ny-2;
 			if (jl==0)	jl = 1;		if (jl==Nx-1) jl = Nx-2;
@@ -1531,33 +1530,38 @@ int Ice_Flow(float **ice_velx_sl, float **ice_vely_sl, float **ice_velx_df, floa
 			  Tomkin's thesis has mistakes, and there D includes the ice_thickness required to convert velocity into flow.
 			*/
 			/*Internal deformation:*/
-			D_df =  -2*A_ice_rheo/(n_ice_rheo+2) * beta*pow(densice*g*ice_thickness[i][j],n_ice_rheo) * pow(modgradicetopo,n_ice_rheo-1) * ice_thickness[i][j];
+			D_df =  -2*A_ice_rheo/(n_ice_flow+1) * beta*pow(densice*g*ice_thickness[i][j],n_ice_flow) * pow(modgradicetopo,n_ice_flow-1) * ice_thickness[i][j];
 			/*Basal sliding:*/
-			D_sl =  -A_sl/.8					 * beta*pow(densice*g*ice_thickness[i][j],n_ice_rheo) * pow(modgradicetopo,n_ice_rheo-1) ;
+			D_sl =  -A_ice_slide/.8				 * beta*pow(densice*g*ice_thickness[i][j],n_ice_flow) * pow(modgradicetopo,n_ice_flow-1) ;
 
-			melt_temp = melt_temp_per_depth*ice_thickness[i][j];
 			/*No slip if ice bottom is frozen (apply a gradual change around the melting temperature)*/
-			if (TEMPERATURE_ICE(topo[i][j])<melt_temp-melt_temp_range) {
-				D_sl = 0;
-			}
-			if (TEMPERATURE_ICE(topo[i][j])>=melt_temp-melt_temp_range && TEMPERATURE_ICE(topo[i][j])<=melt_temp+melt_temp_range) {
-				D_sl = D_sl * (TEMPERATURE_ICE(topo[i][j]) - (melt_temp-melt_temp_range)) / (2*melt_temp_range);
-			}
-			if (TEMPERATURE_ICE(topo[i][j])>melt_temp+melt_temp_range) {
-				D_sl = D_sl;
+			{
+				float gradual_range = 0.5; /*K, temperature transition from slip to no slip*/
+				float melt_temp = melt_temp_per_depth*ice_thickness[i][j];
+				if (TEMPERATURE_ICE(topo[i][j])<melt_temp-gradual_range) {
+					D_sl = 0;
+				}
+				if (TEMPERATURE_ICE(topo[i][j])>=melt_temp-gradual_range && TEMPERATURE_ICE(topo[i][j])<=melt_temp+gradual_range) {
+					D_sl = D_sl * (TEMPERATURE_ICE(topo[i][j]) - (melt_temp-gradual_range)) / (2*gradual_range);
+				}
+				if (TEMPERATURE_ICE(topo[i][j])>melt_temp+gradual_range) {
+					D_sl = D_sl;
+				}
 			}
 
 			/*Limit velocities to a fraction of (dx+dy)/2*/
-			vel_limit = 1.0*(dx+dy)/2/dt_ice;
-			vel = sqrt(pow(D_df*gradicetopox, 2)+pow(D_df*gradicetopoy, 2));
-			if (vel > vel_limit) {
-				PRINT_WARNING("Limiting ice deformation velocity to %.2f", vel_limit*secsperyr);
-				D_df /= (vel/vel_limit) ;
-			}
-			vel = sqrt(pow(D_sl*gradicetopox, 2)+pow(D_sl*gradicetopoy, 2));
-			if (vel > vel_limit) {
-				PRINT_DEBUG("Limiting ice slip velocity to %.2f", vel_limit*secsperyr);
-				D_sl /= (vel/vel_limit) ;
+			{
+				float vel, vel_limit = 1.0*(dx+dy)/2/dt_ice;
+				vel = sqrt(pow(D_df*gradicetopox, 2)+pow(D_df*gradicetopoy, 2));
+				if (vel > vel_limit) {
+					PRINT_WARNING("Limiting ice deformation velocity to %.2f", vel_limit*secsperyr);
+					D_df /= (vel/vel_limit) ;
+				}
+				vel = sqrt(pow(D_sl*gradicetopox, 2)+pow(D_sl*gradicetopoy, 2));
+				if (vel > vel_limit) {
+					PRINT_DEBUG("Limiting ice slip velocity to %.2f", vel_limit*secsperyr);
+					D_sl /= (vel/vel_limit) ;
+				}
 			}
 			D_coeff[i][j] = D_df + D_sl;
 			/*Ice deformation and sliding velocities, both parallel to icetopo gradient*/
@@ -1572,7 +1576,7 @@ int Ice_Flow(float **ice_velx_sl, float **ice_vely_sl, float **ice_velx_df, floa
 		for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) {
 			float 	ice_thermal_diff=1.09e-6 /*m2/s*/,
 				surf_heat_flow=54e-3 /*W/m2*/, ice_thermal_conduc=2.1 /*W/m/K*/,
-				ablation_constant=.5/secsperyr /*m/s/C*/,
+				ablation_constant=.5/secsperyr /*m/s/C ice melting rate per degree temperature difference*/,
 				ice_precip, ice_melt, surf_temp_grad, Ts, Tb,
 				divergence, gradicetopox, gradicetopoy, divergence_q, divergence_q_d, divergence_qs,
 				q_up, q_dw, q_lf, q_ri, q_ru, q_rd, q_lu, q_ld,
@@ -1598,24 +1602,6 @@ int Ice_Flow(float **ice_velx_sl, float **ice_vely_sl, float **ice_velx_df, floa
 			if (i>0)	qs_up = ( D_coeff[i-1][j]*ice_sedm_load[i-1][j] + D_coeff[i][j]*ice_sedm_load[i][j] )/2  *  (+icetopo[i-1][j] - icetopo[i][j]) / dy;
 			if (i<Ny-1)	qs_dw = ( D_coeff[i+1][j]*ice_sedm_load[i+1][j] + D_coeff[i][j]*ice_sedm_load[i][j] )/2  *  (-icetopo[i+1][j] + icetopo[i][j]) / dy;
 
-			/*actual ice velocity field*/
-/*			D_sl_over_D=D_df_over_D=0;
-			ice_vel_sl = sqrt(ice_velx_sl[i][j]*ice_velx_sl[i][j]+ice_vely_sl[i][j]*ice_vely_sl[i][j]);
-			ice_vel_df = sqrt(ice_velx_df[i][j]*ice_velx_df[i][j]+ice_vely_df[i][j]*ice_vely_df[i][j]);
-			if (ice_vel_sl+ice_vel_df) {
-				D_sl_over_D = ice_vel_sl/(ice_vel_sl+ice_vel_df);
-				D_df_over_D = ice_vel_df/(ice_vel_sl+ice_vel_df);
-			}
-			if (ice_thickness[i][j]) {
-				ice_velx_sl[i][j] = D_sl_over_D * (q_ri+q_lf)/2/ice_thickness[i][j];
-				ice_vely_sl[i][j] = D_sl_over_D * (q_up+q_dw)/2/ice_thickness[i][j];
-				ice_velx_df[i][j] = D_df_over_D * (q_ri+q_lf)/2/ice_thickness[i][j];
-				ice_vely_df[i][j] = D_df_over_D * (q_up+q_dw)/2/ice_thickness[i][j];
-			}
-			else {
-				ice_velx_sl[i][j] = ice_vely_sl[i][j] = ice_velx_df[i][j] = ice_vely_df[i][j] = 0;
-			}
-*/
 			/*Calculate divergence of flux q and update increments in ice thickness*/
 			divergence_q   =  ( q_ri  - q_lf  ) / dx  +  ( q_up  - q_dw  ) / dy ;
 			divergence_q_d =  ( q_ru  - q_ld  ) / dxy +  ( q_rd  - q_lu  ) / dxy ;
@@ -1643,7 +1629,7 @@ int Ice_Flow(float **ice_velx_sl, float **ice_vely_sl, float **ice_velx_df, floa
 				mindh =MIN_2(mindh,  icetopo[i-1][j]-icetopo[i][j]);			maxdh =MAX_2(maxdh,  icetopo[i-1][j]-icetopo[i][j]);
 				mindhl=MIN_2(mindhl, ice_sedm_load[i-1][j]-ice_sedm_load[i][j]);	maxdhl=MAX_2(maxdhl, ice_sedm_load[i-1][j]-ice_sedm_load[i][j]);
 			}
-	/*!!*/		dh[i][j]  = MAX_2(dh[i][j],  .45*mindh);	dh[i][j]  = MIN_2(dh[i][j],  .45*maxdh);
+	/*!!*/	dh[i][j]  = MAX_2(dh[i][j],  .45*mindh);	dh[i][j]  = MIN_2(dh[i][j],  .45*maxdh);
 			dhl[i][j] = MAX_2(dhl[i][j], .45*mindhl);	dhl[i][j] = MIN_2(dhl[i][j], .45*maxdhl);
 
 			/*Limit the amount of thickening to the available upflow ice thickness*/
@@ -1685,9 +1671,11 @@ int Ice_Flow(float **ice_velx_sl, float **ice_vely_sl, float **ice_velx_df, floa
 				Tb = Ts + surf_temp_grad * ice_thickness[i][j];
 			}
 			/*Ice melt at the base of the ice sheet, proportional to basal TEMPERATURE_ICE in centigrades*/
-			melt_temp = melt_temp_per_depth*ice_thickness[i][j];
-			ice_melt = ablation_constant * (Tb+melt_temp-TEMP_FREEZE_WATER);
-			ice_melt = LIMIT(ice_melt, 0, ice_precip + (ice_thickness[i][j]+dh[i][j])/dt_ice);
+			{
+				float melt_temp = melt_temp_per_depth*ice_thickness[i][j];
+				ice_melt = ablation_constant * (Tb+melt_temp-TEMP_FREEZE_WATER);
+				ice_melt = LIMIT(ice_melt, 0, ice_precip + (ice_thickness[i][j]+dh[i][j])/dt_ice);
+			}
 
 			dh[i][j] +=  (ice_precip - ice_melt) * dt_ice;
 
@@ -1698,8 +1686,8 @@ int Ice_Flow(float **ice_velx_sl, float **ice_vely_sl, float **ice_velx_df, floa
 				}
 				else {
 					if (AT_BORDER(i,j))
-					*total_lost_water += ice_melt*dx*dy / n_iters;
-				else 	*total_evap_water += ice_melt*dx*dy / n_iters;
+							*total_lost_water += ice_melt*dx*dy / n_iters;
+					else 	*total_evap_water += ice_melt*dx*dy / n_iters;
 				}
 			}
 			else {
@@ -1727,7 +1715,7 @@ int Ice_Flow(float **ice_velx_sl, float **ice_vely_sl, float **ice_velx_df, floa
 			ice_def_vol_incr *= dx*dy;
 			ice_vol *= dx*dy;
 			if (ice_sed_vol && fabs(ice_sed_vol_incr_corr)>1*ice_sed_vol/100) PRINT_ERROR("sediment unbalance: %.2e N (%+.2f %%) out of %.2e N", ice_sed_vol_incr_corr*denscrust*g, ice_sed_vol_incr_corr/ice_sed_vol*100, ice_sed_vol*denscrust*g);
-			if (ice_vol && fabs(ice_def_vol_incr)>1*ice_vol/100) PRINT_ERROR("ice volume unbalance: %.2e m3 (%+.2f %%) out of %.2e m3", ice_def_vol_incr, ice_def_vol_incr/ice_vol*100, ice_vol);
+			if (ice_vol && fabs(ice_def_vol_incr)>2*ice_vol/100) PRINT_ERROR("ice volume unbalance: %+.2f %% out of %.2e m3. Reduce dt_ice?", ice_def_vol_incr/ice_vol*100, ice_vol);
 		}
 		for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) {
 			/*Apply the results*/
@@ -1807,10 +1795,10 @@ int Lake_Fill (
 	  this node is equally distributed to all the lake neighbours,
 	  depositing a part of the sediments which is limited by
 	  the lake's elevation. The sediment transfer is iterated 
-	  with the next neigbor nodes in the lake successively.
+	  with the next neighbor nodes in the lake successively.
 	  No sedimentation occurs in the outlets, which are eroded
 	  as rivers.
-	  row,col is the lake node receiving sediments.
+	  row,col is the lake node receiving the sediment.
 	*/
 
 	int	il, 
@@ -2014,7 +2002,7 @@ int Sediment (double d_mass, int row, int col)
 	float dh_sed;
 
 	dh_sed = MASS2SEDTHICK(d_mass);
-	if (dh_sed < -10) PRINT_WARNING("trying to sediment negative mass: %f m", dh_sed);
+	if (dh_sed < -2) PRINT_WARNING("trying to sediment negative mass: %f m", dh_sed);
 	/*Increment load, Blocks and topo*/
 	Dq[row][col] +=  dh_sed * g * (denssedim-densenv);
 	Blocks[numBlocks-1].thick[row][col] += dh_sed;

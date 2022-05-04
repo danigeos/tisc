@@ -21,8 +21,7 @@ awk '{if (NR==2) for (i=3; i<=NF; i++) {dens[i]=$i;}\
 	xyz2grd	-G$tmp.sed.grd.tmp -I$dx/$dy -R$Region -H0
 
 grdimage $tmp.sed.grd.tmp -C$tmp.sed_cpt.tmp -JX -R -O -K >> $ps
-grdcontour $tmp.sed.grd.tmp -JX -R$Region -C.5 -O -K >> $ps
-
+grdcontour $tmp.sed.grd.tmp -JX -R$Region -C1 -O -K >> $ps
 #grdinfo $tmp.sed.grd.tmp
 
 #if (-r $prj.pfl) psxy $prj.pfl -JX -R$Region -M -W$col_lin -H2 -O -K >> $ps 
@@ -35,4 +34,3 @@ if (-r $prj.pfl) psxy $prj.pfl -JX -R -M -W$col_lin -H2 -O -K >> $ps
 if (-r $prj.CMP) psxy $prj.CMP -JX -R -M -L -W4/0/0/0 -O -K >> $ps 
 
 psscale -C$tmp.sed_cpt.tmp  -D$xscale/$yscale/$width/$scalewidth\h -B:"Sediment thickness (km)": -L -O -K >> $ps
-

@@ -15,6 +15,15 @@ Details on authorship and citation in 'tisc/doc/tisc.info.txt'.
 See license details in the documentation at tisc/doc/LICENSE.txt.
 
 
+TO INSTALL a Ubuntu Linux virtual machine with GMT4 (required for graphic output):
+
+    Install Virtualbox: https://www.virtualbox.org/wiki/Downloads
+
+	Download https://geo3bcnbox.geo3bcn.csic.es/index.php/s/mlQPch1DQDsY0ih/download
+
+    Import VM with Ubuntu 20.04 + GMT 4.5.18.
+	Virtualbox > File > Import...
+
 
 TO INSTALL TISC:
 
@@ -26,7 +35,7 @@ Linux environment.
 -Modify compiling options by editing 'tisc/config.mk' and 'tisc/src/Makefile'.
 
 -Compile typing 'make' in the main directory. This will create the executable 
-tisc in the tisc/bin/ directory. You should then put tisc/bin/ and tisc/script/ 
+tisc in the tisc/bin/ directory. Then include tisc/bin/ and tisc/script/ 
 in your shell path.
 
 -Install GMT 4 (free-ware software, used for graphic output) and put 
@@ -34,7 +43,8 @@ its bin/ directory in your path. This should work:
 	sudo apt-get update
 	sudo apt-get install gmt ksh csh tofrodos
 
--The GMT scripts are wirtten in C-shell language.
+-The GMT scripts are wirtten in C-shell language, so make sure to have that one 
+installed.
 
 -Try examples of running TISC going to directory 'tisc/demo/'. This will allow
 you to be sure that the code is working properly. Check that the graphic

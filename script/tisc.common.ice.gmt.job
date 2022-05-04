@@ -1,21 +1,31 @@
 #ICE
+cat - <<END>  $tmp.icevel_cpt.tmp
+	0   	255	255	255		10   	200	200	255
+	10  	155	155	255		100 	255	0	0
+	100 	255   0 0 		1000 	100	100	100
+END
 if (-r $prj.ice) then 
- 	#awk '{if ($11>0) print $1, $2}' $prj.xyw | \
- 	#	psxy -JX -R -Ss$size_ice_squares -G255 -O -K >> $ps
- 	awk '{if ($4>2) print($1,$2,$4)}' $prj.ice |\
- 		xyz2grd -G$tmp.ice.grd.tmp -I$dx/$dy -R -H2
- 	awk '{if ($4>0) print($1,$2,$3+$4)}' $prj.ice |\
- 		xyz2grd -G$tmp.icetop.grd.tmp -I$dx/$dy -R -H2
- 	grdgradient $tmp.icetop.grd.tmp -A0 -G$tmp.intensity.icetop.grd.tmp  #-Nt1
- 	#.0004 MUL is normal for large scale
- 	grdmath $tmp.intensity.icetop.grd.tmp .0015 MUL = $tmp.intensity.icetop.grd.tmp
- 	grdview $tmp.ice.grd.tmp -C$tmp.ice_cpt.tmp  -JX -R \
- 		-I$tmp.intensity.icetop.grd.tmp -Ts -K -O >> $ps
- 	awk '{print $1, $2, $4}' $prj.ice | \
- 		xyz2grd -G$tmp.ice_thick.grd.tmp -I$dx/$dy -R -H2
- 	grdcontour $tmp.ice_thick.grd.tmp -JX -R -C100 -A500 -Wa4/50/50/255 -Wc1/50/50/255 -O -K >> $ps
- 	grdcontour $tmp.icetop.grd.tmp -JX -R -C$tmp.topo_palet.tmp -W1 -A -O -K >> $ps
- 	awk '{if (NR>2 && $4>2) {a=$5+$7;b=$6+$8;l=sqrt(a*a+b*b); if (l>00) print $1,$2, atan2(b,a)*180/3.1415927, l/500}}'  $prj.ice | \
- 		psxy -JX -R -Svb.01/.4/.2n2 -W1 -G0 -O -K >> $ps
+	set trim_thick = 10
+	awk -v trim_thick=$trim_thick '{if ($4>trim_thick) print $1, $2, $4-trim_thick; else print $1,$2,0}' $prj.ice | \
+		xyz2grd -G$tmp.ice_thick.grd.tmp -I$dx/$dy -R -H2
+	awk '{if (NR>2 && $4>1) {a=$5+$7;b=$6+$8;l=sqrt(a*a+b*b); print $1,$2, l}}'  $prj.ice | \
+		xyz2grd -G$tmp.ice_vel.grd.tmp -I$dx/$dy -R -H2
+
+	#grdinfo $tmp.ice_thick.grd.tmp
+ 	#grdinfo $tmp.ice_vel.grd.tmp
+ 	awk -v trim_thick=$trim_thick '{if ($4>trim_thick) print($1,$2,$3+$4)}' $prj.ice |\
+		xyz2grd -G$tmp.icetop.grd.tmp -I$dx/$dy -R -H2
+	grdgradient $tmp.icetop.grd.tmp -A0 -G$tmp.intensity.icetop.grd.tmp  #-Nt1
+	grdmath $tmp.intensity.icetop.grd.tmp .0015 MUL = $tmp.intensity.icetop.grd.tmp
+	grdview $tmp.ice_vel.grd.tmp -C$tmp.icevel_cpt.tmp  -JX -R \
+		-I$tmp.intensity.icetop.grd.tmp -Ts -K -O >> $ps
+	#grdcontour $tmp.ice_thick.grd.tmp -JX -R -C500 -A500 -Wa2/50/50/255 -Wc1/50/50/255 -O -K >> $ps
+	grdcontour $tmp.icetop.grd.tmp -JX -R -C$tmp.topo_palet.tmp -W1 -A -O -K >> $ps
+	#Velocity arrows:
+	#arrowwidth/headlength/headwidth [Default unit is 0.075c/0.3c/0.25c Afster n come the norm, which *divides* the size of arrow (not its length!)
+	awk '{if (NR>2 && $4>2) {a=$5+$7;b=$6+$8;l=sqrt(a*a+b*b); print $1,$2, l, atan2(b,a)*180/3.1415927, l*2e-3}}' $prj.ice | \
+		psxy -JX -R -Svt.1/.4/.2n1.5 -W0 -C$tmp.icevel_cpt.tmp -O -K >> $ps
+
+	psscale -C$tmp.icevel_cpt.tmp -D$xscale/$yscale/$width/$scalewidth\h -B:"Ice velocity (m/yr)": -L -O -K >> $ps
 endif
 
