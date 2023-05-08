@@ -38,7 +38,7 @@ int main(int argc, char **argv)
 
 	fprintf(stdout, "\nT= %.4f My", Time/Matosec);
 
-	if (switch_dt_output) {calculate_topo(topo); Write_Ouput();}
+	if (switch_ps==2) {calculate_topo(topo); Write_Ouput();}
 
 	/*MAIN LOOP: In this loop time increments from Timeini to Timefinal*/
 	do {
@@ -66,7 +66,7 @@ int main(int argc, char **argv)
 		Time += dt;
 		fprintf(stdout, "\nT= %.4f My", Time/Matosec);
 
-		if (switch_dt_output) Write_Ouput();
+		if (switch_ps==2) Write_Ouput();
 	} while (Time < Timefinal-dt/10);
 
 	The_End();
@@ -194,7 +194,7 @@ int inputs (int argc, char **argv)
 			read_file_resume(resume_filename);
 			interpr_command_line_opts(argc, argv);
 			if (verbose_level>=1) fprintf(stdout, "\nResuming project '%s'. Timefinal=%.1f My", projectname, Timefinal/Matosec);
-			if (switch_dt_output) n_image--; /*Don't produce 2 jpg's of the same stage of restart*/
+			if (switch_ps==2) n_image--; /*Don't produce 2 jpg's of the same stage of restart*/
 			return(1);
 		case 10:
 			if (!read_file_parameters(verbose_level>=1, 0)) {
@@ -368,10 +368,10 @@ int interpr_command_line_opts(int argc, char **argv)
 					switch_file_out=YES;
 					break;
 				case 'P':
-					switch_ps=YES;
+					switch_ps=(strlen(prm)>0)?value:1; /*default is 1 to keep old command line syntax with -Pc*/
 					switch_write_file_Blocks=YES;
 					if (argv[iarg][2] == 'c') {
-						switch_dt_output=YES;
+						switch_ps=2;
 						strcpy(gif_geom, "");
 						if (strlen(prm2)>0) strcpy(gif_geom, prm2);
 					}
@@ -1331,7 +1331,7 @@ int The_End()
 	fprintf(stdout, "-  basement\n");
 	fprintf(stdout, "\nFinal total sediment volume: %.2f 1e3 km3\n", total_vol_seds/1e12);
 
-	if (!switch_dt_output) Write_Ouput();
+	if (switch_ps!=2) Write_Ouput();
 
 	if (verbose_level>=1) {time_t ltime; time(&ltime); fprintf(stdout, "\nTime end: %s", ctime(&ltime));}
 
@@ -1432,7 +1432,7 @@ int Write_Ouput()
 		if (verbose_level>=3) 
 			fprintf(stdout, "\n%s\n", command) ;
 		system(command);
-		if (switch_dt_output) {
+		if (switch_ps==2) {
 			/*crop by default to the border*/
 			if (strlen(gif_geom)<2) sprintf(gif_geom, "-trim -background Khaki -label 'TISC software: %s' -gravity South -append", projectname);
 			sprintf(command, "convert -density 200 %s.ps %s -interlace NONE  %s%03d.jpg", /*-fill \"#ffff99\" -draw \"rectangle 8,8 90,25\" -fill \"#000055\" -font helvetica -draw \"text 12,20 t_%+3.2f_My \" */

@@ -100,7 +100,7 @@ float	zini, 				/*altitude of the initial plate position over the sea level [m]*
 	**var_eros_level, 		/*Variations of the erosion level (height dividing erosion and sedimentation, measured from sea_level)*/
 	*horiz_record_time;		/*Array with times in wich to record horizons*/
 	
-BOOL	switch_dt_output=NO, 
+BOOL
 	switch_file_out=NO, 
 	switch_gradual, 		/*YES to distribute the load between the Time of reading file and the Time of the following one*/
 	switch_topoest, 		/*YES if load files give topographic loads which must stay at zero level while the deflection room is filled up with 'densinfill' density material*/
