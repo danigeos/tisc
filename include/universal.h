@@ -22,6 +22,7 @@ float
 
 int	
 	Nx, Ny, Nz,  			/*Number of grid knots in x & z directions)*/
+	switch_ps, 				/*1 if postscript file will have to be wroten*/
 	verbose_level;
 
 float
@@ -35,6 +36,5 @@ char
 
 BOOL	
 	switch_geograph_coor,			/*1 if x-y are geographycal coordinates in decimal degrees*/
-	switch_ps, 						/*SI if postscript file will have to be wroten*/
-	switch_write_file;				/*SI if results file must be wroten*/
+	switch_write_file;				/*1 if results file must be wroten*/
 
