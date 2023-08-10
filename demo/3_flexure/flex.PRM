@@ -21,8 +21,8 @@ zmax		2000	Vertical range (for graphic purposes only)
 
 #GRIDDING:
 #dx is automalically defined as (xmax-xmin)/(Nx-1)
-Nx		101	E-W direction grid points. 
-Ny		101	N-S direction grid points
+Nx		751	E-W direction grid points. 
+Ny		501	N-S direction grid points
 
 #INITIAL RELIEF:
 zini		0	Initial altitude [m] above sea level (added to the initial

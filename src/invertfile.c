@@ -43,7 +43,7 @@ int main (int argc, char **argv)
 		strcpy(vector_de_lineas[cont] , linea);
 	}
 	numlines = cont ;
-	close(filein);
+	fclose(filein);
 
 	if (switch_info) fprintf(stderr, "\nInverts the order of the %i lines in '%s'.\n", numlines, fichinput);
 	for (cont=numlines-1; cont>=0 ; cont--) {

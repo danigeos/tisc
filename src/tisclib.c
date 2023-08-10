@@ -860,7 +860,9 @@ int calculate_water_load()
 		Dq_water = (h_water_now-h_water[i][j]) * g * (denswater-densenv);
 		h_water[i][j] = h_water_now;
 		/*Don't load the initial water column*/
-		if (Time>Timeini) Dq[i][j] += Dq_water;
+		if (Time>Timeini+1.5*dt || (Time>Timeini && !hydro_model)) {
+			Dq[i][j] += Dq_water;
+		}
 		water_volume += h_water[i][j];		
 	}
 

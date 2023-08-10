@@ -7,6 +7,7 @@
 #include "geomodel.h"		/*Most general definitions and types*/
 
 
+int syntax (); 
 int 	outin (float x, float y, float *polygonX, float *polygonY, int number_of_points_in_polygon);
 float 	gravanompolyg (float *, float *, int, float, float, float);
 float 	geoidanompolyg (float *, float *, int, double, double, double);
@@ -114,7 +115,8 @@ main(int argc, char **argv)
 }
 
 
-syntax () {
+int syntax () 
+{
 	fprintf(stderr, "\n\nSyntax: \t outin <polygonfile>  [-h] [-V<level>]");
 	fprintf(stderr, "\n\nDetermines whether x,y points fall inside or outside a given polygon.");
 	fprintf(stderr, "\nReads polygon from <polygonfile> in two columns (x,y); "
