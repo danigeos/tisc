@@ -91,7 +91,10 @@ int 	diffusion_2D	(float **Matrix, float **d_Matrix, int Nx, int Ny, float Kdiff
 int 	Add_Node_To_Lake (int row, int col, int i_lake);
 int 	Add_Outlet_To_Lake (int row_sd, int col_sd, int row_tr, int col_tr, int i_lake);
 int 	Attempt_Delete_Node_From_Lake (int row, int col);
+int Calculate_Discharge (struct GRIDNODE *sortcell, float *total_lost_water, float *total_evap_water, float *total_underground_water);
+int calculate_topo(float **topo);
 int 	Deallocate_Lake (int i_lake);
+int Define_Drainage_Net (struct GRIDNODE *sortcell); 
 int 	Define_Lake (int i_lake);
 int 	Delete_Node_From_Lake (int row, int col);
 int 	Divide_Lake (int row, int col);
@@ -112,6 +115,8 @@ int 	Orographic_Precipitation_Evaporation_conservative (float windvel, float win
 int 	Precipitation_Evaporation_at_cell (int i, int j, float *Wcol, float windvel, float dtwind);
 float 	max_water_in_air_colum (int i, int j);
 int 	Damn_River_Node (int ia, int ja, int i,  int j);
+float ReSort_Array (float *array, int *orden, int Nx);
+float ReSort_Matrix (float **matrix, struct GRIDNODE *orden, int Nx, int Ny);
 int 	Rise_Damn_Node (int iia, int jja, int i, int j);
 int 	Sediment (double d_mass, int row, int col);
 int 	Unify_Lakes (int i_lake, int i_lake_to_delete);

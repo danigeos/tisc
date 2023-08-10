@@ -84,6 +84,7 @@ int Deallocate_Lake (int i_lake);
 int Define_Lake (int i_lake);
 int Delete_Node_From_Lake (int row, int col);
 int Diffusive_Eros (float Kerosdif, float dt, float dt_eros);
+int Direct_mode(char *load_file_name);
 int interpr_command_line_opts(int argc, char **argv); 
 int Landslide_Transport (float critical_slope, float dt, float dt_eros);
 int Divide_Lake (int row, int col);
@@ -96,6 +97,7 @@ int Lake_Fill (struct LAKE_INFO *Lake, int row, int col, float hl, float dt_fv, 
 float Lake_Input_Discharge (int ilake);
 int Lake_Node_Number(int row, int col);
 int Lake_Saddle_Number (int row, int col);
+int match_parameter (char *str1, char *str2, int show, int replace, char *line);
 float Minimum_Neg_Slope (int i, int j, int *dr_row, int *dr_col);
 int New_Lake ();
 float Precipitation (int row, int col, int type);

@@ -13,6 +13,7 @@ int outin(
 	float *poligonY, 	/* Poligon y coordinates (poligonY[np])		*/
 	int   np);		/* Number of points in poligon.			*/
 
+int syntax(int argc, char **argv);
 
 
 main(int argc, char **argv)
@@ -168,7 +169,7 @@ main(int argc, char **argv)
 }
 
 
-syntax(int argc, char **argv)
+int syntax(int argc, char **argv)
 {
 	fprintf(stderr, "\nSyntax:  %s\t<xy_file> [-I<xy_pol_file>] [-i<value>]", argv[0]);
 	fprintf(stderr, "\n                 \t[-L<mean_lat>] [-r] [-s] [-V[<level>]] [-x<lon0>] [-y<lat0>]\n");

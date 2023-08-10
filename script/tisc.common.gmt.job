@@ -206,11 +206,11 @@ END
 
 cat - <<END>  $tmp.lakes_cpt.tmp
 	0	0	0	0	.49	0	0	0
-	.49	0	120	255	1	0	120	255
+	.49	0	70	255	1	0	70	255
 END
 cat - <<END>  $tmp.lakes_endorh_cpt.tmp
 	0	0	0	0	.49	0	0	0
-	.49	30	150	255	1	30	150	255
+	.49	50	110	255	1	50	110	255
 END
 
 if (! $?min_rain) set min_rain = .5
@@ -333,9 +333,9 @@ awk -v zmin=$topomin -v zmax=$topomax '{if ($5>zmin && $1 <zmax) print $0}' $tmp
 
 
 #Ilumination:
-grdgradient $tmp.top.grd.tmp -A180 -G$tmp.intensity.top.grd.tmp  #-Nt1
+grdgradient $tmp.top.grd.tmp -A180 -G$tmp.intensity.top.grd.tmp  #-Nt1 -Ne1 
 #scales with model length. 00002 MUL is normal for orogen+basin scale (1000km)
-grdmath $tmp.intensity.top.grd.tmp $meanL MUL .00003 MUL = $tmp.intensity.top_all.grd.tmp
+grdmath $tmp.intensity.top.grd.tmp $meanL MUL .00003 MUL $intens MUL .2 DIV = $tmp.intensity.top_all.grd.tmp
 #iluminate only above sea
 grdmath $tmp.top.grd.tmp 0 GT = $tmp.contin.grd.tmp
 grdmath $tmp.intensity.top_all.grd.tmp $tmp.contin.grd.tmp MUL = $tmp.intensity.top.grd.tmp
@@ -361,7 +361,7 @@ endif
 if (-r $prj.hrz) then 
 	awk '{if (NR==2) for (i=3; i<=NF; i++) {dens[i]=$i;}\
 	    if (NR>2) { sedthick=0; \
-		for (i=4; i<=NF; i++) {if (dens[i]<2500) sedthick+=($i-$(i-1)); }\
+		for (i=4; i<=NF; i++) {if (dens[i]<2500 && dens[i]>1500) sedthick+=($i-$(i-1)); }\
 		print($1,$2,sedthick/1e3); \
 	} }' $prj.hrz | xyz2grd -G$tmp.sed.grd.tmp -I$dx/$dy -R -H0
 endif

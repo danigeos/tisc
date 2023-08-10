@@ -271,8 +271,8 @@ INDEX
 	the closest node to x,y will be changed: 'param' determines what
 	parameter is changed at that node:   1: to add water discharge at x,y
 	(m3/s, max. is Amazon at 120e3).  2: to add sediment discharge (kg/s,
-	max. is Ganges at 52e3). This file, in contrast  to all others, is read
-	not once at startup but once for every surface  process iteration.
+	max. is Ganges at 52e3). This file, in contrast to all others, is read
+	not once at startup but once for every surface process iteration.
 
   'project.SLV'
 	Evolution of the sea level and the level separating erosion and 
@@ -539,8 +539,8 @@ No. Density Age Volume Surf.  Vel_x Vel_y Shft_x Shft_y erosL
   rectangular.
     LES matrices arising from the flexural diferential equations are solved
   using a classical band solver (matrix triangularisation).
-    Memory use: The largest array uses this ammount of memory =
-    Nx*Ny*(4*Ny+1)*8 [bits].
+    Memory use: The largest array (used for the flexulra calculation) needs 
+    this ammount of memory = Nx*Ny*(4*Ny+1)*8 [bits].
 
   Orientative execution time of a one-step elastic flexure:
 
@@ -583,15 +583,22 @@ No. Density Age Volume Surf.  Vel_x Vel_y Shft_x Shft_y erosL
 				301x301 -> 60s
 				401x401 -> 209s
 				751x501 -> 11m
-  2019-11	OSX10.14  MacBook Core i7	4k€			4.0 GHz	32GB
+  2019-11	OSX10.14  MacBook Intel Core i7	4k€			4.0 GHz	32GB
 				141x141 -> 1.8s
 				301x301 -> 41s
 				401x401 -> 130s
-				751x501 -> 8m30s
+				751x501 -> 510s = 8m30s
+	2023-11	OSX13.5  Mac Mini chip: M2 Pro
+				141x141 -> 1.8s
+				301x301 -> 28.2s
+				401x401 -> 83s
+				751x501 -> 281s = 4m41s
 
-    The CPU consumed for surface processes increases also with N^3, but when
-  random_topo is added or lakes become endorheic the computing time is much 
-  larger (N^4?).
+
+    At low resolution (Nx<150), the slowest component is the flexural 
+  calculation. The CPU consumed for surface processes increases also with N^3, 
+  but when random_topo is added or lakes become endorheic that computing time 
+  grows faster with (Nx^4?).
 
 
 10.- VERSION HISTORY:
