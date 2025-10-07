@@ -29,7 +29,8 @@ int	erosed_model,
 	nbasins, 
 	nlakes, 		/*number of lakes >= 0 */
 	n_ice_flow, 
-	n_image;
+	n_image,
+	n_insolation_input_points;
 
 float 	evaporation_ct, 		/*[m3/s/m2].*/
 	K_ice_eros, 
@@ -37,6 +38,7 @@ float 	evaporation_ct, 		/*[m3/s/m2].*/
 	A_ice_slide, 
 	dt_ice, 
 	total_rain, 
+	insolation_mean, 
 	Px, Py, Pxy, 		/*Horizontal external load */
 	CYrain, windazimut, 	/*[m], [degrees]*/
 	xmin, xmax, ymin, ymax;	/*Model domain*/
@@ -46,7 +48,7 @@ float 	**D,			/*Equivalent rigidity grid*/
 	**Dw, 
 	**eros_now,  		/*Erosion during present dt at each node*/
 	**EET,			/*Equivalent Elastic Thickness grid*/
-	**h_water, 		/*Sea/lake water column thickness computed if switch_sea==1*/
+	**h_water, 		/*Sea/lake water column thickness computed if water_load==1*/
 	**h_last_unit,
 	**ice_thickness, 
 	**ice_sedm_load, 
@@ -79,7 +81,7 @@ int	lake_instant_fill=0,
 int Add_Node_To_Lake (int row, int col, int i_lake);
 int Add_Saddle_To_Lake (int row_sd, int col_sd, int row_tr, int col_tr, int i_lake);
 int Attempt_Delete_Node_From_Lake (int row, int col);
-int calculate_topo(float **topo);
+float calculate_topo(float **topo);
 int Deallocate_Lake (int i_lake);
 int Define_Lake (int i_lake);
 int Delete_Node_From_Lake (int row, int col);

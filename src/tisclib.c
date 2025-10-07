@@ -79,10 +79,10 @@ int Allocate_Memory()
 
 
 
-int calculate_topo(float **topo_new)
+float calculate_topo(float **topo_new)
 {
 	float mean=0;
-	/*Calculates current topography based on Blocks, Blocks_base and deflection*/
+	/*Calculates current topography based on Blocks_base, Blocks, compaction, and deflection*/
 	PRINT_DEBUG("Entering");
 	for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) {
 		float thickness_above=0;
@@ -841,17 +841,16 @@ int calculate_water_load()
 	*/
 	float	water_volume=0;
 
-	calculate_topo(topo);
+	//calculate_topo(topo);
 
 	if (!water_load) return(0);
 
 	for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) {
-		int il;
 		float Dq_water, h_water_now=0;
 		if (hydro_model) {
-		    if ((il=drainage[i][j].lake)) {
+		    if ((drainage[i][j].lake)) {
 		    	/*sea lake already has its proper level defined*/
-			h_water_now = MAX_2(0, Lake[drainage[i][j].lake].alt-topo[i][j]);
+				h_water_now = MAX_2(0, Lake[drainage[i][j].lake].alt-topo[i][j]);
 		    }
 		}
 		else {
@@ -859,7 +858,7 @@ int calculate_water_load()
 		}
 		Dq_water = (h_water_now-h_water[i][j]) * g * (denswater-densenv);
 		h_water[i][j] = h_water_now;
-		/*Don't load the initial water column*/
+		/*Don't load the initial water column. h_water[i][j] was initialized before time loop based on sea_level*/
 		if (Time>Timeini+1.5*dt || (Time>Timeini && !hydro_model)) {
 			Dq[i][j] += Dq_water;
 		}

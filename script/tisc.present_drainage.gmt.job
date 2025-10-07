@@ -18,7 +18,7 @@ psbasemap -JX$size -R$Region -B$ticklabels\:"x (km)":/$ticklabels\:"y (km)":NseW
 source $tisc_dir/script/tisc.common.topo.gmt.job
 source $tisc_dir/script/tisc.common.drainage.gmt.job
 pstext	-JX -R -O -G0 -W255/255/255 -K <<END >> $ps 
-	$xtime	$ytime	13 0 1 9	$Timenow Ma
+	$xtime	$ytime	13 0 1 9	$Timenow My
 END
 
 
@@ -31,7 +31,7 @@ if (-r $prj.st) then
 endif
 
 if (-r $prj.xyzt) then
-	source $tisc_dir/script/tisc.common.upliftrate.gmt.job
+#	source $tisc_dir/script/tisc.common.upliftrate.gmt.job
 endif
 if (-r $prj.CMP) psxy $prj.CMP* -JX -R -M -W4/0/0/0 -O -K >> $ps 
 pstext	-JX -R$Region -O -K -G0 <<END >> $ps 

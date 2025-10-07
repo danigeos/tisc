@@ -1,21 +1,21 @@
 if (-r $prj.INT) then 
-	grd2xyz $tmp.sed.grd.tmp | outin $prj.INT | \
+	grd2xyz $tmp.sed.grd.tmp | outin $prj.INT -V0 | \
 		awk -v dx=$dx -v dy=$dy '{if ($1=="1") {seds_in+=$4*dx*dy;}} END{printf("\nSediment_region_1: %.1f km3", seds_in);}'
 endif
 if (-r $prj.INT2) then 
-	grd2xyz $tmp.sed.grd.tmp | outin $prj.INT2 | \
+	grd2xyz $tmp.sed.grd.tmp | outin $prj.INT2 -V0 | \
 		awk -v dx=$dx -v dy=$dy '{if ($1=="1") {seds_in+=$4*dx*dy;}} END{printf("\nSediment_region_2: %.1f km3", seds_in);}'
 endif
 if (-r $prj.INT3) then 
-	grd2xyz $tmp.sed.grd.tmp | outin $prj.INT3 | \
+	grd2xyz $tmp.sed.grd.tmp | outin $prj.INT3 -V0 | \
 		awk -v dx=$dx -v dy=$dy '{if ($1=="1") {seds_in+=$4*dx*dy;}} END{printf("\nSediment_region_3: %.1f km3", seds_in);}'
 endif
 if (-r $prj.INT4) then 
-	grd2xyz $tmp.sed.grd.tmp | outin $prj.INT4 | \
+	grd2xyz $tmp.sed.grd.tmp | outin $prj.INT4 -V0 | \
 		awk -v dx=$dx -v dy=$dy '{if ($1=="1") {seds_in+=$4*dx*dy;}} END{printf("\nSediment_region_4: %.1f km3", seds_in);}'
 endif
 if (-r $prj.INT_ROSE) then 
-	cat $prj.st | outin $prj.INT_ROSE | \
+	cat $prj.st | outin $prj.INT_ROSE -V0 | \
 		awk -v dx=$dx -v dy=$dy '{if ($1=="1") {eros_in+=$4;topo_in+=$5;n_in++}} END{printf("\nMean Erosion in region INT_ROSE: %.1f m; mean topo: %.1f m", eros_in/n_in, topo_in/n_in);}'
 endif
 

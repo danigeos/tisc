@@ -19,9 +19,9 @@ float 	dist_xy_pol(
 	int np);		/*Number of points in polygon.*/
 
 
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
-	int	np=10000, i, result, iarg;
+	int	np=10000, i, result, iarg, print_all=0;
 	float	area=0, 
 		*polygonX, *polygonY, 
 		a, b, x, y, 
@@ -46,6 +46,9 @@ main(int argc, char **argv)
 			value=atof(prm);
 
 			switch (argv[iarg][1]) {
+				case 'a':
+					print_all = 1;
+					break;
 				case 'h':
 					syntax();
 				case 'V':
@@ -105,12 +108,15 @@ main(int argc, char **argv)
 			distance = dist_xy_pol(x, y, polygonX, polygonY, np);
 			fprintf (stdout, "%d\t%s", result, linea);
 			i++;
-			if (verbose_level>=2) {
+			if (verbose_level>=4) {
 				if (result==1) 	fprintf(stderr, "%3d Inside;", i);
 				else 		fprintf(stderr, "%3d Outside;", i);
 				fprintf(stderr, " Dist.=%.2f\n", distance);
 			}
-		}	
+		}
+		else if (verbose_level>=3 || print_all) {
+			fprintf (stdout, "%s", linea);
+		}
 	}
 }
 
@@ -122,6 +128,8 @@ int syntax ()
 	fprintf(stderr, "\nReads polygon from <polygonfile> in two columns (x,y); "
 			"\nReads points (x,y,...) from stdin.");
 	fprintf(stderr, "\nWrites [0|1], x, y, ... in stdout. 0 means outside; 1 inside.");
-	fprintf(stderr, "\n-V provides additional information such as the polygon area.\n");
+	fprintf(stderr, "\n-V2 provides additional information such as the polygon area.");
+	fprintf(stderr, "\n-V3 as -V2 but adds the lines not parsed, unchanged.\n");
+	fprintf(stderr, "\n-a prints the lines not parsed, unchanged.\n");
 	AUTHORSHIP;
 }

@@ -16,7 +16,7 @@ int outin(
 int syntax(int argc, char **argv);
 
 
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 	int	i, j, iarg, np=10000;
 	float	mean_lat=37,	

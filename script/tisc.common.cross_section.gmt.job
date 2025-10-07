@@ -49,13 +49,18 @@ while ($col < $numcols)
 				else
 					if ($dens[$col] > 1100) then
 						set colant = `echo $col - 1 | bc`
-						set age_cond = `awk -v a=$age[$col] -v agelimit=$sedim_age_limit 'BEGIN{age=a*1.0; agelimit*=1.; if (age>=agelimit) print 1; else print 0.0}' `
-						#echo $colant, $age[$col], $age_cond, $sedim_age_limit, $age[$colant]
-						if ($age_cond) then
-							set color = $color_sediment
+						set age_cond = `awk -v a=$age[$col] -v agelimit=$sedim_age_limit -v agelimit2=$sedim_age_limit2 'BEGIN{age=a*1.0; agelimit*=1.; \
+							if (age>=agelimit) {if (age>=agelimit2) print 2; else print 1;} else print 0.0}' `
+						if ($age_cond == '2') then
+							set color = $color_young_sediment
 						else
-							set color = $color_old_sediment
+							if ($age_cond == '1') then
+								set color = $color_sediment
+							else
+								set color = $color_old_sediment
+							endif
 						endif
+						#echo ">>>>>>>>" $colant, $age[$col], $age_cond, $sedim_age_limit, $sedim_age_limit2, $age[$colant], $color
 					else
 						if ($dens[$col] > 970) then
 							set color = $color_sea

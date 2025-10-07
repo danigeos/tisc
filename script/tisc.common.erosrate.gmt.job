@@ -1,19 +1,31 @@
 #EROSION RATE
 if (-r $prj.st) then 
-echo -n plotting EROSION RATE...
+echo; echo -n plotting EROSION RATE...
 awk '{print $1,$2,$5/1e3;}' $prj.st | \
 	xyz2grd -G$tmp.erosrate.grd.tmp -I$dx/$dy -R$Region -H2
 grdimage $tmp.erosrate.grd.tmp -C$tmp.erosrate_cpt.tmp  -JX -R -K -O >> $ps
 if (-r $prj.CMP)  psxy $prj.CMP  -JX -R -M -L -W4/0/0/0 -O -K >> $ps 
 if (-r $prj.CMP2) psxy $prj.CMP2 -JX -R -Sc.1 -G255/0/0 -W1/0 -O -K >> $ps 
+
+echo -n "Mean erosrate in INTs: "
+set i_zone = 1
+touch $tmp.erosrateinINTs.tmp
+while (-r $prj$i_zone.INT)
+	awk '{print $1, $2, $NF}' $prj.st | outin $prj$i_zone.INT -V0 | \
+		awk '{if ($1==1) {n++; mber+=$NF/1e3;}}END{printf("%.2f\t",mber/n)}' >> $tmp.erosrateinINTs.tmp
+	@ i_zone = $i_zone + 1
+end
+cat $tmp.erosrateinINTs.tmp
+
 set basin_eros_rate = ""
 set basin_sedi_rate = ""
 if (-r $prj.bas) set basin_eros_rate = `awk '{if (substr($0,1,1)!="#" && substr($0,1,1)!="#") if ($14>0) {n++; mber+=$14/1e3;}}END{printf("%.2f",mber/n)}' $prj.bas`
 if (-r $prj.bas) set basin_sedi_rate = `awk '{if (substr($0,1,1)!="#" && substr($0,1,1)!="#") if ($14<0) {n++; mber+=$14/1e3;}}END{printf("%.2f",mber/n)}' $prj.bas`
-if (-r $prj.pfl) psxy $prj.pfl -JX -R -M -W$col_lin -H2 -O -K >> $ps 
+#if (-r $prj.pfl) psxy $prj.pfl -JX -R -M -W$col_lin -H2 -O -K >> $ps 
 
 pstext	-JX -R -O -K -G0 <<END >> $ps 
-	$xtitle	$ytitle	6 0 1 BR	average eros/sed= $basin_eros_rate $basin_sedi_rate mm/yr
+#	$xtitle	$ytitle	6 0 1 BR	average eros/sed= $basin_eros_rate $basin_sedi_rate mm/yr
+	$xtitle	$ytitle	6 0 1 BR	eros-sed per region:   `cat $tmp.erosrateinINTs.tmp` mm/yr
 END
 
 psscale -C$tmp.erosrate_cpt.tmp -D$xscale/$yscale/$width/$scalewidth\h -B:"Erosion rate (mm/yr)": -L -O -K >> $ps
