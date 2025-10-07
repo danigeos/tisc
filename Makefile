@@ -47,12 +47,12 @@ vers: 	clean_for_tar
 	gzip -f tisc.tar
 	echo "UPLOADING to github."
 	touch tisc/bin/touch_something #needed by git add
-	mv tisc tisc_version
+	mv tisc tisc_copy_for_upload
 	make upload
 
 
 upload:
-	cd tisc_version
+	cd tisc_copy_for_upload
 	#For initialization:  
 	#git init; git remote add tisc https://github.com/danigeos/tisc; git add Makefile README config.mk bin demo doc include lib script src; git rm --cached doc/.first_compilation.txt
 	git commit -a -mTISC_newVersion
