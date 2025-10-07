@@ -86,4 +86,4 @@ pstext -JX -R -O <<END>> $ps
 END
 endif
 
-\rm $tmp.*.tmp 
+rm $tmp.*.tmp 

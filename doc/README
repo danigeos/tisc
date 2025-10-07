@@ -4,29 +4,53 @@
 *****                    USING FINITE DIFFERENCES                          *****
 ********************************************************************************
 
-TISC is a program written in C under Linux to calculate the 2D (planform) 
-flexure of the  lithosphere, fluvial transport along, and, in particular, to 
-numerically simulate the formation of foreland basins. TISC is the 3D version 
-of the cross-section (pseudo 2D) numerical model tAo, and uses the finite 
-difference technique.
+TISC is a program written in C under Linux (MacOS) to calculate the pseudo-3D 
+(planform) flexure of the lithosphere, fluvial transport along rivers, and 
+other surface and tectonic processes. In particular, TISC numerically 
+simulates the formation of sedimentary basins during tectonic compression 
+and extension. TISC is the 3D version of the cross-section (pseudo 2D) 
+numerical model tAo, and uses the finite difference technique.
 
 Main author: Daniel Garcia-Castellanos (CSIC)
 Details on authorship and citation in 'tisc/doc/tisc.info.txt'. 
 See license details in the documentation at tisc/doc/LICENSE.txt.
 
 
+FILES:
+
+tisc/README  instructions for compilation and software setup.
+tisc/doc/tisc.info.txt Main documentation file explaining command-line syntax, inputs and outputs, references.
+tisc/doc/template.PRM Template parameter file. Contains the default parameter values.
+tisc/demo/ Several examples. Most relevant to the paper is tisc/demo/4_river_transport
+tisc/src/tisc.c Main source code file. Other *.c files in this directory are libraries.
+tisc/Makefile Main makefile for installation. See instructions in tisc/README.
+TISC uses the open-sourced GMT4 software for the graphic PostScript output, available at https://www.generic-mapping-tools.org/
+
+SYSTEM REQUIREMENTS:
+
+Either a Mac or a Ubuntu Linux virtual machine including GMT4 (for graphic 
+output) are required:
+
+    Install Virtualbox: https://www.virtualbox.org/wiki/Downloads
+
+	Download virtual machine including Ubuntu 20.04 + GMT 4.5.18 from:
+	https://saco.csic.es/index.php/s/ZTK4dXWS6JYtjr5
+	Usuario: usuario
+	Passwd: usuario20
+	GMT 4.5.18 at /home/usuario/Software/gmt-4.5.18
+
+    Import VM with Ubuntu 20.04 + GMT 4.5.18.
+	Virtualbox > File > Import...
+
 
 TO INSTALL TISC:
-
-TISC has been developed in C under Linux, and is ready for compilation in a Mac 
-Linux environment.
 
 -Uncompress the downloaded file in a directory 'tisc/'.
 
 -Modify compiling options by editing 'tisc/config.mk' and 'tisc/src/Makefile'.
 
 -Compile typing 'make' in the main directory. This will create the executable 
-tisc in the tisc/bin/ directory. You should then put tisc/bin/ and tisc/script/ 
+tisc in the tisc/bin/ directory. Then include tisc/bin/ and tisc/script/ 
 in your shell path.
 
 -Install GMT 4 (free-ware software, used for graphic output) and put 
@@ -34,12 +58,11 @@ its bin/ directory in your path. This should work:
 	sudo apt-get update
 	sudo apt-get install gmt ksh csh tofrodos
 
--The GMT scripts are wirtten in C-shell language.
+-The GMT scripts are wirtten in C-shell language, so make sure to have that one 
+installed.
 
 -Try examples of running TISC going to directory 'tisc/demo/'. This will allow
 you to be sure that the code is working properly. Check that the graphic
 output is correctly produced in the postscript output files (*.ps)
 
 -Read the 'doc/tisc.info.txt' file to know more about how to use TISC.
-
--Note: upon installation, TISC will attempt to notify us by mail about your installation, but this usually fails, depending on your linux email configuration. Please send a brief email so that we can add you to our list and notify about any important bug that may arise (this never happend more than once per year, so far). 

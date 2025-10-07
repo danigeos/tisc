@@ -32,6 +32,7 @@ Memory debugging with:
 
 int main(int argc, char **argv)
 {
+	float **topo_ant;
 
 	/*get input parameters and files*/
 	inputs(argc, argv) ;
@@ -39,11 +40,13 @@ int main(int argc, char **argv)
 	fprintf(stdout, "\nT= %.4f My", Time/Matosec);
 
 	if (switch_ps==2) {calculate_topo(topo); Write_Ouput();}
+	topo_ant = alloc_matrix(Ny, Nx);
+
 
 	/*MAIN LOOP: In this loop time increments from Timeini to Timefinal*/
 	do {
 		/*Remember topography before tectonics and flexure*/
-		calculate_topo(topo);
+		calculate_topo(topo_ant);
 
 		/*Calculate tectonic deformation and tectonic load*/
 		tectload();
@@ -60,8 +63,9 @@ int main(int argc, char **argv)
 		/*Define & solve viscoelastic flexure equation*/
 		Viscous_Relaxation();
 
-		/*Calculates surface water flow and sediment-erosion*/
-		surface_processes(topo);
+//calculate_topo(topo);
+		/*Calculates surface water flow and sediment-erosion. Distributes all previous effects on topo over ninters substeps of dt_st.*/
+		surface_processes(topo_ant);
 
 		Time += dt;
 		fprintf(stdout, "\nT= %.4f My", Time/Matosec);
@@ -70,6 +74,8 @@ int main(int argc, char **argv)
 	} while (Time < Timefinal-dt/10);
 
 	The_End();
+
+	free_matrix (topo_ant, Ny);
 
 	return(1);
 }
@@ -98,7 +104,7 @@ int inputs (int argc, char **argv)
 
 	/*Version of TISC is matched against the parameters file *.PRM*/
 	/*¡¡ UPDATE template.PRM !!*/
-	strcpy(version, "TISC_2019-05-03");
+	strcpy(version, "TISC_2023-08-31");
 
 	/*Default parameter values are read from ./tisc/doc/template.PRM:*/
 	sprintf(projectname, "%s/doc/template", TISCDIR);
@@ -254,6 +260,7 @@ int inputs (int argc, char **argv)
 	A_ice_slide /= secsperyr;
 	rain *= 1e6/Matosec/1e3;
 	if (hydro_model==1) Krain *= 1e6/Matosec/1e3/1e3;
+	rain_per *= Matosec;
 	evaporation_ct *= 1e6/Matosec/1e3;
 	lost_rate *= 1e-2 * 1e-3;
 	temp_sea_level += TEMP_FREEZE_WATER; /*converts from C to K*/
@@ -282,6 +289,7 @@ int inputs (int argc, char **argv)
 	system(command);
 
 	read_file_sea_level(); calculate_sea_level();
+	read_file_insolation();
 	read_file_horiz_record_time();
 	read_file_Te();
 	read_file_rain(precipitation_file);
@@ -606,7 +614,7 @@ int Elastic_Deflection()
     	    }
 
 
-    	    calculate_topo(topo);
+    	    //calculate_topo(topo);
 
     	    /*Statistics on load*/
     	    {
@@ -857,7 +865,7 @@ int move_Blocks()
 int read_file_unit()
 {
 	/*
-	  READS UNIT FILE NAMED 'projectnameNUM.UNIT' WHERE 'NUM' IS 1 FOR THE 
+	  READS UNIT FILE NAMED 'projectname[NUM].UNIT' WHERE 'NUM' IS 1 FOR THE 
 	  FIRST UNIT, 2 FOR THE SECOND, ETC. Interpolates this input. Creates
 	  new unit to store its properties and cuts sediment units when file
 	  contains fault depth rather than a thickness itself.
@@ -1396,7 +1404,7 @@ int Viscous_Relaxation()
 		for (i=0; i<Ny; i++)  for (j=0; j<Nx; j++)  Blocks[i_first_Block_load-1].thick[i][j] +=  Dw[i][j] /*MAX(Dw[i][j], 0)*/ ;
 	}
 
-	calculate_topo(topo);
+	//calculate_topo(topo);
 
 	/*Prints DEFLECTION characteristics*/
 	if (verbose_level>=1) {
@@ -1435,7 +1443,7 @@ int Write_Ouput()
 		if (switch_ps==2) {
 			/*crop by default to the border*/
 			if (strlen(gif_geom)<2) sprintf(gif_geom, "-trim -background Khaki -label 'TISC software: %s' -gravity South -append", projectname);
-			sprintf(command, "convert -density 200 %s.ps %s -interlace NONE  %s%03d.jpg", /*-fill \"#ffff99\" -draw \"rectangle 8,8 90,25\" -fill \"#000055\" -font helvetica -draw \"text 12,20 t_%+3.2f_My \" */
+			sprintf(command, "magick convert -density 300 %s.ps %s -interlace NONE  %s%03d.jpg", /*-fill \"#ffff99\" -draw \"rectangle 8,8 90,25\" -fill \"#000055\" -font helvetica -draw \"text 12,20 t_%+3.2f_My \" */
 				projectname, gif_geom, projectname, n_image);
 			if (verbose_level>=3)
 				fprintf(stdout, "\n%s\n", command) ;

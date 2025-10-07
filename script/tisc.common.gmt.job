@@ -14,7 +14,7 @@ if ($prj == "") then
 endif
 
 if (! $?width) set width = 8
-if (! $?separation_vert) set separation_vert = 2.4
+if (! $?separation_vert) set separation_vert = 2.2
 if ($?separation == "0") set separation = .8
 if ($?intens == "0") set intens	= .2
 if ($?height_CS == "0") set height_CS = 3.5
@@ -86,9 +86,9 @@ if ($zmax == "") set zmax = $props[9]
 set zminm = `echo  $zmin \* 1000 | bc -l`
 set zmaxm = `echo  $zmax \* 1000 | bc -l`
 set ZRegion	= $zmin/$zmax
-set Timenow = `awk -v dt=$dt '(NR==1) {txt=substr($(NF-1),4,8); if (dt>.1) printf("%.1f", txt); else printf("%.2f", txt); exit;}' $prj.hrz`
+set Timenow = `awk -v dt=$dt '(NR==1) {txt=substr($(NF-1),4,8); if (dt>.1) printf("%.1f", txt); else if (dt>.01) printf("%.2f", txt); else printf("%.3f", txt); exit;}' $prj.hrz`
 set xtime = `echo $x0 + $Lx \* .001  | bc -l`
-set ytime = `echo $yf - $Ly \* .001  | bc -l`
+set ytime = `echo $yf - $Ly \* .02  | bc -l`
 set xtitle = `echo $xf - $Lx \* .007  | bc -l`
 set ytitle = `echo $y0 + $Ly \* .015 | bc -l`
 set xt =     `echo $xf - 12  | bc -l`
@@ -103,8 +103,8 @@ set size = $width/$height
 set vert_shift = `echo -$separation_vert - $height  | bc -l`
 set horz_shift = `echo  $separation + $width   | bc -l`
 set xscale = `echo $width / 2 | bc -l`
-set yscale = -.6
-set scalewidth = .3
+set yscale = -.4
+set scalewidth = .2
 set vert_shift_CS = `echo -$height_CS \- $separation | bc -l`
 set width_CS = $width
 set horz_shift_CS = 0
@@ -112,7 +112,9 @@ if (-r $prj.pfl) then
 	set dmax = `tail $prj.pfl | awk '{dmax=$3;} END{print dmax}'`
 	set dens = `awk '(NR==2) {print $0; exit;}' $prj.pfl`
 	set age  = `awk '(NR==3) {print $0; exit;}' $prj.pfl`
-	set sedim_age_limit = `echo \( $Timeini + $Timefinal \) / 2 | bc -l` 
+	set sedim_age_limit  = `awk -v Timeini=$Timeini -v Timefinal=$Timefinal 'BEGIN{print Timeini+1*(Timefinal-Timeini)/3}'` 
+	set sedim_age_limit2 = `awk -v Timeini=$Timeini -v Timefinal=$Timefinal 'BEGIN{print Timeini+2*(Timefinal-Timeini)/3}'` 
+	#echo ">>>>>>>>" $sedim_age_limit, $sedim_age_limit2, $Timeini, $Timefinal
 endif
 
 
@@ -150,7 +152,8 @@ set color_basement = 165/120/0
 set color_heavy_sediment = 80/130/255
 set color_salt = 210/210/210
 set color_old_sediment = 255/180/0
-set color_sediment = 255/255/20
+set color_sediment = 250/210/0
+set color_young_sediment = 240/240/20
 set color_basement = 165/120/0
 set color_thrust   = 170/115/10
 set color_sea      = 50/180/255
@@ -161,7 +164,7 @@ set col_lin	= 1/255/0/120ta
 set col_masstr	= 0/0/0
 
 set ticklabels 	= `awk -v meanL=$meanL 'BEGIN{if (meanL>=990) print "a500f50"; else if (meanL>=390) print "a200f50"; else if (meanL>=90) print "a50f10"; else print "a10f1";}'`
-set zticklabels	= `awk -v zmin=$zmin -v zmax=$zmax 'BEGIN{if (zmax-zmin>=30) print "a10f5g10"; else if (zmax-zmin>=10) print "a4f1g4"; else if (zmax-zmin>=3) print "a1f.5g1"; else if (zmax-zmin>=1) print "a.4f.1g.2"; else print "a.1f.05g.1";}'`
+set zticklabels	= `awk -v zmin=$zmin -v zmax=$zmax 'BEGIN{if (zmax-zmin>=30) print "a10f5g10"; else if (zmax-zmin>=10) print "a4f1g4"; else if (zmax-zmin>=3) print "a1f.5g1"; else if (zmax-zmin>=1) print "a.4f.1g.4"; else print "a.1f.05g.1";}'`
 
 if (-r $prj.xyw) then
 	set sea_level = `awk '{if (NR==1) printf ("%.0f",$(NF-1)); exit;}' $prj.xyw`
@@ -204,13 +207,20 @@ B	0	0	0
 F	255	255	255
 END
 
+
+set lakeR = 0
+set lakeG = 70
+set lakeB = 255
+set endoR = 40
+set endoG = 110
+set endoB = 255
 cat - <<END>  $tmp.lakes_cpt.tmp
 	0	0	0	0	.49	0	0	0
-	.49	0	70	255	1	0	70	255
+	.49	$lakeR	$lakeG	$lakeB	1	$lakeR	$lakeG	$lakeB
 END
 cat - <<END>  $tmp.lakes_endorh_cpt.tmp
 	0	0	0	0	.49	0	0	0
-	.49	50	110	255	1	50	110	255
+	.49	$endoR	$endoG	$endoB	1	$endoR	$endoG	$endoB
 END
 
 if (! $?min_rain) set min_rain = .5
@@ -275,6 +285,22 @@ B	255 255 255
 F	30   30   30
 END
 
+cat - <<END>  $tmp.eros_cumul_cpt.tmp
+   	-1.	155	0	0	-.8	155	0	0
+	-.8	255	0	0	-.6	255	0	0
+	-.6	255	120	0	-.4	255	120	0
+	-.4	255	190	0	-.2	255	190	0
+	-.2	255	255	0	-.1	255	255	0
+	-.1	255	255	255	0	255	255	0
+	.0	170	190	255	.1	170	190	255
+	.1	140	130	255	.2	140	130	255
+	.2	120	80	255	.4	120	80	255
+	.4	70	40	255	.6	70	40	255
+	.6	0	0	255	.8	0	0	255
+F	255 255 255
+B	30   30   30
+END
+
 cat - <<END>  $tmp.erosrate_cpt.tmp
 	-10 180	0	0	-1 180	0	0
 	-1	255	0	0	-0.1	150	190	0
@@ -286,14 +312,6 @@ cat - <<END>  $tmp.erosrate_cpt.tmp
 	1	212	43	255	10	212	43	255
 END
 #makecpt -Ccool -T.1/10/1 -Qo -D >> $tmp.erosrate_cpt.tmp
-
-cat - <<END>  $tmp.eros_cumul_cpt.tmp
-	-.8	150	0	200	-.3	150	0	200
-	-.3	70	0	255	-.2	70	0	255
-	-.2	0	60	255	-.1	0	60	255
-	-.1	30	140	255	0	255	255	255
-END
-cat $tmp.sed_cpt.tmp >>  $tmp.eros_cumul_cpt.tmp
 
 #makecpt -T0/$sedloadmax/1 > $tmp.sedload_cpt.tmp
 cat  <<END> $tmp.sedload_cpt.tmp
@@ -320,11 +338,11 @@ END
 #GRIDS:
 #Topography
 if (-r $prj.xyw) then 
-awk -v sl=$sea_level '{topo=$6; if ($5 =="S" && topo>=sl) topo=sl-1.11; print($1,$2,topo)}' $prj.xyw |\
-	xyz2grd	-G$tmp.top.grd.tmp -I$dx/$dy -R$Region -H2
+	awk -v sl=$sea_level '{topo=$6; if ($5 =="S" && topo>=sl) topo=sl-1.11; print($1,$2,topo)}' $prj.xyw |\
+		xyz2grd	-G$tmp.top.grd.tmp -I$dx/$dy -R$Region -H2
 else
-awk '{print($1,$2,$NF)}' $prj.hrz |\
-	xyz2grd	-G$tmp.top.grd.tmp -I$dx/$dy -R$Region -H2
+	awk '{print($1,$2,$NF)}' $prj.hrz |\
+		xyz2grd	-G$tmp.top.grd.tmp -I$dx/$dy -R$Region -H2
 endif
 
 set topomin = `grdinfo $tmp.top.grd.tmp | awk '{if ($2=="z_min:") print $3}'`
@@ -365,6 +383,7 @@ if (-r $prj.hrz) then
 		print($1,$2,sedthick/1e3); \
 	} }' $prj.hrz | xyz2grd -G$tmp.sed.grd.tmp -I$dx/$dy -R -H0
 endif
+grd2cpt $tmp.sed.grd.tmp -Ctopo > $tmp.sed_cpt.tmp
 
 #eros./sed.:
 if (-r $prj.st) then

@@ -1,7 +1,7 @@
 ### TISC parameters file ###
 
 #TISC VERSION FOR THIS FILE:
-version		TISC_2019-05-03
+version		TISC_2023-08-31
 
 #MODEL REGION: 
 #Coordinates of the corner nodes (center of corner cells, as in netCDF's "node
@@ -91,10 +91,11 @@ hydro_model	0	Defines the hydrological (climate&drainage) model.
 			#0: no precipitation, no fluvial transport. The 
 				following parameters have no effect.
 			#1: runoff(x,y) = (rain + Krain*elevation[km]) * 
-				(1-DX/CXrain) * (1-DY/CYrain) 
-				is used unless a *.RAIN file is given or where the 
-				value in that file is negative. DX,DY is the 
-				distance to the centre of the model.
+				(1-DX/CXrain) * (1-DY/CYrain) * (1-rain_amp*sin((Time-Timeini)/rain_per*2*pi))
+				is used unless a *.RAIN file is given (or where the 
+				value in that file is negative). DX,DY is the 
+				distance to the centre of the model; rain_amp, rain_per define
+				a harmonic variation in precipitation.
 			#2: orographic precipitation following Roer et al. (2003, JGR).
 			#3: orographic precipitation following Garcia-Castellanos (2007, 
 				EPSL), water-conservative.
@@ -133,6 +134,16 @@ CYrain		00e3	If hydro_model=1: proportionality of runoff with y
 				turbulence and finite time of condensation and precipitation 
 				(~1e4 m).
 				If hydro_model==3: unused parameter.
+rain_per	0 	Period [My] of the harmonic change in rain of amplitude 
+				<rain_amp>. See formula above.
+				If hydro_model>=1: unused parameter.
+rain_amp	0 	If <rain_per>!=0, then adds a harmonic temporal change in rain 
+				of period <rain_per> and amplitude <rain_amp>. If 
+				<rain_per>==0, amplifies the insolation oscillations if file 
+				*.INS by a factor (1+<rain_amp>).
+				Unitless ratio, <1. See formula above. 0 means no harmonic 
+				change in rain. Precipitation will change between 
+				(1+/-rain_amp)*rain. For hydro_model>=1, unused parameter.
 evaporation	00	Evaporation rate at lakes [l/m2/yr]=[mm/yr]. 
 				evaporation>runoff can significantly slow down the 
 				hydrological calculations. 
@@ -197,9 +208,9 @@ critical_slope	0	Maximum surface slope (slope triggering landsliding,
 K_river_cap	500	For erosed_model>=2: Constant for river transport capacity
 				[kg/m3]: qeq = K_river_cap*Qw*Slope. Units are kg of sedim. per m3
 				water for S=1, different than in literature, e.g. T&S96 use .1
-				m3/m3, divide tAo values by denssedim to compare). For
-				erosed_model>=3 it has influence only under ~1000. Use a higher
-				value if you need a detachment-limited incision model.
+				m3/m3, divide TISC values by denssedim to compare). For
+				erosed_model>=3 it has influence only under ~5000. Use a much 
+				higher value if you need a detachment-limited incision model.
 erodibility	1e-7	This default erodibility value is ignored for units with a
 				value specified in their *.UNIT file.
 				If erosed_model=2,4,5: length scale of fluvial erosion [m] 

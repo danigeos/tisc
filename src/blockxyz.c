@@ -137,7 +137,7 @@ int main(int argc, char **argv)
 
 
 
-syntax(int argc, char **argv)
+int syntax(int argc, char **argv)
 {
 	fprintf(stderr, 
 		"\nSyntax:  %s [pointsfile] [-d<empty_val>] [-h] -M<mode>[<radius>] -N<Nx>[/<Ny>]\n\t-R<xmin/xmax/ymin/ymax> [-V<level>]", argv[0]);

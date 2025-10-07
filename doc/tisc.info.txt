@@ -276,7 +276,7 @@ INDEX
 
   'project.SLV'
 	Evolution of the sea level and the level separating erosion and 
-	sedimentation levels (optional, read only id water_load is activated in the 
+	sedimentation levels (optional, read only if water_load is activated in the 
 	PRM file):
 	Format:
 
@@ -284,6 +284,22 @@ INDEX
 	time2	s_level2
 	time3	s_level3	[eroslevel2]
 	...	...     	[...]
+
+  'project.INS'
+	Evolution of the insolation (optional, use Laskar's, f.e.). Only for 
+	hydro_model=1. Adds a factor insolation/mean_insolation multiplying 
+	<rain+Krain*z> (see rain_amp in *.PRM) and also multiplying the discharges 
+	in *.NDEFS. Thus, absolute insolation values or their units are irrelevant.
+
+	Format:
+
+	time1	insolation1
+	time2	insolation3
+	time3	insolation3
+	... 	...
+
+	The deviations of insolation from its average value will be amplifiied in 
+	rain by a factor <rain_amp> (if not 0).
 
   'project.REC'
 	Horizon recording times file (optional, defaults to dt_record 
@@ -684,6 +700,13 @@ No. Density Age Volume Surf.  Vel_x Vel_y Shft_x Shft_y erosL
   	Sklar & Dietrich's (1994) erosion dependence on sediment load added by 
   	Michael Berry (UNM, Socorro), new erosed_model #8. Critical stress for 
   	sediment mobilisation.
+  TISC_2023-08-31
+  	Debugged in tisclib.c line 863: Initial water column was loaded as initial 
+  	isostatic load, by Hanneke Heida. Added input parameters for harmonic 
+  	changes in precipitation: rain_amp, rain_per. Repared bug in the screen 
+  	output on lake properties. 
+  TISC_2025-0
+  	Precipitation proportional to insolation file in *.INS.
 
 
 11.- MODEL LIMITATIONS
@@ -807,10 +830,9 @@ No. Density Age Volume Surf.  Vel_x Vel_y Shft_x Shft_y erosL
 
 
 14.- AUTHORSHIP, CREDITS
-	TISC is a program developed since Sept. 1994 by Daniel Garcia-Castellanos with some contributions from others, cited in the code and the GitHub repository.
-	Marked parts of the code have been supplied by Michael Berry (UNM, Socorro) and others.
+	TISC is a program developed since Sept. 1994 by Daniel Garcia-Castellanos with some contributions from others, cited in the code and the GitHub repository. Marked parts of the code have been supplied by Michael Berry (UNM, Socorro), Hanneke Heida and others.
 
-    Details on copyright are in the tisc/doc/ directory.
+	Details on copyright are in the tisc/doc/ directory.
 	Please, contact the author if you will use the program.
 
 	When showing results from this code please cite at least one of the following articles:
@@ -823,8 +845,8 @@ No. Density Age Volume Surf.  Vel_x Vel_y Shft_x Shft_y erosL
 
 
 15.- ACKNOWLEDGEMENTS
-	TISC has been developed mainly in the Instituto de Ciencias de la Tierra Jaume Almera (CSIC, Barcelona) and the Vrije Universiteit (Amsterdam), but stages at the Dalhousie University (Halifax, Canada) and the Australia National University (Canberra) have also been helpful. 
-	Most funding comes from public research institutions. Feedback with users has been essential and special mention must be made to: Mihai Tarapoanca, Jorge Gaspar-Escribano, Juan Alvarez, Jeroen Bartol, Karen Leever, Javier Fullea, Gradmann Sofie, Ronald van Balen, Charlotte Fillon, Michael Berry.
+	TISC has been developed mainly in the Instituto de Ciencias de la Tierra Jaume Almera (now Geo3BCN-CSIC, Barcelona) and the Vrije Universiteit (Amsterdam), but stages at the Dalhousie University (Halifax, Canada) and the Australia National University (Canberra) were also helpful. 
+	Most funding comes from public research institutions. Feedback with users has been essential and special mention must be made to: Mihai Tarapoanca, Jorge Gaspar-Escribano, Juan Alvarez, Jeroen Bartol, Karen Leever, Javier Fullea, Gradmann Sofie, Ronald van Balen, Charlotte Fillon, Michael Berry, Hanneke Heida.
 
 16.- DISCLAIMER 
 	TISC is a tool developed for my own research and no professional programmers are involved, the code is thus not so user-friendly, and I cannot always guarantee my assistance in case of trouble. See other warnings in the license file tisc/doc/LICENSE.txt.

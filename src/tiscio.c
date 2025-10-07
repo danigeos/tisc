@@ -401,6 +401,8 @@ int match_parameter (char *str1, char *str2, int show, int replace, char *line)
 	Match_Param_Replace_flt ( "windazimut",	windazimut,  	0 )
 	Match_Param_Replace_flt ( "CXrain",	CXrain,  	0 )
 	Match_Param_Replace_flt ( "CYrain",	CYrain,  	0 )
+	Match_Param_Replace_flt ( "rain_per",	rain_per,  	0 )
+	Match_Param_Replace_flt ( "rain_amp",	rain_amp,  	0 )
 	Match_Param_Replace_flt ( "evaporation",	evaporation_ct,  	0 )
 	Match_Param_Replace_flt ( "lost_rate",	lost_rate,  	0 )
 	Match_Param_Replace_flt ( "permeability",	permeability,  	0 )
@@ -627,6 +629,8 @@ int read_file_resume(char *filename)
 	fread(&windazimut, 	sizeof(float),		1, 	file);
 	fread(&CXrain, 	sizeof(float),		1, 	file);
 	fread(&CYrain, 	sizeof(float),		1, 	file);
+	fread(&rain_per, 	sizeof(float),		1, 	file);
+	fread(&rain_amp, 	sizeof(float),		1, 	file);
 	fread(&total_bedrock_eros_mass, 	sizeof(float),		1, 	file);
 	fread(&total_sed_mass, 	sizeof(float),		1, 	file);
 
@@ -771,6 +775,48 @@ int read_file_resume(char *filename)
 
 
 
+int read_file_insolation()
+{
+	/*
+	  Reads file with insolation along time named 'projectname.INS to be used for time-changing precipitation'
+	*/
+
+	int 	i, j, nmax_input_points=5000;
+	FILE 	*file;
+	float	*aux1, *aux2;
+
+	insolation_mean = 0;
+
+	Read_Open_Filename_Return(".INS", "rt", "Insolation")
+
+	n_insolation_input_points=0;
+	aux1 = calloc(nmax_input_points, sizeof(float));
+	aux2 = calloc(nmax_input_points, sizeof(float));
+	
+	for (;;) {
+		{char auxstr[MAXLENLINE], *lin; int nfields=0; while (nfields<2) {lin=fgets(auxstr, MAXLENLINE-1, file); if (lin==NULL) break; nfields=sscanf(lin, "%f %f", &aux1[n_insolation_input_points], &aux2[n_insolation_input_points]);}; if (lin==NULL) break;}
+		n_insolation_input_points++;
+		if (n_insolation_input_points>=nmax_input_points-1 ) {
+			PRINT_ERROR("Too many data (%d) in insolation file.", n_insolation_input_points);
+			break;
+		}
+	}
+	fclose(file); 
+	var_insolation = calloc(n_insolation_input_points, sizeof(float *));
+	for (i=0, j=0; i<n_insolation_input_points; i++) {
+		var_insolation[i] = calloc(2, sizeof(float));
+		var_insolation[i][0] = aux1[i]*Matosec;
+		var_insolation[i][1] = aux2[i];
+		insolation_mean += aux2[i];
+	}
+	insolation_mean /= n_insolation_input_points;
+	free(aux1); free(aux2); 
+	PRINT_INFO("Rows in insolation file '%d'. Isolation mean = %.2e", n_insolation_input_points, insolation_mean);
+	return(1);
+}
+
+
+
 int read_file_sea_level()
 {
 	/*
@@ -852,6 +898,27 @@ int read_file_node_defs(float dt_st)
 		PRINT_DEBUG("Node specified: %d,%d, %d, %f", i,j, type, value);
 		switch (type) {
 		    case 1:
+			if (rain_amp && rain_per) value *= (1-rain_amp*sin((Time-Timeini)/rain_per*2*3.1415927));
+			/*IF INSOLATION FILE, inpterpolate insolation to this Time*/
+			if (n_insolation_input_points) {
+				float insolation;
+				int i;
+				if (Time<=var_insolation[0][0] || Time>=var_insolation[n_insolation_input_points-1][0]) {
+					if (Time<=var_insolation[0][0]) 
+						{insolation = var_insolation[0][1];}
+					if (Time>=var_insolation[n_insolation_input_points-1][0]) 
+						{insolation = var_insolation[n_insolation_input_points-1][1];}
+				}
+				else for (i=0; i<n_insolation_input_points-1; i++) {
+					if (Time>var_insolation[i][0] && Time<=var_insolation[i+1][0]) {
+						insolation = var_insolation[i][1]+(Time-var_insolation[i][0])*(var_insolation[i+1][1]-var_insolation[i][1])/(var_insolation[i+1][0]-var_insolation[i][0]); 
+						break;
+					}
+				}
+				value *= (1+(insolation/insolation_mean-1)*((rain_per)?1:(1+rain_amp))); //scale-up the variations with rain_amp
+				PRINT_INFO("Insolation rain factor: %.2f; Additional discharge: %.2e m3/s", (1+(1-insolation/insolation_mean)*1), value);
+			}
+
 			drainage[i][j].discharge += value;
 			total_rain += value;
 			break;
@@ -862,6 +929,7 @@ int read_file_node_defs(float dt_st)
 		}
 	}
 	fclose(file);
+	PRINT_DEBUG("Exiting");
 
 	return 1;
 }
@@ -1296,6 +1364,7 @@ int write_file_drainage ()
 #ifdef SURFACE_TRANSPORT
 	Write_Open_Filename_Return (".xyw", "wt", !switch_write_file_Blocks || Time==Timeini || !hydro_model);
 
+	//calculate_topo(topo);
 	fprintf(file, "#TISC output: drainage.  sea_level: %.1f m\n# x(km) y(km) water(m3/s) sed[kg/s] type topo[m] x-to y-to topo-to precipt[mm/y] evapora[mm/y] ice_thick[m] ice_sed_load[m] swim_dist[km]\n", sea_level);
 	for (i=0; i<Ny; i++) for (j=0; j<Nx; j++) {
 		int il, dcol=drainage[i][j].dr_col, drow=drainage[i][j].dr_row, switch_mouth, ik, jk;
@@ -1311,19 +1380,24 @@ int write_file_drainage ()
 		  IF_LAKE_IS_SEA(il) dr_type = 'S';
 		if (!dr_type) 
 		  dr_type = '-';
-		/*Find the maximum swimming distance with the neigbouring cells:*/
+
+		//Find the maximum swimming distance to all neigbouring cells:
+		//Find the river-distance to the sea from this and from all neigbouring cells.
 		ro[0]=i-1, ro[1]=i,   ro[2]=i+1, ro[3]=i,   ro[4]=i-1, ro[5]=i+1, ro[6]=i+1, ro[7]=i-1;
 		co[0]=j,   co[1]=j+1, co[2]=j,   co[3]=j-1, co[4]=j+1, co[5]=j+1, co[6]=j-1, co[7]=j-1;
-		/*Follow down the i,j river and mark the path to a mouth*/
 		ik=i; jk=j; 
 		dist=0;
+		//1. First descend along the drainage network from the i,j cell to its mouth 
+		//(sea, boundary or endorheic lake) and mark the path as done with the accumulated distance.
 		for (int k=1; ; k++) {
 			int id, jd, ild;
-//printf("\n&&&&&%d    %d %d  %d %d\n", k, i, j, ik, jk);
+			//printf("\n&&&&&%d    %d %d  %d %d\n", k, i, j, ik, jk);
 			id=drainage[ik][jk].dr_row; jd=drainage[ik][jk].dr_col;
 			il=drainage[ik][jk].lake;
-			if (IN_DOMAIN(id,jd))	    ild=drainage[id][jd].lake;
-			else			    ild=0;
+			if (IN_DOMAIN(id,jd))
+				ild=drainage[id][jd].lake;
+			else
+				ild=0;
 			if (IN_DOMAIN(id,jd)) dist += sqrt((id-ik)*(id-ik)*dy*dy+(jd-jk)*(jd-jk)*dx*dx);
 			done[ik][jk]=dist; /*mark this node with the distance to i,j*/
 			switch_mouth=NO; 
@@ -1332,15 +1406,20 @@ int write_file_drainage ()
 			    switch_mouth=YES;
 			/*If it drains outside, it is the end of a river*/
 			if (OUT_DOMAIN(id,jd))
-				    switch_mouth=YES;
-			/*If it drains to an endorheic lake, it is the end of a river*/
-			if (!il && ild && !Lake[ild].n_sd)
-				    switch_mouth=YES;
-			if (switch_mouth) break;
-/*WHY?!!*/		if (k>Nx*Ny) {break;}
+				switch_mouth=YES;
+			/*If not a lake but it drains to an endorheic lake, it is the end of a river*/
+			if (!il && ild && !Lake[ild].n_sd) {
+				int j;
+				for (j=0; j<Lake[ild].n; j++) done[Lake[ild].row[j]][Lake[ild].col[j]]=dist;
+				switch_mouth=YES;
+			}
+			if (switch_mouth) 
+				break;
+			if (k>Nx*Ny) {break;} //WHY NEEDED?!! (bug in drainage.dr)
 			ik=id; jk=jd;
 		}
-		/*Follow down from the neigbours and take the max swimming distance*/
+		//2. Now follow the drainage network from all neigbours until a cell done above 
+		//or until a mouth and also measure the distance 
 		for (int l=0; l<NDERS; l++) {
 			float distneighb;
 			ik=ro[l]; jk=co[l]; 
@@ -1349,37 +1428,40 @@ int write_file_drainage ()
 				int id, jd, ild;
 				id=drainage[ik][jk].dr_row; jd=drainage[ik][jk].dr_col;
 				il=drainage[ik][jk].lake;
-				if (IN_DOMAIN(id,jd))	    ild=drainage[id][jd].lake;
-				else			    ild=0;
+				if (IN_DOMAIN(id,jd))
+					ild=drainage[id][jd].lake;
+				else
+					ild=0;
 				if (IN_DOMAIN(id,jd)) distneighb += sqrt((id-ik)*(id-ik)*dy*dy+(jd-jk)*(jd-jk)*dx*dx);
 				switch_mouth=NO; 
-				/*If this is not a lake and it drains to the sea, then it is a river mouth*/
+				/*If the downstream cell is not in a lake but it drains to the sea, then it is a river mouth*/
 				if (!il) IF_LAKE_IS_SEA(ild)
 				    switch_mouth=YES;
 				/*If it drains outside, it is the end of a river*/
 				if (OUT_DOMAIN(id,jd))
-					    switch_mouth=YES;
-				/*If it drains to an endorheic lake, it is the end of a river*/
-					if (!il && ild && !Lake[ild].n_sd)
-					    switch_mouth=YES;
+				    switch_mouth=YES;
+				/*If not a lake but it drains to an endorheic lake, it is the end of a river*/
+				if (!il && ild && !Lake[ild].n_sd)
+				    switch_mouth=YES;
 				if (switch_mouth) {distneighb+=dist; break;}
 				if (done[id][jd]) {distneighb+=done[id][jd]; break;}
-/*WHY?!!*/		if (k>Nx*Ny) {break;}
+				if (k>Nx*Ny) {break;} //WHY NEEDED?!! (bug in drainage.dr)
 				ik=id; jk=jd;
 			}
+			//Find the largest distance among all 8 neighbours
 			if (distneighb>maxdist) maxdist = distneighb;
 		}
 		
 		fprintf(file, "%7.2f\t%7.2f\t%.2f\t%.2f\t%c\t%.1f\t%7.2f\t%7.2f\t%.1f\t%7.1f\t%7.1f\t%6.1f\t%6.2f\t%6.2f\n",
-			(xmin+j*dx)/1000, (ymax-i*dy)/1000,
-			drainage[i][j].discharge,
+			(xmin+j*dx)/1000, (ymax-i*dy)/1000, 
+			drainage[i][j].discharge, 
 			drainage[i][j].masstr,
 			dr_type, 
 			topo[i][j], 
 			(xmin+dcol*dx)/1000, (ymax-drow*dy)/1000, topo[drow][dcol], 
 			precipitation[i][j]*secsperyr*1e3, evaporation[i][j]*secsperyr*1e3, 
 			(K_ice_eros)? ice_thickness[i][j] : 0, 
-			(K_ice_eros)? ice_sedm_load[i][j] : 0,
+			(K_ice_eros)? ice_sedm_load[i][j] : 0, 
 			maxdist/1e3 );
 		for (int i=0; i<Ny; i++) free(done[i]);
 		free(done);
@@ -1478,7 +1560,7 @@ int write_file_river_basins ()
 	for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) maxdisch=MAX_2(maxdisch, drainage[i][j].discharge);
 
 	fprintf(file, "#TISC output: river basins.\n#x[km] y[km] dischg[m3/s] masstr[kg/s] type topo[m] length[km] chi[km] x-to y-to topo-to[m] length-to[km] chi-to[km] eros_rate[m/My] accumul_erosion[m] level nodes_above");
-	if (verbose_level>=3) fprintf(stdout, "  %3.0f%%", count*100.0/Nx/Ny);
+	if (verbose_level>=4) fprintf(stdout, "  %3.0f%%", count*100.0/Nx/Ny);
 
 	/*Look for river mouths in sea, closed lakes or boundaries*/
 	for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) {
@@ -1497,7 +1579,7 @@ int write_file_river_basins ()
 	    if (!il && ild && !Lake[ild].n_sd)
   	    		switch_mouth=YES;
 	    if (switch_mouth) {
-	    	if (verbose_level>=3) {fprintf(stdout, "\b\b\b\b%3.0f%%", count*100.0/Nx/Ny); fflush(stdout);}
+	    	if (verbose_level>=4) {fprintf(stdout, "\b\b\b\b%3.0f%%", count*100.0/Nx/Ny); fflush(stdout);}
 	    	n_river++; level=0; length=chi=0;
 	    	fprintf(file, "\n> begin river basin %d", n_river); fflush(file);
 	    	river_nodes = find_up_river (i, j, &level, &count, &length, &chi, file, done, maxdisch);
@@ -1507,7 +1589,7 @@ int write_file_river_basins ()
 		fflush(file);
  	    }
 	}
-	if (verbose_level>=3) {fprintf(stdout, "\b\b\b\b     "); fflush(stdout);}
+	if (verbose_level>=4) {fprintf(stdout, "\b\b\b\b     "); fflush(stdout);}
 	fprintf(file, "\n");
 	fclose(file);
 	for (int i=0; i<Ny; i++) free(done[i]);
@@ -1534,7 +1616,7 @@ int write_file_lakes ()
 	fprintf(file, "#TISC output: \n#Lakes: %d", nlakes);
 	for (i=1; i<=nlakes; i++) {
 		float vol, height_lake, lake_evaporation;
-		for (j=0, height_lake=sea_level; j<Lake[i].n; j++)
+		for (j=0, height_lake=-1e6; j<Lake[i].n; j++) //!!
 		    height_lake = MAX_2(height_lake, topo[Lake[i].row[j]][Lake[i].col[j]]);
 		for (j=0, vol=0; j<Lake[i].n; j++)
 		    vol += height_lake - topo[Lake[i].row[j]][Lake[i].col[j]];
@@ -1718,6 +1800,8 @@ int write_file_resume()
 	fwrite(&windazimut, 	sizeof(float),		1, 	file);
 	fwrite(&CXrain, 	sizeof(float),		1, 	file);
 	fwrite(&CYrain, 	sizeof(float),		1, 	file);
+	fwrite(&rain_per, 	sizeof(float),		1, 	file);
+	fwrite(&rain_amp, 	sizeof(float),		1, 	file);
 	fwrite(&total_bedrock_eros_mass, 	sizeof(float),		1, 	file);
 	fwrite(&total_sed_mass, 	sizeof(float),		1, 	file);
 

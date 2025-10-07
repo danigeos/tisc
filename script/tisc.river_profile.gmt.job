@@ -18,11 +18,11 @@ echo "Syntax:   $0 'prj-name' x, y[km] (add 'i' to plot the whole basin)"
 source $tisc_dir/script/tisc.common.river_basin_chosen.gmt.job
 
 #set lmax = 400 #`sort $tmp.chosen_basin.bas.tmp -n -k 7 | tail -n 1 | awk '{print $7}'`
-#set zmin = -500
-#set zmax = 2000 #`echo $zmax | awk '{print $1*1e3}'`
+set zmin = -300
+set zmax = 300 #`echo $zmax | awk '{print $1*1e3}'`
 echo lmax= $lmax, $zmin, $zmax
 psbasemap -JX$width/6 -R000/$lmax/$zmin/$zmax \
-	-Ba500f100:"distance along river (km)":/a1000f200g10000:"elevation, z (m)":nSeW \
+	-Ba500f100:"distance along river (km)":/a100f20g1000:"elevation, z (m)":nSeW \
 	-Y4 -X3.5 -K -P > $ps
 
 source $tisc_dir/script/tisc.common.river_profile.gmt.job

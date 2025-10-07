@@ -72,9 +72,9 @@ endif
 
 
 #PALETAS DE COLORES:
-psscale -C$tmp.topo_palet.tmp 	-D$xscale/-1./13/.35h -B/:"Elevation (m)": -L -O -K >> $ps
+#psscale -C$tmp.topo_palet.tmp 	-D$xscale/-1./13/.35h -B/:"Elevation (m)": -L -O -K >> $ps
 #psscale -C$tmp.eet_cpt.tmp 	-D$xscale/-3.1/13/.35h -B/:"EET": -O -L -K	>> $ps
-psscale -C$tmp.erosrate_cpt.tmp -D$xscale/-2.1/13/.35h -B/:"Sed./Eros. rate (mm/yr)": -L -O -K >> $ps
+#psscale -C$tmp.erosrate_cpt.tmp -D$xscale/-2.1/13/.35h -B/:"Sed./Eros. rate (mm/yr)": -L -O -K >> $ps
 #psscale -C$tmp.subs_cpt.tmp 	-D$xscale/-6.5/13/.35h -B/:"Subsidence (m)": -L -O -K >> $ps
 
 pstext	-JX -R -O -G0 -K -N -Y-1.2 <<END >> $ps 
