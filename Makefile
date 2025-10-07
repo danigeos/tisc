@@ -48,6 +48,7 @@ vers: 	clean_for_tar
 	echo "UPLOADING to github."
 	touch tisc/bin/touch_something #needed by git add
 	mv tisc tisc_version
+	cd tisc_version
 	make upload
 
 
