@@ -29,7 +29,7 @@ clean_for_tar:
 
 
 vers: 	clean_for_tar
-	rm -R -f tisc tisc_version
+	rm -R -f tisc_copy_for_upload
 	mkdir tisc tisc/bin
 	cp -R -L Makefile config.mk README demo doc include lib script src    tisc 
 	rm -f tisc/doc/.first_compilation.txt
