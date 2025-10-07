@@ -48,17 +48,13 @@ vers: 	clean_for_tar
 	echo "UPLOADING to github."
 	touch tisc/bin/touch_something #needed by git add
 	mv tisc tisc_version
-	cd tisc_version
 	make upload
-
-
-upload_version_starting_from_scratch:
-	#(cd tisc_version; git init; git remote add tisc https://github.com/danigeos/tisc; git add .; git commit -a -mnewVersion; git push -u -f tisc master)
 
 
 upload:
 	#for initialization:  
 	#git init; git remote add tisc https://github.com/danigeos/tisc; git add Makefile README config.mk bin demo doc include lib script src; git rm --cached doc/.first_compilation.txt
+	cd tisc_version
 	git commit -a 
 	#add --force to pass by the remote version 
 	git config http.postBuffer 524288000
