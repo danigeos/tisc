@@ -2,7 +2,7 @@
 *****                              TISC                                    *****
 ********************************************************************************
 	For compilation and installation check the file tisc/README
-	Main author: Daniel Garcia-Castellanos, danielgc@ictja.csic.es 
+	Main author: Daniel Garcia-Castellanos, d.g.c@csic.es 
 	Copyright details and other information in tisc/doc/ 
 ********************************************************************************
 
@@ -39,7 +39,7 @@ int main(int argc, char **argv)
 
 	fprintf(stdout, "\nT= %.4f My", Time/Matosec);
 
-	if (switch_ps==2) {calculate_topo(topo); Write_Ouput();}
+	if (switch_ps>=2) {calculate_topo(topo); Write_Ouput();}
 	topo_ant = alloc_matrix(Ny, Nx);
 
 
@@ -70,7 +70,7 @@ int main(int argc, char **argv)
 		Time += dt;
 		fprintf(stdout, "\nT= %.4f My", Time/Matosec);
 
-		if (switch_ps==2) Write_Ouput();
+		if (switch_ps>=2) Write_Ouput();
 	} while (Time < Timefinal-dt/10);
 
 	The_End();
@@ -104,7 +104,7 @@ int inputs (int argc, char **argv)
 
 	/*Version of TISC is matched against the parameters file *.PRM*/
 	/*¡¡ UPDATE template.PRM !!*/
-	strcpy(version, "TISC_2023-08-31");
+	strcpy(version, "TISC_2025-11-06");
 
 	/*Default parameter values are read from ./tisc/doc/template.PRM:*/
 	sprintf(projectname, "%s/doc/template", TISCDIR);
@@ -200,7 +200,7 @@ int inputs (int argc, char **argv)
 			read_file_resume(resume_filename);
 			interpr_command_line_opts(argc, argv);
 			if (verbose_level>=1) fprintf(stdout, "\nResuming project '%s'. Timefinal=%.1f My", projectname, Timefinal/Matosec);
-			if (switch_ps==2) n_image--; /*Don't produce 2 jpg's of the same stage of restart*/
+			if (switch_ps>=2) n_image--; /*Don't produce 2 jpg's of the same stage of restart*/
 			return(1);
 		case 10:
 			if (!read_file_parameters(verbose_level>=1, 0)) {
@@ -380,6 +380,11 @@ int interpr_command_line_opts(int argc, char **argv)
 					switch_write_file_Blocks=YES;
 					if (argv[iarg][2] == 'c') {
 						switch_ps=2;
+						strcpy(gif_geom, "");
+						if (strlen(prm2)>0) strcpy(gif_geom, prm2);
+					}
+					if (argv[iarg][2] == 'p') {
+						switch_ps=3;
 						strcpy(gif_geom, "");
 						if (strlen(prm2)>0) strcpy(gif_geom, prm2);
 					}
@@ -1339,7 +1344,7 @@ int The_End()
 	fprintf(stdout, "-  basement\n");
 	fprintf(stdout, "\nFinal total sediment volume: %.2f 1e3 km3\n", total_vol_seds/1e12);
 
-	if (switch_ps!=2) Write_Ouput();
+	if (switch_ps<2) Write_Ouput();
 
 	if (verbose_level>=1) {time_t ltime; time(&ltime); fprintf(stdout, "\nTime end: %s", ctime(&ltime));}
 
@@ -1434,12 +1439,19 @@ int Write_Ouput()
 	/*Make GMT Postscript*/
 	if (switch_ps) {
 		char 	command[300];
-		sprintf(command, "tisc.gmt.job %s", projectname);
-		if (verbose_level>=3) 
-			fprintf(stdout, "\nPostscript file '%s.ps' is going to be produced with command:", projectname) ;
-		if (verbose_level>=3) 
-			fprintf(stdout, "\n%s\n", command) ;
-		system(command);
+		if (switch_ps<=2) {
+			sprintf(command, "tisc.gmt.job %s", projectname);
+			if (verbose_level>=3) 
+				fprintf(stdout, "\nPostscript file '%s.ps' is going to be produced with command:\n%s\n", projectname, command) ;
+			system(command);
+		}
+		else {
+			sprintf(command, "tisc.plot.py %s; mv -f %s.jpg %s%03d.jpg", projectname, projectname, projectname, n_image);
+			if (verbose_level>=3) 
+				fprintf(stdout, "\nPlot files '%s.xvg' and %s%03d.jpg to be produced with command:\n%s\n", projectname, projectname, n_image, command) ;
+			system(command);
+			n_image++;
+		}
 		if (switch_ps==2) {
 			/*crop by default to the border*/
 			if (strlen(gif_geom)<2) sprintf(gif_geom, "-trim -background Khaki -label 'TISC software: %s' -gravity South -append", projectname);

@@ -705,8 +705,9 @@ No. Density Age Volume Surf.  Vel_x Vel_y Shft_x Shft_y erosL
   	isostatic load, by Hanneke Heida. Added input parameters for harmonic 
   	changes in precipitation: rain_amp, rain_per. Repared bug in the screen 
   	output on lake properties. 
-  TISC_2025-0
+  TISC_2025-11-06
   	Precipitation proportional to insolation file in *.INS.
+  	Python graphic output available through script/tisc.plot.py 
 
 
 11.- MODEL LIMITATIONS
@@ -841,7 +842,7 @@ No. Density Age Volume Surf.  Vel_x Vel_y Shft_x Shft_y erosL
 
 	Garcia-Castellanos, D., Jiménez-Munt, I., 2015. Topographic evolution and  climate aridification during continental collision: insights from computer simulations. PLOS ONE, doi:10.1371/journal.pone.0132252
  
- 	Please, check also the disclaimers section.
+ 	Please, check also the disclaimer section.
 
 
 15.- ACKNOWLEDGEMENTS
