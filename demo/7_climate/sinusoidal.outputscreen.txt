@@ -1,0 +1,1155 @@
+
+* TISC: TECTONICS, ISOSTASY, SURFACE PROCESSES, AND CLIMATE PLANFORM MODELING *
+Version: TISC_2016-08-30
+Parameters at 'climate.PRM'.
+Time start: Tue Aug 30 16:20:50 2016
+
+  topo_ini :  max= 3009.7 m	min= -7.6 m	integr=1.96e+14 m*m2
+T= 0.0000 Myplotting TOPO...
+  topogr.  :  max= 3009.7 m	min= -7.6 m	integr=1.96e+14 m*m2
+  precipit.:  max= 4.6 m/yr	min= 0.1 m/yr	integr=5.68e+10 m/yr*m2
+  evaporat.:  max= 1.0 m/yr	min= 0.0 m/yr	integr=4.57e+10 m/yr*m2
+  rain_now : +1.77e+03 m3/s  evap_wat: +7.40e+02 m3/s outp_water: +1.03e+03 m3/s
+  lake   2/8 : 3.75e+03 km3 9.25e+03 km2  989 m  150,-50   0 out Endorh 135,-100 151.4 m3/s
+  river_max:   337.30 m3/s    11.85 kg/s @ -200.0,-185.0 km, 991.1 m
+  topo_diff_eros_max=    -0.80 mm/yr    sedim_max:     1.70 mm/yr
+  eros_nosd: +3.82e+16 N     sedim_inc: +3.04e+16 N   outp_seds:   +5.93e+15 N  
+  eros-sed.:  max= 1.17 mm/yr	min= -1.70 mm/yr	difference=3.17e+06 m3/yr
+  sediment_vol: 1.69e+03 km3
+
+T= 0.1000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 6.6 m	integr=1.97e+14 m*m2
+  precipit.:  max= 4.3 m/yr	min= 0.1 m/yr	integr=5.48e+10 m/yr*m2
+  evaporat.:  max= 1.0 m/yr	min= 0.0 m/yr	integr=4.53e+10 m/yr*m2
+  rain_now : +1.71e+03 m3/s  evap_wat: +7.31e+02 m3/s outp_water: +9.76e+02 m3/s
+  lake   2/9 : 3.58e+03 km3 8.50e+03 km2  988 m -150,50    1 out @      -100,100 155.9 m3/s
+  river_max:   360.38 m3/s    15.56 kg/s @   20.0,-200.0 km, 992.1 m
+  topo_diff_eros_max=    -0.74 mm/yr    sedim_max:     2.33 mm/yr
+  eros_nosd: +3.66e+16 N     sedim_inc: +3.01e+16 N   outp_seds:   +4.68e+15 N  
+  eros-sed.:  max= 1.08 mm/yr	min= -2.33 mm/yr	difference=2.51e+06 m3/yr
+  sediment_vol: 3.36e+03 km3
+
+T= 0.2000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 14.9 m	integr=1.97e+14 m*m2
+  precipit.:  max= 4.4 m/yr	min= 0.1 m/yr	integr=5.40e+10 m/yr*m2
+  evaporat.:  max= 1.0 m/yr	min= 0.0 m/yr	integr=4.56e+10 m/yr*m2
+  rain_now : +1.68e+03 m3/s  evap_wat: +7.09e+02 m3/s outp_water: +9.73e+02 m3/s
+  lake   2/8 : 3.41e+03 km3 8.87e+03 km2  994 m   50,50    0 out Endorh 100,90  144.7 m3/s
+  river_max:   377.60 m3/s    18.19 kg/s @   20.0,-200.0 km, 992.3 m
+  topo_diff_eros_max=    -0.71 mm/yr    sedim_max:     2.50 mm/yr
+  eros_nosd: +3.55e+16 N     sedim_inc: +2.89e+16 N   outp_seds:   +4.93e+15 N  
+  eros-sed.:  max= 1.04 mm/yr	min= -2.50 mm/yr	difference=2.64e+06 m3/yr
+  sediment_vol: 4.95e+03 km3
+
+T= 0.3000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 26.5 m	integr=1.97e+14 m*m2
+  precipit.:  max= 4.4 m/yr	min= 0.1 m/yr	integr=5.29e+10 m/yr*m2
+  evaporat.:  max= 1.0 m/yr	min= 0.0 m/yr	integr=4.59e+10 m/yr*m2
+  rain_now : +1.65e+03 m3/s  evap_wat: +6.89e+02 m3/s outp_water: +9.61e+02 m3/s
+  lake   4/8 : 3.22e+03 km3 8.58e+03 km2  986 m -150,50    1 out @      -105,95  143.5 m3/s
+  river_max:   443.41 m3/s    21.22 kg/s @   20.0,-200.0 km, 992.4 m
+  topo_diff_eros_max=    -0.72 mm/yr    sedim_max:     3.01 mm/yr
+  eros_nosd: +3.47e+16 N     sedim_inc: +2.84e+16 N   outp_seds:   +4.86e+15 N  
+  eros-sed.:  max= 1.05 mm/yr	min= -3.01 mm/yr	difference=2.61e+06 m3/yr
+  sediment_vol: 6.51e+03 km3
+
+T= 0.4000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 36.4 m	integr=1.98e+14 m*m2
+  precipit.:  max= 4.6 m/yr	min= 0.1 m/yr	integr=5.19e+10 m/yr*m2
+  evaporat.:  max= 1.0 m/yr	min= 0.0 m/yr	integr=4.62e+10 m/yr*m2
+  rain_now : +1.62e+03 m3/s  evap_wat: +6.61e+02 m3/s outp_water: +9.58e+02 m3/s
+  lake   4/8 : 3.07e+03 km3 7.73e+03 km2  988 m -150,50    1 out @      -105,95  139.3 m3/s
+  river_max:   438.26 m3/s    56.10 kg/s @   20.0,-200.0 km, 992.4 m
+  topo_diff_eros_max=    -0.75 mm/yr    sedim_max:     3.09 mm/yr
+  eros_nosd: +3.40e+16 N     sedim_inc: +2.73e+16 N   outp_seds:   +5.55e+15 N  
+  eros-sed.:  max= 1.09 mm/yr	min= -3.09 mm/yr	difference=2.96e+06 m3/yr
+  sediment_vol: 7.99e+03 km3
+
+T= 0.5000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 44.9 m	integr=1.98e+14 m*m2
+  precipit.:  max= 4.6 m/yr	min= 0.1 m/yr	integr=5.12e+10 m/yr*m2
+  evaporat.:  max= 1.0 m/yr	min= 0.0 m/yr	integr=4.67e+10 m/yr*m2
+  rain_now : +1.61e+03 m3/s  evap_wat: +6.57e+02 m3/s outp_water: +9.56e+02 m3/s
+  lake   3/8 : 2.90e+03 km3 6.78e+03 km2  983 m -150,50    1 out @      -110,90  127.3 m3/s
+  river_max:   422.48 m3/s    56.08 kg/s @   20.0,-200.0 km, 992.5 m
+  topo_diff_eros_max=    -0.75 mm/yr    sedim_max:     2.60 mm/yr
+  eros_nosd: +3.34e+16 N     sedim_inc: +2.66e+16 N   outp_seds:   +5.93e+15 N  
+  eros-sed.:  max= 1.11 mm/yr	min= -2.60 mm/yr	difference=3.15e+06 m3/yr
+  sediment_vol: 9.43e+03 km3
+
+T= 0.6000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 53.4 m	integr=1.98e+14 m*m2
+  precipit.:  max= 4.4 m/yr	min= 0.1 m/yr	integr=5.04e+10 m/yr*m2
+  evaporat.:  max= 1.0 m/yr	min= 0.0 m/yr	integr=4.70e+10 m/yr*m2
+  rain_now : +1.55e+03 m3/s  evap_wat: +5.93e+02 m3/s outp_water: +9.62e+02 m3/s
+  lake   1/8 : 2.84e+03 km3 6.10e+03 km2  989 m  150,-50   1 out @      200,-75 118.9 m3/s
+  river_max:   428.97 m3/s    60.24 kg/s @   20.0,-200.0 km, 992.5 m
+  topo_diff_eros_max=    -0.72 mm/yr    sedim_max:     2.97 mm/yr
+  eros_nosd: +3.27e+16 N     sedim_inc: +2.56e+16 N   outp_seds:   +6.25e+15 N  
+  eros-sed.:  max= 1.05 mm/yr	min= -2.97 mm/yr	difference=3.32e+06 m3/yr
+  sediment_vol: 1.08e+04 km3
+
+T= 0.7000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 61.7 m	integr=1.98e+14 m*m2
+  precipit.:  max= 4.5 m/yr	min= 0.1 m/yr	integr=4.98e+10 m/yr*m2
+  evaporat.:  max= 1.0 m/yr	min= 0.0 m/yr	integr=4.70e+10 m/yr*m2
+  rain_now : +1.56e+03 m3/s  evap_wat: +6.35e+02 m3/s outp_water: +9.29e+02 m3/s
+  lake   7/9 : 1.46e+03 km3 6.53e+03 km2  869 m  -50,150   0 out Endorh -20,125 132.9 m3/s
+  river_max:   423.10 m3/s    61.31 kg/s @   20.0,-200.0 km, 992.5 m
+  topo_diff_eros_max=    -0.69 mm/yr    sedim_max:     2.64 mm/yr
+  eros_nosd: +3.19e+16 N     sedim_inc: +2.49e+16 N   outp_seds:   +6.26e+15 N  
+  eros-sed.:  max= 1.00 mm/yr	min= -2.64 mm/yr	difference=3.33e+06 m3/yr
+  sediment_vol: 1.22e+04 km3
+
+T= 0.8000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 70.3 m	integr=1.99e+14 m*m2
+  precipit.:  max= 4.6 m/yr	min= 0.1 m/yr	integr=4.91e+10 m/yr*m2
+  evaporat.:  max= 1.0 m/yr	min= 0.0 m/yr	integr=4.66e+10 m/yr*m2
+  rain_now : +1.53e+03 m3/s  evap_wat: +6.24e+02 m3/s outp_water: +9.11e+02 m3/s
+  lake   8/8 : 1.81e+03 km3 9.13e+03 km2  932 m  -50,150   0 out Endorh -95,110 148.0 m3/s
+  river_max:   407.65 m3/s    61.89 kg/s @   20.0,-200.0 km, 992.5 m
+  topo_diff_eros_max=    -0.66 mm/yr    sedim_max:     3.82 mm/yr
+  eros_nosd: +3.14e+16 N     sedim_inc: +2.44e+16 N   outp_seds:   +6.26e+15 N  
+  eros-sed.:  max= 0.96 mm/yr	min= -3.82 mm/yr	difference=3.31e+06 m3/yr
+  sediment_vol: 1.35e+04 km3
+
+T= 0.9000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 79.6 m	integr=1.99e+14 m*m2
+  precipit.:  max= 4.7 m/yr	min= 0.1 m/yr	integr=4.83e+10 m/yr*m2
+  evaporat.:  max= 1.0 m/yr	min= 0.0 m/yr	integr=4.71e+10 m/yr*m2
+  rain_now : +1.53e+03 m3/s  evap_wat: +6.19e+02 m3/s outp_water: +9.14e+02 m3/s
+  lake   6/8 : 2.00e+03 km3 8.60e+03 km2  970 m  -50,150   1 out @      -35,200 153.9 m3/s
+  river_max:   403.24 m3/s    61.74 kg/s @   20.0,-200.0 km, 992.5 m
+  topo_diff_eros_max=    -0.73 mm/yr    sedim_max:     3.56 mm/yr
+  eros_nosd: +3.06e+16 N     sedim_inc: +2.37e+16 N   outp_seds:   +6.27e+15 N  
+  eros-sed.:  max= 1.07 mm/yr	min= -3.56 mm/yr	difference=3.31e+06 m3/yr
+  sediment_vol: 1.47e+04 km3
+
+T= 1.0000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 89.5 m	integr=1.99e+14 m*m2
+  precipit.:  max= 4.8 m/yr	min= 0.1 m/yr	integr=4.77e+10 m/yr*m2
+  evaporat.:  max= 1.0 m/yr	min= 0.0 m/yr	integr=4.75e+10 m/yr*m2
+  rain_now : +1.51e+03 m3/s  evap_wat: +5.84e+02 m3/s outp_water: +9.27e+02 m3/s
+  lake   6/8 : 1.85e+03 km3 6.82e+03 km2  970 m  -50,150   1 out @      -35,200 156.7 m3/s
+  river_max:   397.64 m3/s    64.65 kg/s @   20.0,-200.0 km, 992.5 m
+  topo_diff_eros_max=    -0.71 mm/yr    sedim_max:     2.78 mm/yr
+  eros_nosd: +3.00e+16 N     sedim_inc: +2.30e+16 N   outp_seds:   +6.51e+15 N  
+  eros-sed.:  max= 1.04 mm/yr	min= -2.78 mm/yr	difference=3.42e+06 m3/yr
+  sediment_vol: 1.60e+04 km3
+
+T= 1.1000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 98.8 m	integr=1.99e+14 m*m2
+  precipit.:  max= 4.9 m/yr	min= 0.1 m/yr	integr=4.71e+10 m/yr*m2
+  evaporat.:  max= 1.0 m/yr	min= 0.0 m/yr	integr=4.79e+10 m/yr*m2
+  rain_now : +1.49e+03 m3/s  evap_wat: +5.55e+02 m3/s outp_water: +9.35e+02 m3/s
+  lake   6/8 : 1.72e+03 km3 5.55e+03 km2  970 m  -50,150   1 out @      -35,200 158.5 m3/s
+  river_max:   394.87 m3/s    63.43 kg/s @   20.0,-200.0 km, 992.5 m
+  topo_diff_eros_max=    -0.76 mm/yr    sedim_max:     2.95 mm/yr
+  eros_nosd: +2.95e+16 N     sedim_inc: +2.30e+16 N   outp_seds:   +6.21e+15 N  
+  eros-sed.:  max= 1.12 mm/yr	min= -2.95 mm/yr	difference=3.27e+06 m3/yr
+  sediment_vol: 1.72e+04 km3
+
+T= 1.2000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 109.6 m	integr=1.99e+14 m*m2
+  precipit.:  max= 5.1 m/yr	min= 0.1 m/yr	integr=4.64e+10 m/yr*m2
+  evaporat.:  max= 1.0 m/yr	min= 0.0 m/yr	integr=4.81e+10 m/yr*m2
+  rain_now : +1.47e+03 m3/s  evap_wat: +5.23e+02 m3/s outp_water: +9.44e+02 m3/s
+  lake   6/8 : 1.60e+03 km3 4.58e+03 km2  970 m  -50,150   1 out @      -35,200 177.0 m3/s
+  river_max:   389.38 m3/s    66.53 kg/s @   20.0,-200.0 km, 992.5 m
+  topo_diff_eros_max=    -0.75 mm/yr    sedim_max:     3.50 mm/yr
+  eros_nosd: +2.89e+16 N     sedim_inc: +2.25e+16 N   outp_seds:   +6.17e+15 N  
+  eros-sed.:  max= 1.10 mm/yr	min= -3.50 mm/yr	difference=3.24e+06 m3/yr
+  sediment_vol: 1.84e+04 km3
+
+T= 1.3000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 121.6 m	integr=1.99e+14 m*m2
+  precipit.:  max= 5.3 m/yr	min= 0.1 m/yr	integr=4.58e+10 m/yr*m2
+  evaporat.:  max= 1.0 m/yr	min= 0.0 m/yr	integr=4.83e+10 m/yr*m2
+  rain_now : +1.45e+03 m3/s  evap_wat: +5.03e+02 m3/s outp_water: +9.46e+02 m3/s
+  lake   1/10 : 1.95e+03 km3 4.25e+03 km2  990 m  150,-50   1 out @      200,-55 126.1 m3/s
+  river_max:   388.43 m3/s    35.38 kg/s @   40.0,-200.0 km, 993.5 m
+  topo_diff_eros_max=    -0.82 mm/yr    sedim_max:     3.71 mm/yr
+  eros_nosd: +2.83e+16 N     sedim_inc: +2.25e+16 N   outp_seds:   +5.53e+15 N  
+  eros-sed.:  max= 1.20 mm/yr	min= -3.71 mm/yr	difference=2.91e+06 m3/yr
+  sediment_vol: 1.96e+04 km3
+
+T= 1.4000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 134.4 m	integr=2.00e+14 m*m2
+  precipit.:  max= 5.6 m/yr	min= 0.1 m/yr	integr=4.52e+10 m/yr*m2
+  evaporat.:  max= 1.0 m/yr	min= 0.0 m/yr	integr=4.85e+10 m/yr*m2
+  rain_now : +1.43e+03 m3/s  evap_wat: +4.79e+02 m3/s outp_water: +9.48e+02 m3/s
+  lake   8/8 : 5.91e+02 km3 4.22e+03 km2  825 m  155,155   0 out Endorh 125,180  82.6 m3/s
+  river_max:   379.78 m3/s    35.90 kg/s @   40.0,-200.0 km, 993.5 m
+  topo_diff_eros_max=    -0.88 mm/yr    sedim_max:     3.57 mm/yr
+  eros_nosd: +2.79e+16 N     sedim_inc: +2.26e+16 N   outp_seds:   +5.09e+15 N  
+  eros-sed.:  max= 1.28 mm/yr	min= -3.57 mm/yr	difference=2.68e+06 m3/yr
+  sediment_vol: 2.08e+04 km3
+
+T= 1.5000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 147.1 m	integr=2.00e+14 m*m2
+  precipit.:  max= 5.6 m/yr	min= 0.1 m/yr	integr=4.46e+10 m/yr*m2
+  evaporat.:  max= 1.0 m/yr	min= 0.0 m/yr	integr=4.87e+10 m/yr*m2
+  rain_now : +1.41e+03 m3/s  evap_wat: +4.61e+02 m3/s outp_water: +9.46e+02 m3/s
+  lake   7/8 : 5.99e+02 km3 4.53e+03 km2  843 m  155,155   0 out Endorh 140,160  87.6 m3/s
+  river_max:   377.05 m3/s    41.20 kg/s @   40.0,-200.0 km, 993.5 m
+  topo_diff_eros_max=    -0.92 mm/yr    sedim_max:     3.41 mm/yr
+  eros_nosd: +2.74e+16 N     sedim_inc: +2.19e+16 N   outp_seds:   +5.26e+15 N  
+  eros-sed.:  max= 1.35 mm/yr	min= -3.41 mm/yr	difference=2.76e+06 m3/yr
+  sediment_vol: 2.19e+04 km3
+
+T= 1.6000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 159.6 m	integr=2.00e+14 m*m2
+  precipit.:  max= 5.8 m/yr	min= 0.1 m/yr	integr=4.36e+10 m/yr*m2
+  evaporat.:  max= 1.0 m/yr	min= 0.0 m/yr	integr=4.90e+10 m/yr*m2
+  rain_now : +1.37e+03 m3/s  evap_wat: +4.36e+02 m3/s outp_water: +9.38e+02 m3/s
+  lake   8/9 : 6.14e+02 km3 5.07e+03 km2  862 m  155,155   0 out Endorh 115,185  94.8 m3/s
+  river_max:   374.22 m3/s    41.34 kg/s @   40.0,-200.0 km, 993.8 m
+  topo_diff_eros_max=    -0.86 mm/yr    sedim_max:     3.72 mm/yr
+  eros_nosd: +2.67e+16 N     sedim_inc: +2.11e+16 N   outp_seds:   +5.48e+15 N  
+  eros-sed.:  max= 1.26 mm/yr	min= -3.72 mm/yr	difference=2.88e+06 m3/yr
+  sediment_vol: 2.30e+04 km3
+
+T= 1.7000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 173.3 m	integr=2.00e+14 m*m2
+  precipit.:  max= 5.9 m/yr	min= 0.1 m/yr	integr=4.30e+10 m/yr*m2
+  evaporat.:  max= 1.0 m/yr	min= 0.0 m/yr	integr=4.90e+10 m/yr*m2
+  rain_now : +1.36e+03 m3/s  evap_wat: +4.18e+02 m3/s outp_water: +9.38e+02 m3/s
+  lake   8/8 : 6.32e+02 km3 5.07e+03 km2  881 m  155,155   0 out Endorh 125,170  94.9 m3/s
+  river_max:   367.95 m3/s    74.23 kg/s @   40.0,-200.0 km, 993.8 m
+  topo_diff_eros_max=    -0.97 mm/yr    sedim_max:     4.37 mm/yr
+  eros_nosd: +2.61e+16 N     sedim_inc: +2.01e+16 N   outp_seds:   +5.84e+15 N  
+  eros-sed.:  max= 1.43 mm/yr	min= -4.37 mm/yr	difference=3.07e+06 m3/yr
+  sediment_vol: 2.41e+04 km3
+
+T= 1.8000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 188.2 m	integr=2.00e+14 m*m2
+  precipit.:  max= 5.9 m/yr	min= 0.1 m/yr	integr=4.25e+10 m/yr*m2
+  evaporat.:  max= 1.0 m/yr	min= 0.0 m/yr	integr=4.89e+10 m/yr*m2
+  rain_now : +1.34e+03 m3/s  evap_wat: +4.05e+02 m3/s outp_water: +9.33e+02 m3/s
+  lake   8/8 : 6.41e+02 km3 5.47e+03 km2  897 m  155,155   0 out Endorh 125,160 100.8 m3/s
+  river_max:   364.23 m3/s    79.43 kg/s @   40.0,-200.0 km, 993.8 m
+  topo_diff_eros_max=    -0.89 mm/yr    sedim_max:     4.05 mm/yr
+  eros_nosd: +2.55e+16 N     sedim_inc: +1.92e+16 N   outp_seds:   +6.20e+15 N  
+  eros-sed.:  max= 1.31 mm/yr	min= -4.05 mm/yr	difference=3.25e+06 m3/yr
+  sediment_vol: 2.51e+04 km3
+
+T= 1.9000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 203.4 m	integr=2.00e+14 m*m2
+  precipit.:  max= 6.3 m/yr	min= 0.1 m/yr	integr=4.18e+10 m/yr*m2
+  evaporat.:  max= 1.0 m/yr	min= 0.0 m/yr	integr=4.92e+10 m/yr*m2
+  rain_now : +1.31e+03 m3/s  evap_wat: +3.80e+02 m3/s outp_water: +9.34e+02 m3/s
+  lake   6/8 : 6.49e+02 km3 5.65e+03 km2  913 m  160,155   0 out Endorh 125,155 103.9 m3/s
+  river_max:   365.30 m3/s   105.05 kg/s @   40.0,-200.0 km, 993.8 m
+  topo_diff_eros_max=    -0.88 mm/yr    sedim_max:     4.65 mm/yr
+  eros_nosd: +2.47e+16 N     sedim_inc: +1.81e+16 N   outp_seds:   +6.49e+15 N  
+  eros-sed.:  max= 1.29 mm/yr	min= -4.65 mm/yr	difference=3.41e+06 m3/yr
+  sediment_vol: 2.61e+04 km3
+
+T= 2.0000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 220.1 m	integr=2.00e+14 m*m2
+  precipit.:  max= 6.5 m/yr	min= 0.1 m/yr	integr=4.11e+10 m/yr*m2
+  evaporat.:  max= 1.0 m/yr	min= 0.0 m/yr	integr=4.93e+10 m/yr*m2
+  rain_now : +1.29e+03 m3/s  evap_wat: +3.62e+02 m3/s outp_water: +9.30e+02 m3/s
+  lake   6/8 : 6.49e+02 km3 5.82e+03 km2  927 m  160,155   0 out Endorh 170,110 107.0 m3/s
+  river_max:   360.88 m3/s   105.93 kg/s @   40.0,-200.0 km, 993.8 m
+  topo_diff_eros_max=    -0.98 mm/yr    sedim_max:     4.70 mm/yr
+  eros_nosd: +2.40e+16 N     sedim_inc: +1.70e+16 N   outp_seds:   +6.92e+15 N  
+  eros-sed.:  max= 1.44 mm/yr	min= -4.70 mm/yr	difference=3.63e+06 m3/yr
+  sediment_vol: 2.70e+04 km3
+
+T= 2.1000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 236.1 m	integr=2.00e+14 m*m2
+  precipit.:  max= 6.0 m/yr	min= 0.1 m/yr	integr=4.04e+10 m/yr*m2
+  evaporat.:  max= 1.0 m/yr	min= 0.0 m/yr	integr=4.92e+10 m/yr*m2
+  rain_now : +1.27e+03 m3/s  evap_wat: +3.44e+02 m3/s outp_water: +9.26e+02 m3/s
+  lake   7/8 : 6.19e+02 km3 5.90e+03 km2  937 m  160,155   0 out Endorh 125,125 108.0 m3/s
+  river_max:   357.28 m3/s   137.23 kg/s @   40.0,-200.0 km, 995.1 m
+  topo_diff_eros_max=    -1.00 mm/yr    sedim_max:     3.97 mm/yr
+  eros_nosd: +2.34e+16 N     sedim_inc: +1.56e+16 N   outp_seds:   +7.63e+15 N  
+  eros-sed.:  max= 1.47 mm/yr	min= -3.97 mm/yr	difference=4.01e+06 m3/yr
+  sediment_vol: 2.78e+04 km3
+
+T= 2.2000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 252.7 m	integr=2.00e+14 m*m2
+  precipit.:  max= 6.0 m/yr	min= 0.1 m/yr	integr=3.97e+10 m/yr*m2
+  evaporat.:  max= 1.0 m/yr	min= 0.0 m/yr	integr=4.96e+10 m/yr*m2
+  rain_now : +1.26e+03 m3/s  evap_wat: +3.09e+02 m3/s outp_water: +9.54e+02 m3/s
+  lake   6/7 : 5.65e+02 km3 4.18e+03 km2  941 m  160,155   1 out @      145,200 109.0 m3/s
+  river_max:   357.10 m3/s   134.04 kg/s @   40.0,-200.0 km, 995.8 m
+  topo_diff_eros_max=    -1.05 mm/yr    sedim_max:     3.29 mm/yr
+  eros_nosd: +2.27e+16 N     sedim_inc: +1.47e+16 N   outp_seds:   +7.96e+15 N  
+  eros-sed.:  max= 1.54 mm/yr	min= -3.29 mm/yr	difference=4.18e+06 m3/yr
+  sediment_vol: 2.86e+04 km3
+
+T= 2.3000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 272.5 m	integr=2.00e+14 m*m2
+  precipit.:  max= 6.3 m/yr	min= 0.1 m/yr	integr=3.89e+10 m/yr*m2
+  evaporat.:  max= 1.0 m/yr	min= 0.0 m/yr	integr=4.98e+10 m/yr*m2
+  rain_now : +1.24e+03 m3/s  evap_wat: +2.66e+02 m3/s outp_water: +9.69e+02 m3/s
+  lake   6/7 : 4.95e+02 km3 3.45e+03 km2  941 m  160,155   1 out @      145,200 108.3 m3/s
+  river_max:   358.79 m3/s   139.39 kg/s @   40.0,-200.0 km, 996.4 m
+  topo_diff_eros_max=    -1.04 mm/yr    sedim_max:     3.14 mm/yr
+  eros_nosd: +2.22e+16 N     sedim_inc: +1.39e+16 N   outp_seds:   +8.27e+15 N  
+  eros-sed.:  max= 1.52 mm/yr	min= -3.14 mm/yr	difference=4.34e+06 m3/yr
+  sediment_vol: 2.93e+04 km3
+
+T= 2.4000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 293.4 m	integr=2.00e+14 m*m2
+  precipit.:  max= 6.6 m/yr	min= 0.1 m/yr	integr=3.83e+10 m/yr*m2
+  evaporat.:  max= 1.0 m/yr	min= 0.0 m/yr	integr=4.97e+10 m/yr*m2
+  rain_now : +1.21e+03 m3/s  evap_wat: +2.44e+02 m3/s outp_water: +9.71e+02 m3/s
+  lake   6/8 : 4.22e+02 km3 3.25e+03 km2  941 m  160,155   1 out @      145,200 110.6 m3/s
+  river_max:   354.28 m3/s   137.00 kg/s @   40.0,-200.0 km, 996.7 m
+  topo_diff_eros_max=    -0.98 mm/yr    sedim_max:     4.01 mm/yr
+  eros_nosd: +2.17e+16 N     sedim_inc: +1.32e+16 N   outp_seds:   +8.47e+15 N  
+  eros-sed.:  max= 1.44 mm/yr	min= -4.01 mm/yr	difference=4.44e+06 m3/yr
+  sediment_vol: 3.00e+04 km3
+
+T= 2.5000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 311.5 m	integr=2.00e+14 m*m2
+  precipit.:  max= 6.8 m/yr	min= 0.1 m/yr	integr=3.75e+10 m/yr*m2
+  evaporat.:  max= 1.0 m/yr	min= 0.0 m/yr	integr=4.97e+10 m/yr*m2
+  rain_now : +1.19e+03 m3/s  evap_wat: +2.11e+02 m3/s outp_water: +9.79e+02 m3/s
+  lake   6/7 : 3.48e+02 km3 2.85e+03 km2  941 m  165,150   1 out @      145,200 108.5 m3/s
+  river_max:   343.33 m3/s   136.01 kg/s @   40.0,-200.0 km, 996.8 m
+  topo_diff_eros_max=    -0.99 mm/yr    sedim_max:     3.75 mm/yr
+  eros_nosd: +2.13e+16 N     sedim_inc: +1.19e+16 N   outp_seds:   +9.34e+15 N  
+  eros-sed.:  max= 1.45 mm/yr	min= -3.75 mm/yr	difference=4.90e+06 m3/yr
+  sediment_vol: 3.06e+04 km3
+
+T= 2.6000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 332.1 m	integr=2.00e+14 m*m2
+  precipit.:  max= 7.2 m/yr	min= 0.1 m/yr	integr=3.69e+10 m/yr*m2
+  evaporat.:  max= 1.0 m/yr	min= 0.0 m/yr	integr=4.96e+10 m/yr*m2
+  rain_now : +1.17e+03 m3/s  evap_wat: +1.90e+02 m3/s outp_water: +9.80e+02 m3/s
+  lake   5/6 : 2.74e+02 km3 2.70e+03 km2  941 m  165,160   1 out @      145,200 114.6 m3/s
+  river_max:   338.72 m3/s   127.64 kg/s @   40.0,-200.0 km, 997.7 m
+  topo_diff_eros_max=    -1.11 mm/yr    sedim_max:     3.47 mm/yr
+  eros_nosd: +2.09e+16 N     sedim_inc: +1.13e+16 N   outp_seds:   +9.52e+15 N  
+  eros-sed.:  max= 1.63 mm/yr	min= -3.47 mm/yr	difference=4.99e+06 m3/yr
+  sediment_vol: 3.12e+04 km3
+
+T= 2.7000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 355.1 m	integr=2.00e+14 m*m2
+  precipit.:  max= 7.8 m/yr	min= 0.1 m/yr	integr=3.62e+10 m/yr*m2
+  evaporat.:  max= 1.0 m/yr	min= 0.0 m/yr	integr=4.97e+10 m/yr*m2
+  rain_now : +1.15e+03 m3/s  evap_wat: +1.62e+02 m3/s outp_water: +9.86e+02 m3/s
+  lake   5/6 : 2.01e+02 km3 2.48e+03 km2  941 m  170,155   1 out @      145,200 116.5 m3/s
+  river_max:   335.13 m3/s   134.54 kg/s @   40.0,-200.0 km, 998.1 m
+  topo_diff_eros_max=    -0.98 mm/yr    sedim_max:     4.02 mm/yr
+  eros_nosd: +2.04e+16 N     sedim_inc: +1.08e+16 N   outp_seds:   +9.59e+15 N  
+  eros-sed.:  max= 1.44 mm/yr	min= -4.02 mm/yr	difference=5.03e+06 m3/yr
+  sediment_vol: 3.18e+04 km3
+
+T= 2.8000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 380.2 m	integr=2.00e+14 m*m2
+  precipit.:  max= 8.4 m/yr	min= 0.1 m/yr	integr=3.56e+10 m/yr*m2
+  evaporat.:  max= 1.0 m/yr	min= 0.0 m/yr	integr=4.98e+10 m/yr*m2
+  rain_now : +1.13e+03 m3/s  evap_wat: +1.30e+02 m3/s outp_water: +9.99e+02 m3/s
+  lake   4/7 : 1.33e+02 km3 2.25e+03 km2  941 m  170,150   1 out @      145,200 114.1 m3/s
+  river_max:   326.71 m3/s   126.05 kg/s @   40.0,-200.0 km, 999.3 m
+  topo_diff_eros_max=    -0.96 mm/yr    sedim_max:     3.50 mm/yr
+  eros_nosd: +1.98e+16 N     sedim_inc: +1.00e+16 N   outp_seds:   +9.75e+15 N  
+  eros-sed.:  max= 1.41 mm/yr	min= -3.50 mm/yr	difference=5.11e+06 m3/yr
+  sediment_vol: 3.23e+04 km3
+
+T= 2.9000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 411.7 m	integr=2.00e+14 m*m2
+  precipit.:  max= 9.1 m/yr	min= 0.1 m/yr	integr=3.50e+10 m/yr*m2
+  evaporat.:  max= 1.0 m/yr	min= 0.0 m/yr	integr=5.00e+10 m/yr*m2
+  rain_now : +1.11e+03 m3/s  evap_wat: +9.72e+01 m3/s outp_water: +1.01e+03 m3/s
+  lake   5/5 : 6.88e+01 km3 1.95e+03 km2  941 m  160,170   1 out @      145,200 115.5 m3/s
+  river_max:   320.58 m3/s   116.91 kg/s @   40.0,-200.0 km, 999.3 m
+  topo_diff_eros_max=    -1.02 mm/yr    sedim_max:     2.60 mm/yr
+  eros_nosd: +1.92e+16 N     sedim_inc: +7.78e+15 N   outp_seds:   +1.14e+16 N  
+  eros-sed.:  max= 1.49 mm/yr	min= -2.60 mm/yr	difference=5.96e+06 m3/yr
+  sediment_vol: 3.27e+04 km3
+
+T= 3.0000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 449.0 m	integr=1.99e+14 m*m2
+  precipit.:  max= 9.8 m/yr	min= 0.1 m/yr	integr=3.45e+10 m/yr*m2
+  evaporat.:  max= 1.0 m/yr	min= 0.0 m/yr	integr=4.98e+10 m/yr*m2
+  rain_now : +1.09e+03 m3/s  evap_wat: +7.72e+01 m3/s outp_water: +1.02e+03 m3/s
+  lake   5/6 : 1.50e+01 km3 1.42e+03 km2  941 m  160,180   1 out @      145,200 114.1 m3/s
+  river_max:   317.61 m3/s   119.98 kg/s @   40.0,-200.0 km, 999.3 m
+  topo_diff_eros_max=    -0.96 mm/yr    sedim_max:     2.51 mm/yr
+  eros_nosd: +1.85e+16 N     sedim_inc: +6.43e+15 N   outp_seds:   +1.21e+16 N  
+  eros-sed.:  max= 1.40 mm/yr	min= -2.51 mm/yr	difference=6.33e+06 m3/yr
+  sediment_vol: 3.31e+04 km3
+
+T= 3.1000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 489.2 m	integr=1.99e+14 m*m2
+  precipit.:  max= 10.5 m/yr	min= 0.1 m/yr	integr=3.40e+10 m/yr*m2
+  evaporat.:  max= 1.0 m/yr	min= 0.0 m/yr	integr=4.97e+10 m/yr*m2
+  rain_now : +1.08e+03 m3/s  evap_wat: +4.37e+01 m3/s outp_water: +1.03e+03 m3/s
+  lake   1/4 : 1.79e+02 km3 7.50e+02 km2  996 m  160,-55   1 out @      185,-55 118.9 m3/s
+  river_max:   313.31 m3/s   120.60 kg/s @   40.0,-200.0 km, 999.3 m
+  topo_diff_eros_max=    -0.96 mm/yr    sedim_max:     2.24 mm/yr
+  eros_nosd: +1.79e+16 N     sedim_inc: +5.20e+15 N   outp_seds:   +1.27e+16 N  
+  eros-sed.:  max= 1.41 mm/yr	min= -2.24 mm/yr	difference=6.68e+06 m3/yr
+  sediment_vol: 3.33e+04 km3
+
+T= 3.2000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 529.7 m	integr=1.99e+14 m*m2
+  precipit.:  max= 11.2 m/yr	min= 0.1 m/yr	integr=3.34e+10 m/yr*m2
+  evaporat.:  max= 1.0 m/yr	min= 0.0 m/yr	integr=4.93e+10 m/yr*m2
+  rain_now : +1.06e+03 m3/s  evap_wat: +3.11e+01 m3/s outp_water: +1.03e+03 m3/s
+  lake   1/4 : 1.15e+02 km3 5.50e+02 km2  996 m  160,-50   1 out @      185,-55  89.7 m3/s
+  river_max:   309.06 m3/s   124.13 kg/s @   40.0,-200.0 km, 999.3 m
+  topo_diff_eros_max=    -1.02 mm/yr    sedim_max:     2.80 mm/yr
+  eros_nosd: +1.76e+16 N     sedim_inc: +4.77e+15 N   outp_seds:   +1.28e+16 N  
+  eros-sed.:  max= 1.50 mm/yr	min= -2.80 mm/yr	difference=6.71e+06 m3/yr
+  sediment_vol: 3.36e+04 km3
+
+T= 3.3000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 584.1 m	integr=1.98e+14 m*m2
+  precipit.:  max= 11.9 m/yr	min= 0.1 m/yr	integr=3.29e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=4.89e+10 m/yr*m2
+  rain_now : +1.04e+03 m3/s  evap_wat: +1.49e+01 m3/s outp_water: +1.03e+03 m3/s
+  lake   1/2 : 6.31e+01 km3 4.50e+02 km2  996 m  165,-55   1 out @      185,-55 102.3 m3/s
+  river_max:   298.60 m3/s   114.89 kg/s @   40.0,-200.0 km, 999.6 m
+  topo_diff_eros_max=    -0.99 mm/yr    sedim_max:     2.79 mm/yr
+  eros_nosd: +1.71e+16 N     sedim_inc: +4.17e+15 N   outp_seds:   +1.29e+16 N  
+  eros-sed.:  max= 1.45 mm/yr	min= -2.79 mm/yr	difference=6.77e+06 m3/yr
+  sediment_vol: 3.38e+04 km3
+
+T= 3.4000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 674.9 m	integr=1.98e+14 m*m2
+  precipit.:  max= 12.5 m/yr	min= 0.1 m/yr	integr=3.24e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=4.86e+10 m/yr*m2
+  rain_now : +1.03e+03 m3/s  evap_wat: +4.58e+00 m3/s outp_water: +1.02e+03 m3/s
+  lake   1/1 : 1.82e+01 km3 2.25e+02 km2  998 m  165,-55   1 out @      175,-55  88.8 m3/s
+  river_max:   290.47 m3/s   112.91 kg/s @   40.0,-200.0 km, 999.6 m
+  topo_diff_eros_max=    -0.96 mm/yr    sedim_max:     3.00 mm/yr
+  eros_nosd: +1.67e+16 N     sedim_inc: +3.43e+15 N   outp_seds:   +1.33e+16 N  
+  eros-sed.:  max= 1.41 mm/yr	min= -3.00 mm/yr	difference=6.98e+06 m3/yr
+  sediment_vol: 3.40e+04 km3
+
+T= 3.5000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 788.4 m	integr=1.97e+14 m*m2
+  precipit.:  max= 13.1 m/yr	min= 0.1 m/yr	integr=3.21e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=4.82e+10 m/yr*m2
+  rain_now : +1.02e+03 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +1.02e+03 m3/s
+  river_max:   282.16 m3/s   103.66 kg/s @   40.0,-200.0 km, 1000.3 m
+  topo_diff_eros_max=    -0.88 mm/yr    sedim_max:     2.16 mm/yr
+  eros_nosd: +1.64e+16 N     sedim_inc: +2.79e+15 N   outp_seds:   +1.37e+16 N  
+  eros-sed.:  max= 1.29 mm/yr	min= -2.16 mm/yr	difference=7.16e+06 m3/yr
+  sediment_vol: 3.41e+04 km3
+
+T= 3.6000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.97e+14 m*m2
+  precipit.:  max= 13.8 m/yr	min= 0.1 m/yr	integr=3.18e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=4.75e+10 m/yr*m2
+  rain_now : +1.01e+03 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +1.01e+03 m3/s
+  river_max:   273.44 m3/s   102.07 kg/s @   40.0,-200.0 km, 1000.3 m
+  topo_diff_eros_max=    -0.90 mm/yr    sedim_max:     0.10 mm/yr
+  eros_nosd: +1.62e+16 N     sedim_inc: +2.29e+15 N   outp_seds:   +1.40e+16 N  
+  eros-sed.:  max= 1.32 mm/yr	min= -0.10 mm/yr	difference=7.32e+06 m3/yr
+  sediment_vol: 3.42e+04 km3
+
+T= 3.7000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.97e+14 m*m2
+  precipit.:  max= 14.7 m/yr	min= 0.1 m/yr	integr=3.14e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=4.69e+10 m/yr*m2
+  rain_now : +9.96e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +9.96e+02 m3/s
+  river_max:   266.33 m3/s    97.71 kg/s @   40.0,-200.0 km, 1000.3 m
+  topo_diff_eros_max=    -0.85 mm/yr    sedim_max:     0.08 mm/yr
+  eros_nosd: +1.60e+16 N     sedim_inc: +1.93e+15 N   outp_seds:   +1.41e+16 N  
+  eros-sed.:  max= 1.24 mm/yr	min= -0.08 mm/yr	difference=7.37e+06 m3/yr
+  sediment_vol: 3.43e+04 km3
+
+T= 3.8000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.96e+14 m*m2
+  precipit.:  max= 15.5 m/yr	min= 0.1 m/yr	integr=3.11e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=4.62e+10 m/yr*m2
+  rain_now : +9.87e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +9.87e+02 m3/s
+  river_max:   257.90 m3/s    89.41 kg/s @   40.0,-200.0 km, 1000.3 m
+  topo_diff_eros_max=    -0.88 mm/yr    sedim_max:     0.06 mm/yr
+  eros_nosd: +1.56e+16 N     sedim_inc: +1.47e+15 N   outp_seds:   +1.41e+16 N  
+  eros-sed.:  max= 1.29 mm/yr	min= -0.06 mm/yr	difference=7.42e+06 m3/yr
+  sediment_vol: 3.44e+04 km3
+
+T= 3.9000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.96e+14 m*m2
+  precipit.:  max= 16.2 m/yr	min= 0.1 m/yr	integr=3.08e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=4.55e+10 m/yr*m2
+  rain_now : +9.77e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +9.77e+02 m3/s
+  river_max:   257.20 m3/s    91.85 kg/s @   40.0,-200.0 km, 1000.3 m
+  topo_diff_eros_max=    -0.97 mm/yr    sedim_max:     0.06 mm/yr
+  eros_nosd: +1.52e+16 N     sedim_inc: +1.19e+15 N   outp_seds:   +1.40e+16 N  
+  eros-sed.:  max= 1.42 mm/yr	min= -0.06 mm/yr	difference=7.37e+06 m3/yr
+  sediment_vol: 3.45e+04 km3
+
+T= 4.0000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.95e+14 m*m2
+  precipit.:  max= 16.8 m/yr	min= 0.1 m/yr	integr=3.05e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=4.48e+10 m/yr*m2
+  rain_now : +9.67e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +9.67e+02 m3/s
+  river_max:   251.09 m3/s    83.15 kg/s @   40.0,-200.0 km, 1001.2 m
+  topo_diff_eros_max=    -0.96 mm/yr    sedim_max:     0.05 mm/yr
+  eros_nosd: +1.49e+16 N     sedim_inc: +9.23e+14 N   outp_seds:   +1.39e+16 N  
+  eros-sed.:  max= 1.41 mm/yr	min= -0.05 mm/yr	difference=7.31e+06 m3/yr
+  sediment_vol: 3.45e+04 km3
+
+T= 4.1000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.95e+14 m*m2
+  precipit.:  max= 17.3 m/yr	min= 0.1 m/yr	integr=3.02e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=4.41e+10 m/yr*m2
+  rain_now : +9.57e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +9.57e+02 m3/s
+  river_max:   279.27 m3/s    94.51 kg/s @   40.0,-200.0 km, 1001.2 m
+  topo_diff_eros_max=    -0.87 mm/yr    sedim_max:     0.05 mm/yr
+  eros_nosd: +1.46e+16 N     sedim_inc: +7.74e+14 N   outp_seds:   +1.38e+16 N  
+  eros-sed.:  max= 1.28 mm/yr	min= -0.05 mm/yr	difference=7.23e+06 m3/yr
+  sediment_vol: 3.46e+04 km3
+
+T= 4.2000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.94e+14 m*m2
+  precipit.:  max= 17.8 m/yr	min= 0.1 m/yr	integr=2.99e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=4.34e+10 m/yr*m2
+  rain_now : +9.48e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +9.48e+02 m3/s
+  river_max:   276.67 m3/s    93.21 kg/s @   40.0,-200.0 km, 1001.2 m
+  topo_diff_eros_max=    -0.81 mm/yr    sedim_max:     0.10 mm/yr
+  eros_nosd: +1.44e+16 N     sedim_inc: +6.31e+14 N   outp_seds:   +1.38e+16 N  
+  eros-sed.:  max= 1.18 mm/yr	min= -0.10 mm/yr	difference=7.21e+06 m3/yr
+  sediment_vol: 3.46e+04 km3
+
+T= 4.3000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.94e+14 m*m2
+  precipit.:  max= 18.3 m/yr	min= 0.1 m/yr	integr=2.97e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=4.27e+10 m/yr*m2
+  rain_now : +9.41e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +9.41e+02 m3/s
+  river_max:   271.64 m3/s    89.70 kg/s @   40.0,-200.0 km, 1001.2 m
+  topo_diff_eros_max=    -0.81 mm/yr    sedim_max:     0.05 mm/yr
+  eros_nosd: +1.42e+16 N     sedim_inc: +4.31e+14 N   outp_seds:   +1.38e+16 N  
+  eros-sed.:  max= 1.19 mm/yr	min= -0.05 mm/yr	difference=7.24e+06 m3/yr
+  sediment_vol: 3.46e+04 km3
+
+T= 4.4000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.93e+14 m*m2
+  precipit.:  max= 18.7 m/yr	min= 0.1 m/yr	integr=2.94e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=4.20e+10 m/yr*m2
+  rain_now : +9.33e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +9.33e+02 m3/s
+  river_max:   263.56 m3/s    86.73 kg/s @   40.0,-200.0 km, 1001.2 m
+  topo_diff_eros_max=    -0.75 mm/yr    sedim_max:     0.06 mm/yr
+  eros_nosd: +1.42e+16 N     sedim_inc: +4.79e+14 N   outp_seds:   +1.37e+16 N  
+  eros-sed.:  max= 1.11 mm/yr	min= -0.06 mm/yr	difference=7.17e+06 m3/yr
+  sediment_vol: 3.47e+04 km3
+
+T= 4.5000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.93e+14 m*m2
+  precipit.:  max= 19.2 m/yr	min= 0.1 m/yr	integr=2.92e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=4.13e+10 m/yr*m2
+  rain_now : +9.26e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +9.26e+02 m3/s
+  river_max:   254.15 m3/s   162.96 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.78 mm/yr    sedim_max:     0.04 mm/yr
+  eros_nosd: +1.40e+16 N     sedim_inc: +3.76e+14 N   outp_seds:   +1.37e+16 N  
+  eros-sed.:  max= 1.15 mm/yr	min= -0.04 mm/yr	difference=7.17e+06 m3/yr
+  sediment_vol: 3.47e+04 km3
+
+T= 4.6000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.92e+14 m*m2
+  precipit.:  max= 19.6 m/yr	min= 0.1 m/yr	integr=2.90e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=4.07e+10 m/yr*m2
+  rain_now : +9.19e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +9.19e+02 m3/s
+  river_max:   248.37 m3/s    80.32 kg/s @   40.0,-200.0 km, 1001.2 m
+  topo_diff_eros_max=    -0.71 mm/yr    sedim_max:     0.04 mm/yr
+  eros_nosd: +1.39e+16 N     sedim_inc: +1.61e+14 N   outp_seds:   +1.38e+16 N  
+  eros-sed.:  max= 1.03 mm/yr	min= -0.04 mm/yr	difference=7.23e+06 m3/yr
+  sediment_vol: 3.47e+04 km3
+
+T= 4.7000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.92e+14 m*m2
+  precipit.:  max= 19.9 m/yr	min= 0.1 m/yr	integr=2.88e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=4.01e+10 m/yr*m2
+  rain_now : +9.12e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +9.12e+02 m3/s
+  river_max:   250.45 m3/s   159.48 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.71 mm/yr    sedim_max:     0.06 mm/yr
+  eros_nosd: +1.38e+16 N     sedim_inc: +2.09e+14 N   outp_seds:   +1.36e+16 N  
+  eros-sed.:  max= 1.04 mm/yr	min= -0.06 mm/yr	difference=7.13e+06 m3/yr
+  sediment_vol: 3.47e+04 km3
+
+T= 4.8000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.91e+14 m*m2
+  precipit.:  max= 20.2 m/yr	min= 0.1 m/yr	integr=2.85e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=3.95e+10 m/yr*m2
+  rain_now : +9.04e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +9.04e+02 m3/s
+  river_max:   252.11 m3/s   160.38 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.72 mm/yr    sedim_max:     0.05 mm/yr
+  eros_nosd: +1.36e+16 N     sedim_inc: +5.88e+13 N   outp_seds:   +1.36e+16 N  
+  eros-sed.:  max= 1.05 mm/yr	min= -0.05 mm/yr	difference=7.11e+06 m3/yr
+  sediment_vol: 3.47e+04 km3
+
+T= 4.9000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.91e+14 m*m2
+  precipit.:  max= 20.4 m/yr	min= 0.1 m/yr	integr=2.83e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=3.90e+10 m/yr*m2
+  rain_now : +8.97e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +8.97e+02 m3/s
+  river_max:   260.28 m3/s   163.48 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.69 mm/yr    sedim_max:     0.03 mm/yr
+  eros_nosd: +1.34e+16 N     sedim_inc: -9.99e+13 N   outp_seds:   +1.35e+16 N  
+  eros-sed.:  max= 1.01 mm/yr	min= -0.03 mm/yr	difference=7.09e+06 m3/yr
+  sediment_vol: 3.47e+04 km3
+
+T= 5.0000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.90e+14 m*m2
+  precipit.:  max= 20.7 m/yr	min= 0.1 m/yr	integr=2.81e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=3.84e+10 m/yr*m2
+  rain_now : +8.90e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +8.90e+02 m3/s
+  river_max:   261.97 m3/s   168.21 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.62 mm/yr    sedim_max:     0.04 mm/yr
+  eros_nosd: +1.32e+16 N     sedim_inc: -2.32e+14 N   outp_seds:   +1.34e+16 N  
+  eros-sed.:  max= 0.90 mm/yr	min= -0.04 mm/yr	difference=7.03e+06 m3/yr
+  sediment_vol: 3.47e+04 km3
+
+T= 5.1000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.90e+14 m*m2
+  precipit.:  max= 20.9 m/yr	min= 0.1 m/yr	integr=2.79e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=3.79e+10 m/yr*m2
+  rain_now : +8.83e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +8.83e+02 m3/s
+  river_max:   248.04 m3/s   155.68 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.66 mm/yr    sedim_max:     0.05 mm/yr
+  eros_nosd: +1.30e+16 N     sedim_inc: -2.22e+14 N   outp_seds:   +1.32e+16 N  
+  eros-sed.:  max= 0.97 mm/yr	min= -0.05 mm/yr	difference=6.92e+06 m3/yr
+  sediment_vol: 3.47e+04 km3
+
+T= 5.2000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.89e+14 m*m2
+  precipit.:  max= 21.1 m/yr	min= 0.1 m/yr	integr=2.76e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=3.73e+10 m/yr*m2
+  rain_now : +8.75e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +8.75e+02 m3/s
+  river_max:   251.03 m3/s   161.41 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.67 mm/yr    sedim_max:     0.04 mm/yr
+  eros_nosd: +1.27e+16 N     sedim_inc: -3.29e+14 N   outp_seds:   +1.30e+16 N  
+  eros-sed.:  max= 0.99 mm/yr	min= -0.04 mm/yr	difference=6.83e+06 m3/yr
+  sediment_vol: 3.46e+04 km3
+
+T= 5.3000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.89e+14 m*m2
+  precipit.:  max= 21.3 m/yr	min= 0.1 m/yr	integr=2.74e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=3.68e+10 m/yr*m2
+  rain_now : +8.67e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +8.67e+02 m3/s
+  river_max:   251.66 m3/s   158.85 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.64 mm/yr    sedim_max:     0.05 mm/yr
+  eros_nosd: +1.25e+16 N     sedim_inc: -3.07e+14 N   outp_seds:   +1.28e+16 N  
+  eros-sed.:  max= 0.94 mm/yr	min= -0.05 mm/yr	difference=6.71e+06 m3/yr
+  sediment_vol: 3.46e+04 km3
+
+T= 5.4000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.88e+14 m*m2
+  precipit.:  max= 21.5 m/yr	min= 0.1 m/yr	integr=2.71e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=3.63e+10 m/yr*m2
+  rain_now : +8.59e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +8.59e+02 m3/s
+  river_max:   249.70 m3/s   155.67 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.55 mm/yr    sedim_max:     0.07 mm/yr
+  eros_nosd: +1.22e+16 N     sedim_inc: -3.51e+14 N   outp_seds:   +1.26e+16 N  
+  eros-sed.:  max= 0.80 mm/yr	min= -0.07 mm/yr	difference=6.60e+06 m3/yr
+  sediment_vol: 3.46e+04 km3
+
+T= 5.5000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.88e+14 m*m2
+  precipit.:  max= 21.6 m/yr	min= 0.1 m/yr	integr=2.69e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=3.57e+10 m/yr*m2
+  rain_now : +8.52e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +8.52e+02 m3/s
+  river_max:   249.23 m3/s   149.78 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.54 mm/yr    sedim_max:     0.06 mm/yr
+  eros_nosd: +1.20e+16 N     sedim_inc: -3.51e+14 N   outp_seds:   +1.23e+16 N  
+  eros-sed.:  max= 0.79 mm/yr	min= -0.06 mm/yr	difference=6.47e+06 m3/yr
+  sediment_vol: 3.46e+04 km3
+
+T= 5.6000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.88e+14 m*m2
+  precipit.:  max= 21.8 m/yr	min= 0.1 m/yr	integr=2.66e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=3.52e+10 m/yr*m2
+  rain_now : +8.44e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +8.44e+02 m3/s
+  river_max:   251.71 m3/s   152.60 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.53 mm/yr    sedim_max:     0.04 mm/yr
+  eros_nosd: +1.18e+16 N     sedim_inc: -4.67e+14 N   outp_seds:   +1.23e+16 N  
+  eros-sed.:  max= 0.77 mm/yr	min= -0.04 mm/yr	difference=6.44e+06 m3/yr
+  sediment_vol: 3.46e+04 km3
+
+T= 5.7000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.87e+14 m*m2
+  precipit.:  max= 22.0 m/yr	min= 0.1 m/yr	integr=2.64e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=3.47e+10 m/yr*m2
+  rain_now : +8.36e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +8.36e+02 m3/s
+  river_max:   252.02 m3/s   153.13 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.50 mm/yr    sedim_max:     0.04 mm/yr
+  eros_nosd: +1.16e+16 N     sedim_inc: -4.50e+14 N   outp_seds:   +1.20e+16 N  
+  eros-sed.:  max= 0.73 mm/yr	min= -0.04 mm/yr	difference=6.32e+06 m3/yr
+  sediment_vol: 3.45e+04 km3
+
+T= 5.8000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.87e+14 m*m2
+  precipit.:  max= 22.1 m/yr	min= 0.1 m/yr	integr=2.61e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=3.41e+10 m/yr*m2
+  rain_now : +8.28e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +8.28e+02 m3/s
+  river_max:   258.82 m3/s   154.60 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.51 mm/yr    sedim_max:     0.04 mm/yr
+  eros_nosd: +1.14e+16 N     sedim_inc: -3.60e+14 N   outp_seds:   +1.17e+16 N  
+  eros-sed.:  max= 0.75 mm/yr	min= -0.04 mm/yr	difference=6.16e+06 m3/yr
+  sediment_vol: 3.45e+04 km3
+
+T= 5.9000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.86e+14 m*m2
+  precipit.:  max= 22.2 m/yr	min= 0.1 m/yr	integr=2.59e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=3.36e+10 m/yr*m2
+  rain_now : +8.20e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +8.20e+02 m3/s
+  river_max:   285.73 m3/s   162.57 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.45 mm/yr    sedim_max:     0.06 mm/yr
+  eros_nosd: +1.11e+16 N     sedim_inc: -3.37e+14 N   outp_seds:   +1.15e+16 N  
+  eros-sed.:  max= 0.67 mm/yr	min= -0.06 mm/yr	difference=6.02e+06 m3/yr
+  sediment_vol: 3.45e+04 km3
+
+T= 6.0000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.86e+14 m*m2
+  precipit.:  max= 22.3 m/yr	min= 0.1 m/yr	integr=2.56e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=3.30e+10 m/yr*m2
+  rain_now : +8.12e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +8.12e+02 m3/s
+  river_max:   288.96 m3/s   165.74 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.45 mm/yr    sedim_max:     0.06 mm/yr
+  eros_nosd: +1.09e+16 N     sedim_inc: -2.35e+14 N   outp_seds:   +1.12e+16 N  
+  eros-sed.:  max= 0.66 mm/yr	min= -0.06 mm/yr	difference=5.85e+06 m3/yr
+  sediment_vol: 3.45e+04 km3
+
+T= 6.1000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.85e+14 m*m2
+  precipit.:  max= 22.5 m/yr	min= 0.1 m/yr	integr=2.53e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=3.25e+10 m/yr*m2
+  rain_now : +8.03e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +8.03e+02 m3/s
+  river_max:   258.71 m3/s   151.55 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.43 mm/yr    sedim_max:     0.04 mm/yr
+  eros_nosd: +1.07e+16 N     sedim_inc: -3.32e+14 N   outp_seds:   +1.10e+16 N  
+  eros-sed.:  max= 0.63 mm/yr	min= -0.04 mm/yr	difference=5.78e+06 m3/yr
+  sediment_vol: 3.45e+04 km3
+
+T= 6.2000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.85e+14 m*m2
+  precipit.:  max= 22.6 m/yr	min= 0.1 m/yr	integr=2.51e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=3.20e+10 m/yr*m2
+  rain_now : +7.95e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +7.95e+02 m3/s
+  river_max:   274.93 m3/s   153.57 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.42 mm/yr    sedim_max:     0.03 mm/yr
+  eros_nosd: +1.04e+16 N     sedim_inc: -3.97e+14 N   outp_seds:   +1.08e+16 N  
+  eros-sed.:  max= 0.61 mm/yr	min= -0.03 mm/yr	difference=5.68e+06 m3/yr
+  sediment_vol: 3.45e+04 km3
+
+T= 6.3000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.85e+14 m*m2
+  precipit.:  max= 22.8 m/yr	min= 0.1 m/yr	integr=2.48e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=3.16e+10 m/yr*m2
+  rain_now : +7.86e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +7.86e+02 m3/s
+  river_max:   268.63 m3/s   154.24 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.44 mm/yr    sedim_max:     0.04 mm/yr
+  eros_nosd: +1.02e+16 N     sedim_inc: -3.75e+14 N   outp_seds:   +1.05e+16 N  
+  eros-sed.:  max= 0.64 mm/yr	min= -0.04 mm/yr	difference=5.52e+06 m3/yr
+  sediment_vol: 3.44e+04 km3
+
+T= 6.4000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.84e+14 m*m2
+  precipit.:  max= 22.9 m/yr	min= 0.1 m/yr	integr=2.45e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=3.11e+10 m/yr*m2
+  rain_now : +7.77e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +7.77e+02 m3/s
+  river_max:   267.56 m3/s   147.77 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.50 mm/yr    sedim_max:     0.04 mm/yr
+  eros_nosd: +9.95e+15 N     sedim_inc: -5.16e+14 N   outp_seds:   +1.05e+16 N  
+  eros-sed.:  max= 0.74 mm/yr	min= -0.04 mm/yr	difference=5.49e+06 m3/yr
+  sediment_vol: 3.44e+04 km3
+
+T= 6.5000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.84e+14 m*m2
+  precipit.:  max= 23.0 m/yr	min= 0.1 m/yr	integr=2.43e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=3.06e+10 m/yr*m2
+  rain_now : +7.69e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +7.69e+02 m3/s
+  river_max:   261.40 m3/s   144.77 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.38 mm/yr    sedim_max:     0.03 mm/yr
+  eros_nosd: +9.69e+15 N     sedim_inc: -5.02e+14 N   outp_seds:   +1.02e+16 N  
+  eros-sed.:  max= 0.56 mm/yr	min= -0.03 mm/yr	difference=5.35e+06 m3/yr
+  sediment_vol: 3.44e+04 km3
+
+T= 6.6000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.83e+14 m*m2
+  precipit.:  max= 23.0 m/yr	min= 0.1 m/yr	integr=2.40e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=3.02e+10 m/yr*m2
+  rain_now : +7.60e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +7.60e+02 m3/s
+  river_max:   290.28 m3/s   152.40 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.37 mm/yr    sedim_max:     0.04 mm/yr
+  eros_nosd: +9.47e+15 N     sedim_inc: -4.75e+14 N   outp_seds:   +9.94e+15 N  
+  eros-sed.:  max= 0.54 mm/yr	min= -0.04 mm/yr	difference=5.21e+06 m3/yr
+  sediment_vol: 3.44e+04 km3
+
+T= 6.7000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.83e+14 m*m2
+  precipit.:  max= 23.1 m/yr	min= 0.1 m/yr	integr=2.37e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=2.98e+10 m/yr*m2
+  rain_now : +7.52e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +7.52e+02 m3/s
+  river_max:   261.34 m3/s   139.52 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.43 mm/yr    sedim_max:     0.05 mm/yr
+  eros_nosd: +9.25e+15 N     sedim_inc: -3.86e+14 N   outp_seds:   +9.64e+15 N  
+  eros-sed.:  max= 0.62 mm/yr	min= -0.05 mm/yr	difference=5.05e+06 m3/yr
+  sediment_vol: 3.43e+04 km3
+
+T= 6.8000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.83e+14 m*m2
+  precipit.:  max= 23.2 m/yr	min= 0.1 m/yr	integr=2.35e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=2.94e+10 m/yr*m2
+  rain_now : +7.43e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +7.43e+02 m3/s
+  river_max:   268.07 m3/s   143.09 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.39 mm/yr    sedim_max:     0.04 mm/yr
+  eros_nosd: +9.01e+15 N     sedim_inc: -4.64e+14 N   outp_seds:   +9.47e+15 N  
+  eros-sed.:  max= 0.57 mm/yr	min= -0.04 mm/yr	difference=4.97e+06 m3/yr
+  sediment_vol: 3.43e+04 km3
+
+T= 6.9000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.82e+14 m*m2
+  precipit.:  max= 23.2 m/yr	min= 0.1 m/yr	integr=2.32e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=2.90e+10 m/yr*m2
+  rain_now : +7.35e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +7.35e+02 m3/s
+  river_max:   267.15 m3/s   142.34 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.36 mm/yr    sedim_max:     0.03 mm/yr
+  eros_nosd: +8.77e+15 N     sedim_inc: -4.87e+14 N   outp_seds:   +9.25e+15 N  
+  eros-sed.:  max= 0.52 mm/yr	min= -0.03 mm/yr	difference=4.85e+06 m3/yr
+  sediment_vol: 3.43e+04 km3
+
+T= 7.0000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.82e+14 m*m2
+  precipit.:  max= 23.3 m/yr	min= 0.1 m/yr	integr=2.29e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=2.86e+10 m/yr*m2
+  rain_now : +7.27e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +7.27e+02 m3/s
+  river_max:   265.83 m3/s   136.38 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.33 mm/yr    sedim_max:     0.06 mm/yr
+  eros_nosd: +8.55e+15 N     sedim_inc: -3.15e+14 N   outp_seds:   +8.87e+15 N  
+  eros-sed.:  max= 0.48 mm/yr	min= -0.06 mm/yr	difference=4.65e+06 m3/yr
+  sediment_vol: 3.43e+04 km3
+
+T= 7.1000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.82e+14 m*m2
+  precipit.:  max= 23.3 m/yr	min= 0.1 m/yr	integr=2.27e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=2.82e+10 m/yr*m2
+  rain_now : +7.19e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +7.19e+02 m3/s
+  river_max:   262.11 m3/s   132.78 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.33 mm/yr    sedim_max:     0.06 mm/yr
+  eros_nosd: +8.35e+15 N     sedim_inc: -4.00e+14 N   outp_seds:   +8.75e+15 N  
+  eros-sed.:  max= 0.48 mm/yr	min= -0.06 mm/yr	difference=4.59e+06 m3/yr
+  sediment_vol: 3.43e+04 km3
+
+T= 7.2000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.81e+14 m*m2
+  precipit.:  max= 23.4 m/yr	min= 0.1 m/yr	integr=2.24e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=2.79e+10 m/yr*m2
+  rain_now : +7.11e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +7.11e+02 m3/s
+  river_max:   258.01 m3/s   124.62 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.35 mm/yr    sedim_max:     0.04 mm/yr
+  eros_nosd: +8.14e+15 N     sedim_inc: -4.56e+14 N   outp_seds:   +8.60e+15 N  
+  eros-sed.:  max= 0.51 mm/yr	min= -0.04 mm/yr	difference=4.51e+06 m3/yr
+  sediment_vol: 3.42e+04 km3
+
+T= 7.3000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.81e+14 m*m2
+  precipit.:  max= 23.4 m/yr	min= 0.1 m/yr	integr=2.22e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=2.75e+10 m/yr*m2
+  rain_now : +7.03e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +7.03e+02 m3/s
+  river_max:   254.32 m3/s   121.93 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.36 mm/yr    sedim_max:     0.04 mm/yr
+  eros_nosd: +7.94e+15 N     sedim_inc: -3.92e+14 N   outp_seds:   +8.33e+15 N  
+  eros-sed.:  max= 0.53 mm/yr	min= -0.04 mm/yr	difference=4.37e+06 m3/yr
+  sediment_vol: 3.42e+04 km3
+
+T= 7.4000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.81e+14 m*m2
+  precipit.:  max= 23.5 m/yr	min= 0.1 m/yr	integr=2.20e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=2.72e+10 m/yr*m2
+  rain_now : +6.96e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +6.96e+02 m3/s
+  river_max:   257.51 m3/s   119.21 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.35 mm/yr    sedim_max:     0.03 mm/yr
+  eros_nosd: +7.75e+15 N     sedim_inc: -3.67e+14 N   outp_seds:   +8.12e+15 N  
+  eros-sed.:  max= 0.52 mm/yr	min= -0.03 mm/yr	difference=4.26e+06 m3/yr
+  sediment_vol: 3.42e+04 km3
+
+T= 7.5000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.80e+14 m*m2
+  precipit.:  max= 23.5 m/yr	min= 0.1 m/yr	integr=2.17e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=2.69e+10 m/yr*m2
+  rain_now : +6.88e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +6.88e+02 m3/s
+  river_max:   255.19 m3/s   116.80 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.34 mm/yr    sedim_max:     0.03 mm/yr
+  eros_nosd: +7.55e+15 N     sedim_inc: -3.90e+14 N   outp_seds:   +7.94e+15 N  
+  eros-sed.:  max= 0.50 mm/yr	min= -0.03 mm/yr	difference=4.16e+06 m3/yr
+  sediment_vol: 3.42e+04 km3
+
+T= 7.6000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.80e+14 m*m2
+  precipit.:  max= 23.6 m/yr	min= 0.1 m/yr	integr=2.15e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=2.65e+10 m/yr*m2
+  rain_now : +6.81e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +6.81e+02 m3/s
+  river_max:   259.83 m3/s   118.36 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.31 mm/yr    sedim_max:     0.03 mm/yr
+  eros_nosd: +7.36e+15 N     sedim_inc: -4.03e+14 N   outp_seds:   +7.77e+15 N  
+  eros-sed.:  max= 0.46 mm/yr	min= -0.03 mm/yr	difference=4.07e+06 m3/yr
+  sediment_vol: 3.41e+04 km3
+
+T= 7.7000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.80e+14 m*m2
+  precipit.:  max= 23.6 m/yr	min= 0.1 m/yr	integr=2.13e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=2.62e+10 m/yr*m2
+  rain_now : +6.74e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +6.74e+02 m3/s
+  river_max:   253.22 m3/s   117.33 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.29 mm/yr    sedim_max:     0.02 mm/yr
+  eros_nosd: +7.18e+15 N     sedim_inc: -4.10e+14 N   outp_seds:   +7.59e+15 N  
+  eros-sed.:  max= 0.43 mm/yr	min= -0.02 mm/yr	difference=3.98e+06 m3/yr
+  sediment_vol: 3.41e+04 km3
+
+T= 7.8000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.80e+14 m*m2
+  precipit.:  max= 23.7 m/yr	min= 0.1 m/yr	integr=2.11e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=2.60e+10 m/yr*m2
+  rain_now : +6.67e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +6.67e+02 m3/s
+  river_max:   253.13 m3/s    92.81 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.28 mm/yr    sedim_max:     0.03 mm/yr
+  eros_nosd: +7.00e+15 N     sedim_inc: -4.70e+14 N   outp_seds:   +7.47e+15 N  
+  eros-sed.:  max= 0.41 mm/yr	min= -0.03 mm/yr	difference=3.91e+06 m3/yr
+  sediment_vol: 3.41e+04 km3
+
+T= 7.9000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.79e+14 m*m2
+  precipit.:  max= 23.7 m/yr	min= 0.1 m/yr	integr=2.08e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=2.57e+10 m/yr*m2
+  rain_now : +6.60e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +6.60e+02 m3/s
+  river_max:   252.61 m3/s   115.10 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.30 mm/yr    sedim_max:     0.04 mm/yr
+  eros_nosd: +6.80e+15 N     sedim_inc: -3.49e+14 N   outp_seds:   +7.15e+15 N  
+  eros-sed.:  max= 0.45 mm/yr	min= -0.04 mm/yr	difference=3.75e+06 m3/yr
+  sediment_vol: 3.41e+04 km3
+
+T= 8.0000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.79e+14 m*m2
+  precipit.:  max= 23.8 m/yr	min= 0.1 m/yr	integr=2.06e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=2.54e+10 m/yr*m2
+  rain_now : +6.54e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +6.54e+02 m3/s
+  river_max:   251.73 m3/s   109.83 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.29 mm/yr    sedim_max:     0.03 mm/yr
+  eros_nosd: +6.62e+15 N     sedim_inc: -4.00e+14 N   outp_seds:   +7.02e+15 N  
+  eros-sed.:  max= 0.42 mm/yr	min= -0.03 mm/yr	difference=3.68e+06 m3/yr
+  sediment_vol: 3.41e+04 km3
+
+T= 8.1000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.79e+14 m*m2
+  precipit.:  max= 23.8 m/yr	min= 0.1 m/yr	integr=2.04e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=2.52e+10 m/yr*m2
+  rain_now : +6.47e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +6.47e+02 m3/s
+  river_max:   249.45 m3/s   109.87 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.29 mm/yr    sedim_max:     0.04 mm/yr
+  eros_nosd: +6.45e+15 N     sedim_inc: -4.22e+14 N   outp_seds:   +6.87e+15 N  
+  eros-sed.:  max= 0.42 mm/yr	min= -0.04 mm/yr	difference=3.60e+06 m3/yr
+  sediment_vol: 3.40e+04 km3
+
+T= 8.2000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.79e+14 m*m2
+  precipit.:  max= 23.8 m/yr	min= 0.1 m/yr	integr=2.02e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=2.50e+10 m/yr*m2
+  rain_now : +6.41e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +6.41e+02 m3/s
+  river_max:   249.54 m3/s   103.84 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.26 mm/yr    sedim_max:     0.03 mm/yr
+  eros_nosd: +6.27e+15 N     sedim_inc: -3.87e+14 N   outp_seds:   +6.66e+15 N  
+  eros-sed.:  max= 0.38 mm/yr	min= -0.03 mm/yr	difference=3.49e+06 m3/yr
+  sediment_vol: 3.40e+04 km3
+
+T= 8.3000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.78e+14 m*m2
+  precipit.:  max= 23.9 m/yr	min= 0.1 m/yr	integr=2.00e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=2.47e+10 m/yr*m2
+  rain_now : +6.35e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +6.35e+02 m3/s
+  river_max:   246.38 m3/s   104.12 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.27 mm/yr    sedim_max:     0.02 mm/yr
+  eros_nosd: +6.10e+15 N     sedim_inc: -4.55e+14 N   outp_seds:   +6.56e+15 N  
+  eros-sed.:  max= 0.39 mm/yr	min= -0.02 mm/yr	difference=3.44e+06 m3/yr
+  sediment_vol: 3.40e+04 km3
+
+T= 8.4000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.78e+14 m*m2
+  precipit.:  max= 23.9 m/yr	min= 0.1 m/yr	integr=1.98e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=2.45e+10 m/yr*m2
+  rain_now : +6.29e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +6.29e+02 m3/s
+  river_max:   248.48 m3/s   105.72 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.25 mm/yr    sedim_max:     0.03 mm/yr
+  eros_nosd: +5.95e+15 N     sedim_inc: -4.56e+14 N   outp_seds:   +6.40e+15 N  
+  eros-sed.:  max= 0.36 mm/yr	min= -0.03 mm/yr	difference=3.36e+06 m3/yr
+  sediment_vol: 3.40e+04 km3
+
+T= 8.5000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.78e+14 m*m2
+  precipit.:  max= 24.0 m/yr	min= 0.1 m/yr	integr=1.97e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=2.43e+10 m/yr*m2
+  rain_now : +6.23e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +6.23e+02 m3/s
+  river_max:   233.63 m3/s    98.24 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.23 mm/yr    sedim_max:     0.02 mm/yr
+  eros_nosd: +5.78e+15 N     sedim_inc: -5.14e+14 N   outp_seds:   +6.30e+15 N  
+  eros-sed.:  max= 0.33 mm/yr	min= -0.02 mm/yr	difference=3.30e+06 m3/yr
+  sediment_vol: 3.39e+04 km3
+
+T= 8.6000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.78e+14 m*m2
+  precipit.:  max= 24.0 m/yr	min= 0.1 m/yr	integr=1.95e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=2.41e+10 m/yr*m2
+  rain_now : +6.18e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +6.18e+02 m3/s
+  river_max:   239.68 m3/s    97.62 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.22 mm/yr    sedim_max:     0.02 mm/yr
+  eros_nosd: +5.63e+15 N     sedim_inc: -4.85e+14 N   outp_seds:   +6.11e+15 N  
+  eros-sed.:  max= 0.32 mm/yr	min= -0.02 mm/yr	difference=3.21e+06 m3/yr
+  sediment_vol: 3.39e+04 km3
+
+T= 8.7000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.77e+14 m*m2
+  precipit.:  max= 24.1 m/yr	min= 0.1 m/yr	integr=1.93e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=2.39e+10 m/yr*m2
+  rain_now : +6.12e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +6.12e+02 m3/s
+  river_max:   233.33 m3/s    91.62 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.21 mm/yr    sedim_max:     0.02 mm/yr
+  eros_nosd: +5.48e+15 N     sedim_inc: -4.64e+14 N   outp_seds:   +5.94e+15 N  
+  eros-sed.:  max= 0.31 mm/yr	min= -0.02 mm/yr	difference=3.11e+06 m3/yr
+  sediment_vol: 3.39e+04 km3
+
+T= 8.8000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.77e+14 m*m2
+  precipit.:  max= 24.1 m/yr	min= 0.1 m/yr	integr=1.92e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=2.37e+10 m/yr*m2
+  rain_now : +6.07e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +6.07e+02 m3/s
+  river_max:   232.21 m3/s    88.92 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.20 mm/yr    sedim_max:     0.02 mm/yr
+  eros_nosd: +5.33e+15 N     sedim_inc: -5.12e+14 N   outp_seds:   +5.84e+15 N  
+  eros-sed.:  max= 0.30 mm/yr	min= -0.02 mm/yr	difference=3.06e+06 m3/yr
+  sediment_vol: 3.39e+04 km3
+
+T= 8.9000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.77e+14 m*m2
+  precipit.:  max= 24.1 m/yr	min= 0.1 m/yr	integr=1.90e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=2.36e+10 m/yr*m2
+  rain_now : +6.02e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +6.02e+02 m3/s
+  river_max:   229.42 m3/s    90.10 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.20 mm/yr    sedim_max:     0.03 mm/yr
+  eros_nosd: +5.19e+15 N     sedim_inc: -4.78e+14 N   outp_seds:   +5.67e+15 N  
+  eros-sed.:  max= 0.29 mm/yr	min= -0.03 mm/yr	difference=2.97e+06 m3/yr
+  sediment_vol: 3.38e+04 km3
+
+T= 9.0000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.77e+14 m*m2
+  precipit.:  max= 24.2 m/yr	min= 0.1 m/yr	integr=1.88e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=2.34e+10 m/yr*m2
+  rain_now : +5.97e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +5.97e+02 m3/s
+  river_max:   226.84 m3/s    86.24 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.19 mm/yr    sedim_max:     0.03 mm/yr
+  eros_nosd: +5.05e+15 N     sedim_inc: -5.06e+14 N   outp_seds:   +5.55e+15 N  
+  eros-sed.:  max= 0.29 mm/yr	min= -0.03 mm/yr	difference=2.91e+06 m3/yr
+  sediment_vol: 3.38e+04 km3
+
+T= 9.1000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.77e+14 m*m2
+  precipit.:  max= 24.2 m/yr	min= 0.1 m/yr	integr=1.87e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=2.33e+10 m/yr*m2
+  rain_now : +5.92e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +5.92e+02 m3/s
+  river_max:   218.61 m3/s    79.88 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.21 mm/yr    sedim_max:     0.02 mm/yr
+  eros_nosd: +4.91e+15 N     sedim_inc: -4.33e+14 N   outp_seds:   +5.34e+15 N  
+  eros-sed.:  max= 0.31 mm/yr	min= -0.02 mm/yr	difference=2.80e+06 m3/yr
+  sediment_vol: 3.38e+04 km3
+
+T= 9.2000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.76e+14 m*m2
+  precipit.:  max= 24.2 m/yr	min= 0.1 m/yr	integr=1.86e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=2.31e+10 m/yr*m2
+  rain_now : +5.88e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +5.88e+02 m3/s
+  river_max:   219.52 m3/s    79.16 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.19 mm/yr    sedim_max:     0.02 mm/yr
+  eros_nosd: +4.79e+15 N     sedim_inc: -4.45e+14 N   outp_seds:   +5.24e+15 N  
+  eros-sed.:  max= 0.28 mm/yr	min= -0.02 mm/yr	difference=2.75e+06 m3/yr
+  sediment_vol: 3.38e+04 km3
+
+T= 9.3000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.76e+14 m*m2
+  precipit.:  max= 24.3 m/yr	min= 0.1 m/yr	integr=1.84e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=2.30e+10 m/yr*m2
+  rain_now : +5.84e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +5.84e+02 m3/s
+  river_max:   218.44 m3/s    76.17 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.18 mm/yr    sedim_max:     0.03 mm/yr
+  eros_nosd: +4.66e+15 N     sedim_inc: -4.73e+14 N   outp_seds:   +5.14e+15 N  
+  eros-sed.:  max= 0.27 mm/yr	min= -0.03 mm/yr	difference=2.69e+06 m3/yr
+  sediment_vol: 3.37e+04 km3
+
+T= 9.4000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.76e+14 m*m2
+  precipit.:  max= 24.3 m/yr	min= 0.1 m/yr	integr=1.83e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=2.29e+10 m/yr*m2
+  rain_now : +5.79e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +5.79e+02 m3/s
+  river_max:   215.48 m3/s    75.29 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.17 mm/yr    sedim_max:     0.03 mm/yr
+  eros_nosd: +4.54e+15 N     sedim_inc: -4.20e+14 N   outp_seds:   +4.96e+15 N  
+  eros-sed.:  max= 0.26 mm/yr	min= -0.03 mm/yr	difference=2.60e+06 m3/yr
+  sediment_vol: 3.37e+04 km3
+
+T= 9.5000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.76e+14 m*m2
+  precipit.:  max= 24.3 m/yr	min= 0.1 m/yr	integr=1.82e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=2.28e+10 m/yr*m2
+  rain_now : +5.75e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +5.75e+02 m3/s
+  river_max:   213.84 m3/s    73.57 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.19 mm/yr    sedim_max:     0.02 mm/yr
+  eros_nosd: +4.42e+15 N     sedim_inc: -4.46e+14 N   outp_seds:   +4.87e+15 N  
+  eros-sed.:  max= 0.28 mm/yr	min= -0.02 mm/yr	difference=2.55e+06 m3/yr
+  sediment_vol: 3.37e+04 km3
+
+T= 9.6000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.76e+14 m*m2
+  precipit.:  max= 24.4 m/yr	min= 0.1 m/yr	integr=1.80e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=2.27e+10 m/yr*m2
+  rain_now : +5.72e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +5.72e+02 m3/s
+  river_max:   211.73 m3/s    74.17 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.17 mm/yr    sedim_max:     0.02 mm/yr
+  eros_nosd: +4.31e+15 N     sedim_inc: -4.24e+14 N   outp_seds:   +4.73e+15 N  
+  eros-sed.:  max= 0.24 mm/yr	min= -0.02 mm/yr	difference=2.48e+06 m3/yr
+  sediment_vol: 3.37e+04 km3
+
+T= 9.7000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.75e+14 m*m2
+  precipit.:  max= 24.4 m/yr	min= 0.1 m/yr	integr=1.79e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=2.26e+10 m/yr*m2
+  rain_now : +5.68e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +5.68e+02 m3/s
+  river_max:   206.01 m3/s    71.26 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.16 mm/yr    sedim_max:     0.02 mm/yr
+  eros_nosd: +4.20e+15 N     sedim_inc: -4.60e+14 N   outp_seds:   +4.66e+15 N  
+  eros-sed.:  max= 0.24 mm/yr	min= -0.02 mm/yr	difference=2.44e+06 m3/yr
+  sediment_vol: 3.37e+04 km3
+
+T= 9.8000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.75e+14 m*m2
+  precipit.:  max= 24.4 m/yr	min= 0.1 m/yr	integr=1.78e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=2.25e+10 m/yr*m2
+  rain_now : +5.65e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +5.65e+02 m3/s
+  river_max:   204.50 m3/s    67.86 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.17 mm/yr    sedim_max:     0.02 mm/yr
+  eros_nosd: +4.10e+15 N     sedim_inc: -4.65e+14 N   outp_seds:   +4.56e+15 N  
+  eros-sed.:  max= 0.25 mm/yr	min= -0.02 mm/yr	difference=2.39e+06 m3/yr
+  sediment_vol: 3.36e+04 km3
+
+T= 9.9000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+  topogr.  :  max= 3009.7 m	min= 941.4 m	integr=1.75e+14 m*m2
+  precipit.:  max= 24.5 m/yr	min= 0.1 m/yr	integr=1.77e+10 m/yr*m2
+  evaporat.:  max= 1.1 m/yr	min= 0.0 m/yr	integr=2.24e+10 m/yr*m2
+  rain_now : +5.61e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +5.61e+02 m3/s
+  river_max:   201.05 m3/s    64.46 kg/s @  -35.0,200.0 km, 971.0 m
+  topo_diff_eros_max=    -0.16 mm/yr    sedim_max:     0.02 mm/yr
+  eros_nosd: +3.99e+15 N     sedim_inc: -4.34e+14 N   outp_seds:   +4.43e+15 N  
+  eros-sed.:  max= 0.23 mm/yr	min= -0.02 mm/yr	difference=2.32e+06 m3/yr
+  sediment_vol: 3.36e+04 km3
+
+T= 10.0000 Myplotting TOPO...plotting DRAINAGE...plotting RAIN...plotting EROSION RATE...plotting DRAINAGE...
+
+2 units:
+No. Density Age Volume Surf.  Vel_x Vel_y Shft_x Shft_y erosL
+     kg/m3  My  1e3km3 1e3km2 km/My km/My   km     km    [m] 
+ 1:  2250   5.0    0.0  11.9   0.0   0.0    0.0    0.0 1.0e-06  S
+ 0:  2250   0.0   33.6  92.4   0.0   0.0    0.0    0.0 1.0e-06  S  1st unit
+ -:  2850   0.0    -     -     0     0      0      0   1.0e-07   -   basement
+
+Final total sediment volume: 33.61 1e3 km3
+
+Time end: Tue Aug 30 16:40:55 2016
+
