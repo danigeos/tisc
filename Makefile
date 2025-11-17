@@ -4,7 +4,7 @@
 #Type  'make'  in this directory to compile.
 #
 #tisc has been succesfully compiled with this Makefile in: 
-#  iOS 11, linux, 
+#  macOS 11, macOS 16, linux, 
 #Earlier versions were functional in:
 #  IBM AIX Version 3.2 for IBM RISC 6000 workstations, Hewlett Packard Envizex. Sun Solaris OS5
 #------------------------------------------------------------------------
@@ -29,6 +29,7 @@ clean_for_tar:
 
 
 vers: 	clean_for_tar
+	echo "CLEANING for packing"
 	rm -R -f tisc_copy_for_upload
 	mkdir tisc tisc/bin
 	cp -R -L Makefile config.mk README demo doc include lib script src    tisc 
@@ -42,16 +43,17 @@ vers: 	clean_for_tar
 		echo Removing surface processes stuff; \
 		rm tisc/src/*surf_proc* ; \
 	fi
+	echo "PACKING for upload"
 	tar -chf tisc.tar tisc
 	chmod og-r tisc.tar
 	gzip -f tisc.tar
-	echo "UPLOADING to github."
 	touch tisc/bin/touch_something #needed by git add
 	mv tisc tisc_copy_for_upload
 	make upload
 
 
 upload:
+	echo "UPLOADING to github."
 	cd tisc_copy_for_upload
 	#For initialization:  
 	#git init; git remote add tisc https://github.com/danigeos/tisc; git add Makefile README config.mk bin demo doc include lib script src; git rm --cached doc/.first_compilation.txt

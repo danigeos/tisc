@@ -1,7 +1,7 @@
 ### TISC parameters file ###
 
-#TISC VERSION FOR THIS FILE:
-version		TISC_2023-08-31
+#TISC VERSION TO WHICH THIS PARAMETER FILE CORRESPONDS:
+version		TISC_2025-11-06
 
 #MODEL REGION: 
 #Coordinates of the corner nodes (center of corner cells, as in netCDF's "node
@@ -22,7 +22,7 @@ Ny		51	N-S direction grid points
 
 #INITIAL RELIEF:
 zini		0	Initial altitude [m] above sea level (added to the initial
-				topography in '*.ZINI').
+				topography distribution in '*.ZINI').
 random_topo	0	Adds noise to initial topo between -random_topo/2 and 
 				+random_topo/2 [m]. The computation of lake drainage can become
 				much slower using a high value.

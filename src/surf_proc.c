@@ -1621,7 +1621,7 @@ int Ice_Flow(float **ice_velx_sl, float **ice_vely_sl, float **ice_velx_df, floa
 			if (i>0)	q_up  = ( D_coeff[i-1][j]*ice_thickness[i-1][j] + D_coeff[i][j]*ice_thickness[i][j] )/2  *  (+icetopo[i-1][j] - icetopo[i][j]) / dy;
 			if (i<Ny-1)	q_dw  = ( D_coeff[i+1][j]*ice_thickness[i+1][j] + D_coeff[i][j]*ice_thickness[i][j] )/2  *  (-icetopo[i+1][j] + icetopo[i][j]) / dy;
 
-			if (i>0	&& j<Nx-1)	q_ru  = ( D_coeff[i-1][j+1]*ice_thickness[i-1][j+1] + D_coeff[i][j]*ice_thickness[i][j] )/2  *  (+icetopo[i-1][j+1] - icetopo[i][j]) / dx;
+			if (i>0	&& j<Nx-1)	q_ru  = ( D_coeff[i-1][j+1]*ice_thickness[i-1][j+1] + D_coeff[i][j]*ice_thickness[i][j] )/2  *  (+icetopo[i-1][j+1] - icetopo[i][j]) / dx; //WHY DX OR DY IN THESE??!!
 			if (i<Ny-1 && j<Nx-1)	q_rd  = ( D_coeff[i+1][j+1]*ice_thickness[i+1][j+1] + D_coeff[i][j]*ice_thickness[i][j] )/2  *  (+icetopo[i+1][j+1] - icetopo[i][j]) / dx;
 			if (i>0	&& j>0   )	q_lu  = ( D_coeff[i-1][j-1]*ice_thickness[i-1][j-1] + D_coeff[i][j]*ice_thickness[i][j] )/2  *  (-icetopo[i-1][j-1] + icetopo[i][j]) / dy;
 			if (i<Ny-1 && j>0)	q_ld  = ( D_coeff[i+1][j-1]*ice_thickness[i+1][j-1] + D_coeff[i][j]*ice_thickness[i][j] )/2  *  (-icetopo[i+1][j-1] + icetopo[i][j]) / dy;

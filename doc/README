@@ -58,8 +58,9 @@ its bin/ directory in your path. This should work:
 	sudo apt-get update
 	sudo apt-get install gmt ksh csh tofrodos
 
--The GMT scripts are wirtten in C-shell language, so make sure to have that one 
-installed.
+-The GMT scripts for plotting are wirtten in C-shell language, so make sure to 
+have that one installed. There are alternative python scripts. See tisc -Pp 
+command syntax in tisc.info.txt
 
 -Try examples of running TISC going to directory 'tisc/demo/'. This will allow
 you to be sure that the code is working properly. Check that the graphic
