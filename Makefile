@@ -58,7 +58,7 @@ upload:
 	cd tisc_copy_for_upload
 	#For initialization:  
 	#git init; git remote add tisc https://github.com/danigeos/tisc; git add Makefile README config.mk bin demo doc include lib script src; git rm --cached doc/.first_compilation.txt
-	git commit -a -mTISC_newVersion
+	git commit -a -m$(VERSION)
 	git config http.postBuffer 524288000; git config http.maxRequestBuffer 100M; git config core.compression 0
 	#add --force to pass by the remote version 
 	git push -u -f tisc master
