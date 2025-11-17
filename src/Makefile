@@ -89,7 +89,7 @@ tisc.o: tisc.c tisclib.c tiscio.c
 	@echo; echo tisc HOME DIRECTORY: $(tisc_DIR);  echo ARCH=$(ARCH);  
 	@echo OP. SYSTEM=$(OS);  echo User home: $(HOME_DIR); 
 	@echo You are currently $(shell whoami)	using the shell $(SHELL) ; echo
-	$(CC) $(OPTS) -o tisc.o -DTISCDIR=$(tisc_DIR) -I$(INCL) -c tisc.c $(DEFS)
+	$(CC) $(OPTS) -o tisc.o -DVERSION=\"$(VERSION)\" -DTISCDIR=$(tisc_DIR) -I$(INCL) -c tisc.c $(DEFS)
 	if [ -f /usr/local/bin/ctags ]; then \
 		/usr/local/bin/ctags *.c ../lib/thin_sheet.f ../lib/libreria.c ../include/*.h ;\
 		echo tags file produced.;\

@@ -45,9 +45,9 @@ vers: 	clean_for_tar
 		rm tmp/src/*surf_proc* ; \
 	fi
 	echo "PACKING"
-	tar -chf tisc.tar tmp
-	chmod og-r tisc.tar
-	gzip -f tisc.tar
+	tar -chf $(VERSION).tar tmp
+	chmod og-r $(VERSION).tar
+	gzip -f $(VERSION).tar
 	touch tmp/bin/touch_something #needed by git add
 	mv tmp tisc_copy_for_upload
 	make upload
