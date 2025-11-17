@@ -1,4 +1,5 @@
 #------------------------------------------------------------------------
+VERSION = \"TISC_2025-11-06\"
 #You may need to modify these variables
 #C compiler:
 CC	= gcc #gcc #cc 

@@ -1,17 +1,18 @@
 #---------------------------- TISC makefile ----------------------------
-##First read and modify options in ./config.mk
+#First read and modify options in ./config.mk
 #
 #Type  'make'  in this directory to compile.
 #
-#tisc has been succesfully compiled with this Makefile in: 
+#TISC has been succesfully compiled with this Makefile in: 
 #  macOS 11, macOS 16, linux, 
-#Earlier versions were functional in:
+#Earlier versions were functional for:
 #  IBM AIX Version 3.2 for IBM RISC 6000 workstations, Hewlett Packard Envizex. Sun Solaris OS5
 #------------------------------------------------------------------------
 
 include config.mk
 
 all:
+	@echo; echo; echo Compiling version $(VERSION)
 	(cd src; make all)
 	@echo; echo; echo Compilation succeeded!
 	@(echo "ADD TO YOUR PATH: `pwd`/bin/  AND  `pwd`/script/")
@@ -30,25 +31,25 @@ clean_for_tar:
 
 vers: 	clean_for_tar
 	echo "CLEANING for packing"
-	rm -R -f tisc_copy_for_upload
-	mkdir tisc tisc/bin
-	cp -R -L Makefile config.mk README demo doc include lib script src    tisc 
-	rm -f tisc/doc/.first_compilation.txt
+	rm -R -f tmp tisc_copy_for_upload
+	mkdir tmp tmp/bin
+	cp -R -L Makefile config.mk README demo doc include lib script src   tmp 
+	rm -f tmp/doc/.first_compilation.txt
 	if [ $(findstring THIN_SHEET,$(DEFS)) ]; then echo Including thin sheet stuff; else \
 		echo Removing thin sheet stuff; \
-		rm tisc/lib/*thin_sheet* ; \
-		rm tisc/lib/sistbanda* ; \
+		rm tmp/lib/*thin_sheet* ; \
+		rm tmp/lib/sistbanda* ; \
 	fi
 	if [ $(findstring SURFACE_TRANSPORT,$(DEFS)) ]; then echo Including surface processes stuff; else \
 		echo Removing surface processes stuff; \
-		rm tisc/src/*surf_proc* ; \
+		rm tmp/src/*surf_proc* ; \
 	fi
-	echo "PACKING for upload"
-	tar -chf tisc.tar tisc
+	echo "PACKING"
+	tar -chf tisc.tar tmp
 	chmod og-r tisc.tar
 	gzip -f tisc.tar
-	touch tisc/bin/touch_something #needed by git add
-	mv tisc tisc_copy_for_upload
+	touch tmp/bin/touch_something #needed by git add
+	mv tmp tisc_copy_for_upload
 	make upload
 
 
