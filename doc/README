@@ -5,7 +5,7 @@
 ********************************************************************************
 
 TISC is a program written in C under Linux (MacOS) to calculate the pseudo-3D 
-(planform) flexure of the lithosphere, fluvial transport along rivers, and 
+(planform 2.5D) flexure of the lithosphere, fluvial transport along rivers, and 
 other surface and tectonic processes. In particular, TISC numerically 
 simulates the formation of sedimentary basins during tectonic compression 
 and extension. TISC is the 3D version of the cross-section (pseudo 2D) 
