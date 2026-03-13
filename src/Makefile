@@ -11,7 +11,7 @@ include ../config.mk
 
 #------------------------------------------------------------------------
 #You should not modify these directories
-tisc_DIR = \"`cd ..; pwd`\"
+tisc_DIR = $(shell cd .. && pwd)
 HOME_DIR = `cd; pwd`
 OS 	= `../script/match_OS`
 ARCH 	= `../script/match_arch`
@@ -50,7 +50,7 @@ blockxyz: blockxyz.c
 
 cuthrz: cuthrz.c tisclib.c tiscio.c libreria
 	$(CC) cuthrz.c -o $(BIN)/cuthrz $(OPTS) $(LIBS) $(LIB)/libreria.o $(SP_LIBS) \
-		-DTISCDIR=$(tisc_DIR) -I$(INCL)
+		-D'TISCDIR="$(tisc_DIR)"' -I$(INCL)
 
 
 invertfile: invertfile.c 
@@ -89,7 +89,7 @@ tisc.o: tisc.c tisclib.c tiscio.c
 	@echo; echo tisc HOME DIRECTORY: $(tisc_DIR);  echo ARCH=$(ARCH);  
 	@echo OP. SYSTEM=$(OS);  echo User home: $(HOME_DIR); 
 	@echo You are currently $(shell whoami)	using the shell $(SHELL) ; echo
-	$(CC) $(OPTS) -o tisc.o -DVERSION=\"$(VERSION)\" -DTISCDIR=$(tisc_DIR) -I$(INCL) -c tisc.c $(DEFS)
+	$(CC) $(OPTS) -o tisc.o -D'VERSION="$(VERSION)"' -D'TISCDIR="$(tisc_DIR)"' -I$(INCL) -c tisc.c $(DEFS)
 	if [ -f /usr/local/bin/ctags ]; then \
 		/usr/local/bin/ctags *.c ../lib/thin_sheet.f ../lib/libreria.c ../include/*.h ;\
 		echo tags file produced.;\

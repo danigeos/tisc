@@ -15,6 +15,8 @@ all:
 	@echo; echo; echo Compiling version $(VERSION)
 	(cd src; make all)
 	@echo; echo; echo Compilation succeeded!
+	@echo "Updating version in doc/template.PRM"
+	LANG=C sed -E -i.bak 's/^version[[:space:]]+.*/version\t\t$(VERSION)/' doc/template.PRM
 	@(echo "ADD TO YOUR PATH: `pwd`/bin/  AND  `pwd`/script/")
 	@(echo "ADD IN .cshrc:    setenv tisc_dir `pwd` ")
 	@(echo "ADD IN .bashrc:   export tisc_dir=`pwd` ")
