@@ -1,1 +1,12 @@
 runs/
+tisc_copy_for_upload/
+"more on tisc"/
+*.tar.gz
+*.pptx
+*.gif
+*.pdf
+*.tiff
+*.png
+*.jpg
+*.DS_Store
+.gmtcommands4
