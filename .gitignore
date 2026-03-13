@@ -1,5 +1,31 @@
-runs/
-tisc_copy_for_upload/
+# Ignore all executables and binaries in the bin directory
+/bin/*
+!/bin/.empty_needed_for_git
+
+# macOS specific files
+.DS_Store
+**/.DS_Store
+/bin/*.dSYM/
+
+# Build artifacts
+*.o
+*.a
+*.so
+*.dSYM/
+*.ps
+/src/tags
+/src/.tags
+
+# General ignores
+*~
+*.swp
+*.log
+*.aux
+*.out
+
+# Project specific ignores
+/runs/
+/tisc_copy_for_upload/
 "more on tisc"/
 *.tar.gz
 *.pptx
@@ -8,5 +34,4 @@ tisc_copy_for_upload/
 *.tiff
 *.png
 *.jpg
-*.DS_Store
 .gmtcommands4
