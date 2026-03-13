@@ -50,7 +50,7 @@ vers: 	clean_for_tar
 	gzip -f $(VERSION).tar
 	touch tmp/bin/touch_something #needed by git add
 	mv tmp tisc_copy_for_upload
-	make upload
+	#make upload
 
 
 upload:
