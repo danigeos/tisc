@@ -1,18 +1,9 @@
 #!/usr/bin/env python3
 """
-tisc.UNITdrawer.py — km units, inline Z input (no focus needed),
-ordered ring interpolation, live 2D+3D (Shift+Left-drag tilt),
-and silent save to <project>.UNIT
-
-Edit (2D):
-  • Left-click: add point
-  • Right-click or Enter: close polygon → inline Z input (type & press Enter)
-  • z: undo  • d: delete last  • n: close active & start new
-  • s: save to <project>.UNIT  • q / Esc: quit
-
-3D:
-  • Opens at start (zenith view)
-  • Hold Shift + Left-drag in the 2D window to tilt 3D (azimuth/elevation)
+tisc.UNITdrawer.py — km units, inline Z input (type & Enter),
+user-order ring interpolation, live 2D+3D (Shift+Left-drag tilt),
+save to <project>.UNIT with Z line (no 'Z' prefix) + coords (6 sig figs),
+snap-to-grid inside domain, accept clicks anywhere (even beyond axes).
 """
 
 import argparse, re, sys
@@ -20,7 +11,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, Tuple
 
-# Disable toolbar & all default keymaps that could interfere
+# Disable toolbar & default keymaps that interfere
 import matplotlib as mpl
 mpl.rcParams['toolbar'] = 'none'
 for k in ('keymap.fullscreen','keymap.home','keymap.back','keymap.forward',
@@ -91,16 +82,24 @@ class PolyApp:
             "Nx": dom_m.get("Nx") or 81, "Ny": dom_m.get("Ny") or (dom_m.get("Nx") or 81),
         }
 
+        # Build grid (km) for snapping + interpolation
+        self.xs, self.ys, (self.Xg, self.Yg) = self._ensure_grid()
+
         # 2D editor
         self.fig, self.ax = plt.subplots(num=f"TISC UNIT drawer (km) — {project}", facecolor='white')
         w, h = self.fig.get_size_inches(); self.fig.set_size_inches(w*1.5, h*1.5, forward=True)
         self.ax.set_title(f"Draw polygons for '{project}'.UNIT (km)")
         self.ax.set_xlabel("x (km)"); self.ax.set_ylabel("y (km)")
         self.ax.set_aspect('equal', adjustable='box')
-        if all(self.dom_km.get(k) is not None for k in ("xmin","xmax","ymin","ymax")):
-            self.ax.set_xlim(self.dom_km["xmin"], self.dom_km["xmax"])
-            self.ax.set_ylim(self.dom_km["ymin"], self.dom_km["ymax"])
+        self.ax.set_xlim(self.xs.min(), self.xs.max())
+        self.ax.set_ylim(self.ys.min(), self.ys.max())
         self.ax.grid(True, alpha=0.3)
+
+        # Shortcuts as figure subtitle (outside plot)
+        shortcuts = ("Shortcuts: Left-click add (snaps inside domain) | Right-click/Enter close→Z | "
+                     "Shift+Left-drag tilt 3D | z undo | d delete | n new | s save | q/Esc quit")
+        self.fig.subplots_adjust(top=0.88)
+        self.fig.suptitle(shortcuts, y=0.98, fontsize=9)
 
         # State
         self.current_pts: List[Tuple[float,float]] = []
@@ -110,34 +109,28 @@ class PolyApp:
         self.poly_patches: List[MplPolygon] = []
         self.poly_z: List[float] = []
 
-        # Inline Z input (custom overlay — no widget focus needed)
+        # Inline Z input (no widget focus needed)
         self.awaiting_z = False
         self._z_buffer = ""
-        self._z_text_artist = None  # matplotlib.text.Text
-        # draw slot for prompt
         self._z_ax = self.fig.add_axes([0.15, 0.02, 0.35, 0.06]); self._z_ax.set_axis_off()
 
-        # Elevation 2D & 3D
+        # Elevation: 2D + 3D
         self.im = None; self.cbar = None
         self.fig3d = plt.figure(num=f"Elevation 3D — {self.project}", figsize=(8, 6))
+        self.fig3d.subplots_adjust(left=0.02, right=0.98, bottom=0.02, top=0.98)  # tighter
         self.ax3d = self.fig3d.add_subplot(111, projection='3d')
-        self.azim = -60.0; self.elev = 90.0  # zenith
+        # Start positive Z up with slight tilt
+        self.azim = -60.0; self.elev = 30.0
         self.ax3d.view_init(elev=self.elev, azim=self.azim)
         self.ax3d.set_xlabel("x (km)"); self.ax3d.set_ylabel("y (km)"); self.ax3d.set_zlabel("Z")
+        self.cbar3d = None  # single 3D colorbar
 
         # Shift+drag tracking
         self.shift_down = False
         self.tilt_dragging = False
         self.tilt_last_xy = (0.0, 0.0)
 
-        # Help + status
-        self.help_text = self.ax.text(
-            0.01, 0.99,
-            "Left-click: add | Right-click/Enter: close → Z | Shift+Left-drag: tilt 3D | "
-            "z: undo | d: delete | n: new | s: save | q/Esc: quit",
-            transform=self.ax.transAxes, va='top', ha='left', fontsize=9,
-            bbox=dict(boxstyle='round', facecolor='white', alpha=0.7, lw=0.5),
-        )
+        # Status (small inside axes)
         self.status = self.ax.text(
             0.01, 0.01, "0 polygons | 0 points (km)", transform=self.ax.transAxes,
             va='bottom', ha='left', fontsize=9,
@@ -154,22 +147,56 @@ class PolyApp:
         # Prime empty Z plots
         self.compute_and_plot_z()
 
+    # ---------- Grid ---------- #
+    def _ensure_grid(self):
+        Nx, Ny = int(self.dom_km["Nx"]), int(self.dom_km["Ny"])
+        xmin, xmax = self.dom_km["xmin"], self.dom_km["xmax"]
+        ymin, ymax = self.dom_km["ymin"], self.dom_km["ymax"]
+        xs = np.linspace(xmin, xmax, Nx); ys = np.linspace(ymin, ymax, Ny)
+        return xs, ys, np.meshgrid(xs, ys)
+
+    def _snap_to_grid(self, x, y):
+        ix = np.abs(self.xs - x).argmin()
+        iy = np.abs(self.ys - y).argmin()
+        return float(self.xs[ix]), float(self.ys[iy])
+
+    def _in_domain(self, x: float, y: float) -> bool:
+        return (self.xs.min() <= x <= self.xs.max()) and (self.ys.min() <= y <= self.ys.max())
+
+    def _display_to_data(self, x_disp: float, y_disp: float):
+        """Map figure/window pixel coords → data coords, even when pointer is outside axes."""
+        inv = self.ax.transData.inverted()
+        x_data, y_data = inv.transform((x_disp, y_disp))
+        return float(x_data), float(y_data)
+
     # ---------- Events ---------- #
 
     def on_button_press(self, event):
-        if event.inaxes != self.ax: return
-        # Shift + Left-drag for 3D tilt
-        if self.shift_down and event.button == 1:
+        # Shift + Left-drag for 3D tilt can start anywhere over the figure
+        if self.shift_down and event.button == 1 and event.x is not None and event.y is not None:
             self.tilt_dragging = True
             self.tilt_last_xy = (event.x, event.y)
             return
-        # Editing blocked while awaiting Z
-        if self.awaiting_z: return
-        if event.button == 1 and event.xdata is not None and event.ydata is not None:
-            self.current_pts.append((event.xdata, event.ydata))
-            self._redraw_current()
-        elif event.button == 3:
-            self.close_current_polygon()
+
+        # While waiting for Z entry, ignore editing clicks
+        if self.awaiting_z:
+            return
+
+        # Accept clicks ANYWHERE in the window (even outside axes)
+        if event.button in (1, 3) and event.x is not None and event.y is not None:
+            x_d, y_d = self._display_to_data(event.x, event.y)
+
+            if event.button == 1:
+                # Snap inside domain; keep raw coords outside domain
+                if self._in_domain(x_d, y_d):
+                    xg, yg = self._snap_to_grid(x_d, y_d)
+                    self.current_pts.append((xg, yg))
+                else:
+                    self.current_pts.append((x_d, y_d))
+                self._redraw_current()
+
+            elif event.button == 3:
+                self.close_current_polygon()
 
     def on_button_release(self, event):
         self.tilt_dragging = False
@@ -194,15 +221,13 @@ class PolyApp:
         # Inline Z input: capture keys globally until Enter
         if self.awaiting_z:
             if event.key in ('enter','return'):
-                self._submit_z_from_buffer()
-                return
+                self._submit_z_from_buffer(); return
             elif event.key == 'backspace':
                 self._z_buffer = self._z_buffer[:-1]
             elif event.key == 'delete':
                 self._z_buffer = ""
             elif len(event.key) == 1 and event.key in "0123456789.-+eE":
                 self._z_buffer += event.key
-            # update overlay
             self._render_z_overlay()
             return
 
@@ -278,15 +303,8 @@ class PolyApp:
 
     # ---------- Grid / Interpolation / Plot ---------- #
 
-    def ensure_grid(self):
-        Nx, Ny = int(self.dom_km["Nx"]), int(self.dom_km["Ny"])
-        xmin, xmax = self.dom_km["xmin"], self.dom_km["xmax"]
-        ymin, ymax = self.dom_km["ymin"], self.dom_km["ymax"]
-        xs = np.linspace(xmin, xmax, Nx); ys = np.linspace(ymin, ymax, Ny)
-        return xs, ys, np.meshgrid(xs, ys)
-
     def compute_Z(self):
-        xs, ys, (X, Y) = self.ensure_grid()
+        xs, ys, X, Y = self.xs, self.ys, self.Xg, self.Yg
         Z = np.zeros_like(X)
         if len(self.polygons) == 0:
             return xs, ys, Z
@@ -318,7 +336,8 @@ class PolyApp:
     def compute_and_plot_z(self):
         xs, ys, Z = self.compute_Z()
         extent = [xs.min(), xs.max(), ys.min(), ys.max()]
-        # 2D heatmap
+
+        # 2D heatmap (single colorbar)
         if self.im is None:
             self.im = self.ax.imshow(Z, origin='lower', extent=extent, interpolation='nearest', cmap='terrain')
             vmin, vmax = float(np.nanmin(Z)), float(np.nanmax(Z)); vmax = vmax if vmax != 0 else 1.0
@@ -331,36 +350,64 @@ class PolyApp:
             if self.cbar: self.cbar.update_normal(self.im)
         self.fig.canvas.draw_idle()
 
-        # 3D surface
+        # 3D surface (single colorbar; Z positive upwards; tight layout)
         X, Y = np.meshgrid(xs, ys)
         self.ax3d.cla()
         surf = self.ax3d.plot_surface(X, Y, Z, cmap='terrain', linewidth=0, antialiased=False, rstride=1, cstride=1)
         self.ax3d.set_xlabel("x (km)"); self.ax3d.set_ylabel("y (km)"); self.ax3d.set_zlabel("Z")
+        # Axis limits + box aspect to reduce empty space
+        self.ax3d.set_xlim(xs.min(), xs.max())
+        self.ax3d.set_ylim(ys.min(), ys.max())
+        zmin, zmax = float(np.nanmin(Z)), float(np.nanmax(Z))
+        if zmax == zmin: zmax = zmin + 1.0
+        self.ax3d.set_zlim(zmin, zmax)
+        try:
+            self.ax3d.zaxis.set_inverted(False)  # ensure positive-upwards
+            xr = xs.max()-xs.min(); yr = ys.max()-ys.min(); zr = max(zmax - zmin, 1e-9)
+            self.ax3d.set_box_aspect((xr, yr, zr))
+        except Exception:
+            pass
         self.ax3d.view_init(elev=self.elev, azim=self.azim)
-        self.fig3d.colorbar(surf, ax=self.ax3d, shrink=0.7, aspect=18, label='Z')
+
+        # Single 3D colorbar
+        if self.cbar3d is not None:
+            try: self.cbar3d.remove()
+            except Exception: pass
+            self.cbar3d = None
+        self.cbar3d = self.fig3d.colorbar(surf, ax=self.ax3d, shrink=0.72, aspect=18, pad=0.02, label='Z')
+
         self.fig3d.canvas.draw_idle()
 
-    # ---------- Save ---------- #
+    # ---------- Save (Z line + coords, 6 sig figs) ---------- #
 
     def save_and_exit(self):
         out_path = self.out_dir / f"{self.project}.UNIT"
-        write_unit_with_z_km(out_path, self.polygons, self.poly_z)
-        print(f"Saved {len(self.polygons)} polygons to {out_path} (units: km)")
+        write_unit_with_z_and_coords_km(out_path, self.polygons, self.poly_z)
+        print(f"Saved {len(self.polygons)} polygons to {out_path} (units: km; Z line + coords, 6 sig figs)")
         plt.close(self.fig); plt.close(self.fig3d)
 
 # ---------------- File I/O ---------------- #
 
-def write_unit_with_z_km(path: Path, polygons: List[List[Tuple[float,float]]], poly_z: List[float]) -> None:
+def write_unit_with_z_and_coords_km(path: Path, polygons: List[List[Tuple[float,float]]], poly_z: List[float]) -> None:
+    """
+    Output (km):
+      # UNIT polygons generated <timestamp>
+      <Z_value>              <-- number only, no leading 'Z'
+      x y                    <-- 6 significant digits
+      ...
+    (blank line between polygons)
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
     ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     with open(path, "w") as f:
         f.write(f"# UNIT polygons generated {ts}\n")
         for i, poly in enumerate(polygons):
             z_val = poly_z[i] if i < len(poly_z) else 0.0
-            f.write(f"Z {z_val}\n")
+            f.write(f"{z_val:.6g}\n")  # Z line, no 'Z ' prefix
             for x, y in poly:
-                f.write(f"{x:.6f} {y:.6f}\n")
-            if i != len(polygons) - 1: f.write("\n")
+                f.write(f"{x:.6g} {y:.6g}\n")
+            if i != len(polygons) - 1:
+                f.write("\n")
 
 # ---------------- CLI ---------------- #
 

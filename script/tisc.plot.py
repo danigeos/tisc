@@ -1,442 +1,557 @@
 #!/usr/bin/env python3
 """
-tisc.UNITdrawer.py — km units, inline Z input (type & Enter),
-user-order ring interpolation, live 2D+3D (Shift+Left-drag tilt),
-save to <project>.UNIT with Z line (no 'Z' prefix) + coords (6 sig figs),
-snap-to-grid inside domain, accept clicks anywhere (even beyond axes).
+TISC multi-panel plotting script (single page).
+
+Usage
+-----
+    python tisc.plot.py LagoMare
+    python tisc.plot.py sinusoidal
+
+Inputs for project P (if present)
+---------------------------------
+P.xyw   : drainage output (required)
+P.st    : erosion output (topo, accum_eros, eros_rate)
+P.xyzt  : isostatic subsidence/deflection (3rd column = w)
+P.bas   : river basins (blocks separated by '>', area in '# END river basin ... of XXX km2: ...')
+
+Output (single multi-panel figure)
+----------------------------------
+P.svg
+P.jpg
+
+Panels
+------
+1) Top row, full width:    Topography + drainage (exorheic/endorheic, lakes)
+2) Middle row, full width: Erosion rate + isostatic subsidence (w) contours
+3) Bottom row, left:       Length–elevation profile (largest basin)
+4) Bottom row, right:      Chi–elevation profile (largest basin)
 """
 
-import argparse, re, sys
-from datetime import datetime
-from pathlib import Path
-from typing import List, Tuple
-
-# Disable toolbar & default keymaps that interfere
-import matplotlib as mpl
-mpl.rcParams['toolbar'] = 'none'
-for k in ('keymap.fullscreen','keymap.home','keymap.back','keymap.forward',
-          'keymap.pan','keymap.zoom','keymap.grid','keymap.yscale',
-          'keymap.xscale','keymap.save','keymap.copy','keymap.quit'):
-    mpl.rcParams[k] = []
+import argparse
+import io
+import os
+import re
+from typing import Optional, Tuple, List
 
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
-from matplotlib.lines import Line2D
-from matplotlib.patches import Polygon as MplPolygon
-from matplotlib.path import Path as MplPath
-from matplotlib.colors import Normalize
-from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
+import matplotlib as mpl
+from matplotlib.collections import LineCollection
 
-# ---------------- PRM parsing ---------------- #
 
-PRM_FIELD_REGEX = r'(?im)^\s*{name}\s+([+\-]?\d+(?:\.\d+)?(?:e[+\-]?\d+)?)'
+# ----------------------------- CONFIG -----------------------------
+# Visual tuning defaults (you can adjust these quickly)
+EXO_COLOR = "#4d8fd1"
+ENDO_COLOR = "#5f7ad6"
+HSPACE     = 0.28          # vertical space between rows
+WSPACE     = 0.10          # horizontal space between main and cbar columns
+WIDTH_RATIOS  = [20.0, 1.5]# left: plots, right: colorbars
+HEIGHT_RATIOS = [1.0, 1.0, 0.45]  # topo, erosion, profiles (shorter row)
+FIG_SIZE  = (12, 14)
+DPI       = 250
 
-def parse_prm(prm_path: Path):
-    txt = prm_path.read_text()
-    def get(name, required=True):
-        m = re.search(PRM_FIELD_REGEX.format(name=re.escape(name)), txt)
-        if not m:
-            if required: raise ValueError(f"Parameter '{name}' not found in {prm_path}")
-            return None
-        return float(m.group(1))
-    data = {
-        "xmin": get("xmin"), "xmax": get("xmax"),
-        "ymin": get("ymin"), "ymax": get("ymax"),
-        "Nx":   int(get("Nx", required=False)) if re.search(PRM_FIELD_REGEX.format(name="Nx"), txt) else None,
-        "Ny":   int(get("Ny", required=False)) if re.search(PRM_FIELD_REGEX.format(name="Ny"), txt) else None,
-    }
-    if data["Ny"] is None: data["Ny"] = data["Nx"]
-    return data
+# Final layout safety margins (figure-fraction)
+LEFT_MIN, RIGHT_MAX = 0.05, 0.98
+BOTTOM_MIN, TOP_MAX = 0.05, 0.97
 
-# ---------------- Geometry helpers ---------------- #
+# Final layout tweaks
+PROFILE_SCALE = 1.20   # 20% larger (width & height)
+PROFILE_DY    = -0.05  # 5% lower (figure coords)
+CBAR_SHRINK   = 0.70   # 70% of original width (right edge fixed)
 
-def point_in_poly_grid(xs, ys, poly: List[Tuple[float,float]]):
-    path = MplPath(poly, closed=True)
-    X, Y = np.meshgrid(xs, ys)
-    pts = np.column_stack([X.ravel(), Y.ravel()])
-    return path.contains_points(pts).reshape(Y.shape)
 
-def dist_to_poly_boundary(X, Y, poly: List[Tuple[float,float]]):
-    px = np.asarray([p[0] for p in poly]); py = np.asarray([p[1] for p in poly])
-    xi, yi = px[:-1], py[:-1]; xj, yj = px[1:], py[1:]
-    vx, vy = xj - xi, yj - yi
-    Xe, Ye = X[..., None], Y[..., None]
-    wx, wy = Xe - xi, Ye - yi
-    seglen2 = vx*vx + vy*vy + 1e-30
-    t = np.clip((wx*vx + wy*vy)/seglen2, 0.0, 1.0)
-    projx, projy = xi + t*vx, yi + t*vy
-    dx, dy = Xe - projx, Ye - projy
-    return np.sqrt(np.min(dx*dx + dy*dy, axis=-1))
+# ----------------------------- I/O -----------------------------
 
-# ---------------- App ---------------- #
+def load_drainage_xyw(path: str) -> pd.DataFrame:
+    """
+    Load drainage (.xyw) with at least:
+      x y water sed type topo x_to y_to ...
+    Extra cols are kept as generic col_i.
+    """
+    df = pd.read_csv(path, comment="#", sep=r"\s+", header=None)
+    base_cols = [
+        "x_km", "y_km",
+        "water_m3s", "sed_kgs",
+        "type", "topo_m",
+        "x_to", "y_to",
+    ]
+    extra_cols = [f"col_{i}" for i in range(df.shape[1] - len(base_cols))]
+    df.columns = base_cols + extra_cols
+    return df
 
-class PolyApp:
-    def __init__(self, dom_m, project: str, out_dir: Path):
-        self.project = project
-        self.out_dir = out_dir
 
-        m2km = lambda v: None if v is None else v/1000.0
-        self.dom_km = {
-            "xmin": m2km(dom_m.get("xmin")), "xmax": m2km(dom_m.get("xmax")),
-            "ymin": m2km(dom_m.get("ymin")), "ymax": m2km(dom_m.get("ymax")),
-            "Nx": dom_m.get("Nx") or 81, "Ny": dom_m.get("Ny") or (dom_m.get("Nx") or 81),
-        }
+def load_erosion_st(path: str) -> pd.DataFrame:
+    """
+    Load erosion (.st):
+      x y topo accum_erosion eros_rate
+    """
+    st_df = pd.read_csv(path, comment="#", sep=r"\s+", header=None)
+    st_df.columns = [
+        "x_km", "y_km",
+        "topo_m_st",
+        "accum_eros_m",
+        "eros_rate_m_per_My",
+    ]
+    return st_df
 
-        # Build grid (km) for snapping + interpolation
-        self.xs, self.ys, (self.Xg, self.Yg) = self._ensure_grid()
 
-        # 2D editor
-        self.fig, self.ax = plt.subplots(num=f"TISC UNIT drawer (km) — {project}", facecolor='white')
-        w, h = self.fig.get_size_inches(); self.fig.set_size_inches(w*1.5, h*1.5, forward=True)
-        self.ax.set_title(f"Draw polygons for '{project}'.UNIT (km)")
-        self.ax.set_xlabel("x (km)"); self.ax.set_ylabel("y (km)")
-        self.ax.set_aspect('equal', adjustable='box')
-        self.ax.set_xlim(self.xs.min(), self.xs.max())
-        self.ax.set_ylim(self.ys.min(), self.ys.max())
-        self.ax.grid(True, alpha=0.3)
+def load_deflection_xyzt(path: str) -> pd.DataFrame:
+    """
+    Load deflection (.xyzt). We need col 2 -> 'w'.
+    """
+    df = pd.read_csv(path, comment="#", sep=r"\s+", header=None)
+    ncol = df.shape[1]
+    names = ["x_km", "y_km", "w"] + [f"col{i}" for i in range(3, ncol)]
+    df.columns = names[:ncol]
+    return df
 
-        # Shortcuts as figure subtitle (outside plot)
-        shortcuts = ("Shortcuts: Left-click add (snaps inside domain) | Right-click/Enter close→Z | "
-                     "Shift+Left-drag tilt 3D | z undo | d delete | n new | s save | q/Esc quit")
-        self.fig.subplots_adjust(top=0.88)
-        self.fig.suptitle(shortcuts, y=0.98, fontsize=9)
 
-        # State
-        self.current_pts: List[Tuple[float,float]] = []
-        self.current_line = Line2D([], [], marker='o', linestyle='-', lw=1.5, alpha=0.9)
-        self.ax.add_line(self.current_line)
-        self.polygons: List[List[Tuple[float,float]]] = []
-        self.poly_patches: List[MplPolygon] = []
-        self.poly_z: List[float] = []
+def load_basins(path: str) -> List[Tuple[float, pd.DataFrame]]:
+    """
+    Parse .bas into list of (area_km2, basin_df).
+    Each block starts with '>' and ends with a line like:
+      '# END river basin N of AREA km2: ...'
+    Data lines contain 17 columns:
+      x_km y_km dischg_m3s masstr_kgs type topo_m length_km chi_km
+      x_to_km y_to_km topo_to_m length_to_km chi_to_km eros_rate_m_per_My
+      accum_eros_m level nodes_above
+    """
+    basins: List[Tuple[float, pd.DataFrame]] = []
+    cur_lines: List[str] = []
+    cur_area: Optional[float] = None
 
-        # Inline Z input (no widget focus needed)
-        self.awaiting_z = False
-        self._z_buffer = ""
-        self._z_ax = self.fig.add_axes([0.15, 0.02, 0.35, 0.06]); self._z_ax.set_axis_off()
+    with open(path, "r") as f:
+        for line in f:
+            s = line.strip()
+            if not s:
+                continue
+            if s.startswith("#TISC output") or s.startswith("#x["):
+                continue
+            if s.startswith(">"):
+                cur_lines = []
+                cur_area = None
+                continue
+            if s.startswith("# END river basin"):
+                m = re.search(r"of\s+([\d\.]+)\s+km2", s)
+                if m:
+                    cur_area = float(m.group(1))
+                if cur_lines:
+                    buf = io.StringIO("\n".join(cur_lines))
+                    bdf = pd.read_csv(buf, sep=r"\s+", header=None)
+                    bdf.columns = [
+                        "x_km", "y_km",
+                        "dischg_m3s", "masstr_kgs",
+                        "type", "topo_m",
+                        "length_km", "chi_km",
+                        "x_to_km", "y_to_km",
+                        "topo_to_m", "length_to_km",
+                        "chi_to_km", "eros_rate_m_per_My",
+                        "accum_eros_m", "level", "nodes_above",
+                    ]
+                    basins.append((cur_area if cur_area is not None else np.nan, bdf))
+                cur_lines = []
+                cur_area = None
+                continue
+            if s.startswith("#"):
+                continue
+            cur_lines.append(s)
 
-        # Elevation: 2D + 3D
-        self.im = None; self.cbar = None
-        self.fig3d = plt.figure(num=f"Elevation 3D — {self.project}", figsize=(8, 6))
-        self.fig3d.subplots_adjust(left=0.02, right=0.98, bottom=0.02, top=0.98)  # tighter
-        self.ax3d = self.fig3d.add_subplot(111, projection='3d')
-        # Start positive Z up with slight tilt
-        self.azim = -60.0; self.elev = 30.0
-        self.ax3d.view_init(elev=self.elev, azim=self.azim)
-        self.ax3d.set_xlabel("x (km)"); self.ax3d.set_ylabel("y (km)"); self.ax3d.set_zlabel("Z")
-        self.cbar3d = None  # single 3D colorbar
+    return basins
 
-        # Shift+drag tracking
-        self.shift_down = False
-        self.tilt_dragging = False
-        self.tilt_last_xy = (0.0, 0.0)
 
-        # Status (small inside axes)
-        self.status = self.ax.text(
-            0.01, 0.01, "0 polygons | 0 points (km)", transform=self.ax.transAxes,
-            va='bottom', ha='left', fontsize=9,
-            bbox=dict(boxstyle='round', facecolor='white', alpha=0.7, lw=0.5),
-        )
+# ------------------------ Helpers / Grid / Routing ------------------------
 
-        # Events
-        self.fig.canvas.mpl_connect('button_press_event', self.on_button_press)
-        self.fig.canvas.mpl_connect('button_release_event', self.on_button_release)
-        self.fig.canvas.mpl_connect('motion_notify_event', self.on_motion)
-        self.fig.canvas.mpl_connect('key_press_event', self.on_key_press)
-        self.fig.canvas.mpl_connect('key_release_event', self.on_key_release)
+def estimate_grid_spacing(df: pd.DataFrame) -> Tuple[float, float]:
+    xs = np.sort(df["x_km"].unique())
+    ys = np.sort(df["y_km"].unique())
+    dxs = np.diff(xs)
+    dys = np.diff(ys)
+    dx = float(np.min(dxs[dxs > 0])) if np.any(dxs > 0) else 1.0
+    dy = float(np.min(dys[dys > 0])) if np.any(dys > 0) else 1.0
+    return dx, dy
 
-        # Prime empty Z plots
-        self.compute_and_plot_z()
 
-    # ---------- Grid ---------- #
-    def _ensure_grid(self):
-        Nx, Ny = int(self.dom_km["Nx"]), int(self.dom_km["Ny"])
-        xmin, xmax = self.dom_km["xmin"], self.dom_km["xmax"]
-        ymin, ymax = self.dom_km["ymin"], self.dom_km["ymax"]
-        xs = np.linspace(xmin, xmax, Nx); ys = np.linspace(ymin, ymax, Ny)
-        return xs, ys, np.meshgrid(xs, ys)
+def build_grid(df: pd.DataFrame, value_col: str):
+    grid_df = df.pivot(index="y_km", columns="x_km", values=value_col)
+    xs = grid_df.columns.to_numpy()
+    ys = grid_df.index.to_numpy()
+    return xs, ys, grid_df.to_numpy()
 
-    def _snap_to_grid(self, x, y):
-        ix = np.abs(self.xs - x).argmin()
-        iy = np.abs(self.ys - y).argmin()
-        return float(self.xs[ix]), float(self.ys[iy])
 
-    def _in_domain(self, x: float, y: float) -> bool:
-        return (self.xs.min() <= x <= self.xs.max()) and (self.ys.min() <= y <= self.ys.max())
+def classify_routing(df: pd.DataFrame) -> pd.Series:
+    """
+    Label rows 'exo' if they reach sea / sub-sea or exit domain;
+    otherwise 'endo' (loops / internal sinks).
+    """
+    coords = list(zip(df["x_km"].values, df["y_km"].values))
+    index_from_coord = {c: i for i, c in enumerate(coords)}
+    topo_clean = df["topo_m"].copy()
+    topo_clean[topo_clean <= -3e4] = np.nan
 
-    def _display_to_data(self, x_disp: float, y_disp: float):
-        """Map figure/window pixel coords → data coords, even when pointer is outside axes."""
-        inv = self.ax.transData.inverted()
-        x_data, y_data = inv.transform((x_disp, y_disp))
-        return float(x_data), float(y_data)
+    status: dict[int, str] = {}
 
-    # ---------- Events ---------- #
+    def step(idx: int, max_steps: int = 10000) -> str:
+        if idx in status:
+            return status[idx]
+        visited = set()
+        cur = idx
+        for _ in range(max_steps):
+            if cur in status:
+                res = status[cur]
+                break
+            if cur in visited:
+                res = "endo"
+                break
+            visited.add(cur)
 
-    def on_button_press(self, event):
-        # Shift + Left-drag for 3D tilt can start anywhere over the figure
-        if self.shift_down and event.button == 1 and event.x is not None and event.y is not None:
-            self.tilt_dragging = True
-            self.tilt_last_xy = (event.x, event.y)
-            return
+            row = df.iloc[cur]
+            topo_val = topo_clean.iloc[cur]
+            if (row["type"] == "S") or (np.isfinite(topo_val) and topo_val <= 0):
+                res = "exo"
+                break
 
-        # While waiting for Z entry, ignore editing clicks
-        if self.awaiting_z:
-            return
+            tgt_coord = (row["x_to"], row["y_to"])
+            if tgt_coord == (row["x_km"], row["y_km"]):
+                res = "endo"
+                break
 
-        # Accept clicks ANYWHERE in the window (even outside axes)
-        if event.button in (1, 3) and event.x is not None and event.y is not None:
-            x_d, y_d = self._display_to_data(event.x, event.y)
+            nxt = index_from_coord.get(tgt_coord)
+            if nxt is None:
+                res = "exo"
+                break
 
-            if event.button == 1:
-                # Snap inside domain; keep raw coords outside domain
-                if self._in_domain(x_d, y_d):
-                    xg, yg = self._snap_to_grid(x_d, y_d)
-                    self.current_pts.append((xg, yg))
-                else:
-                    self.current_pts.append((x_d, y_d))
-                self._redraw_current()
-
-            elif event.button == 3:
-                self.close_current_polygon()
-
-    def on_button_release(self, event):
-        self.tilt_dragging = False
-
-    def on_motion(self, event):
-        if not self.tilt_dragging: return
-        if event.x is None or event.y is None: return
-        dx = event.x - self.tilt_last_xy[0]
-        dy = event.y - self.tilt_last_xy[1]
-        self.azim = (self.azim + dx * 0.3) % 360.0
-        self.elev = float(np.clip(self.elev - dy * 0.2, 5.0, 90.0))
-        self.ax3d.view_init(elev=self.elev, azim=self.azim)
-        self.fig3d.canvas.draw_idle()
-        self.tilt_last_xy = (event.x, event.y)
-
-    def on_key_press(self, event):
-        # Track shift state
-        if event.key in ('shift', 'shiftleft', 'shiftright'):
-            self.shift_down = True
-            return
-
-        # Inline Z input: capture keys globally until Enter
-        if self.awaiting_z:
-            if event.key in ('enter','return'):
-                self._submit_z_from_buffer(); return
-            elif event.key == 'backspace':
-                self._z_buffer = self._z_buffer[:-1]
-            elif event.key == 'delete':
-                self._z_buffer = ""
-            elif len(event.key) == 1 and event.key in "0123456789.-+eE":
-                self._z_buffer += event.key
-            self._render_z_overlay()
-            return
-
-        # Normal editing keys
-        if event.key in ('enter','return'):
-            self.close_current_polygon()
-        elif event.key == 'z' and self.current_pts:
-            self.current_pts.pop(); self._redraw_current()
-        elif event.key == 'd':
-            self.delete_last_polygon()
-        elif event.key == 'n' and self.current_pts:
-            self.close_current_polygon()
-        elif event.key in ('q','escape'):
-            plt.close(self.fig); plt.close(self.fig3d)
-        elif event.key == 's':
-            self.save_and_exit()
-
-    def on_key_release(self, event):
-        if event.key in ('shift', 'shiftleft', 'shiftright'):
-            self.shift_down = False
-
-    # ---------- Helpers ---------- #
-
-    def _redraw_current(self):
-        xs = [p[0] for p in self.current_pts]; ys = [p[1] for p in self.current_pts]
-        self.current_line.set_data(xs, ys); self._update_status(); self.fig.canvas.draw_idle()
-
-    def _update_status(self):
-        self.status.set_text(f"{len(self.polygons)} polygons | {len(self.current_pts)} points (km)")
-
-    # ---------- Inline Z input overlay ---------- #
-
-    def _open_z_prompt(self):
-        self.awaiting_z = True
-        self._z_buffer = ""
-        self._render_z_overlay()
-
-    def _render_z_overlay(self):
-        self._z_ax.cla(); self._z_ax.set_axis_off()
-        msg = f"Z value: {self._z_buffer}  (press Enter)"
-        self._z_ax.text(0, 0.5, msg, va='center', ha='left', fontsize=10)
-        self.fig.canvas.draw_idle()
-
-    def _submit_z_from_buffer(self):
-        try: z_val = float(self._z_buffer) if self._z_buffer.strip() != "" else 0.0
-        except Exception: z_val = 0.0
-        self.poly_z.append(z_val)
-        self.awaiting_z = False
-        self._z_ax.cla(); self._z_ax.set_axis_off()
-        self._update_status(); self.fig.canvas.draw_idle()
-        self.compute_and_plot_z()
-
-    # ---------- Polygon ops ---------- #
-
-    def close_current_polygon(self):
-        if len(self.current_pts) < 3: return
-        if self.current_pts[0] != self.current_pts[-1]:
-            self.current_pts.append(self.current_pts[0])
-        self.polygons.append(self.current_pts.copy())
-        patch = MplPolygon(self.current_pts, closed=True, fill=False, edgecolor='C1', lw=2)
-        self.poly_patches.append(patch); self.ax.add_patch(patch)
-        self.current_pts.clear(); self.current_line.set_data([], [])
-        self._update_status(); self.fig.canvas.draw_idle()
-        self._open_z_prompt()
-
-    def delete_last_polygon(self):
-        if not self.polygons: return
-        self.polygons.pop()
-        if self.poly_patches: self.poly_patches.pop().remove()
-        if self.poly_z: self.poly_z.pop()
-        self._update_status(); self.fig.canvas.draw_idle()
-        self.compute_and_plot_z()
-
-    # ---------- Grid / Interpolation / Plot ---------- #
-
-    def compute_Z(self):
-        xs, ys, X, Y = self.xs, self.ys, self.Xg, self.Yg
-        Z = np.zeros_like(X)
-        if len(self.polygons) == 0:
-            return xs, ys, Z
-        polys = self.polygons  # user order
-        zvals = [self.poly_z[i] if i < len(self.poly_z) else 0.0 for i in range(len(polys))]
-        inside = [point_in_poly_grid(xs, ys, poly) for poly in polys]
-        dists  = [dist_to_poly_boundary(X, Y, poly) for poly in polys]
-        for i in range(len(polys)):
-            mask_i = inside[i]
-            if i < len(polys) - 1:
-                mask_next = inside[i+1]
-                # inside i but outside next → blend
-                ring = mask_i & (~mask_next)
-                if ring.any():
-                    d_outer = dists[i][ring]
-                    d_inner = dists[i+1][ring]
-                    t = d_outer / (d_outer + d_inner + 1e-12)
-                    Z[ring] = (1.0 - t) * zvals[i] + t * zvals[i+1]
-                # inside i AND inside next → Z_i
-                nested = mask_i & mask_next
-                if nested.any():
-                    Z[nested] = zvals[i]
-            else:
-                # last polygon: inside → Z_last
-                if mask_i.any():
-                    Z[mask_i] = zvals[i]
-        return xs, ys, Z
-
-    def compute_and_plot_z(self):
-        xs, ys, Z = self.compute_Z()
-        extent = [xs.min(), xs.max(), ys.min(), ys.max()]
-
-        # 2D heatmap (single colorbar)
-        if self.im is None:
-            self.im = self.ax.imshow(Z, origin='lower', extent=extent, interpolation='nearest', cmap='terrain')
-            vmin, vmax = float(np.nanmin(Z)), float(np.nanmax(Z)); vmax = vmax if vmax != 0 else 1.0
-            self.im.set_norm(Normalize(vmin=vmin, vmax=vmax))
-            self.cbar = self.fig.colorbar(self.im, ax=self.ax, label='Z')
+            cur = nxt
         else:
-            self.im.set_data(Z); self.im.set_extent(extent)
-            vmin, vmax = float(np.nanmin(Z)), float(np.nanmax(Z)); vmax = vmax if vmax != 0 else 1.0
-            self.im.set_norm(Normalize(vmin=vmin, vmax=vmax))
-            if self.cbar: self.cbar.update_normal(self.im)
-        self.fig.canvas.draw_idle()
+            res = "endo"
 
-        # 3D surface (single colorbar; Z positive upwards; tight layout)
-        X, Y = np.meshgrid(xs, ys)
-        self.ax3d.cla()
-        surf = self.ax3d.plot_surface(X, Y, Z, cmap='terrain', linewidth=0, antialiased=False, rstride=1, cstride=1)
-        self.ax3d.set_xlabel("x (km)"); self.ax3d.set_ylabel("y (km)"); self.ax3d.set_zlabel("Z")
-        # Axis limits + box aspect to reduce empty space
-        self.ax3d.set_xlim(xs.min(), xs.max())
-        self.ax3d.set_ylim(ys.min(), ys.max())
-        zmin, zmax = float(np.nanmin(Z)), float(np.nanmax(Z))
-        if zmax == zmin: zmax = zmin + 1.0
-        self.ax3d.set_zlim(zmin, zmax)
-        try:
-            self.ax3d.zaxis.set_inverted(False)  # ensure positive-upwards
-            xr = xs.max()-xs.min(); yr = ys.max()-ys.min(); zr = max(zmax - zmin, 1e-9)
-            self.ax3d.set_box_aspect((xr, yr, zr))
-        except Exception:
-            pass
-        self.ax3d.view_init(elev=self.elev, azim=self.azim)
+        for v in visited:
+            status[v] = res
+        return res
 
-        # Single 3D colorbar
-        if self.cbar3d is not None:
-            try: self.cbar3d.remove()
-            except Exception: pass
-            self.cbar3d = None
-        self.cbar3d = self.fig3d.colorbar(surf, ax=self.ax3d, shrink=0.72, aspect=18, pad=0.02, label='Z')
+    return pd.Series([step(i) for i in range(len(df))], index=df.index, name="drain_type")
 
-        self.fig3d.canvas.draw_idle()
 
-    # ---------- Save (Z line + coords, 6 sig figs) ---------- #
+def nice_ticks(vmin: float, vmax: float, target: int = 8) -> np.ndarray:
+    span = vmax - vmin
+    if span <= 0:
+        return np.array([vmin])
+    raw_step = span / target
+    mag = 10 ** np.floor(np.log10(raw_step))
+    candidates = np.array([1, 2, 2.5, 5, 10]) * mag
+    step = candidates[np.argmin(np.abs(candidates - raw_step))]
+    start = np.ceil(vmin / step) * step
+    end = np.floor(vmax / step) * step
+    return np.arange(start, end + 0.5 * step, step)
 
-    def save_and_exit(self):
-        out_path = self.out_dir / f"{self.project}.UNIT"
-        write_unit_with_z_and_coords_km(out_path, self.polygons, self.poly_z)
-        print(f"Saved {len(self.polygons)} polygons to {out_path} (units: km; Z line + coords, 6 sig figs)")
-        plt.close(self.fig); plt.close(self.fig3d)
 
-# ---------------- File I/O ---------------- #
+# ----------------------------- Main Plotter -----------------------------
 
-def write_unit_with_z_and_coords_km(path: Path, polygons: List[List[Tuple[float,float]]], poly_z: List[float]) -> None:
-    """
-    Output (km):
-      # UNIT polygons generated <timestamp>
-      <Z_value>              <-- number only, no leading 'Z'
-      x y                    <-- 6 significant digits
-      ...
-    (blank line between polygons)
-    """
-    path.parent.mkdir(parents=True, exist_ok=True)
-    ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    with open(path, "w") as f:
-        f.write(f"# UNIT polygons generated {ts}\n")
-        for i, poly in enumerate(polygons):
-            z_val = poly_z[i] if i < len(poly_z) else 0.0
-            f.write(f"{z_val:.6g}\n")  # Z line, no 'Z ' prefix
-            for x, y in poly:
-                f.write(f"{x:.6g} {y:.6g}\n")
-            if i != len(polygons) - 1:
-                f.write("\n")
+def plot_tisc_project(project: str,
+                      min_discharge_quantile: float = 0.3,
+                      max_link_factor: float = 3.0):
 
-# ---------------- CLI ---------------- #
+    drainage_path = f"{project}.xyw"
+    erosion_path  = f"{project}.st"
+    xyzt_path     = f"{project}.xyzt"
+    bas_path      = f"{project}.bas"
+
+    if not os.path.exists(drainage_path):
+        raise FileNotFoundError(f"Drainage file not found: {drainage_path}")
+
+    have_erosion = os.path.exists(erosion_path)
+    have_xyzt    = os.path.exists(xyzt_path)
+    have_bas     = os.path.exists(bas_path)
+
+    # -- Topography & drainage --
+    df = load_drainage_xyw(drainage_path)
+    df["topo_m_clean"] = df["topo_m"]
+    df.loc[df["topo_m_clean"] <= -3e4, "topo_m_clean"] = np.nan
+
+    xs, ys, topo_grid = build_grid(df, "topo_m_clean")
+    x_min, x_max = xs.min(), xs.max()
+    y_min, y_max = ys.min(), ys.max()
+
+    valid_topo = topo_grid[np.isfinite(topo_grid)]
+    sea_vals   = valid_topo[valid_topo < 0]
+    land_vals  = valid_topo[valid_topo > 0]
+    topo_vmin  = np.nanpercentile(sea_vals, 25.0) if sea_vals.size > 0 else np.nanpercentile(valid_topo, 25.0)
+    topo_vmax  = np.nanmax(land_vals) if land_vals.size > 0 else np.nanmax(valid_topo)
+    topo_vmin  = min(topo_vmin, -1.0)
+    topo_vmax  = max(topo_vmax,  1.0)
+
+    bath_cmap = mpl.colormaps.get_cmap("Blues_r").resampled(128)
+    land_cmap = mpl.colormaps.get_cmap("terrain").resampled(128)
+    colors = np.vstack((bath_cmap(np.linspace(0.2, 1.0, 128)),
+                        land_cmap(np.linspace(0.25, 1.0, 128))))
+    bathy_land_cmap = mpl.colors.ListedColormap(colors, name="bathy_land")
+    topo_norm = mpl.colors.TwoSlopeNorm(vmin=topo_vmin, vcenter=0.0, vmax=topo_vmax)
+
+    df["drain_type"] = classify_routing(df)
+
+    dx_grid, dy_grid = estimate_grid_spacing(df)
+    max_link_len = max_link_factor * max(dx_grid, dy_grid)
+
+    flow_df = df[(df["water_m3s"] > 0) & (df["type"] != "S")].copy()
+    dx = flow_df["x_to"] - flow_df["x_km"]
+    dy = flow_df["y_to"] - flow_df["y_km"]
+    dist = np.sqrt(dx * dx + dy * dy)
+    flow_df = flow_df[dist <= max_link_len].copy()
+    if not flow_df.empty:
+        q_thresh = flow_df["water_m3s"].quantile(min_discharge_quantile)
+        flow_df = flow_df[flow_df["water_m3s"] >= q_thresh].copy()
+
+    exo_riv  = flow_df[flow_df["drain_type"] == "exo"].copy()
+    endo_riv = flow_df[flow_df["drain_type"] == "endo"].copy()
+
+    def make_segments(subdf: pd.DataFrame):
+        if subdf.empty:
+            return [], []
+        w = subdf["water_m3s"].values
+        wmin, wmax = np.percentile(w, [1, 99])
+        w = np.clip(w, wmin, wmax)
+        wn = (w - wmin) / (wmax - wmin + 1e-9)
+        widths = 0.2 + 2.5 * wn
+        segs = list(zip(subdf[["x_km", "y_km"]].to_numpy(),
+                        subdf[["x_to", "y_to"]].to_numpy()))
+        return segs, widths
+
+    exo_segs,  exo_w  = make_segments(exo_riv)
+    endo_segs, endo_w = make_segments(endo_riv)
+
+    # Lakes (remove single-node)
+    lake_df = df[df["type"] == "L"].copy()
+    lake_coords = list(zip(lake_df["x_km"].values, lake_df["y_km"].values))
+    lake_set = set(lake_coords)
+    multi_mask = []
+    for (x, y) in lake_coords:
+        has_neighbor = False
+        for dxn in (-dx_grid, 0.0, dx_grid):
+            for dyn in (-dy_grid, 0.0, dy_grid):
+                if dxn == 0.0 and dyn == 0.0:
+                    continue
+                if (x + dxn, y + dyn) in lake_set:
+                    has_neighbor = True
+                    break
+            if has_neighbor:
+                break
+        multi_mask.append(has_neighbor)
+    lake_df_multi = lake_df[np.array(multi_mask)] if len(lake_df) else lake_df
+    exo_lakes  = lake_df_multi[lake_df_multi["drain_type"] == "exo"]
+    endo_lakes = lake_df_multi[lake_df_multi["drain_type"] == "endo"]
+
+    # -- Erosion & norm --
+    eros_grid = None
+    eros_cmap = None
+    eros_norm = None
+    if have_erosion:
+        st_df = load_erosion_st(erosion_path)
+        eros_grid_df = st_df.pivot(index="y_km", columns="x_km", values="eros_rate_m_per_My")
+        eros_grid = eros_grid_df.reindex(index=ys, columns=xs).to_numpy()
+        eros_vals = eros_grid[np.isfinite(eros_grid)]
+        eros_max  = np.nanpercentile(np.abs(eros_vals), 99.0) if eros_vals.size > 0 else 1.0
+        eros_norm = mpl.colors.TwoSlopeNorm(vmin=-eros_max, vcenter=0.0, vmax=eros_max)
+        eros_cmap = mpl.colormaps.get_cmap("seismic")
+
+    # -- Deflection (w) --
+    w_grid = None
+    if have_xyzt:
+        xyzt_df = load_deflection_xyzt(xyzt_path)
+        w_grid_df = xyzt_df.pivot(index="y_km", columns="x_km", values="w")
+        w_grid = w_grid_df.reindex(index=ys, columns=xs).to_numpy()
+
+    # -- Prepare profiles (largest basin) --
+    profiles = None
+    if have_bas and eros_grid is not None and eros_norm is not None:
+        basins = load_basins(bas_path)
+        if basins:
+            largest_area, bas = max(basins, key=lambda t: t[0])
+            bas = bas.copy()
+            mask_len = np.isfinite(bas["length_km"]) & np.isfinite(bas["length_to_km"]) \
+                       & np.isfinite(bas["topo_m"]) & np.isfinite(bas["topo_to_m"])
+            mask_chi = np.isfinite(bas["chi_km"]) & np.isfinite(bas["chi_to_km"]) \
+                       & np.isfinite(bas["topo_m"]) & np.isfinite(bas["topo_to_m"])
+            bas_len = bas[mask_len]
+            bas_chi = bas[mask_chi]
+
+            # widths by discharge
+            q = bas["dischg_m3s"].values
+            if q.size > 0:
+                qmin, qmax = np.percentile(q, [1, 99])
+                q_clip = np.clip(q, qmin, qmax)
+                q_norm = (q_clip - qmin) / (qmax - qmin + 1e-9)
+                widths = 0.5 + 2.5 * q_norm
+            else:
+                widths = np.full(len(bas), 1.0)
+
+            # colors by eros_rate (same norm/cmap as erosion map)
+            colors_profile = eros_cmap(eros_norm(bas["eros_rate_m_per_My"].values))
+
+            len_segs = np.stack([
+                bas_len[["length_km", "topo_m"]].to_numpy(),
+                bas_len[["length_to_km", "topo_to_m"]].to_numpy()
+            ], axis=1) if len(bas_len) > 0 else np.empty((0, 2, 2))
+
+            chi_segs = np.stack([
+                bas_chi[["chi_km", "topo_m"]].to_numpy(),
+                bas_chi[["chi_to_km", "topo_to_m"]].to_numpy()
+            ], axis=1) if len(bas_chi) > 0 else np.empty((0, 2, 2))
+
+            profiles = dict(
+                largest_area=largest_area,
+                bas_len=bas_len, bas_chi=bas_chi,
+                len_segs=len_segs, chi_segs=chi_segs,
+                widths=widths, colors_profile=colors_profile
+            )
+
+    # ------------------ Figure layout (single page) ------------------
+    fig = plt.figure(figsize=FIG_SIZE, dpi=DPI)
+
+    # 3 rows x 2 columns (right col for colorbars)
+    gs = fig.add_gridspec(
+        3, 2,
+        width_ratios=WIDTH_RATIOS,
+        height_ratios=[
+            HEIGHT_RATIOS[0],
+            HEIGHT_RATIOS[1] if eros_grid is not None else 0.001,
+            HEIGHT_RATIOS[2] if profiles is not None else 0.001,
+        ],
+        wspace=WSPACE,
+        hspace=HSPACE,
+    )
+
+    # Axes
+    ax1 = fig.add_subplot(gs[0, 0])  # topo
+    ax2 = fig.add_subplot(gs[1, 0]) if eros_grid is not None else None  # erosion
+    if profiles is not None:
+        bottom_gs = gs[2, 0].subgridspec(1, 2, wspace=0.28)
+        ax_len = fig.add_subplot(bottom_gs[0, 0])
+        ax_chi = fig.add_subplot(bottom_gs[0, 1])
+    else:
+        ax_len = ax_chi = None
+
+    # ---- Panel 1: Topography + drainage ----
+    im1 = ax1.imshow(
+        topo_grid,
+        extent=[x_min, x_max, y_min, y_max],
+        origin="lower",
+        aspect="equal",
+        cmap=bathy_land_cmap,
+        norm=topo_norm,
+    )
+    if exo_segs:
+        ax1.add_collection(LineCollection(exo_segs, linewidths=exo_w, color=EXO_COLOR, alpha=0.8, label="Exorheic rivers"))
+    if endo_segs:
+        ax1.add_collection(LineCollection(endo_segs, linewidths=endo_w, color=ENDO_COLOR, alpha=0.8, label="Endorheic rivers"))
+    if not exo_lakes.empty:
+        ax1.scatter(exo_lakes["x_km"], exo_lakes["y_km"], s=10, edgecolors="none", c=EXO_COLOR, alpha=0.9, label="Exorheic lakes")
+    if not endo_lakes.empty:
+        ax1.scatter(endo_lakes["x_km"], endo_lakes["y_km"], s=12, edgecolors="none", c=ENDO_COLOR, alpha=0.9, label="Endorheic lakes")
+    ax1.set_xlim(x_min, x_max); ax1.set_ylim(y_min, y_max)
+    ax1.set_ylabel("y (km)")
+    ax1.set_title(f"{project}: Topography & Drainage")
+    ax1.set_xticks(nice_ticks(x_min, x_max)); ax1.set_yticks(nice_ticks(y_min, y_max))
+    ax1.legend(loc="lower left", fontsize=8)
+    cax1 = fig.add_subplot(gs[0, 1])
+    cbar1 = fig.colorbar(im1, cax=cax1); cbar1.set_label("Topography (m)")
+
+    # ---- Panel 2: Erosion + w contours ----
+    if eros_grid is not None and ax2 is not None:
+        im2 = ax2.imshow(
+            eros_grid,
+            extent=[x_min, x_max, y_min, y_max],
+            origin="lower",
+            aspect="equal",
+            cmap=eros_cmap,
+            norm=eros_norm,
+        )
+        ax2.set_xlabel("x (km)"); ax2.set_ylabel("y (km)")
+        title2 = f"{project}: Erosion rate (m/My)"
+        if w_grid is not None:
+            title2 += " & isostatic subsidence (w) contours"
+        ax2.set_title(title2)
+        ax2.set_xticks(nice_ticks(x_min, x_max)); ax2.set_yticks(nice_ticks(y_min, y_max))
+        cax2 = fig.add_subplot(gs[1, 1])
+        cbar2 = fig.colorbar(im2, cax=cax2); cbar2.set_label("Erosion rate (m/My)")
+
+        if w_grid is not None:
+            w_valid = w_grid[np.isfinite(w_grid)]
+            if w_valid.size > 0:
+                levels = np.linspace(np.nanmin(w_valid), np.nanmax(w_valid), 10)
+                cs = ax2.contour(xs, ys, w_grid, levels=levels, colors="k", linewidths=0.5, alpha=0.8)
+                ax2.clabel(cs, inline=True, fontsize=6, fmt="%.1f")
+
+    # ---- Panel 3 & 4: Profiles (largest basin) ----
+    if profiles is not None and ax_len is not None and ax_chi is not None:
+        la = profiles["largest_area"]
+        bas_len = profiles["bas_len"]; bas_chi = profiles["bas_chi"]
+        len_segs = profiles["len_segs"]; chi_segs = profiles["chi_segs"]
+        widths = profiles["widths"]; colors_profile = profiles["colors_profile"]
+
+        if len(len_segs) > 0:
+            lc_len = LineCollection(len_segs, linewidths=widths[bas_len.index], colors=colors_profile[bas_len.index], alpha=0.9)
+            ax_len.add_collection(lc_len)
+        ax_len.set_xlabel("Length along river (km)")
+        ax_len.set_ylabel("Elevation (m)")
+        ax_len.set_title(f"{project}: Length–elevation profile\nLargest basin ({la:.0f} km²)")
+        ax_len.autoscale()
+
+        if len(chi_segs) > 0:
+            lc_chi = LineCollection(chi_segs, linewidths=widths[bas_chi.index], colors=colors_profile[bas_chi.index], alpha=0.9)
+            ax_chi.add_collection(lc_chi)
+        ax_chi.set_xlabel("Chi (km)")
+        ax_chi.set_title(f"{project}: Chi–elevation profile")
+        ax_chi.autoscale()
+
+    # ------------------ Final layout tweaks (safe & robust) ------------------
+    # 1) Profiles: scale and lower a bit, but clamp to margins
+    for ax in [ax_len, ax_chi]:
+        if ax is None:
+            continue
+        left, bottom, width, height = ax.get_position().bounds
+        width  *= PROFILE_SCALE
+        height *= PROFILE_SCALE
+        bottom += PROFILE_DY
+        left   = max(LEFT_MIN,  min(left,   RIGHT_MAX - width))
+        bottom = max(BOTTOM_MIN, min(bottom, TOP_MAX  - height))
+        ax.set_position([left, bottom, width, height])
+
+    # 2) Colorbars: shrink width to CBAR_SHRINK, keep right edge fixed and clamp
+    for cax in [locals().get("cax1"), locals().get("cax2")]:
+        if cax is None:
+            continue
+        left, bottom, width, height = cax.get_position().bounds
+        new_w   = width * CBAR_SHRINK
+        new_l   = left + (width - new_w)  # right edge fixed
+        new_l   = max(LEFT_MIN, min(new_l, RIGHT_MAX - new_w))
+        bottom  = max(BOTTOM_MIN, min(bottom, TOP_MAX - height))
+        cax.set_position([new_l, bottom, new_w, height])
+
+    # ------------------ Save ------------------
+    svg_path = f"{project}.svg"
+    jpg_path = f"{project}.jpg"
+    fig.savefig(svg_path)
+    fig.savefig(jpg_path, dpi=300)
+    print(f"Saved: {svg_path}\nSaved: {jpg_path}")
+
+
+# ----------------------------- CLI -----------------------------
 
 def main():
-    ap = argparse.ArgumentParser(description="Draw polygons for TISC UNIT files (km units) + live 3D")
-    ap.add_argument("project_or_prm", help="Project name (expects <name>.PRM) or a path to a .PRM file")
-    ap.add_argument("--outdir", default=".", help="Output directory (default: current folder)")
-    args = ap.parse_args()
+    parser = argparse.ArgumentParser(description="Plot TISC outputs for a project into one multi-panel figure.")
+    parser.add_argument("project", help="Project name (expects project.xyw and optionally .st, .xyzt, .bas)")
+    parser.add_argument("--min-discharge-quantile", type=float, default=0.3,
+                        help="Quantile below which rivers are not plotted (default 0.3).")
+    parser.add_argument("--max-link-factor", type=float, default=3.0,
+                        help="Max allowed routing-link length as factor of grid spacing.")
+    args = parser.parse_args()
 
-    prm_input = Path(args.project_or_prm)
-    if prm_input.suffix.lower() == ".prm" and prm_input.exists():
-        prm_path = prm_input; project = prm_path.stem
-    else:
-        project = args.project_or_prm; prm_path = Path(f"{project}.PRM")
+    plot_tisc_project(
+        project=args.project,
+        min_discharge_quantile=args.min_discharge_quantile,
+        max_link_factor=args.max_link_factor,
+    )
 
-    if not prm_path.exists():
-        print(f"Warning: PRM file not found: {prm_path} — using default km view.", file=sys.stderr)
-        dom_m = {"xmin": -1_000.0, "xmax": 1_000.0, "ymin": -1_000.0, "ymax": 1_000.0, "Nx": 81, "Ny": 81}
-    else:
-        dom_m = parse_prm(prm_path)
-        if dom_m.get("Nx") is None: dom_m["Nx"], dom_m["Ny"] = 81, 81
-
-    km = lambda v: None if v is None else v/1000.0
-    print(f"Loaded domain from {prm_path if prm_path.exists() else '(none)'} (km): "
-          f"x in [{km(dom_m['xmin'])}, {km(dom_m['xmax'])}], y in [{km(dom_m['ymin'])}, {km(dom_m['ymax'])}] | "
-          f"Nx={dom_m.get('Nx')} Ny={dom_m.get('Ny')}")
-
-    app = PolyApp(dom_m, project, Path(args.outdir))
-    plt.show()
 
 if __name__ == "__main__":
     main()

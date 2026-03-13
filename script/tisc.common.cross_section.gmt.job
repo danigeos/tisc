@@ -1,7 +1,7 @@
 if (-f $prj.pfl) then
 echo -n plotting CROSS SECTION... 
 set dens 	= `awk '(NR==2) {print $0; exit;}' $prj.pfl`
-set numcols 	= `awk '(NR==4) {print NF; exit;}' $prj.pfl`
+set numcols = `awk '(NR==4) {print NF; exit;}' $prj.pfl`
 set vert_shift_CS = 2.5
 
 awk '{if (NR>2) print $0}' $prj.pfl | awk '{print NR,$0}' | sort -nr | sed 's/^[0-9]* //' > $tmp.2.tmp

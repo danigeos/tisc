@@ -26,6 +26,13 @@
 #define PRINT_WARNING(...)	{if (verbose_level>=3) {fprintf(stderr, "\nWarning: In %s: ", __func__); fprintf(stderr, __VA_ARGS__);}}	/**/
 #define PRINT_DEBUG(...)	{if (verbose_level>=4) {fprintf(stderr, "\nDebug: In %s: ", __func__); fprintf(stderr, __VA_ARGS__);}} 	/*Used to track position in the code*/
 #define PRINT_DEBUGPLUS(...){if (verbose_level>=5) {fprintf(stderr, "\nDebug+: In %s: ", __func__); fprintf(stderr, __VA_ARGS__);}} 	/*Used to help on code debugging*/
+#define PRINT_ARRAY_INFO(array, name, units) {\
+	    float max=-1e19, min=1e19, vol=0;\
+	    for (int i=0; i<Nx; i++) {\
+	    	    vol += array[i]*dx;\
+	    	    if (max<array[i])  max=array[i];\
+	    	    if (min>array[i])  min=array[i];}\
+	    PRINT_SUMLINE("%s:  max= %.1f %s\tmin= %.1f %s\tintegr=%.2e %s*m", name, max, units, min, units, vol, units);}
 #define PRINT_GRID_INFO(grid, name, units) {\
 	    float max=-1e19, min=1e19, vol=0;\
 	    for (int i=0; i<Ny; i++)    for (int j=0; j<Nx; j++) {\

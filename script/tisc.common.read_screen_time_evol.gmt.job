@@ -1,0 +1,17 @@
+cat $prj.screen | \
+    awk '{\
+    	if ($1=="T=") time=$2;\
+    	if ($1=="lake") print time, $8, $6, $13, $10;\
+    }' > $prj.time-lake_elev 
+
+cat $prj.screen | \
+    awk '{\
+        if ($1=="T=") time=$2;\
+        if (substr($1,0,15)=="Sediment_region") print time, $2;\
+    }' > $prj.time-sedim_vol
+
+cat $prj.screen | \
+    awk '{\
+        if ($1=="T=") time=$2;\
+        if ($1=="rain_now") print time, $3, $6;\
+    }' > $prj.time-water

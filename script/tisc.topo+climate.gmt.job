@@ -18,11 +18,9 @@ psbasemap -JX$size -R$Region -B$ticklabels\:"x, longitude (km)":/$ticklabels\:"y
 source $tisc_dir/script/tisc.common.topo+drainage.gmt.job
 
 #PRECIPITATION
-if (-r $prj.xyw) then 
 set min_rain = 1.8
 echo min_rain = $min_rain
 source $tisc_dir/script/tisc.common.rain.gmt.job
-endif
 
 #ICE
 source $tisc_dir/script/tisc.common.ice.gmt.job

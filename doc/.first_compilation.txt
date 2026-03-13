@@ -1,0 +1,20 @@
+First compilation of tisc in cuba by danielgc
+/home/danielgc/software/tisc/src
+Mon Jan  3 19:34:19 CET 2005
+
+Login: danielgc       			Name: Daniel Garcia-Castellanos
+Directory: /home/danielgc           	Shell: /bin/csh
+On since Mon Dec 27 16:27 (CET) on :0,    idle 103 days 0:34, from console
+On since Mon Dec 27 16:27 (CET) on pts/0, idle 7 days 3:06
+On since Tue Dec 28 17:42 (CET) on pts/1, idle 5 days 23:57 (messages off)
+On since Mon Dec 27 16:27 (CET) on pts/2 (messages off)
+On since Mon Dec 27 16:27 (CET) on pts/3, idle 4 days 10:28 (messages off)
+On since Tue Dec 28 17:47 (CET) on pts/4, idle 6 days 1:42 (messages off)
+On since Mon Dec 27 16:27 (CET) on pts/5, idle 4:15 (messages off)
+On since Thu Dec 30 05:46 (CET) on pts/6, idle 4 days 5:14 (messages off)
+On since Mon Dec 27 16:27 (CET) on pts/7, idle 4:29 (messages off)
+On since Thu Dec 30 13:21 (CET) on pts/8, idle 3 days 1:06 (messages off)
+On since Tue Dec 28 17:24 (CET) on pts/9, idle 6 days 2:09 (messages off)
+New mail received Mon Nov  8 16:32 2004 (CET)
+     Unread since Fri Nov  5 17:55 2004 (CET)
+No Plan.

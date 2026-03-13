@@ -1,0 +1,17 @@
+#calculate index of capturability, vulnerability, or imminence of piracy at a node C=(Cx, Cy) as:
+#   Ic(C) = Ad(C)/MAX(|V-C|+(zd(V,C)-z(C)), for all V)
+#where:
+#C = is the node to be diverted where the index Ic is calculated.
+#Ad(C) = Catchment area above C.
+#V are all the nodes with lower topography than C that could potentially capture. z(V)<z(C).
+#|V-C|=horizontal distance from C to V.
+#zd is the elevation of the lowest divide between V and C).
+#
+#Ic is a unitless index between 0 and infinity.
+# Ic=0 if Ad=0
+# Ic->inf if d=0
+# Ic->inf if zd->z(C)
+#
+# Problem: an avulsion in a meander would give a very high Ic!  Although high Ic will be found in very few nodes only.
+# Add proportionality with the headloss [m] between C and V.
+# Add proportionality between the distance of the old and new pathways that are not shared.

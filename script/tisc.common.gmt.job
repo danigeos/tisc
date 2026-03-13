@@ -75,16 +75,16 @@ set dx	= `echo $Lx \/ \($Nx-1\) | bc -l`
 set dy	= `echo $Ly \/ \($Ny-1\) | bc -l`
 set dxy = `awk -v dx=$dx -v dy=$dy 'BEGIN{print sqrt(dx*dx+dy*dy)}'`
 if (-r $prj.PRM) then
-	set dt   	= `awk '{if ($1=="dt")        {print $2; exit;}}' $prj.PRM`
-	set Timeini 	= `awk '{if ($1=="Timeini")   {print $2; exit;}}' $prj.PRM`
-	set Timefinal 	= `awk '{if ($1=="Timefinal") {print $2; exit;}}' $prj.PRM`
-	set zmin 	= `awk '{if ($1=="zmin")      {print $2/1e3; exit;}}' $prj.PRM`
-	set zmax 	= `awk '{if ($1=="zmax")      {print $2/1e3; exit;}}' $prj.PRM`
+	set dt   	    = `awk '{if ($1=="dt")        {v=$2;}} END{print v;}' $prj.PRM`
+	set Timeini 	= `awk '{if ($1=="Timeini")   {v=$2;}} END{print v;}' $prj.PRM`
+	set Timefinal 	= `awk '{if ($1=="Timefinal") {v=$2;}} END{print v;}' $prj.PRM`
+	set zmin 	    = `awk '{if ($1=="zmin")      {v=$2;}} END{print v;}' $prj.PRM`
+	set zmax 	    = `awk '{if ($1=="zmax")      {v=$2;}} END{print v;}' $prj.PRM`
 endif
 if ($zmin == "") set zmin = $props[8]
 if ($zmax == "") set zmax = $props[9]
-set zminm = `echo  $zmin \* 1000 | bc -l`
-set zmaxm = `echo  $zmax \* 1000 | bc -l`
+set zminkm = `awk -v v=$zmin 'BEGIN{print v/1e3}'`
+set zmaxkm = `awk -v v=$zmax 'BEGIN{print v/1e3}'`
 set ZRegion	= $zmin/$zmax
 set Timenow = `awk -v dt=$dt '(NR==1) {txt=substr($(NF-1),4,8); if (dt>.1) printf("%.1f", txt); else if (dt>.01) printf("%.2f", txt); else printf("%.3f", txt); exit;}' $prj.hrz`
 set xtime = `echo $x0 + $Lx \* .001  | bc -l`
@@ -164,7 +164,7 @@ set col_lin	= 1/255/0/120ta
 set col_masstr	= 0/0/0
 
 set ticklabels 	= `awk -v meanL=$meanL 'BEGIN{if (meanL>=990) print "a500f50"; else if (meanL>=390) print "a200f50"; else if (meanL>=90) print "a50f10"; else print "a10f1";}'`
-set zticklabels	= `awk -v zmin=$zmin -v zmax=$zmax 'BEGIN{if (zmax-zmin>=30) print "a10f5g10"; else if (zmax-zmin>=10) print "a4f1g4"; else if (zmax-zmin>=3) print "a1f.5g1"; else if (zmax-zmin>=1) print "a.4f.1g.4"; else print "a.1f.05g.1";}'`
+set zticklabels	= `awk -v zmin=$zminkm -v zmax=$zmaxkm 'BEGIN{if (zmax-zmin>=30) print "a10f5g10"; else if (zmax-zmin>=10) print "a4f1g4"; else if (zmax-zmin>=3) print "a1f.5g1"; else if (zmax-zmin>=1) print "a.4f.1g.4"; else print "a.1f.05g.1";}'`
 
 if (-r $prj.xyw) then
 	set sea_level = `awk '{if (NR==1) printf ("%.0f",$(NF-1)); exit;}' $prj.xyw`
@@ -223,7 +223,7 @@ cat - <<END>  $tmp.lakes_endorh_cpt.tmp
 	.49	$endoR	$endoG	$endoB	1	$endoR	$endoG	$endoB
 END
 
-if (! $?min_rain) set min_rain = .5
+if (! $?min_rain) set min_rain = 0
 cat - <<END>  $tmp.rain_cpt.tmp 
 #0		255	150	0	$min_rain 255	255	0
 $min_rain 	21      234     255     1     21      234     255

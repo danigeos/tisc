@@ -1,0 +1,64 @@
+* TISC: TECTONICS, ISOSTASY, SURFACE PROCESSES, AND CLIMATE PLANFORM MODELING *
+version	TISC_2017-05-19
+xmin		-1.5e+05	Western model limit coordinate [m]
+xmax		3.5e+05	Eastern model limit coordinate [m]
+ymin		-2.5e+05	Southern model limit coordinate [m]
+ymax		2.5e+05	Northern model limit coordinate [m]
+zmin		-3000	Northern model limit coordinate [m]
+zmax		1000	Northern model limit coordinate [m]
+Nx		201	E-W direction grid points. 
+Ny		201	N-S direction grid points
+zini		100	Initial altitude [m] above sea level (added to the initial
+random_topo	10	Adds noise to initial topo between -random_topo/2 and 
+
+densasthen	3250	Density beneath the lithospheric plate, at the isostatic
+denscrust	2850	Mean density of crust (used for the basement).
+densinfill	2850	Used only if topoest==1. Infill density used to fill
+denssedim	2200	Sediment density at deposition (bulk, including pores and
+densenv		0	Environment density (air or water) above the existing blocks.
+sed_porosity 0.35		Mean porosity of sediment at deposition (seafloor). For
+compact_depth 2000	Depth at which sediment porosity is reduced by a factor e,
+
+Timeini		0	Initial time.
+Timefinal	15	Final time.
+dt 		1	Time step (>0, time increment or interval) for flexure and
+dt_eros		0.05	Approximate dt for surface processes (will be adjusted to
+dt_record	5	Time lag between records of sedimentary horizons (time lines)
+
+isost_model	1	Isostasy mechanism: 
+Te		2.5e+04	Default EET [m] when no *.EET file is given. Te=0 => local
+tau		1	Relaxation time in Myr (used only for the viscoelastic plate model:
+boundary_conds	5	Boundary conditions for flexure at N, S, E, W (4 
+water_load	1	To take into account sea+lake load and allow for temporal sea
+Px		0	Horizontal tectonic force in x (compressive => >0)
+Py		0	Horizontal tectonic force in y
+Pxy		0	Horizontal tectonic shear force xy
+
+hydro_model	1	Defines the hydrological (climate&drainage) model. 
+rain		500	[l/m2/yr]=[mm/yr]=[1.58e-8 m3/m2/s].
+Krain		500	If hydro_model=1: proportionality of runoff with 
+windazimut	90	If hydro_model>=2: azimut of wind flow direction in 
+relhumid	1	If hydro_model==3: humidity factor of incomming wind 
+CXrain		0	If hydro_model=1: proportionality of runoff with x (distance
+CYrain		0	If hydro_model=1: proportionality of runoff with y 
+evaporation	0	Evaporation rate at lakes [l/m2/yr]=[mm/yr]. evaporation>runoff
+lost_rate	0	Water evapotranspirated per river unit length [%/km]
+temp_sea_level	8	If hydro_model>=2 or K_ice_eros>0: Temperature at sea level
+
+erosed_model	6	Defines the erosion/sedimentation model.
+Keroseol	0.1	Continental background erosion rate (ratio per My, [m/(m·My)]).
+Ksedim  	100	Additional sedimentation rate below sea level [m/My].
+Kerosdif   	0.2	Diffusive transport coefficient [m2/yr] (e.g., Ks in 
+critical_slope	0	Maximum surface slope (slope triggering landsliding, 
+K_river_cap	60	For erosed_model>=2: Constant for river transport capacity
+erodibility	1.2e+05	This default erodibility value is ignored for units with a
+erodibility_sed	6e+04	Same as 'erodibility' but for sediments.
+l_fluv_sedim	2.5e+04	Sedimentation decay distance [m] (fluvial aggradation 
+deform_sed	1	0 means that sediment units will remain steady (velocity =0); 1
+eros_bound_cond	0000	Boundary Conditions for surface processes at the N, S,
+K_ice_eros	0	Constant of ice incision rate relating ice sliding velocity to
+
+verbose_level	1	Specify the level of runtime prints in stdout.
+switch_files	1	For extra file output: see files *.bas *.all *.lakes in
+mode_interp	4	Default interpolation mode for input files. See
+switch_ps	1	For postscript graphic output (uses GMT4 shell scripts).

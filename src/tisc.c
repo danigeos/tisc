@@ -16,7 +16,7 @@ Memory debugging with:
 	-DONE by M. Berry. Implement sediment load effects on transport and erosion (Sklar). 
 	-Implement transitory water flow. Interesting for acceleration of erosion during lake overtopping.
 	-DONE. Filter part of the surface water to the lowest surrounding node at 2-cell distance (16 candidates), to simulate underground that accelerates capture. -Alternative: smooth out the discharge grid to simulate underground flow.
-	-DONE. Solved bug in erosed_model 6.
+	-DONE. Solve bug in erosed_model 6.
 	-DONE. Implement sediment compaction (in calculate_topo and when writting the hrz/pfl files).
 	-DONE. Add the water layer to the pfl profile, as in tAo.
 	-DONE. Find water divides: the maximum swimming distance with the neigbouring cells. In write_file_drainage.
@@ -104,6 +104,7 @@ int inputs (int argc, char **argv)
 
 	/*Version of TISC is matched against the parameters file *.PRM*/
 	/*¡¡ UPDATE template.PRM !!*/
+	//defined in tisc/config.mk
 	strcpy(version, VERSION);
 
 	/*Default parameter values are read from ./tisc/doc/template.PRM:*/
@@ -1446,7 +1447,8 @@ int Write_Ouput()
 			system(command);
 		}
 		else {
-			sprintf(command, "tisc.plot.py %s; mv -f %s.jpg %s%03d.jpg", projectname, projectname, projectname, n_image);
+			if (strlen(gif_geom)<2) sprintf(gif_geom, " --elev 30 --fov 140");
+			sprintf(command, "tisc.plot.py %s %s; mv -f %s.jpg %s%03d.jpg", projectname, gif_geom, projectname, projectname, n_image);
 			if (verbose_level>=3) 
 				fprintf(stdout, "\nPlot files '%s.xvg' and %s%03d.jpg to be produced with command:\n%s\n", projectname, projectname, n_image, command) ;
 			system(command);
@@ -1455,7 +1457,7 @@ int Write_Ouput()
 		if (switch_ps==2) {
 			/*crop by default to the border*/
 			if (strlen(gif_geom)<2) sprintf(gif_geom, "-trim -background Khaki -label 'TISC software: %s' -gravity South -append", projectname);
-			sprintf(command, "magick convert -density 300 %s.ps %s -interlace NONE  %s%03d.jpg", /*-fill \"#ffff99\" -draw \"rectangle 8,8 90,25\" -fill \"#000055\" -font helvetica -draw \"text 12,20 t_%+3.2f_My \" */
+			sprintf(command, "magick -density 300 %s.ps %s -interlace NONE  %s%03d.jpg", /*-fill \"#ffff99\" -draw \"rectangle 8,8 90,25\" -fill \"#000055\" -font helvetica -draw \"text 12,20 t_%+3.2f_My \" */
 				projectname, gif_geom, projectname, n_image);
 			if (verbose_level>=3)
 				fprintf(stdout, "\n%s\n", command) ;

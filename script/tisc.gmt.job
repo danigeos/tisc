@@ -22,6 +22,13 @@ pstext	-JX -R -O -G0 -W255/255/255 -K <<END >> $ps
 	$xtime	$ytime	13 0 1 9	$Timenow My
 END
 
+#PRECIPITATION
+set min_rain = .5
+echo min_rain = $min_rain
+source $tisc_dir/script/tisc.common.rain.gmt.job
+#grdinfo $tmp.rain.grd.tmp 
+#cat $tmp.rain_cpt.tmp
+
 
 #UPPER RIGHT: GEOLOGY or THIN SHEET VELOCITY FIELD & BLOCK THICKNESS
 psbasemap -JX$size -R$Region -B$ticklabels\:"x (km)":/$ticklabels\:"y (km)":Nsew \
@@ -68,9 +75,11 @@ if (-r $prj.pfl) then
 	set width_CS = `echo  $width  | bc -l`
 	set horz_shift_CS = `echo  $width + $separation  | bc -l`
 
-	psbasemap -JX$width_CS/$height_CS -R0/$dmax/$zmin/$zmax \
+set echo
+	psbasemap -JX$width_CS/$height_CS -R0/$dmax/$zminkm/$zmaxkm \
 		-B$ticklabels\:"distance (km)":/$zticklabels\:"z (km)":NsEw \
 		-O -K -X$horz_shift_CS -Y$vert_shift_CS >> $ps
+unset echo
 	source $tisc_dir/script/tisc.common.cross_section.gmt.job
 else
 if (-r $prj.eeth) then
