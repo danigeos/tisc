@@ -88,6 +88,6 @@ K_ice_eros	0	Constant of ice incission rate relating ice sliding velocity to ero
 
 #INPUT/OUTPUT:
 switch_files	1	For extra file output.
-switch_ps	1	For postscript graphic output (uses GMT shell scripts).
+switch_ps	2	For postscript graphic output (uses GMT shell scripts).
 
 
