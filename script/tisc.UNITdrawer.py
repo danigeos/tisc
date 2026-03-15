@@ -415,7 +415,10 @@ def main():
     ap = argparse.ArgumentParser(description="Draw polygons for TISC UNIT files (km units) + live 3D")
     ap.add_argument("project_or_prm", help="Project name (expects <name>.PRM) or a path to a .PRM file")
     ap.add_argument("--outdir", default=".", help="Output directory (default: current folder)")
-    args = ap.parse_args()
+    args, unknown = ap.parse_known_args()
+
+    if unknown:
+        print(f"Warning: Unknown parameters passed and ignored: {unknown}")
 
     prm_input = Path(args.project_or_prm)
     if prm_input.suffix.lower() == ".prm" and prm_input.exists():

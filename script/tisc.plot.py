@@ -350,6 +350,7 @@ def plot_tisc_project(project: str,
         eros_grid = eros_grid_df.reindex(index=ys, columns=xs).to_numpy()
         eros_vals = eros_grid[np.isfinite(eros_grid)]
         eros_max  = np.nanpercentile(np.abs(eros_vals), 99.0) if eros_vals.size > 0 else 1.0
+        if eros_max == 0: eros_max = 1.0
         eros_norm = mpl.colors.TwoSlopeNorm(vmin=-eros_max, vcenter=0.0, vmax=eros_max)
         eros_cmap = mpl.colormaps.get_cmap("seismic")
 
@@ -544,7 +545,10 @@ def main():
                         help="Quantile below which rivers are not plotted (default 0.3).")
     parser.add_argument("--max-link-factor", type=float, default=3.0,
                         help="Max allowed routing-link length as factor of grid spacing.")
-    args = parser.parse_args()
+    args, unknown = parser.parse_known_args()
+
+    if unknown:
+        print(f"Warning: Unknown parameters passed and ignored: {unknown}")
 
     plot_tisc_project(
         project=args.project,
