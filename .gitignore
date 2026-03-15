@@ -2,7 +2,6 @@
 older_version_backups/
 runs/
 more_on_TISC/
-"more on tisc"/
 
 # === General Ignores ===
 /bin/*
@@ -14,18 +13,5 @@ more_on_TISC/
 .DS_Store
 
 # === Ignored Untracked Files ===
-demo/3_flexure/flex.gif
-demo/3_flexure/flex.jpg
-demo/4_river_transport/conic_island030.jpg
-demo/4_river_transport/conic_island031.jpg
-demo/4_river_transport/conic_island040.jpg
-demo/6_tectonics/.gmtcommands4
-demo/6_tectonics/demo.jpg
-demo/6_tectonics/demo.ps
-demo/6_tectonics/demo000.jpg
-demo/6_tectonics/demo001.jpg
-demo/6_tectonics/demo010.jpg
-demo/6_tectonics/demo011.jpg
 src/.tags
 src/tags
-src/globals.c
