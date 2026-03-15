@@ -1,7 +1,6 @@
 #!/bin/csh
 ##############################################################################
-#job file to produce postscript graphic files of tAo3D results with GMT 3.0
-#	Daniel Garcia-Castellanos, 1994-1996.
+#job file to produce postscript graphic files of TISC results with GMT 4.0
 ##############################################################################
 #Syntax: 	tisc.gmt.job 'model-root-name' 
 ##############################################################################
@@ -76,7 +75,7 @@ set disch1 = .1
 #set disch2 = 500
 #set disch3 = 500
 psbasemap -JX$size -R$Region -B$ticklabels\:"":/$ticklabels\:"":nSeW \
-		-Y12 -X2.5 -K -P >! $ps
+		-Y8 -X2.5 -K -P >! $ps
 source $tisc_dir/script/tisc.common.topo+drainage.gmt.job
 
 set slopel = .05 #.015  #slope limit to be plot in red
@@ -86,12 +85,12 @@ awk '{if (substr($1,1,1)!="#" && substr($1,1,1)!=">" && $3>=dl && $5!="S" && $5!
 		slope=-($10-$6)/dist; area=$NF*dx*dy; \
 		slopelaux=slopel/(1^(-.4))*($3^(-.4)); \
 		if (slope<slopel && $6>2000) {\
-			print $1, $2; print $8, $9; print ">",slope, area\
+			print $1, $2; print $9, $10; print ">",slope, area\
 		}\
 	}\
 	}}' \
 	dl=$disch1 slopel=$slopel dx=$dx dy=$dy $prj.bas | \
-	psxy -JX -R -M -W1/255 -O -K >> $ps 
+	psxy -JX -R -M -W1/0/0/255 -O -K >> $ps 
 
 pstext	-JX -R$Region -O -G255 -K <<END >> $ps 
 	$xt	$yt	11 0 1 3	topography + drainage   t=$Timenow My
@@ -130,28 +129,77 @@ awk '{if ($3>=dl) if (d=sqrt(($8-$1)*($8-$1)+($9-$2)*($9-$2))) printf ("%.1f\t%.
 	sort -u | sort -n |\
 	psxy -JX -R -W1 -Sp -O -K >> $ps
 awk '{if ($1>0 && $2>0) {print log($1) "\t" log($2)}}' $tmp.area-slope.xy.tmp > $tmp.inp_ajuste.tmp
-trend1d $tmp.inp_ajuste.tmp -Np2 -Fxm | sort -u | sort -n > $tmp.res_ajuste.log.tmp
-set coeff=`awk '{if (NR==2) {a1=$1; b1=$2;} if (NR==17) {a2=$1; b2=$2; exit} } END{printf("%.3f",(b2-b1)/(a2-a1));}' $tmp.res_ajuste.log.tmp`
-echo "Coefficient theta (curvature) =" $coeff
-echo basin_eros_rate = $basin_eros_rate "m/My"
+set has_pts = `wc -l < $tmp.inp_ajuste.tmp | awk '{print ($1 > 2 ? 1 : 0)}'`
+if ( "$has_pts" == "1" ) then
+	trend1d $tmp.inp_ajuste.tmp -Np2 -Fxm | sort -u | sort -n > $tmp.res_ajuste.log.tmp
+	set coeff=`awk '{if (NR==2) {a1=$1; b1=$2;} if (NR==17) {a2=$1; b2=$2; exit} } END{if(a2!=a1) printf("%.3f",(b2-b1)/(a2-a1)); else print "0.000";}' $tmp.res_ajuste.log.tmp`
+	echo "Coefficient theta (curvature) =" $coeff
+	echo basin_eros_rate = $basin_eros_rate "m/My"
 
-awk '{print exp($1) "\t" exp($2)}' $tmp.res_ajuste.log.tmp |\
-	awk '{n++; if (!(n%m)) print $0}' m=1 |\
-	sort -u | sort -n |\
-	psxy -JX -R -W6ta -O -K >> $ps
-pstext	-JX -R -O -G0 -K <<END >> $ps 
-	100000000000 .0002	9 0 1 BR	slope-area logarithmic profile; theta = $coeff
+	awk '{print exp($1) "\t" exp($2)}' $tmp.res_ajuste.log.tmp |\
+		awk '{n++; if (!(n%m)) print $0}' m=1 |\
+		sort -u | sort -n |\
+		psxy -JX -R -W6ta -O -K >> $ps
+	pstext	-JX -R -O -G0 -K <<END >> $ps 
+		100000000000 .0002	9 0 1 BR	slope-area logarithmic profile; theta = $coeff
 END
+endif
 endif
 
 
+#GRAINSIZE DIAGRAM
+if (-r $prj.grainsize) then
+echo plotting GRAINSIZE...
+if (-r $prj.bas) then
+	set shift_x = $horz_shift
+	set shift_y = 0
+else
+	set shift_x = 0
+	set shift_y = $vert_shift
+endif
+psbasemap -JX$size -R$Region -B$ticklabels\nSew -X$shift_x -Y$shift_y -O -K >> $ps
+
+awk '{if (substr($1,1,1)!="#" && substr($1,1,1)!=">" && NF>2 && $NF>0 && $NF!="NaN" && $NF!="nan") print $1, $2, $NF}' $prj.grainsize >! $tmp.grainsize.xyz.tmp
+set has_data = `wc -l < $tmp.grainsize.xyz.tmp | awk '{print ($1 > 0 ? 1 : 0)}'`
+if ( $has_data ) then
+	xyz2grd $tmp.grainsize.xyz.tmp -G$tmp.grainsize.grd.tmp -I$dx/$dy -R$Region
+	grdinfo $tmp.grainsize.grd.tmp 
+	set zvals = `grdinfo -C $tmp.grainsize.grd.tmp | tail -1 | awk '{print $6, $7}'`
+	if ( "$zvals" == "" ) set zvals = "0 0"
+	
+	set is_nan = `echo $zvals | awk '{if ($1 == "NaN" || $1 == "nan") print 1; else print 0}'`
+	if ( "$is_nan" == "0" ) then
+		set is_flat = `echo $zvals | awk '{if ($2 - $1 < 1e-4) print 1; else print 0}'`
+		if ( "$is_flat" == "1" ) then
+			set cpt_range = `echo $zvals | awk '{min=$1-1; max=$2+1; if(min<0) min=0; if(max<=min) max=min+1; print min "/" max "/0.1"}'`
+			makecpt -Crainbow -T$cpt_range -Z >! $tmp.grainsize_cpt.tmp
+		else
+			grd2cpt $tmp.grainsize.grd.tmp -Crainbow -Z >! $tmp.grainsize_cpt.tmp
+		endif
+		
+		# Remove NaN color definition to make empty regions strictly transparent
+		grep -v "^N" $tmp.grainsize_cpt.tmp >! $tmp.grainsize_cpt_trans.tmp
+		mv -f $tmp.grainsize_cpt_trans.tmp $tmp.grainsize_cpt.tmp
+		
+		grdimage $tmp.grainsize.grd.tmp -C$tmp.grainsize_cpt.tmp -JX -R -O -K >> $ps
+		psscale -C$tmp.grainsize_cpt.tmp -D4/-2.5/6/.3h -B/:"grainsize (m)": -L -O -K >> $ps
+	endif
+endif
+
+pstext	-JX -R$Region -O -G255 -K <<END >> $ps 
+	$xt	$yt	11 0 1 3	grainsize top unit
+END
+
+# Shift back so the rest of the script behaves exactly as it did before
+psxy -JX -R -T -X-$shift_x -Y-$shift_y -O -K >> $ps
+endif
+
 
 #PALETAS DE COLORES:
-psscale -C$tmp.topo_palet.tmp 	 -D-1/-2.5/11/.3h  -B/:"elevation (m)": -L -O -K >> $ps
-psscale -C$tmp.erosrate_cpt.tmp  -D-1/-4.5/11/.3h  -B/:"eros.-sedim. (m/My)": -L -O -K >> $ps
+#psscale -C$tmp.topo_palet.tmp 	 -D-1/-2.5/11/.3h  -B/:"elevation (m)": -L -O -K >> $ps
+#psscale -C$tmp.erosrate_cpt.tmp  -D-1/-4.5/11/.3h  -B/:"eros.-sedim. (m/My)": -L -O -K >> $ps
 
 psbasemap -JX -R -B:: -O >> $ps
 
 
 rm $tmp.*.tmp
-

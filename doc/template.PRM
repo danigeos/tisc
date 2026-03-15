@@ -44,6 +44,8 @@ sed_porosity .3		Mean porosity of sediment at deposition (seafloor). For
 				just to convert eroded/deposited volumes into bulk rock mass.
 compact_depth 3000	Depth at which sediment porosity is reduced by a factor e,
 				due to compaction [m]. 0 (zero) means no compaction.
+grain_size			1 	 #[m]
+grain_size_decay 	15000 #[m]
 
 #TIME VARIABLES [My] (time goes from negative to positive: Timeini<Timefinal):
 Timeini		0	Initial time.

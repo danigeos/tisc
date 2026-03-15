@@ -95,7 +95,7 @@ int New_Lake ();
 float Precipitation (int row, int col, int type);
 int Damn_River_Node (int ia, int ja, int i,  int j);
 int Rise_Damn_Node (int iia, int jja, int i, int j);
-int Sediment (ModelConfig *cfg, ModelContext *ctx, double dh_sed, int row, int col);
+int Sediment (ModelConfig *cfg, ModelContext *ctx, double dh_sed, int row, int col, float grainsize);
 int surface_processes (float **topo_ant, ModelConfig *cfg, ModelContext *ctx);
 int tectload(ModelConfig *cfg, ModelContext *ctx);
 int move_Blocks(ModelConfig *cfg, ModelContext *ctx);

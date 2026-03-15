@@ -8,6 +8,9 @@ Daniel Garcia-Castellanos
 #include "tisclib.h"
 #include "../lib/libreria.h"
 
+extern float initial_grain_size;
+extern float distance_half_grainsize;
+
 int find_up_river (ModelConfig *cfg, ModelContext *ctx, int row, int col, int *level, int *count, float *length, float *chi, FILE *file, bool **done, float ref_discharge);
 
 
@@ -419,6 +422,8 @@ int match_parameter (char *str1, char *str2, int show, int replace, char *line)
 	Match_Param_Replace_flt ( "erodibility",	erodibility,  	0 )
 	Match_Param_Replace_flt ( "erodibility_sed",	erodibility_sed,  	0 )
 	Match_Param_Replace_flt ( "critical_stress",	critical_stress,  	0 )
+	Match_Param_Replace_flt ( "grain_size",	initial_grain_size,  	0 )
+	Match_Param_Replace_flt ( "grain_size_decay",	distance_half_grainsize,  	0 )
 	Match_Param_Replace_flt ( "l_fluv_sedim",	l_fluv_sedim,  	0 )
 	Match_Param_Replace_flt ( "temp_sea_level",	temp_sea_level,  	0 )
 	Match_Param_Replace_int ( "deform_sed",  	deform_sed, 	0 )
@@ -623,6 +628,8 @@ int read_file_resume(char *filename)
 	fread(&erodibility, 	sizeof(float),		1, 	file);
 	fread(&erodibility_sed, 	sizeof(float),		1, 	file);
 	fread(&critical_stress, 	sizeof(float),		1, 	file);
+	fread(&initial_grain_size, 	sizeof(float),		1, 	file);
+	fread(&distance_half_grainsize, sizeof(float),		1, 	file);
 	fread(&l_fluv_sedim, 	sizeof(float),		1, 	file);
 	fread(&lost_rate, 	sizeof(float),		1, 	file);
 	fread(&permeability, 	sizeof(float),		1, 	file);
@@ -1353,6 +1360,38 @@ int write_file_Blocks (ModelConfig *cfg, ModelContext *ctx)
 
 
 
+int write_file_grainsize (ModelConfig *cfg, ModelContext *ctx)
+{
+	FILE 	*file ;
+
+	/*
+	  WRITES A FILE WITH GRAINSIZE OF SEDIMENT BLOCKS
+	*/
+
+	Write_Open_Filename_Return (".grainsize", "wt", !switch_write_file_Blocks);
+
+	fprintf(file, "# x(km)\t\t y(km)\t\t grainsize(m)-->  \t\t(t=%.2f My)\n#    \tAge:\t", ctx->Time/Matosec) ;
+	for (int k=0; k<ctx->numBlocks; k++) {
+		if (Blocks[k].type == 'S') {
+			fprintf(file, "\t%.2f", Blocks[k].age/Matosec);
+		}
+	}
+	for (int i=0; i<cfg->Ny; i++)  for (int j=0; j<cfg->Nx; j++) {
+		float thickness_above=0, top_block;
+		fprintf(file, "\n%9.3f\t%9.3f", (cfg->xmin+j*cfg->dx)/1000, (cfg->ymax-i*cfg->dy)/1000);
+		
+		for (int i_Block=0; i_Block<ctx->numBlocks; i_Block++) {
+			if (Blocks[i_Block].type == 'S') {
+				fprintf(file, "\t%8.3f",  Blocks[i_Block].detr_grsize[i][j]);
+			}
+		}
+	}
+	fclose(file);
+	return 1;
+}
+
+
+
 #define NDERS 8	
 
 int write_file_drainage (ModelConfig *cfg, ModelContext *ctx)
@@ -1790,6 +1829,8 @@ int write_file_resume(ModelConfig *cfg, ModelContext *ctx)
 	fwrite(&erodibility, 	sizeof(float),		1, 	file);
 	fwrite(&erodibility_sed, 	sizeof(float),		1, 	file);
 	fwrite(&critical_stress, 	sizeof(float),		1, 	file);
+	fwrite(&initial_grain_size, 	sizeof(float),		1, 	file);
+	fwrite(&distance_half_grainsize, sizeof(float),		1, 	file);
 	fwrite(&l_fluv_sedim, 	sizeof(float),		1, 	file);
 	fwrite(&lost_rate, 	sizeof(float),		1, 	file);
 	fwrite(&permeability, 	sizeof(float),		1, 	file);

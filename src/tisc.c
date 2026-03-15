@@ -1472,6 +1472,7 @@ int Write_Ouput(ModelConfig *cfg, ModelContext *ctx)
 	//write_file_time(cfg, ctx, w, h_water);
 	write_file_deflection(cfg, ctx);
 	write_file_Blocks(cfg, ctx);
+	write_file_grainsize(cfg, ctx);
 	write_file_cross_section(cfg, ctx);
 	write_file_drainage(cfg, ctx);
 	write_file_ice(cfg, ctx);

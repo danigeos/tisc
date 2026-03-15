@@ -35,6 +35,8 @@ char projectname[MAXLONFICH], title[MAXLONLINE];
 int nloads, n_sea_level_input_points, n_eros_level_input_points, n_record_times;
 int i_first_Block_load, i_Block_insert, numBlocks, nwrotenfiles, run_type;
 float Kerosdif, Keroseol, Ksedim, critical_slope, K_river_cap, erodibility, erodibility_sed, critical_stress;
+float initial_grain_size = 1.0;
+float distance_half_grainsize = 5000.0;
 float spl_m, spl_n, l_fluv_sedim, lost_rate, permeability, rain, Krain, relative_humidity, CXrain;
 float rain_per, rain_amp, total_bedrock_eros_mass, total_sed_mass;
 float zini, dt_record, sed_porosity, compact_depth, last_time_file_time, random_topo = 0;

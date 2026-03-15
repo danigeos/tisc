@@ -15,6 +15,9 @@
 #define THICK2SEDMASS(cfg, thick)	((thick)*(cfg->denssedim-sed_porosity*cfg->denswater)*cfg->dx*cfg->dy)	/*converts sediment thickness into sediment mass*/
 
 
+extern float initial_grain_size;
+extern float distance_half_grainsize;
+
 /*Declaration of functions at libreria.c*/
 float 	**alloc_matrix  (int num_fil, int num_col);
 int 	free_matrix 	(float **matrix, int num_fil);
@@ -51,7 +54,7 @@ int 	Damn_River_Node (int ia, int ja, int i,  int j);
 float 	ReSort_Array (float *array, int *orden, int Nx);
 float 	ReSort_Matrix (float **matrix, struct GRIDNODE *orden, int Nx, int Ny);
 int 	Rise_Damn_Node (int iia, int jja, int i, int j);
-int 	Sediment (ModelConfig *cfg, ModelContext *ctx, double d_mass, int row, int col);
+int 	Sediment (ModelConfig *cfg, ModelContext *ctx, double d_mass, int row, int col, float grainsize);
 int 	Unify_Lakes (ModelConfig *cfg, ModelContext *ctx, int i_lake, int i_lake_to_delete);
 int 	Diffusive_Eros (ModelConfig *cfg, ModelContext *ctx, float Kerosdif);
 int 	Landslide_Transport (ModelConfig *cfg, ModelContext *ctx, float critical_slope);
@@ -116,6 +119,7 @@ int Surface_Transport (ModelConfig *cfg, ModelContext *ctx, float **topo_ant, in
 		for (int i=0; i<cfg->Ny; i++) for (int j=0; j<cfg->Nx; j++) {
 			drainage[i][j].masstr = 0;
 			drainage[i][j].discharge = 0;
+			drainage[i][j].grainsize = 0;
 		}
 
 		/*Resorts the matrix of topography.*/
@@ -545,7 +549,7 @@ int constant_rate_eros (ModelConfig *cfg, ModelContext *ctx, float Keroseol, flo
 		/*SEDIMENTATION*/
 		else if (water_load) {
 			Dh = MIN_2(Ksedim*ctx->dt, ctx->sea_level-ctx->topo[i][j]);
-				Sediment (cfg, ctx, THICK2SEDMASS(cfg, Dh), i, j);
+				Sediment (cfg, ctx, THICK2SEDMASS(cfg, Dh), i, j, 0);
 		}
 	}
 
@@ -1024,7 +1028,7 @@ int Diffusive_Eros (ModelConfig *cfg, ModelContext *ctx, float Kerosdif)
 	 		 /*Adds results to the height and the next load Dq and removes material from the Blocks*/
 	 		 for(int i=0; i<cfg->Ny; i++)  for(int j=0; j<cfg->Nx; j++)  {
 	 			 if (Dheros[i][j]>0) {
-	 				 Sediment (cfg, ctx, Dheros[i][j]*cfg->dx*cfg->dy*cfg->denscrust, i, j);
+	 				 Sediment (cfg, ctx, Dheros[i][j]*cfg->dx*cfg->dy*cfg->denscrust, i, j, 0);
 	 			 }
 	 			 if (Dheros[i][j]<0) {
 	 				 Erode	(cfg, ctx, -Dheros[i][j]*cfg->dx*cfg->dy*cfg->denscrust, i, j);
@@ -1367,21 +1371,45 @@ int Fluvial_Transport(struct GRIDNODE *sortcell, ModelConfig *cfg, ModelContext 
 		if (d_mass<0) {
 				/*SEDIMENTATION, limit d_mass with the masstr in this node*/
 				d_mass = MAX_2(d_mass, -drainage[row][col].masstr*dt_st);
-				Sediment (cfg, ctx, -d_mass, row, col);
+				Sediment (cfg, ctx, -d_mass, row, col, drainage[row][col].grainsize);
 		}
 		if (d_mass>0) {
 				/*EROSION.*/
+				float eroded_rate = d_mass / dt_st;
+				if (drainage[row][col].masstr + eroded_rate > 0) {
+					drainage[row][col].grainsize = (drainage[row][col].masstr * drainage[row][col].grainsize + eroded_rate * initial_grain_size) / (drainage[row][col].masstr + eroded_rate);
+				} else {
+					drainage[row][col].grainsize = initial_grain_size;
+				}
 				Erode	(cfg, ctx, d_mass, row, col);
 		}
 
 		/*Adds the mass increment to the transferring mass contained in this cell: */
 		drainage[row][col].masstr += d_mass/dt_st;
+		
+		float transfer_dist = 0;
+		if (IN_DOMAIN(drow,dcol)) {
+			transfer_dist = sqrt(cfg->dy*(drow-row)*cfg->dy*(drow-row) + cfg->dx*(dcol-col)*cfg->dx*(dcol-col));
+		} else {
+			transfer_dist = cfg->dxy; 
+		}
+		
+		float transferred_grainsize = 0;
+		if (distance_half_grainsize > 0) {
+			transferred_grainsize = drainage[row][col].grainsize * pow(0.5, transfer_dist / distance_half_grainsize);
+		} else {
+			transferred_grainsize = drainage[row][col].grainsize;
+		}
+
 		/*Transfers suspended solid mass.*/
 		if (IN_DOMAIN(drow,dcol)) {
 		int ild = drainage[drow][dcol].lake;
 		float hl;
 		switch (drainage[drow][dcol].type) {
 			case 'L':
+			if (drainage[drow][dcol].masstr + drainage[row][col].masstr > 0) {
+				drainage[drow][dcol].grainsize = (drainage[drow][dcol].masstr * drainage[drow][dcol].grainsize + drainage[row][col].masstr * transferred_grainsize) / (drainage[drow][dcol].masstr + drainage[row][col].masstr);
+			}
 			drainage[drow][dcol].masstr += drainage[row][col].masstr;
 			/*If draining to an OPEN lake:*/
 			if (Lake[ild].n_sd) {
@@ -1396,11 +1424,15 @@ int Fluvial_Transport(struct GRIDNODE *sortcell, ModelConfig *cfg, ModelContext 
 				*/
 				hl = ctx->topo[row][col];  /*MIN_2 (Lake[ild].alt+1., ctx->topo[row][col]-1.);??*/
 				Lake_Fill (Lake, cfg, ctx, drow, dcol, hl, dt_st, lake_instant_fill);
-				if (IN_DOMAIN(drainage[drow][dcol].dr_row, drainage[drow][dcol].dr_col))
+				if (IN_DOMAIN(drainage[drow][dcol].dr_row, drainage[drow][dcol].dr_col)) {
 						/*Next line commented in tAo!!*/
+					if (drainage[drainage[drow][dcol].dr_row][drainage[drow][dcol].dr_col].masstr + drainage[drow][dcol].masstr > 0) {
+						drainage[drainage[drow][dcol].dr_row][drainage[drow][dcol].dr_col].grainsize = (drainage[drainage[drow][dcol].dr_row][drainage[drow][dcol].dr_col].masstr * drainage[drainage[drow][dcol].dr_row][drainage[drow][dcol].dr_col].grainsize + drainage[drow][dcol].masstr * drainage[drow][dcol].grainsize) / (drainage[drainage[drow][dcol].dr_row][drainage[drow][dcol].dr_col].masstr + drainage[drow][dcol].masstr);
+					}
 					drainage[drainage[drow][dcol].dr_row][drainage[drow][dcol].dr_col].masstr += drainage[drow][dcol].masstr;
-				else
+				} else {
 					*total_lost_sed_mass += drainage[row][col].masstr * dt_st;
+				}
 			}
 			/*If draining to an CLOSED (endorheic) lake:*/
 			else {
@@ -1416,6 +1448,9 @@ int Fluvial_Transport(struct GRIDNODE *sortcell, ModelConfig *cfg, ModelContext 
 			break;
 			case 'R':
 			case 'E':
+			if (drainage[drow][dcol].masstr + drainage[row][col].masstr > 0) {
+				drainage[drow][dcol].grainsize = (drainage[drow][dcol].masstr * drainage[drow][dcol].grainsize + drainage[row][col].masstr * transferred_grainsize) / (drainage[drow][dcol].masstr + drainage[row][col].masstr);
+			}
 			drainage[drow][dcol].masstr += drainage[row][col].masstr;
 			break;
 		 }
@@ -1728,7 +1763,7 @@ int Ice_EroSed(ModelConfig *cfg, ModelContext *ctx, float **ice_velx_sl, float *
 			float deposit=0, max_sed_factor=.02;
 			if (ice_sedm_load[i][j]>max_sed_factor*ice_thickness[i][j]) 
 				deposit = ice_sedm_load[i][j]-max_sed_factor*ice_thickness[i][j];
-			Sediment(cfg, ctx, deposit * cfg->dx*cfg->dy * cfg->denscrust, i, j);
+			Sediment(cfg, ctx, deposit * cfg->dx*cfg->dy * cfg->denscrust, i, j, 0);
 			ice_sedm_load[i][j] -= deposit;
 			*total_ice_sedim += deposit * cfg->dx*cfg->dy * cfg->denscrust;
 			/*printf("\n%d %d %.2e m", i,j, *total_ice_sedim);*/
@@ -1777,7 +1812,7 @@ int Lake_Fill (
 		IF_LAKE_IS_SEA(il) its_sea=true;
 		if (!its_sea) {
 			for (int i=0; i<Lake[il].n; i++) {
-				Sediment (cfg, ctx, THICK2SEDMASS(cfg, Lake[il].alt - ctx->topo[Lake[il].row[i]][Lake[il].col[i]]), Lake[il].row[i], Lake[il].col[i]);
+				Sediment (cfg, ctx, THICK2SEDMASS(cfg, Lake[il].alt - ctx->topo[Lake[il].row[i]][Lake[il].col[i]]), Lake[il].row[i], Lake[il].col[i], 0);
 			}
 		}
 	}
@@ -1798,7 +1833,8 @@ int Lake_Fill (
 	Dhsedmax = MAX_2(hl-topo[row][col], 0);
 	Dhsed = MIN_2(Dhsed, Dhsedmax);
 	d_mass = -THICK2SEDMASS(cfg, Dhsed);
-	Sediment (cfg, ctx, -d_mass, row, col);
+	float grainsize = drainage[row][col].grainsize;
+	Sediment (cfg, ctx, -d_mass, row, col, grainsize);
 	drainage[row][col].masstr += d_mass/dt_st;
 	n_done=n_total_done=1;
 	done[0].row=row; done[0].col=col; 
@@ -1848,7 +1884,7 @@ int Lake_Fill (
 		Dhsed = -MASS2SEDTHICK(cfg, d_mass_now * done_grid[to_do[i].row][to_do[i].col]);
 		Dhsed = MIN_2(Dhsed, Dhsedmax);
 		d_mass = -THICK2SEDMASS(cfg, Dhsed);
-		Sediment (cfg, ctx, -d_mass, to_do[i].row, to_do[i].col);
+		Sediment (cfg, ctx, -d_mass, to_do[i].row, to_do[i].col, grainsize);
 		drainage[row][col].masstr += d_mass/dt_st;
 		done[i].row = to_do[i].row;
 		done[i].col = to_do[i].col;
@@ -1870,7 +1906,7 @@ int Lake_Fill (
 	if (!Lake[il].n_sd && drainage[row][col].masstr > .1) {
 		d_mass = -drainage[row][col].masstr * dt_st;
 		for (int i=0; i<Lake[il].n; i++) {
-			Sediment (cfg, ctx, -d_mass/Lake[il].n, Lake[il].row[i], Lake[il].col[i]);
+			Sediment (cfg, ctx, -d_mass/Lake[il].n, Lake[il].row[i], Lake[il].col[i], grainsize);
 		}
 		Dhsed = -MASS2SEDTHICK(cfg, d_mass) / Lake[il].n;
 		if (cfg->verbose_level>=3 || (drainage[row][col].masstr>1 && Dhsed>10))
@@ -1935,7 +1971,7 @@ int Landslide_Transport (ModelConfig *cfg, ModelContext *ctx, float critical_slo
 				/*it should preserve mass instead of using denscrust!!*/
 					Dheros = maxdiff/4; /*reduces slope by 1/2*/
 				Erode	(cfg, ctx, Dheros*cfg->dx*cfg->dy*cfg->denscrust, i, j);
-				Sediment (cfg, ctx, Dheros*cfg->dx*cfg->dy*cfg->denscrust, ro[imaxslope], co[imaxslope]);
+				Sediment (cfg, ctx, Dheros*cfg->dx*cfg->dy*cfg->denscrust, ro[imaxslope], co[imaxslope], 0);
 				}
 		}
 		}
@@ -1947,7 +1983,7 @@ int Landslide_Transport (ModelConfig *cfg, ModelContext *ctx, float critical_slo
 
 
 
-int Sediment (ModelConfig *cfg, ModelContext *ctx, double d_mass, int row, int col) 
+int Sediment (ModelConfig *cfg, ModelContext *ctx, double d_mass, int row, int col, float grainsize) 
 {
 	/*
 	  Adds dh_sed to the highest Block.
@@ -1959,6 +1995,17 @@ int Sediment (ModelConfig *cfg, ModelContext *ctx, double d_mass, int row, int c
 
 	dh_sed = MASS2SEDTHICK(cfg, d_mass);
 	if (dh_sed < -2) PRINT_WARNING("trying to sediment negative mass: %f m", dh_sed);
+	
+	/* Update grainsize if it's a sedimentary block */
+	if (Blocks[ctx->numBlocks-1].type == 'S' && grainsize > 0) {
+		if (Blocks[ctx->numBlocks-1].thick[row][col] + dh_sed > 0) {
+			Blocks[ctx->numBlocks-1].detr_grsize[row][col] = 
+				(Blocks[ctx->numBlocks-1].thick[row][col] * Blocks[ctx->numBlocks-1].detr_grsize[row][col] + dh_sed * grainsize) / 
+				(Blocks[ctx->numBlocks-1].thick[row][col] + dh_sed);
+		} else {
+			Blocks[ctx->numBlocks-1].detr_grsize[row][col] = grainsize;
+		}
+	}
 	/*Increment load, Blocks and topo*/
 	Dq[row][col] +=  dh_sed * g * (cfg->denssedim-cfg->densenv);
 	Blocks[ctx->numBlocks-1].thick[row][col] += dh_sed;
