@@ -97,6 +97,8 @@ struct BLOCK { 		/*for TISC*/
 	float	**thick;		/*Present thickness at each x point*/
 	float	**detr_ratio;		/*Only used for sediment Blocks: % of detrital sediment (non carbonatic)*/
 	float	**detr_grsize;		/*Only used for sediment Blocks: grain size of the detrital sediment*/
+	float	**thickgypsum;		/*Only used for sediment Blocks: gypsum thickness*/
+	float	**thickhalite;		/*Only used for sediment Blocks: halite thickness*/
 	float	age;			/*Age of initial file reading*/
 	float	density;		/*Density*/
 	float	erodibility;		/*erosion parameter*/
@@ -117,6 +119,8 @@ struct BLOCK_1D {	/*for tAo*/
 	float	*thick;			/*Present thickness at each x point*/
 	float	*detr_ratio;		/*Only used for sediment Blocks: % of detrital sediment (non carbonatic)*/
 	float	*detr_grsize;		/*Only used for sediment Blocks: grain size of the detrital sediment*/
+	float	*thickgypsum;		/*Only used for sediment Blocks: gypsum thickness*/
+	float	*thickhalite;		/*Only used for sediment Blocks: halite thickness*/
 	float	age;			/*Age of initial file read*/
 	float	density;		/*Density*/
 	float	erodibility;		/*erosion parameter*/
@@ -139,6 +143,10 @@ struct DRAINAGE {
 	float discharge;	/*water flow through the node [m3/s]*/
 	float masstr;		/*sediment load: mass exiting the cell [kg/s]*/
 	float grainsize;	/*average grain size of the sedload[m]*/
+	float C_Ca;			/*concentration of Ca [kg/m3]*/
+	float C_SO4;		/*concentration of SO4 [kg/m3]*/
+	float C_Na;			/*concentration of Na [kg/m3]*/
+	float C_Cl;			/*concentration of Cl [kg/m3]*/
 	char type;		/*type (lake, river, sea, etc)*/
 	int lake;		/*number of the lake: > 0 means is well defined; < 0 means is not still defined; 0 means it is not a lake*/
 };
@@ -152,6 +160,10 @@ struct LAKE_INFO {		/*For lakes*/
 	int *col_sd;
 	float alt;		/*Altitude of the lake water level*/
 	float vol;		/*Volume of the lake water body*/
+	float mass_Ca;		/*dissolved mass of Ca in lake [kg]*/
+	float mass_SO4;		/*dissolved mass of SO4 in lake [kg]*/
+	float mass_Na;		/*dissolved mass of Na in lake [kg]*/
+	float mass_Cl;		/*dissolved mass of Cl in lake [kg]*/
 };
 
 struct CS2D {
@@ -166,6 +178,10 @@ struct DRAINAGE_1D {
 	float discharge;	/*water flow through the node [m3/s]*/
 	float masstr;		/*sediment load: mass exiting the cell [kg/s]*/
 	float grainsize;	/*average grain size of the sedload[m]*/
+	float C_Ca;			/*concentration of Ca [kg/m3]*/
+	float C_SO4;		/*concentration of SO4 [kg/m3]*/
+	float C_Na;			/*concentration of Na [kg/m3]*/
+	float C_Cl;			/*concentration of Cl [kg/m3]*/
 	char type;		/*type (lake, river, sea, etc)*/
 	int lake;		/*number of the lake: > 0 means is well defined; < 0 means is not still defined; 0 means it is not a lake*/
 };
@@ -177,6 +193,10 @@ struct LAKE_INFO_1D {		/*For lakes*/
 	int *sd;
 	float alt;		/*Altitude of the lake water level*/
 	float vol;		/*Volume of the lake water body*/
+	float mass_Ca;		/*dissolved mass of Ca in lake [kg]*/
+	float mass_SO4;		/*dissolved mass of SO4 in lake [kg]*/
+	float mass_Na;		/*dissolved mass of Na in lake [kg]*/
+	float mass_Cl;		/*dissolved mass of Cl in lake [kg]*/
 };
 
 #endif /* TYPES_N_DEFS_H */

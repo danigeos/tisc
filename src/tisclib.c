@@ -139,6 +139,8 @@ int Delete_Block(int i_Block)
 	if (Blocks[i_Block].type == 'S') {
 		free_matrix (Blocks[i_Block].detr_ratio,  Ny);
 		free_matrix (Blocks[i_Block].detr_grsize, Ny);
+		free_matrix (Blocks[i_Block].thickgypsum, Ny);
+		free_matrix (Blocks[i_Block].thickhalite, Ny);
 	}
 	for (k=i_Block; k<numBlocks-1; k++) Blocks[k] = Blocks[k+1];
 	numBlocks--;

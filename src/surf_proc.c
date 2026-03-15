@@ -18,6 +18,10 @@
 extern float initial_grain_size;
 extern float distance_half_grainsize;
 
+extern float C_Ca_SEA, C_SO4_SEA, C_Na_SEA, C_Cl_SEA;
+extern float C_Ca_RIV, C_SO4_RIV, C_Na_RIV, C_Cl_RIV;
+extern float GYPSUM_PRECIP_CN, HALITE_PRECIP_CN;
+
 /*Declaration of functions at libreria.c*/
 float 	**alloc_matrix  (int num_fil, int num_col);
 int 	free_matrix 	(float **matrix, int num_fil);
@@ -106,6 +110,9 @@ int Surface_Transport (ModelConfig *cfg, ModelContext *ctx, float **topo_ant, in
 	dt_st = ctx->dt/n_iters;
 	PRINT_INFO("n_iters=%3d", n_iters);
 
+	ctx->total_precip_gypsum_rate = 0;
+	ctx->total_precip_halite_rate = 0;
+
 	/*Distributes transport in 'n_iters' substeps:*/
 	for (int iter=0; iter<n_iters; iter++) {	  	  
 		if (verbose_level>=3) fprintf(stdout, "\b\b\b%3d", n_iters-iter); fflush(stdout);
@@ -120,6 +127,10 @@ int Surface_Transport (ModelConfig *cfg, ModelContext *ctx, float **topo_ant, in
 			drainage[i][j].masstr = 0;
 			drainage[i][j].discharge = 0;
 			drainage[i][j].grainsize = 0;
+			drainage[i][j].C_Ca = 0;
+			drainage[i][j].C_SO4 = 0;
+			drainage[i][j].C_Na = 0;
+			drainage[i][j].C_Cl = 0;
 		}
 
 		/*Resorts the matrix of topography.*/
@@ -139,6 +150,9 @@ int Surface_Transport (ModelConfig *cfg, ModelContext *ctx, float **topo_ant, in
 
 		Ice_EroSed(cfg, ctx, ice_velx_sl, ice_vely_sl, dt_st, &total_ice_eros, &total_ice_sedim);
 	}
+
+	ctx->total_precip_gypsum_rate /= n_iters;
+	ctx->total_precip_halite_rate /= n_iters;
 
 	if (verbose_level>=3) fprintf(stdout, "\b\b\b"); fflush(stdout);
 
@@ -194,6 +208,9 @@ int Surface_Transport (ModelConfig *cfg, ModelContext *ctx, float **topo_ant, in
 		}
 	}
 	if (hydro_model && verbose_level>=1) {
+		PRINT_SUMLINE("salt precip:  gypsum= %.2e kg/s  halite= %.2e kg/s   accum_gypsum= %.2e kg  accum_halite= %.2e kg", 
+			ctx->total_precip_gypsum_rate, ctx->total_precip_halite_rate, ctx->total_accum_gypsum, ctx->total_accum_halite);
+
 		{
 			int i_biggest_nosea=0, n_biggest_nosea=0;
 			for (int i=1; i<=nlakes; i++) {
@@ -287,7 +304,8 @@ int Calculate_Discharge (struct GRIDNODE *sortcell, ModelConfig *cfg, ModelConte
 	int 	il, 
 		row, col, drow, dcol;
 	float	runoff, 
-		dd, dxdivdy=dx/dy;
+		dd, dxdivdy=dx/dy, 
+		dt_st = ctx->dt / MAX_2(floor(ctx->dt/ctx->dt_eros+.5), 1);
 
 	PRINT_DEBUG("Calculating discharge");
 	/*
@@ -339,11 +357,20 @@ int Calculate_Discharge (struct GRIDNODE *sortcell, ModelConfig *cfg, ModelConte
 			if (drainage[row][col].type == 'L') {
 				if (Lake[il].n_sd) runoff = 0; /*!! the 'if' was commented before 2024-05-18, probable cause for lower total precipitation during endorheism in Lago-Mare model*/
 			}
+			drainage[row][col].C_Ca += runoff * C_Ca_RIV;
+			drainage[row][col].C_SO4 += runoff * C_SO4_RIV;
+			drainage[row][col].C_Na += runoff * C_Na_RIV;
+			drainage[row][col].C_Cl += runoff * C_Cl_RIV;
 			if (drainage[row][col].type == 'E') {
 				/*Put into this outlet the rain from lake nodes draining here.*/
 				for (int i=0; i<Lake[il].n; i++) {
 					if (drainage[Lake[il].row[i]][Lake[il].col[i]].dr_row == row && drainage[Lake[il].row[i]][Lake[il].col[i]].dr_col == col) {
-						runoff += precipitation[row][col] * dx*dy;
+						float r = precipitation[Lake[il].row[i]][Lake[il].col[i]] * dx*dy;
+						runoff += r;
+						drainage[row][col].C_Ca += r * C_Ca_RIV;
+						drainage[row][col].C_SO4 += r * C_SO4_RIV;
+						drainage[row][col].C_Na += r * C_Na_RIV;
+						drainage[row][col].C_Cl += r * C_Cl_RIV;
 					}
 				}
 			}
@@ -398,29 +425,120 @@ int Calculate_Discharge (struct GRIDNODE *sortcell, ModelConfig *cfg, ModelConte
 							/*Darcy's law (isotropic porous medium): fluid_velocity = perm/visc * pressure_diff/distance */
 							/*Need to account for the 3D effect properly*/
 							underground_water_flow = (topo[row][col]>topo[i][j])? MIN_2(drainage[row][col].discharge, dxy*dxy*dx*dy/dist/dist*permeability/viscwater*denswater*g*(topo[row][col]-topo[i][j])/dist) : 0;
+							float frac = 0;
+							if (drainage[row][col].discharge > 0) frac = underground_water_flow / drainage[row][col].discharge;
+							drainage[i][j].C_Ca += drainage[row][col].C_Ca * frac;
+							drainage[i][j].C_SO4 += drainage[row][col].C_SO4 * frac;
+							drainage[i][j].C_Na += drainage[row][col].C_Na * frac;
+							drainage[i][j].C_Cl += drainage[row][col].C_Cl * frac;
+							drainage[row][col].C_Ca -= drainage[row][col].C_Ca * frac;
+							drainage[row][col].C_SO4 -= drainage[row][col].C_SO4 * frac;
+							drainage[row][col].C_Na -= drainage[row][col].C_Na * frac;
+							drainage[row][col].C_Cl -= drainage[row][col].C_Cl * frac;
 							drainage[row][col].discharge -= underground_water_flow;
 							drainage[i][j].discharge     += underground_water_flow;
 							*total_underground_water     += underground_water_flow;
 				}
 			}
 
-			/*Transfers water.*/
+			/*Transfers water and salt.*/
 			if (IN_DOMAIN(drow, dcol)) {
-				/*Remove evapotranspirated water from the rivers*/
-				*total_evap_water			 	+= drainage[row][col].discharge * MIN_2(lost_rate*dd, 1);
-				drainage[row][col].discharge	-= drainage[row][col].discharge * MIN_2(lost_rate*dd, 1);
+				float evap_loss = drainage[row][col].discharge * MIN_2(lost_rate*dd, 1);
+				*total_evap_water += evap_loss;
+				drainage[row][col].discharge -= evap_loss;
+			} else {
+				if (AT_BORDER(row,col)) {
+					*total_lost_water += drainage[row][col].discharge;
+				} else {
+					*total_evap_water += drainage[row][col].discharge;
+				}
+			}
+
+			bool is_sea = false;
+			if (il) { IF_LAKE_IS_SEA(il) is_sea = true; }
+			float precip_Gypsum_flux = 0, precip_Halite_flux = 0;
+			bool completely_evaporates = (!IN_DOMAIN(drow, dcol) && !AT_BORDER(row, col));
+			
+			if (is_sea) {
+				drainage[row][col].C_Ca = C_Ca_SEA * drainage[row][col].discharge;
+				drainage[row][col].C_SO4 = C_SO4_SEA * drainage[row][col].discharge;
+				drainage[row][col].C_Na = C_Na_SEA * drainage[row][col].discharge;
+				drainage[row][col].C_Cl = C_Cl_SEA * drainage[row][col].discharge;
+			} else {
+				float C_Gypsum = 0, C_Halite = 0;
+				if (drainage[row][col].discharge > 0 && !completely_evaporates) {
+					C_Gypsum = (drainage[row][col].C_Ca + drainage[row][col].C_SO4) / drainage[row][col].discharge;
+					C_Halite = (drainage[row][col].C_Na + drainage[row][col].C_Cl) / drainage[row][col].discharge;
+					if (C_Halite > HALITE_PRECIP_CN) {
+						float excess = C_Halite - HALITE_PRECIP_CN;
+						precip_Halite_flux = excess * drainage[row][col].discharge;
+						float ratio = HALITE_PRECIP_CN / C_Halite;
+						drainage[row][col].C_Na *= ratio;
+						drainage[row][col].C_Cl *= ratio;
+					}
+					if (C_Gypsum > GYPSUM_PRECIP_CN) {
+						float excess = C_Gypsum - GYPSUM_PRECIP_CN;
+						precip_Gypsum_flux = excess * drainage[row][col].discharge;
+						float ratio = GYPSUM_PRECIP_CN / C_Gypsum;
+						drainage[row][col].C_Ca *= ratio;
+						drainage[row][col].C_SO4 *= ratio;
+					}
+				} else {
+					precip_Halite_flux = drainage[row][col].C_Na + drainage[row][col].C_Cl;
+					precip_Gypsum_flux = drainage[row][col].C_Ca + drainage[row][col].C_SO4;
+					drainage[row][col].C_Na = 0; drainage[row][col].C_Cl = 0;
+					drainage[row][col].C_Ca = 0; drainage[row][col].C_SO4 = 0;
+				}
+			}
+
+			if (precip_Gypsum_flux > 0 || precip_Halite_flux > 0) {
+				float vol_rate_gypsum = precip_Gypsum_flux / 2300.0;
+				float vol_rate_halite = precip_Halite_flux / 2160.0;
+				float dh_gypsum = vol_rate_gypsum * dt_st / (cfg->dx * cfg->dy);
+				float dh_halite = vol_rate_halite * dt_st / (cfg->dx * cfg->dy);
+				float dh_salt = dh_gypsum + dh_halite;
+				if (dh_salt > 0) {
+					ctx->total_precip_gypsum_rate += precip_Gypsum_flux;
+					ctx->total_precip_halite_rate += precip_Halite_flux;
+					ctx->total_accum_gypsum += precip_Gypsum_flux * dt_st;
+					ctx->total_accum_halite += precip_Halite_flux * dt_st;
+					if (ctx->numBlocks > 0) {
+						if (Blocks[ctx->numBlocks-1].type == 'S') {
+							Blocks[ctx->numBlocks-1].thickgypsum[row][col] += dh_gypsum;
+							Blocks[ctx->numBlocks-1].thickhalite[row][col] += dh_halite;
+						}
+						Blocks[ctx->numBlocks-1].thick[row][col] += dh_salt;
+					}
+					ctx->topo[row][col] += dh_salt;
+					float avg_dens = (precip_Gypsum_flux + precip_Halite_flux) / (vol_rate_gypsum + vol_rate_halite);
+					Dq[row][col] += dh_salt * g * (avg_dens - cfg->densenv);
+				}
+			}
+
+			float final_C_Ca = 0, final_C_SO4 = 0, final_C_Na = 0, final_C_Cl = 0;
+			if (drainage[row][col].discharge > 0) {
+				final_C_Ca = drainage[row][col].C_Ca / drainage[row][col].discharge;
+				final_C_SO4 = drainage[row][col].C_SO4 / drainage[row][col].discharge;
+				final_C_Na = drainage[row][col].C_Na / drainage[row][col].discharge;
+				final_C_Cl = drainage[row][col].C_Cl / drainage[row][col].discharge;
+			}
+
+			if (IN_DOMAIN(drow, dcol)) {
 				switch (drainage[drow][dcol].type) {
 				case 'L':
-					/*Check: this shouldn't happen (a node transferring to a lake with a higher level).*/
 					if (Lake[drainage[drow][dcol].lake].n_sd) if (IN_DOMAIN(drainage[drow][dcol].dr_row, drainage[drow][dcol].dr_col)) if (topo[drainage[drow][dcol].dr_row][drainage[drow][dcol].dr_col] > topo[row][col])
 						PRINT_ERROR("[%d][%d] transferring water to lake in [%d][%d] is < than outlet [%d][%d]:  %.1f<%.1f.", row, col, drow, dcol, drainage[drow][dcol].dr_row, drainage[drow][dcol].dr_col, topo[row][col], topo[drainage[drow][dcol].dr_row][drainage[drow][dcol].dr_col]);
-					/*Drain to the lake node*/
+					drainage[drow][dcol].C_Ca += drainage[row][col].C_Ca;
+					drainage[drow][dcol].C_SO4 += drainage[row][col].C_SO4;
+					drainage[drow][dcol].C_Na += drainage[row][col].C_Na;
+					drainage[drow][dcol].C_Cl += drainage[row][col].C_Cl;
 					drainage[drow][dcol].discharge += drainage[row][col].discharge;
-					/*Drain also to its outlet if it has*/
-					if (IN_DOMAIN(drainage[drow][dcol].dr_row, drainage[drow][dcol].dr_col))
+					if (IN_DOMAIN(drainage[drow][dcol].dr_row, drainage[drow][dcol].dr_col)) {
+						drainage[drainage[drow][dcol].dr_row][drainage[drow][dcol].dr_col].C_Ca += drainage[row][col].C_Ca;
+						drainage[drainage[drow][dcol].dr_row][drainage[drow][dcol].dr_col].C_SO4 += drainage[row][col].C_SO4;
+						drainage[drainage[drow][dcol].dr_row][drainage[drow][dcol].dr_col].C_Na += drainage[row][col].C_Na;
+						drainage[drainage[drow][dcol].dr_row][drainage[drow][dcol].dr_col].C_Cl += drainage[row][col].C_Cl;
 						drainage[drainage[drow][dcol].dr_row][drainage[drow][dcol].dr_col].discharge += drainage[row][col].discharge;
-					else {
-						/*Do nothing, border outlet transfer will be calculated below*/
 					}
 					break;
 				case 'R':
@@ -428,29 +546,33 @@ int Calculate_Discharge (struct GRIDNODE *sortcell, ModelConfig *cfg, ModelConte
 						PRINT_ERROR("\aI should never write this!.");
 						*total_evap_water += drainage[row][col].discharge;
 					}
-					else
+					else {
+						drainage[drow][dcol].C_Ca += drainage[row][col].C_Ca;
+						drainage[drow][dcol].C_SO4 += drainage[row][col].C_SO4;
+						drainage[drow][dcol].C_Na += drainage[row][col].C_Na;
+						drainage[drow][dcol].C_Cl += drainage[row][col].C_Cl;
 						drainage[drow][dcol].discharge += drainage[row][col].discharge;
+					}
 					break;
 				case 'E':
-					/*Lake internal drainage is done above*/
-					if (il != drainage[drow][dcol].lake)
+					if (il != drainage[drow][dcol].lake) {
+						drainage[drow][dcol].C_Ca += drainage[row][col].C_Ca;
+						drainage[drow][dcol].C_SO4 += drainage[row][col].C_SO4;
+						drainage[drow][dcol].C_Na += drainage[row][col].C_Na;
+						drainage[drow][dcol].C_Cl += drainage[row][col].C_Cl;
 						drainage[drow][dcol].discharge += drainage[row][col].discharge;
+					}
 					break;
 				default:
 					PRINT_ERROR("[%d][%d] draining to [%d][%d] has missing drainage type.", row, col, drow, dcol);
 					break;
 				}
 			}
-			else {
-				if (AT_BORDER(row,col)) {
-					/*Transfers out of model.*/
-					*total_lost_water += drainage[row][col].discharge;
-				}
-				else {
-					/*Evaporates water from endorheic lake nodes*/
-					*total_evap_water += drainage[row][col].discharge;
-				}
-			}
+
+			drainage[row][col].C_Ca = final_C_Ca;
+			drainage[row][col].C_SO4 = final_C_SO4;
+			drainage[row][col].C_Na = final_C_Na;
+			drainage[row][col].C_Cl = final_C_Cl;
 	}
 	
 	/*Calculate lake elevation and volume*/
@@ -504,12 +626,12 @@ int Calculate_Discharge (struct GRIDNODE *sortcell, ModelConfig *cfg, ModelConte
 		{
 		float max_elev=-1e9;
 		for (int i=0; i<Lake[il].n; i++) max_elev = MAX_2(topo[Lake[il].row[i]][Lake[il].col[i]], max_elev);
-		if (Lake[il].alt != max_elev) {
+		if (fabs(Lake[il].alt - max_elev) > 0.01) {
 			bool its_sea=false;
 			IF_LAKE_IS_SEA(il) its_sea=true;
 			/*BUG: This check failed at Jenna West mac, giving repeated errors without apparent cause 2016-09-01*/
-			if (!its_sea)
-			PRINT_ERROR("Lake %d (not sea) should have the elevation of its highest node %.2f m instead of %.2f m.", il, max_elev, Lake[il].alt);
+			if (!its_sea && cfg->verbose_level>=3)
+			PRINT_WARNING("Lake %d (not sea) should have the elevation of its highest node %.2f m instead of %.2f m.", il, max_elev, Lake[il].alt);
 		}
 		/*Check: all outlets should have the same elevation (except for the sea)*/
 		for (int i=1; i<Lake[il].n_sd; i++) {
@@ -1416,7 +1538,7 @@ int Fluvial_Transport(struct GRIDNODE *sortcell, ModelConfig *cfg, ModelContext 
 				float diff; 
 				/*Check: this can happen when a node transferring to a lake is eroded below the lake level or when the lake node was already deposited and became higher than the tributary node. See Lake_Fill at Dhsed=...*/
 				if (IN_DOMAIN(drainage[drow][dcol].dr_row, drainage[drow][dcol].dr_col))  if (diff=(ctx->topo[drainage[drow][dcol].dr_row][drainage[drow][dcol].dr_col] - ctx->topo[row][col]) > 0)
-					if (fabs(diff)>2 || cfg->verbose_level>=3) PRINT_ERROR("[%d][%d] transferring mass to lake in [%d][%d] is < than outlet [%d][%d] by %.1f m.", row, col, drow, dcol, drainage[drow][dcol].dr_row, drainage[drow][dcol].dr_col, diff);
+					if (fabs(diff)>2 || (cfg->verbose_level>=4 && diff > 0)) PRINT_WARNING("[%d][%d] transferring mass to lake in [%d][%d] is < than outlet [%d][%d] by %.1f m.", row, col, drow, dcol, drainage[drow][dcol].dr_row, drainage[drow][dcol].dr_col, diff);
 				/*
 				hl = topo[Lake[ild].row_sd[0]][Lake[ild].col_sd[0]] + 1;
 				if (topo[Lake[ild].row_sd[0]][Lake[ild].col_sd[0]] < sea_level && AT_BORDER(Lake[ild].row_sd[0], Lake[ild].col_sd[0]))
@@ -1997,7 +2119,7 @@ int Sediment (ModelConfig *cfg, ModelContext *ctx, double d_mass, int row, int c
 	if (dh_sed < -2) PRINT_WARNING("trying to sediment negative mass: %f m", dh_sed);
 	
 	/* Update grainsize if it's a sedimentary block */
-	if (Blocks[ctx->numBlocks-1].type == 'S' && grainsize > 0) {
+	if (ctx->numBlocks > 0 && Blocks[ctx->numBlocks-1].type == 'S' && grainsize > 0) {
 		if (Blocks[ctx->numBlocks-1].thick[row][col] + dh_sed > 0) {
 			Blocks[ctx->numBlocks-1].detr_grsize[row][col] = 
 				(Blocks[ctx->numBlocks-1].thick[row][col] * Blocks[ctx->numBlocks-1].detr_grsize[row][col] + dh_sed * grainsize) / 
@@ -2008,7 +2130,9 @@ int Sediment (ModelConfig *cfg, ModelContext *ctx, double d_mass, int row, int c
 	}
 	/*Increment load, Blocks and topo*/
 	Dq[row][col] +=  dh_sed * g * (cfg->denssedim-cfg->densenv);
-	Blocks[ctx->numBlocks-1].thick[row][col] += dh_sed;
+	if (ctx->numBlocks > 0) {
+		Blocks[ctx->numBlocks-1].thick[row][col] += dh_sed;
+	}
 	ctx->topo[row][col] += dh_sed;
 	/*record of eros/sed is performed in kg*/
 	eros_now[row][col]   -= d_mass ;
@@ -2383,6 +2507,15 @@ int Delete_Node_From_Lake (ModelConfig *cfg, ModelContext *ctx, int row, int col
 					drainage[lrow][lcol].dr_col = Lake[il].col_sd[imindist2];
 					drainage[row][col].discharge -= drainage[lrow][lcol].discharge;
 					drainage[drainage[lrow][lcol].dr_row][drainage[lrow][lcol].dr_col].discharge += drainage[lrow][lcol].discharge;
+					
+					drainage[row][col].C_Ca -= drainage[lrow][lcol].C_Ca;
+					drainage[drainage[lrow][lcol].dr_row][drainage[lrow][lcol].dr_col].C_Ca += drainage[lrow][lcol].C_Ca;
+					drainage[row][col].C_SO4 -= drainage[lrow][lcol].C_SO4;
+					drainage[drainage[lrow][lcol].dr_row][drainage[lrow][lcol].dr_col].C_SO4 += drainage[lrow][lcol].C_SO4;
+					drainage[row][col].C_Na -= drainage[lrow][lcol].C_Na;
+					drainage[drainage[lrow][lcol].dr_row][drainage[lrow][lcol].dr_col].C_Na += drainage[lrow][lcol].C_Na;
+					drainage[row][col].C_Cl -= drainage[lrow][lcol].C_Cl;
+					drainage[drainage[lrow][lcol].dr_row][drainage[lrow][lcol].dr_col].C_Cl += drainage[lrow][lcol].C_Cl;
 				}
 				if (drainage[lrow][lcol].lake != il)
 					PRINT_ERROR("'Lake' %d (%dth of %d) and 'drainage' %d don't match in node [%d][%d].", il, i, Lake[il].n, drainage[lrow][lcol].lake, lrow, lcol);
@@ -2496,8 +2629,13 @@ int Divide_Lake (ModelConfig *cfg, ModelContext *ctx, int row, int col /*lake no
 		for (i=0; i<Lake[il].n; i++) {
 			drow = drainage[Lake[il].row[i]][Lake[il].col[i]].dr_row;
 			dcol = drainage[Lake[il].row[i]][Lake[il].col[i]].dr_col;
-		if (drow==row && dcol==col) 
-			drainage[row][col].discharge -= drainage[Lake[il].row[i]][Lake[il].col[i]].discharge;
+			if (drow==row && dcol==col) {
+				drainage[row][col].discharge -= drainage[Lake[il].row[i]][Lake[il].col[i]].discharge;
+				drainage[row][col].C_Ca -= drainage[Lake[il].row[i]][Lake[il].col[i]].C_Ca;
+				drainage[row][col].C_SO4 -= drainage[Lake[il].row[i]][Lake[il].col[i]].C_SO4;
+				drainage[row][col].C_Na -= drainage[Lake[il].row[i]][Lake[il].col[i]].C_Na;
+				drainage[row][col].C_Cl -= drainage[Lake[il].row[i]][Lake[il].col[i]].C_Cl;
+			}
 		}
 	}
 
@@ -2578,9 +2716,11 @@ int Divide_Lake (ModelConfig *cfg, ModelContext *ctx, int row, int col /*lake no
 		if (IN_DOMAIN(ro[k],co[k])) {
 			deriv = (ctx->topo[ro[k]][co[k]]-ctx->topo[i][j])/dist;
 			/*I include deriv==0 because it can happen that the removed node is in a plane and needs to drain somewhere in that plane.*/
-			if (deriv<=0 && deriv<=maxderneg && drainage[ro[k]][co[k]].lake!=first_open) {
+			if (drainage[ro[k]][co[k]].lake!=first_open) {
+				if (imaxderneg == SIGNAL || deriv < maxderneg) {
 				imaxderneg=k;
 				maxderneg=deriv;
+				}
 			}
 		}
 	}
@@ -2599,6 +2739,10 @@ int Divide_Lake (ModelConfig *cfg, ModelContext *ctx, int row, int col /*lake no
 			drainage[Lake[first_open].row[i]][Lake[first_open].col[i]].dr_col = col;
 			/*The water of the new open lake will be transferred to this outlet inmediately after in Calculate_Discharge.*/
 			drainage[row][col].discharge += MAX_2(0, drainage[Lake[first_open].row[i]][Lake[first_open].col[i]].discharge);
+			drainage[row][col].C_Ca += MAX_2(0, drainage[Lake[first_open].row[i]][Lake[first_open].col[i]].C_Ca);
+			drainage[row][col].C_SO4 += MAX_2(0, drainage[Lake[first_open].row[i]][Lake[first_open].col[i]].C_SO4);
+			drainage[row][col].C_Na += MAX_2(0, drainage[Lake[first_open].row[i]][Lake[first_open].col[i]].C_Na);
+			drainage[row][col].C_Cl += MAX_2(0, drainage[Lake[first_open].row[i]][Lake[first_open].col[i]].C_Cl);
 			PRINT_DEBUG("Open lake resulting from splitting at [%d][%d] (%f m3/s): [%d][%d]   %f m3/s", row,col, drainage[row][col].discharge, Lake[first_open].row[i], Lake[first_open].col[i], drainage[Lake[first_open].row[i]][Lake[first_open].col[i]].discharge);
 		}
 		Add_Node_To_Lake   (row, col, first_open);

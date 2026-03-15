@@ -14,7 +14,29 @@ Memory debugging with:
 	-Track sediment composition (carbonates, salt, and detrital grain size) in another class in structure Blocks. This to calculate grain size distribution in basin, and as a first step for sed-size dependent erosion, once transitory flow is implemented. 
 		Prompt: For grain_size implementation, the idea is that the sediment incorporated to a river segment has a predefined initial grain_size at source (add this param to the template PRM, default is 1 m, and read/write it as other params), changing the grain size of the river sediment load masstr (a new member of drainage.grainsize must be defined, similar to drainage.masstr but containing its average grainsize at that segment. Then, when the sediment load masstr is transferred from one cell to another, the grain size must be averaged with other tributaries and reduced by a factor distance/distance_half_grainsize (the distance that would reduce grainze by a factor 2, default is 5 km, add to PRM). Then, when sediment is deposited to a sedeimntary block unit, the river grainsize will modify the average block grainsize iin that point proportionally to the sediment added relative to the sediement already present in the block at that cell. Therefore, a new member Blocks.grainsize must be defined similar to Blocks.thick but containing the grainsize at each cell. Then grainsize must be saved to a file of extension .grainsize. See if I miss anything
 	-Track salt:
-		Prompt: Next challange: implement salt deposition in endorheic lakes. Specifically, two salts: gypsum and halite. We will calculate the precipitation rate by tracking the concentration in rivers and lakes, including the seas that initially have a higher marine ion concentration that will be provided as a set of parameters in the PRM file. River ions are is tracked with a fixed concentration of 4 ions (Ca, SO4, Na, Cl) dissolved by rain water and transferred along the river network (each cell gets the average concentration of its tributaries and the local rainwater). Closed lakes increase the salinity, since evaporation removes pure water and leaves the salt until a saturation concentration is reached for either. Salt content above saturation for either gypsum or halite is precipitated using the density of halite and gypsum rock, and adding the precipitating lake salt as thickness to the top sedimentary unit, and also tracked independently in a new member of the Block struct: Blocks.thicksalt. A new output file of extension *.thicksalt will contain this in a format similar to *.hrz but only for sediment units (written only if hydro_model and evaporation are not zero). 
+		Prompt: Next challenge: implement salt deposition in endorheic lakes. Specifically, two salts: gypsum and halite. We will calculate the precipitation rate by tracking the concentration in rivers and lakes, including the seas that initially have a higher marine ion concentration that will be provided as a set of parameters in the PRM file. Treat ion flow using concentrations at each river or lake, not with flow variables. Since water discharge is in m3/s, the produc will give us mass precipitation rates. River ion flow are tracked with a fixed concentration of 4 ions (Ca, SO4, Na, Cl) dissolved by rain water and transferred along the river network (each cell gets the average concentration of its tributaries and the local rainwater). Closed lakes increase the salinity, since evaporation removes pure water and leaves the salt until a saturation concentration is reached for either. Salt content above saturation for either gypsum or halite is precipitated using the density of halite and gypsum rock, and adding the precipitating lake salt as thickness to the top sedimentary unit, and also tracked independently in a new member of the Block struct: Blocks.thicksalt. A new output file of extension *.thicksalt will contain this salt thickness in a format similar to *.hrz but only for sediment units (written only if hydro_model and evaporation are not zero). Use these variables and values as initial and saturation concentrations, and add them to the template.PRM, to be read from there : 
+# MESSINIAN OCEAN CHEMISTRY OVERRIDES (Approximate ~6 Ma)
+# --------------------------------------------------------
+C_Ca_SEA = 0.048	#these two imply initial
+C_SO4_SEA = 2.04 	#gypsum conc = 2.062 kg/m3
+C_Na_SEA = 10.70
+C_Cl_SEA = 19.30
+
+# River Inputs (Continental Runoff)
+# Rivers are typically Ca-rich (carbonate weathering) relative to SO4
+C_Ca_RIV = 0.06
+C_SO4_RIV = 0.01
+C_Na_RIV = 0.05
+C_Cl_RIV = 0.05
+
+# Precipitation Thresholds (kg/m3)
+# Used to calculate the effective Ksp for the model
+GYPSUM_PRECIP_CN = 5.25
+HALITE_PRECIP_CN = 272.1
+
+How confident are you about implementing all this safely? 
+
+
 	-La flexion no es estable con cambios bruscos de Te (Mayo 2001).
 	-DONE by M. Berry. Implement sediment load effects on transport and erosion (Sklar). 
 	-Implement transitory water flow. Interesting for acceleration of erosion during lake overtopping.
@@ -65,6 +87,10 @@ int main(int argc, char **argv)
 	ctx.dt = dt;
 	ctx.sea_level = sea_level;
 	ctx.nlakes = nlakes;
+	ctx.total_accum_gypsum = total_accum_gypsum;
+	ctx.total_accum_halite = total_accum_halite;
+	ctx.total_precip_gypsum_rate = total_precip_gypsum_rate;
+	ctx.total_precip_halite_rate = total_precip_halite_rate;
 
 	if (switch_ps>=2) {calculate_topo(&cfg, &ctx, topo); Write_Ouput(&cfg, &ctx);}
 
@@ -103,6 +129,7 @@ int main(int argc, char **argv)
 		ctx.numBlocks = numBlocks;
 
 		Time += dt;
+		ctx.Time = Time;
 		fprintf(stdout, "\nT= %.4f My", Time/Matosec);
 
 		if (switch_ps>=2) Write_Ouput(&cfg, &ctx);
@@ -1094,6 +1121,8 @@ int read_file_unit(ModelConfig *cfg, ModelContext *ctx)
 			if (Blocks[ctx->numBlocks-1].type == 'S') {
 				Blocks[ctx->numBlocks-1].detr_ratio  = alloc_matrix(cfg->Ny, cfg->Nx);
 				Blocks[ctx->numBlocks-1].detr_grsize = alloc_matrix(cfg->Ny, cfg->Nx);
+				Blocks[ctx->numBlocks-1].thickgypsum = alloc_matrix(cfg->Ny, cfg->Nx);
+				Blocks[ctx->numBlocks-1].thickhalite = alloc_matrix(cfg->Ny, cfg->Nx);
 			}
 			if (density         != NO_DATA && Blocks[ctx->numBlocks-1].type != 'S') Blocks[ctx->numBlocks-1].density = density;
 			if (erodibility_aux != NO_DATA && Blocks[ctx->numBlocks-1].type != 'S') Blocks[ctx->numBlocks-1].erodibility = erodibility_aux;
@@ -1292,6 +1321,8 @@ int surface_processes (float **topo_ant, ModelConfig *cfg, ModelContext *ctx)
   		  Blocks[numBlocks-1].erodibility = erodibility_sed ;
 		  Blocks[numBlocks-1].detr_ratio = alloc_matrix(cfg->Ny, cfg->Nx);
 		  Blocks[numBlocks-1].detr_grsize = alloc_matrix(cfg->Ny, cfg->Nx);
+		  Blocks[numBlocks-1].thickgypsum = alloc_matrix(cfg->Ny, cfg->Nx);
+		  Blocks[numBlocks-1].thickhalite = alloc_matrix(cfg->Ny, cfg->Nx);
 		  ctx->numBlocks = numBlocks; /* IMPORTANT: Sync Context Struct! */
   	    }
 	}
@@ -1475,6 +1506,7 @@ int Write_Ouput(ModelConfig *cfg, ModelContext *ctx)
 	write_file_deflection(cfg, ctx);
 	write_file_Blocks(cfg, ctx);
 	write_file_grainsize(cfg, ctx);
+	write_file_thicksalt(cfg, ctx);
 	write_file_cross_section(cfg, ctx);
 	write_file_drainage(cfg, ctx);
 	write_file_ice(cfg, ctx);
@@ -1497,7 +1529,7 @@ int Write_Ouput(ModelConfig *cfg, ModelContext *ctx)
 			if (strlen(gif_geom)<2) sprintf(gif_geom, " --elev 30 --fov 140");
 			sprintf(command, "tisc.plot.py %s %s; mv -f %s.jpg %s%03d.jpg", projectname, gif_geom, projectname, projectname, n_image);
 			if (cfg->verbose_level>=3) 
-				fprintf(stdout, "\nPlot files '%s.xvg' and %s%03d.jpg to be produced with command:\n%s\n", projectname, projectname, n_image, command) ;
+				fprintf(stdout, "\nPlot files '%s.svg' and %s%03d.jpg to be produced with command:\n%s\n", projectname, projectname, n_image, command) ;
 			system(command);
 			n_image++;
 		}

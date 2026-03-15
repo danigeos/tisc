@@ -31,6 +31,8 @@ typedef struct {
 	float dt, dt_eros;
 	float sea_level;
 	float total_rain, total_sed_mass, total_bedrock_eros_mass;
+	float total_precip_gypsum_rate, total_precip_halite_rate;
+	float total_accum_gypsum, total_accum_halite;
 	int numBlocks;
 	int nlakes;
 	float **topo;
@@ -64,6 +66,9 @@ extern char boundary_conds[5], eros_bound_cond[5], solver_type, gif_geom[MAXLENL
 extern int lake_instant_fill, **lake_former_step;
 
 
+
+extern float total_precip_gypsum_rate, total_precip_halite_rate;
+extern float total_accum_gypsum, total_accum_halite;
 
 /*functions at libreria.c*/
 #include "../lib/libreria.h"

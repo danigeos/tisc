@@ -11,6 +11,10 @@ Daniel Garcia-Castellanos
 extern float initial_grain_size;
 extern float distance_half_grainsize;
 
+extern float C_Ca_SEA, C_SO4_SEA, C_Na_SEA, C_Cl_SEA;
+extern float C_Ca_RIV, C_SO4_RIV, C_Na_RIV, C_Cl_RIV;
+extern float GYPSUM_PRECIP_CN, HALITE_PRECIP_CN;
+
 int find_up_river (ModelConfig *cfg, ModelContext *ctx, int row, int col, int *level, int *count, float *length, float *chi, FILE *file, bool **done, float ref_discharge);
 
 
@@ -424,6 +428,7 @@ int match_parameter (char *str1, char *str2, int show, int replace, char *line)
 	Match_Param_Replace_flt ( "critical_stress",	critical_stress,  	0 )
 	Match_Param_Replace_flt ( "grain_size",	initial_grain_size,  	0 )
 	Match_Param_Replace_flt ( "grain_size_decay",	distance_half_grainsize,  	0 )
+
 	Match_Param_Replace_flt ( "l_fluv_sedim",	l_fluv_sedim,  	0 )
 	Match_Param_Replace_flt ( "temp_sea_level",	temp_sea_level,  	0 )
 	Match_Param_Replace_int ( "deform_sed",  	deform_sed, 	0 )
@@ -457,6 +462,18 @@ int match_parameter (char *str1, char *str2, int show, int replace, char *line)
 	Match_Param_Replace_int ( "erosed_type",	erosed_model,  	1 )
 	Match_Param_Replace_int ( "switch_hydro",	hydro_model,  	1 )
 	Match_Param_Replace_flt ( "leng_fluv_eros",	erodibility,  	1 )
+
+	Match_Param_Replace_flt ( "C_Ca_SEA",	C_Ca_SEA,  	0 )
+	Match_Param_Replace_flt ( "C_SO4_SEA",	C_SO4_SEA,  	0 )
+	Match_Param_Replace_flt ( "C_Na_SEA",	C_Na_SEA,  	0 )
+	Match_Param_Replace_flt ( "C_Cl_SEA",	C_Cl_SEA,  	0 )
+	Match_Param_Replace_flt ( "C_Ca_RIV",	C_Ca_RIV,  	0 )
+	Match_Param_Replace_flt ( "C_SO4_RIV",	C_SO4_RIV,  	0 )
+	Match_Param_Replace_flt ( "C_Na_RIV",	C_Na_RIV,  	0 )
+	Match_Param_Replace_flt ( "C_Cl_RIV",	C_Cl_RIV,  	0 )
+	Match_Param_Replace_flt ( "GYPSUM_PRECIP_CN",	GYPSUM_PRECIP_CN,  	0 )
+	Match_Param_Replace_flt ( "HALITE_PRECIP_CN",	HALITE_PRECIP_CN,  	0 )
+
 	Match_Param_Replace_flt ( "leng_fluv_sedim",	l_fluv_sedim,  	1 )
 	Match_Param_Replace_int ( "switch_erosed",	erosed_model,  	1 )
 	Match_Param_Replace_int ( "switch_sea", 	water_load,  	1 )
@@ -547,6 +564,18 @@ int read_file_resume(char *filename)
 	fread(&upper_crust_thick_default, sizeof(float),1, 	file);
 	fread(&densasthen, 	sizeof(float),		1, 	file);
 	fread(&densmantle, 	sizeof(float),		1, 	file);
+
+	fread(&C_Ca_SEA, 	sizeof(float),		1, 	file);
+	fread(&C_SO4_SEA, 	sizeof(float),		1, 	file);
+	fread(&C_Na_SEA, 	sizeof(float),		1, 	file);
+	fread(&C_Cl_SEA, 	sizeof(float),		1, 	file);
+	fread(&C_Ca_RIV, 	sizeof(float),		1, 	file);
+	fread(&C_SO4_RIV, 	sizeof(float),		1, 	file);
+	fread(&C_Na_RIV, 	sizeof(float),		1, 	file);
+	fread(&C_Cl_RIV, 	sizeof(float),		1, 	file);
+	fread(&GYPSUM_PRECIP_CN, 	sizeof(float),		1, 	file);
+	fread(&HALITE_PRECIP_CN, 	sizeof(float),		1, 	file);
+
 	fread(&denssedim, 	sizeof(float),		1, 	file);
 	fread(&denscrust, 	sizeof(float),		1, 	file);
 	fread(&densenv, 	sizeof(float),		1, 	file);
@@ -630,6 +659,7 @@ int read_file_resume(char *filename)
 	fread(&critical_stress, 	sizeof(float),		1, 	file);
 	fread(&initial_grain_size, 	sizeof(float),		1, 	file);
 	fread(&distance_half_grainsize, sizeof(float),		1, 	file);
+
 	fread(&l_fluv_sedim, 	sizeof(float),		1, 	file);
 	fread(&lost_rate, 	sizeof(float),		1, 	file);
 	fread(&permeability, 	sizeof(float),		1, 	file);
@@ -644,6 +674,11 @@ int read_file_resume(char *filename)
 	fread(&rain_amp, 	sizeof(float),		1, 	file);
 	fread(&total_bedrock_eros_mass, 	sizeof(float),		1, 	file);
 	fread(&total_sed_mass, 	sizeof(float),		1, 	file);
+
+	fread(&total_precip_gypsum_rate, 	sizeof(float),		1, 	file);
+	fread(&total_precip_halite_rate, 	sizeof(float),		1, 	file);
+	fread(&total_accum_gypsum, 	sizeof(float),		1, 	file);
+	fread(&total_accum_halite, 	sizeof(float),		1, 	file);
 
 	fread(&hydro_model, 	sizeof(int),		1, 	file);
 	fread(&lake_instant_fill, 	sizeof(int),		1, 	file);
@@ -728,9 +763,13 @@ int read_file_resume(char *filename)
 	    if (Blocks[j].type == 'S') {
 		Blocks[j].detr_ratio = alloc_matrix(Ny, Nx);
 		Blocks[j].detr_grsize = alloc_matrix(Ny, Nx);
+		Blocks[j].thickgypsum = alloc_matrix(Ny, Nx);
+		Blocks[j].thickhalite = alloc_matrix(Ny, Nx);
 		for (i=0; i<Ny; i++) {
 			fread(Blocks[j].detr_ratio[i], 	sizeof(float),	Nx, 	file);
 			fread(Blocks[j].detr_grsize[i], 	sizeof(float),	Nx, 	file);
+			fread(Blocks[j].thickgypsum[i], 	sizeof(float),	Nx, 	file);
+			fread(Blocks[j].thickhalite[i], 	sizeof(float),	Nx, 	file);
 		}
 	    }
 	}
@@ -932,6 +971,10 @@ int read_file_node_defs(ModelConfig *cfg, ModelContext *ctx, float dt_st)
 
 			drainage[i][j].discharge += value;
 			ctx->total_rain += value;
+			drainage[i][j].C_Ca += value * C_Ca_RIV;
+			drainage[i][j].C_SO4 += value * C_SO4_RIV;
+			drainage[i][j].C_Na += value * C_Na_RIV;
+			drainage[i][j].C_Cl += value * C_Cl_RIV;
 			break;
 		    case 2:
 			drainage[i][j].masstr += value;
@@ -1330,7 +1373,7 @@ int write_file_Blocks (ModelConfig *cfg, ModelContext *ctx)
 
 	Write_Open_Filename_Return (".hrz", "wt", !switch_write_file_Blocks);
 
-	fprintf(file, "# x(km)\t\t y(km)\t\t z(m)-->  \t\t(t=%.2f My)\n#    \tDens:\t%.0f", ctx->Time/Matosec, cfg->denscrust) ;
+	fprintf(file, "# x(km)\t\t y(km)\t\t z(m)-->  \t\t(t=%.4f My)\n#    \tDens:\t%.0f", ctx->Time/Matosec, cfg->denscrust) ;
 	for (int k=0; k<ctx->numBlocks; k++) {
 		fprintf(file, "\t%.0f", Blocks[k].density);
 	}
@@ -1370,7 +1413,7 @@ int write_file_grainsize (ModelConfig *cfg, ModelContext *ctx)
 
 	Write_Open_Filename_Return (".grainsize", "wt", !switch_write_file_Blocks);
 
-	fprintf(file, "# x(km)\t\t y(km)\t\t grainsize(m)-->  \t\t(t=%.2f My)\n#    \tAge:\t", ctx->Time/Matosec) ;
+	fprintf(file, "# x(km)\t\t y(km)\t\t grainsize(m)-->  \t\t(t=%.4f My)\n#    \tAge:\t", ctx->Time/Matosec) ;
 	for (int k=0; k<ctx->numBlocks; k++) {
 		if (Blocks[k].type == 'S') {
 			fprintf(file, "\t%.2f", Blocks[k].age/Matosec);
@@ -1392,6 +1435,33 @@ int write_file_grainsize (ModelConfig *cfg, ModelContext *ctx)
 
 
 
+int write_file_thicksalt (ModelConfig *cfg, ModelContext *ctx)
+{
+	FILE 	*file ;
+
+	/* WRITES A FILE WITH SALT THICKNESS OF SEDIMENT BLOCKS */
+	if (!cfg->hydro_model || !evaporation_ct) return 0;
+
+	Write_Open_Filename_Return (".thicksalt", "wt", !switch_write_file_Blocks);
+
+	fprintf(file, "# x(km)\t\t y(km)\t\t gypsum_thickness(m)\t halite_thickness(m)\t\t(t=%.4f My)\n", ctx->Time/Matosec) ;
+	for (int i=0; i<cfg->Ny; i++)  for (int j=0; j<cfg->Nx; j++) {
+		float total_gypsum = 0;
+		float total_halite = 0;
+		for (int i_Block=0; i_Block<ctx->numBlocks; i_Block++) {
+			if (Blocks[i_Block].type == 'S') {
+				total_gypsum += Blocks[i_Block].thickgypsum[i][j];
+				total_halite += Blocks[i_Block].thickhalite[i][j];
+			}
+		}
+		fprintf(file, "%9.3f\t%9.3f\t%8.3f\t%8.3f\n", (cfg->xmin+j*cfg->dx)/1000, (cfg->ymax-i*cfg->dy)/1000, total_gypsum, total_halite);
+	}
+	fclose(file);
+	return 1;
+}
+
+
+
 #define NDERS 8	
 
 int write_file_drainage (ModelConfig *cfg, ModelContext *ctx)
@@ -1405,17 +1475,19 @@ int write_file_drainage (ModelConfig *cfg, ModelContext *ctx)
 	*/
 
 #ifdef SURFACE_TRANSPORT
-	Write_Open_Filename_Return (".xyw", "wt", !switch_write_file_Blocks || ctx->Time==ctx->Timeini || !cfg->hydro_model);
+	Write_Open_Filename_Return (".xyw", "wt", !switch_write_file_Blocks || !cfg->hydro_model);
 
 	//calculate_topo(topo);
-	fprintf(file, "#TISC output: drainage.  sea_level: %.1f m\n# x(km) y(km) water(m3/s) sed[kg/s] type topo[m] x-to y-to topo-to precipt[mm/y] evapora[mm/y] ice_thick[m] ice_sed_load[m] swim_dist[km]\n", ctx->sea_level);
+	fprintf(file, "#TISC output: drainage.  sea_level: %.1f m\n# x(km) y(km) water(m3/s) sed[kg/s] type topo[m] x-to y-to topo-to precipt[mm/y] evapora[mm/y] ice_thick[m] ice_sed_load[m] swim_dist[km] grainsize[m] C_Ca[kg/m3] C_SO4[kg/m3] C_Na[kg/m3] C_Cl[kg/m3]\n", ctx->sea_level);
+	
+	float **done = alloc_matrix(cfg->Ny, cfg->Nx);
+
 	for (i=0; i<cfg->Ny; i++) for (j=0; j<cfg->Nx; j++) {
 		int il, dcol=drainage[i][j].dr_col, drow=drainage[i][j].dr_row, switch_mouth, ik, jk;
 		char dr_type;
 		float dist, maxdist;
-		float **done;
-		done = alloc_matrix(cfg->Ny, cfg->Nx);
 		maxdist=0;
+		for (int row=0; row<cfg->Ny; row++) memset(done[row], 0, cfg->Nx * sizeof(float));
 		if (drow==SIGNAL && dcol==SIGNAL) {drow=i; dcol=j;}
 		dr_type = drainage[i][j].type;
 		if ((il=drainage[i][j].lake)) 
@@ -1494,7 +1566,12 @@ int write_file_drainage (ModelConfig *cfg, ModelContext *ctx)
 			if (distneighb>maxdist) maxdist = distneighb;
 		}
 		
-		fprintf(file, "%7.2f\t%7.2f\t%.2f\t%.2f\t%c\t%.1f\t%7.2f\t%7.2f\t%.1f\t%7.1f\t%7.1f\t%6.1f\t%6.2f\t%6.2f\n",
+		float conc_Ca  = (drainage[i][j].discharge > 0) ? drainage[i][j].C_Ca  / drainage[i][j].discharge : 0;
+		float conc_SO4 = (drainage[i][j].discharge > 0) ? drainage[i][j].C_SO4 / drainage[i][j].discharge : 0;
+		float conc_Na  = (drainage[i][j].discharge > 0) ? drainage[i][j].C_Na  / drainage[i][j].discharge : 0;
+		float conc_Cl  = (drainage[i][j].discharge > 0) ? drainage[i][j].C_Cl  / drainage[i][j].discharge : 0;
+
+		fprintf(file, "%7.2f\t%7.2f\t%.2f\t%.2f\t%c\t%.1f\t%7.2f\t%7.2f\t%.1f\t%7.1f\t%7.1f\t%6.1f\t%6.2f\t%6.2f\t%.3f\t%.4f\t%.4f\t%.4f\t%.4f\n",
 			(cfg->xmin+j*cfg->dx)/1000, (cfg->ymax-i*cfg->dy)/1000, 
 			drainage[i][j].discharge, 
 			drainage[i][j].masstr,
@@ -1504,9 +1581,9 @@ int write_file_drainage (ModelConfig *cfg, ModelContext *ctx)
 			precipitation[i][j]*secsperyr*1e3, evaporation[i][j]*secsperyr*1e3, 
 			(K_ice_eros)? ice_thickness[i][j] : 0, 
 			(K_ice_eros)? ice_sedm_load[i][j] : 0, 
-			maxdist/1e3 );
-		free_matrix(done, cfg->Ny);
+			maxdist/1e3, drainage[i][j].grainsize, conc_Ca, conc_SO4, conc_Na, conc_Cl );
 	}
+	free_matrix(done, cfg->Ny);
 	fclose(file);
 #endif
 	return (1);
@@ -1593,7 +1670,7 @@ int write_file_river_basins (ModelConfig *cfg, ModelContext *ctx)
 	  WRITES INFORMATION ABOUT HYDROLOGICAL BASINS
 	*/
 
-	Write_Open_Filename_Return (".bas", "wt", !cfg->hydro_model || !switch_write_file || ctx->Time==ctx->Timeini);
+	Write_Open_Filename_Return (".bas", "wt", !cfg->hydro_model || !switch_write_file);
 
 	done = (bool **) alloc_matrix_int(cfg->Ny, cfg->Nx);
 
@@ -1650,7 +1727,7 @@ int write_file_lakes (ModelConfig *cfg, ModelContext *ctx)
 	FILE 	*file;
 
 #ifdef SURFACE_TRANSPORT
-	Write_Open_Filename_Return (".lak", "wt", !cfg->hydro_model || !switch_write_file || !ctx->nlakes || ctx->Time==ctx->Timeini);
+	Write_Open_Filename_Return (".lak", "wt", !cfg->hydro_model || !switch_write_file || !ctx->nlakes);
 
 	fprintf(file, "#TISC output: \n#Lakes: %d", ctx->nlakes);
 	for (i=1; i<=ctx->nlakes; i++) {
@@ -1699,7 +1776,7 @@ int write_file_ice (ModelConfig *cfg, ModelContext *ctx)
 	*/
 
 #ifdef SURFACE_TRANSPORT
-	Write_Open_Filename_Return (".ice", "wt", !switch_write_file_Blocks || !cfg->hydro_model || !K_ice_eros || ctx->Time==ctx->Timeini);
+	Write_Open_Filename_Return (".ice", "wt", !switch_write_file_Blocks || !cfg->hydro_model || !K_ice_eros);
 
 	fprintf(file, "#TISC output: ice flow.  sea_level: %.1f m\n# x(km) y(km) topo[m] ice_thick[m]  vx_df vy_df[m/y]  vx_sl vy_sl  sol_prec[mm/y] ice_sed_load[m]\n", ctx->sea_level);
 	for (i=0; i<cfg->Ny; i++) for (j=0; j<cfg->Nx; j++) {
@@ -1759,6 +1836,18 @@ int write_file_resume(ModelConfig *cfg, ModelContext *ctx)
 	fwrite(&upper_crust_thick_default, sizeof(float),1, 	file);
 	fwrite(&densasthen, 	sizeof(float),		1, 	file);
 	fwrite(&densmantle, 	sizeof(float),		1, 	file);
+
+	fwrite(&C_Ca_SEA, 	sizeof(float),		1, 	file);
+	fwrite(&C_SO4_SEA, 	sizeof(float),		1, 	file);
+	fwrite(&C_Na_SEA, 	sizeof(float),		1, 	file);
+	fwrite(&C_Cl_SEA, 	sizeof(float),		1, 	file);
+	fwrite(&C_Ca_RIV, 	sizeof(float),		1, 	file);
+	fwrite(&C_SO4_RIV, 	sizeof(float),		1, 	file);
+	fwrite(&C_Na_RIV, 	sizeof(float),		1, 	file);
+	fwrite(&C_Cl_RIV, 	sizeof(float),		1, 	file);
+	fwrite(&GYPSUM_PRECIP_CN, sizeof(float),		1, 	file);
+	fwrite(&HALITE_PRECIP_CN, sizeof(float),		1, 	file);
+
 	fwrite(&denssedim, 	sizeof(float),		1, 	file);
 	fwrite(&denscrust, 	sizeof(float),		1, 	file);
 	fwrite(&densenv, 	sizeof(float),		1, 	file);
@@ -1831,6 +1920,7 @@ int write_file_resume(ModelConfig *cfg, ModelContext *ctx)
 	fwrite(&critical_stress, 	sizeof(float),		1, 	file);
 	fwrite(&initial_grain_size, 	sizeof(float),		1, 	file);
 	fwrite(&distance_half_grainsize, sizeof(float),		1, 	file);
+
 	fwrite(&l_fluv_sedim, 	sizeof(float),		1, 	file);
 	fwrite(&lost_rate, 	sizeof(float),		1, 	file);
 	fwrite(&permeability, 	sizeof(float),		1, 	file);
@@ -1845,6 +1935,11 @@ int write_file_resume(ModelConfig *cfg, ModelContext *ctx)
 	fwrite(&rain_amp, 	sizeof(float),		1, 	file);
 	fwrite(&total_bedrock_eros_mass, 	sizeof(float),		1, 	file);
 	fwrite(&total_sed_mass, 	sizeof(float),		1, 	file);
+
+	fwrite(&ctx->total_precip_gypsum_rate, 	sizeof(float),		1, 	file);
+	fwrite(&ctx->total_precip_halite_rate, 	sizeof(float),		1, 	file);
+	fwrite(&ctx->total_accum_gypsum, 	sizeof(float),		1, 	file);
+	fwrite(&ctx->total_accum_halite, 	sizeof(float),		1, 	file);
 
 	fwrite(&hydro_model, 	sizeof(int),		1, 	file);
 	fwrite(&lake_instant_fill, 	sizeof(int),		1, 	file);
@@ -1909,6 +2004,8 @@ int write_file_resume(ModelConfig *cfg, ModelContext *ctx)
 			for (i=0; i<Ny; i++) {
 				fwrite(Blocks[j].detr_ratio[i], sizeof(float), Nx, file);
 				fwrite(Blocks[j].detr_grsize[i], sizeof(float), Nx, file);
+				fwrite(Blocks[j].thickgypsum[i], sizeof(float), Nx, file);
+				fwrite(Blocks[j].thickhalite[i], sizeof(float), Nx, file);
 			}
 		}
 	}
@@ -1947,7 +2044,7 @@ int write_file_surftransp (ModelConfig *cfg, ModelContext *ctx)
 	  EROSION and SEDIMENTATION file
 	*/
 
-	Write_Open_Filename_Return (".st", "wt", !cfg->erosed_model || !switch_write_file_Blocks || ctx->Time==ctx->Timeini);
+	Write_Open_Filename_Return (".st", "wt", !cfg->erosed_model || !switch_write_file_Blocks);
 
 	fprintf(file, "#TISC output drainage.  sea_level: %.1f m\n# x(km)  y(km) topo[m]  accumul_erosion[m] eros_rate[m/My]\n", ctx->sea_level);
 	for (int i=0; i<cfg->Ny; i++) for (int j=0; j<cfg->Nx; j++) {

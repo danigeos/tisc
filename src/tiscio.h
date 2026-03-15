@@ -25,6 +25,7 @@ int Calculate_2D_Cross_Section (ModelConfig *cfg, ModelContext *ctx, struct BLOC
 int write_file_cross_section (ModelConfig *cfg, ModelContext *ctx);
 int write_file_Blocks (ModelConfig *cfg, ModelContext *ctx);
 int write_file_grainsize (ModelConfig *cfg, ModelContext *ctx);
+int write_file_thicksalt (ModelConfig *cfg, ModelContext *ctx);
 int write_file_drainage (ModelConfig *cfg, ModelContext *ctx);
 int write_file_river_basins (ModelConfig *cfg, ModelContext *ctx);
 int write_file_lakes (ModelConfig *cfg, ModelContext *ctx);

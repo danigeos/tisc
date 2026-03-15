@@ -37,8 +37,23 @@ int i_first_Block_load, i_Block_insert, numBlocks, nwrotenfiles, run_type;
 float Kerosdif, Keroseol, Ksedim, critical_slope, K_river_cap, erodibility, erodibility_sed, critical_stress;
 float initial_grain_size = 1.0;
 float distance_half_grainsize = 5000.0;
+
+/* Salt & Ion parameters */
+float C_Ca_SEA = 0.048;
+float C_SO4_SEA = 2.04;
+float C_Na_SEA = 10.70;
+float C_Cl_SEA = 19.30;
+float C_Ca_RIV = 0.06;
+float C_SO4_RIV = 0.01;
+float C_Na_RIV = 0.05;
+float C_Cl_RIV = 0.05;
+float GYPSUM_PRECIP_CN = 5.25;
+float HALITE_PRECIP_CN = 272.1;
+
 float spl_m, spl_n, l_fluv_sedim, lost_rate, permeability, rain, Krain, relative_humidity, CXrain;
 float rain_per, rain_amp, total_bedrock_eros_mass, total_sed_mass;
+float total_precip_gypsum_rate = 0, total_precip_halite_rate = 0;
+float total_accum_gypsum = 0, total_accum_halite = 0;
 float zini, dt_record, sed_porosity, compact_depth, last_time_file_time, random_topo = 0;
 float **var_sea_level, **var_eros_level, **var_insolation, *horiz_record_time;
 bool switch_file_out = false, switch_gradual, switch_topoest, switch_write_file_Blocks, deform_sed;
