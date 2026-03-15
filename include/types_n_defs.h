@@ -1,3 +1,6 @@
+#ifndef TYPES_N_DEFS_H
+#define TYPES_N_DEFS_H
+
 /*
 	include file for most of my programs.
 */
@@ -8,6 +11,7 @@
 #include <string.h>
 #include <memory.h>
 //#include <malloc.h>
+#include <stdbool.h>
 #include <time.h>
 
 #define	MAXLENFILE	256			/*Max. length for filenames*/
@@ -88,10 +92,6 @@
 
 
 #define AUTHORSHIP		{ fprintf(stderr, "\n\t\t\t\t2018, Daniel Garcia-Castellanos\n");}
-
-/*YES=1;  NO=0. Defines boolean type for switches with values true or false (YES or NO)*/
-typedef enum BOOLEAN	{NO, YES} BOOL;
-#define SI YES
 
 struct BLOCK { 		/*for TISC*/
 	float	**thick;		/*Present thickness at each x point*/
@@ -179,3 +179,4 @@ struct LAKE_INFO_1D {		/*For lakes*/
 	float vol;		/*Volume of the lake water body*/
 };
 
+#endif /* TYPES_N_DEFS_H */

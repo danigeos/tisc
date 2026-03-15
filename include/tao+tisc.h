@@ -46,7 +46,7 @@
 	if ((file = fopen(name,type)) == NULL) {PRINT_INFO("Cannot read "txt" input file '%s'.", name); return 0;}\
 	PRINT_INFO("Reading "txt" at '%s'", name);};
 #define Read_Header_File(file) {\
-	char line[MAXLENLINE+200], *lineptr, str1[MAXLENLINE], str2[MAXLENLINE]; float value; int nlines=0, nparams=0, nread; BOOL switch_show=(verbose_level>=3)? 1:0;\
+	char line[MAXLENLINE+200], *lineptr, str1[MAXLENLINE], str2[MAXLENLINE]; float value; int nlines=0, nparams=0, nread; bool switch_show=(verbose_level>=3)? true:false;\
 	while ((lineptr=fgets(line, MAXLENLINE+200-1, file)) != NULL && nlines<NMAXHEADERLINES) {\
 		nlines++; nread=sscanf(lineptr, "%s %s", str1, str2);\
 		if (nread == 2) {\
@@ -60,55 +60,21 @@
 
 
 
+extern int nloads, n_sea_level_input_points, n_eros_level_input_points, n_record_times;
+extern int i_first_Block_load, i_Block_insert, numBlocks, nwrotenfiles, run_type;
 
-int	nloads, 			/*Number of loads done*/
-	n_sea_level_input_points,	/*Number of sea level input points*/
-	n_eros_level_input_points, 	/*Number of input points of erosion level*/
-	n_record_times, 		/*Number of horizons to record*/
-	i_first_Block_load, 		/*Number of the first Block corresponding to a load*/
-	i_Block_insert, 			/*Number of the Block in wich will be inserted the heigh of the next load*/
-	numBlocks, 			/*Number of recorded Blocks*/
-	nwrotenfiles, 			/*Number of wroten output files*/
-	run_type; 			/*tao execution mode*/
 	
-float	Kerosdif, 		/*Diffusive erosion rate in m2/Ma, (e. g. D. Waltham & S. Hardy*/
-	Keroseol, 		/*Background erosion rate in m/m/Ma*/
-	Ksedim, 		/*Marine sedimentation rate in m/Ma and its maximum water depth of validity*/
-	critical_slope, 	/*for landsliding*/
-	K_river_cap, 		/*Constant of river transport capacity [kg/m3].*/
-	erodibility, 		
-	erodibility_sed, 	
-	critical_stress, 	/*basal shear stress needed for grain mobilisation*/
-	spl_m, spl_n, 		/*exponents of the stream power law over Q and S; m/n is ca. 0.5*/
-	l_fluv_sedim, 		/*Length scale of fluvial sedimentation */
-	lost_rate, 		/*Percent of lost water per unit length */
-	permeability, /*[m2]*/
-	rain, Krain, 		/*[m3/s/m2], [m3/s/m2/m] or m/s*/
-	relative_humidity, 	/*Relative humidity at the upwind boundary (incoming air rel. humidity) [no units]*/
-	CXrain, 		/*[m]*/
-	rain_per, 		/*My*/
-	rain_amp, 		/*-*/
-	total_bedrock_eros_mass,
-	total_sed_mass; 
+extern float Kerosdif, Keroseol, Ksedim, critical_slope, K_river_cap, erodibility, erodibility_sed, critical_stress;
+extern float spl_m, spl_n, l_fluv_sedim, lost_rate, permeability, rain, Krain, relative_humidity, CXrain;
+extern float rain_per, rain_amp, total_bedrock_eros_mass, total_sed_mass;
 
 
-float	zini, 				/*altitude of the initial plate position over the sea level [m]*/
-	dt_record, 				/*maximum Time interval between automatically-generated sediment Blocks [s]*/
-	sed_porosity, 
-	compact_depth, 
-	last_time_file_time, 
-	random_topo=0, 			/*Maximum random variation of initial topo*/
-	**var_sea_level, 		/*Array nx2 with sea level along time*/
-	**var_eros_level, 		/*Variations of the erosion level (height dividing erosion and sedimentation, measured from sea_level)*/
-	**var_insolation, 
-	*horiz_record_time;		/*Array with times in wich to record horizons*/
-	
-BOOL
-	switch_file_out=NO, 
-	switch_gradual, 		/*YES to distribute the load between the Time of reading file and the Time of the following one*/
-	switch_topoest, 		/*YES if load files give topographic loads which must stay at zero level while the deflection room is filled up with 'densinfill' density material*/
-	switch_write_file_Blocks, 	/*YES if Blocks (profile *.pfl) file is to be written*/
-	deform_sed;			/*YES to deform sediment automatically, based on Blocks motion*/
+
+extern float zini, dt_record, sed_porosity, compact_depth, last_time_file_time, random_topo;
+extern float **var_sea_level, **var_eros_level, **var_insolation, *horiz_record_time;
+
+extern bool switch_file_out, switch_gradual, switch_topoest, switch_write_file_Blocks, deform_sed;
+
 
 
 /*FUNCTION DECLARATIONS:*/

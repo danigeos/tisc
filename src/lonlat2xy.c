@@ -21,15 +21,15 @@ int main(int argc, char **argv)
 	int	i, j, iarg, np=10000;
 	float	mean_lat=37,	
 		x0=-7, y0=36, xx, yy, zz, 
-		escala_mediax, 		/* m/º */ 
+		escala_mediax, 		/* m/ï¿½ */ 
 		escala_mediay, 
 		*poligonX, *poligonY,
 		poligon_value=0, 
 		xm, ym, zm, alt_shift = 100;
 	char	zstr[MAXLONLINE];
-	BOOL	switch_reverse=NO, switch_outside_inside=NO, 
-		switch_change_z_val=NO, switch_km_io=NO, 
-		switch_divide_at_360=NO;
+	bool	switch_reverse=false, switch_outside_inside=false, 
+		switch_change_z_val=false, switch_km_io=false, 
+		switch_divide_at_360=false;
 	FILE 	*filein=NULL, *filelimit=NULL;
 
 	if (argc<2) syntax(argc, argv); 
@@ -51,7 +51,7 @@ int main(int argc, char **argv)
 			value2 = atof(prm2);
 			switch (argv[iarg][1]) {
 				case 'd':
-					switch_divide_at_360 = YES;
+					switch_divide_at_360 = true;
 					break;
 				case 'I':
 					if ((filelimit = fopen(prm, "rt")) == NULL) {
@@ -59,7 +59,7 @@ int main(int argc, char **argv)
 						fprintf(stderr, "\nTwo columns (x-y) will be read from file.\n");
 						exit(0);
 					}
-					switch_change_z_val = YES;
+					switch_change_z_val = true;
 					for (i=0;;i++) {
 						float  a, b;
 						int    nread;
@@ -79,16 +79,16 @@ int main(int argc, char **argv)
 					poligon_value = value;
 					break;
 				case 'k':
-					switch_km_io = YES;
+					switch_km_io = true;
 					break;
 				case 'L':
 					mean_lat = value;
 					break;
 				case 'r':
-					switch_reverse = YES;
+					switch_reverse = true;
 					break;
 				case 's':
-					switch_outside_inside = YES;
+					switch_outside_inside = true;
 					break;
 				case 'V':
 					verbose_level = 1;

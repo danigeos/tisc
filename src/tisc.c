@@ -27,54 +27,86 @@ Memory debugging with:
 
 
 #include "tisc.h"
-#include "tisclib.c"
-#include "tiscio.c"
+#include "tisclib.h"
+#include "tiscio.h"
 #include "../lib/libreria.h"
 
 int main(int argc, char **argv)
 {
 	float **topo_ant;
+	ModelConfig cfg = {0};
+	ModelContext ctx = {0};
 
 	/*get input parameters and files*/
 	inputs(argc, argv) ;
 
 	fprintf(stdout, "\nT= %.4f My", Time/Matosec);
 
-	if (switch_ps>=2) {calculate_topo(topo); Write_Ouput();}
 	topo_ant = alloc_matrix(Ny, Nx);
 
+	/* Populate configuration context */
+	cfg.Nx = Nx; cfg.Ny = Ny;
+	cfg.dx = dx; cfg.dy = dy; cfg.dxy = dxy;
+	cfg.xmin = xmin; cfg.xmax = xmax; cfg.ymin = ymin; cfg.ymax = ymax;
+	cfg.hydro_model = hydro_model;
+	cfg.erosed_model = erosed_model;
+	cfg.verbose_level = verbose_level;
+	cfg.densenv = densenv; cfg.denssedim = denssedim;
+	cfg.denscrust = denscrust; cfg.denswater = denswater; cfg.densice = densice;
+	cfg.Px = Px; cfg.Py = Py; cfg.Pxy = Pxy;
+
+	ctx.Timeini = Timeini; ctx.Timefinal = Timefinal;
+	ctx.dt_eros = dt_eros;
+	ctx.topo = topo;
+	ctx.numBlocks = numBlocks;
+	ctx.Time = Time;
+	ctx.dt = dt;
+	ctx.sea_level = sea_level;
+	ctx.nlakes = nlakes;
+
+	if (switch_ps>=2) {calculate_topo(&cfg, &ctx, topo); Write_Ouput(&cfg, &ctx);}
 
 	/*MAIN LOOP: In this loop time increments from Timeini to Timefinal*/
 	do {
 		/*Remember topography before tectonics and flexure*/
-		calculate_topo(topo_ant);
+		calculate_topo(&cfg, &ctx, topo_ant);
 
 		/*Calculate tectonic deformation and tectonic load*/
-		tectload();
+		tectload(&cfg, &ctx);
 		
 		/*Sea level variations*/
-		calculate_sea_level();
+		ctx.sea_level = calculate_sea_level(ctx.Time);
 
 		/*Calculates water column load*/
-		calculate_water_load();
+		calculate_water_load(&cfg, &ctx);
 
 		/*Define & solve elastic flexure equation*/
-		Elastic_Deflection();
+		Elastic_Deflection(&cfg, &ctx);
 
 		/*Define & solve viscoelastic flexure equation*/
-		Viscous_Relaxation();
+		Viscous_Relaxation(&cfg, &ctx);
 
-//calculate_topo(topo);
+		/* Update dynamic context */
+		ctx.Time = Time;
+		ctx.dt = dt;
+		ctx.sea_level = sea_level;
+		ctx.nlakes = nlakes;
+		ctx.numBlocks = numBlocks;
+
 		/*Calculates surface water flow and sediment-erosion. Distributes all previous effects on topo over ninters substeps of dt_st.*/
-		surface_processes(topo_ant);
+		surface_processes(topo_ant, &cfg, &ctx);
+
+		/* Synchronize context with changes made by the physics engine */
+		ctx.nlakes = nlakes;
+		ctx.numBlocks = numBlocks;
 
 		Time += dt;
 		fprintf(stdout, "\nT= %.4f My", Time/Matosec);
 
-		if (switch_ps>=2) Write_Ouput();
+		if (switch_ps>=2) Write_Ouput(&cfg, &ctx);
 	} while (Time < Timefinal-dt/10);
 
-	The_End();
+	The_End(&cfg, &ctx);
 
 	free_matrix (topo_ant, Ny);
 
@@ -95,7 +127,7 @@ int inputs (int argc, char **argv)
 	char 	command[MAXLENLINE], 
 		resume_filename[MAXLENFILE],
 		load_file_name[MAXLENLINE];
-	BOOL	success_def_prm=NO, switch_initial_geom=NO;
+	bool	success_def_prm=false, switch_initial_geom=false;
 
 	run_type=0;
 	solver_type = 'l';
@@ -187,7 +219,7 @@ int inputs (int argc, char **argv)
 
 	nloads=0; n_image=0; nlakes=0;
 	numBlocks=0; i_first_Block_load=0; i_Block_insert=0;
-	nwrotenfiles=0; switch_topoest=NO;
+	nwrotenfiles=0; switch_topoest=false;
 
 	switch (run_type)
 	{
@@ -266,7 +298,7 @@ int inputs (int argc, char **argv)
 	evaporation_ct *= 1e6/Matosec/1e3;
 	lost_rate *= 1e-2 * 1e-3;
 	temp_sea_level += TEMP_FREEZE_WATER; /*converts from C to K*/
-	switch_write_file_Blocks = YES; 
+	switch_write_file_Blocks = true; 
 	if (strlen(boundary_conds)<4)  boundary_conds[1]= boundary_conds[2]= boundary_conds[3]= boundary_conds[0];
 	if (strlen(eros_bound_cond)<4) eros_bound_cond[1]=eros_bound_cond[2]=eros_bound_cond[3]=eros_bound_cond[0];
 
@@ -290,7 +322,7 @@ int inputs (int argc, char **argv)
 	sprintf(command, "rm -f .*.tisc.tmp %s.mtrz", projectname);
 	system(command);
 
-	read_file_sea_level(); calculate_sea_level();
+	read_file_sea_level(); sea_level = calculate_sea_level(Time);
 	read_file_insolation();
 	read_file_horiz_record_time();
 	read_file_Te();
@@ -375,11 +407,11 @@ int interpr_command_line_opts(int argc, char **argv)
 					else PRINT_WARNING("Impossible to change grid when resuming a model.");
 					break;
 				case 'o':
-					switch_file_out=YES;
+					switch_file_out=true;
 					break;
 				case 'P':
 					switch_ps=(strlen(prm)>0)?value:1; /*default is 1 to keep old command line syntax with -Pc*/
-					switch_write_file_Blocks=YES;
+					switch_write_file_Blocks=true;
 					if (argv[iarg][2] == 'c') {
 						switch_ps=2;
 						strcpy(gif_geom, "");
@@ -495,6 +527,8 @@ int Direct_mode(char *load_file_name)
 {
 	int 	i, j;
 	FILE 	*file;
+	ModelConfig cfg = {0}; 
+	ModelContext ctx = {0};
 
 	/*Solves flexure problem in direct mode: taking a single external load file and 
 	writing deflection in standar output. There are no other input files neither 
@@ -503,6 +537,9 @@ int Direct_mode(char *load_file_name)
 	PRINT_INFO("Entering direct mode. xmin/xmax/ymin/ymax=%.1f/%.1f/%.1f/%.1f Nx/Ny=%d/%d\n", xmin,xmax,ymin,ymax, Nx,Ny);
 	dx = (xmax-xmin) / (Nx-1) ;
 	dy = (ymax-ymin) / (Ny-1) ;
+	cfg.Nx = Nx; cfg.Ny = Ny; cfg.dx = dx; cfg.dy = dy; cfg.Px = Px; cfg.Py = Py; cfg.Pxy = Pxy;
+	cfg.verbose_level = verbose_level;
+	ctx.Time = Time; ctx.Timeini = Timeini;
 	Allocate_Memory();
 	if (strcmp(load_file_name, "")) {
 		if ((file = fopen(load_file_name, "rt")) == NULL) {
@@ -516,7 +553,7 @@ int Direct_mode(char *load_file_name)
 		D[i][j] = ET2RIG(Te_default); 
 		Dq[i][j] = h_last_unit[i][j];
 	}
-	Elastic_Deflection();
+	Elastic_Deflection(&cfg, &ctx);
 	fprintf(stdout, "\n\nx[km]\t\ty[km]\t\tw[m]\t\tpressure[Pa]\n"); 
 	for (i=0; i<Ny; i++) for (j=0; j<Nx; j++) 
 		fprintf(stdout, "%8.1f\t%8.1f\t%8.1f\t%8.1f\n", 
@@ -528,46 +565,46 @@ int Direct_mode(char *load_file_name)
 
 
 
-int tectload()
+int tectload(ModelConfig *cfg, ModelContext *ctx)
 {
 	/*
 	CALCULATES NEW LOAD INCREMENT FROM UNIT FILES, Returns 1 if elastic
 	flexure must be done (i.e, if changes in load  occurred), 0 otherwise.
 	*/
 	
-	PRINT_GRID_INFO (topo, "topogr.  ", "m");
+	PRINT_GRID_INFO (ctx->topo, "topogr.  ", "m");
 
 	/*Moves Blocks*/
-	move_Blocks();
+	move_Blocks(cfg, ctx);
 
 	/*Reads external load from file*/
-	while (read_file_unit());
+	while (read_file_unit(cfg, ctx));
 
 	/*Distributes the emplacement of a unit along time*/
-	gradual_Block();
+	gradual_Block(cfg, ctx);
 
-	Repare_Blocks();
+	Repare_Blocks(cfg, ctx);
 
 	return (1);
 }
 
 
 
-int Elastic_Deflection()
+int Elastic_Deflection(ModelConfig *cfg, ModelContext *ctx)
 {
-	int 	i, j, NDi=2*Ny, NDs=2*Ny, Neqs=Nx*Ny, 
-		nonzeroes=13*Nx*Ny, ESP, PATH, FLAG, NSP, 
+	int 	i, j, NDi=2*cfg->Ny, NDs=2*cfg->Ny, Neqs=cfg->Nx*cfg->Ny, 
+		nonzeroes=13*cfg->Nx*cfg->Ny, ESP, PATH, FLAG, NSP, 
 		*R, *C, *IC, *IA, *JA, *ISP;
 	double	**A, *b, *w_aux;
 	float 	*B, *Z, *mathlib_matrix, *RSP;
-	BOOL	load_changes=NO;
+	bool	load_changes=false;
 
-	for (i=0; i<Ny; i++) for (j=0; j<Nx; j++) if (Dq[i][j]) load_changes = YES;
-	if (isost_model>0 && (load_changes || (Time==Timeini && (Px || Py || Pxy)))) {
+	for (i=0; i<cfg->Ny; i++) for (j=0; j<cfg->Nx; j++) if (Dq[i][j]) load_changes = true;
+	if (isost_model>0 && (load_changes || (ctx->Time==ctx->Timeini && (cfg->Px || cfg->Py || cfg->Pxy)))) {
     	    if (!Te_default) {
 				/*LOCAL ISOSTASY*/
 				float Krest;
-				for (i=0; i<Ny; i++) for (j=0; j<Nx; j++)  {
+				for (i=0; i<cfg->Ny; i++) for (j=0; j<cfg->Nx; j++)  {
 				    GET_KREST(Krest, q, i,j)
 				    Dw[i][j] = Dq[i][j] / Krest;
 				}
@@ -579,8 +616,8 @@ int Elastic_Deflection()
     		    /*Requires 4*Nx*Ny*Ny cells*/
     			b = (double *) calloc (Neqs, sizeof(double));
 				A = alloc_matrix_dbl (Neqs, NDi+1+NDs);
-    			defineLESalmostdiagonalmatrix(A, b, q, Dq, w, 0);
-    			solveLESalmostdiagonal(A, b, Dw);
+    			defineLESalmostdiagonalmatrix(cfg, A, b, q, Dq, w, 0);
+    			solveLESalmostdiagonal(cfg, A, b, Dw);
     			free_matrix_dbl (A, Neqs);
     			free(b);
     			break;
@@ -597,7 +634,7 @@ int Elastic_Deflection()
     		    JA =    (int *) calloc (nonzeroes, sizeof(int));
     		    ISP =   (int *) calloc (1*NSP, sizeof(int));
     		    RSP =   (float *) calloc (NSP, sizeof(float));
-    		    defineLESmatrix_for_mathlib(mathlib_matrix, IA, JA, B, Dq, w, &nonzeroes, 0);
+    		    defineLESmatrix_for_mathlib(cfg, mathlib_matrix, IA, JA, B, Dq, w, &nonzeroes, 0);
     		    for (i=0; i<Neqs; i++)  R[i]=IC[i]=C[i]=i+1;
 #ifdef MATHLIB_SOLVER
     		    printf("\nNeqs=%d NSP=%d nonzeroes=%d", Neqs, NSP, nonzeroes);
@@ -605,7 +642,7 @@ int Elastic_Deflection()
     		    if (FLAG!=0) {PRINT_ERROR("\aTDRV exit #%d. Memory excess=%d\n", FLAG, ESP); }
     		    fprintf(stdout, "\tMemory excess=%d\n", ESP);
 #endif
-    		    for (i=0; i<Ny; i++) for (j=0; j<Nx; j++)	Dw[i][j] = Z[j*Ny+i];
+    		    for (i=0; i<cfg->Ny; i++) for (j=0; j<cfg->Nx; j++)	Dw[i][j] = Z[j*cfg->Ny+i];
 
     		    free(Z); free(B); free(mathlib_matrix);
     		    free(R); free(C);free(IC); free(IA); free(JA); free(ISP); free(RSP);
@@ -613,10 +650,10 @@ int Elastic_Deflection()
     	      }
 	    }
 
-    	    for (i=0; i<Ny; i++) for (j=0; j<Nx; j++)  w[i][j] += Dw[i][j];
+    	    for (i=0; i<cfg->Ny; i++) for (j=0; j<cfg->Nx; j++)  w[i][j] += Dw[i][j];
     	    if (switch_topoest) {
    		    /*Defines the thickness of last infill Block*/
-    		    for (i=0; i<Ny; i++)  for (j=0; j<Nx; j++)  
+    		    for (i=0; i<cfg->Ny; i++)  for (j=0; j<cfg->Nx; j++)  
 		    	Blocks[i_first_Block_load-1].thick[i][j] +=  MAX_2(Dw[i][j], 0) ;
     	    }
 
@@ -627,33 +664,33 @@ int Elastic_Deflection()
     	    {
     		    int i, j, imax, jmax, imin, jmin;
     		    float maxloadinc=-1e25, minloadinc=1e25, total_load=0;
-    		    for (i=0;i<Ny;i++) for (j=0;j<Nx;j++) {
+    		    for (i=0;i<cfg->Ny;i++) for (j=0;j<cfg->Nx;j++) {
     			q[i][j] += Dq[i][j];
-    			total_load += Dq[i][j]*dx*dy;
+    			total_load += Dq[i][j]*cfg->dx*cfg->dy;
     			if (maxloadinc<Dq[i][j]) {maxloadinc=Dq[i][j]; imax=i; jmax=j;}
     			if (minloadinc>Dq[i][j]) {minloadinc=Dq[i][j]; imin=i; jmin=j;}
     		    }
     		    if (load_changes) 
 		    	PRINT_SUMLINE("load  now:  max = %+8.2e N/m2  min = %+8.2e N/m2   Total: %+8.2e N\tMax at %.0f,%.0f km", 
-		    		maxloadinc, minloadinc, total_load, (xmin+dx*jmax)/1e3, (ymax-dy*imax)/1e3); 
+		    		maxloadinc, minloadinc, total_load, (cfg->xmin+cfg->dx*jmax)/1e3, (cfg->ymax-cfg->dy*imax)/1e3); 
     	    }
     	    /*Statistics on deflection*/
     	    {
     		    float total_load=0, total_restitutive_force=0, Krest;
-    		    for (i=0; i<Ny; i++) for (j=0; j<Nx; j++)	{
+    		    for (i=0; i<cfg->Ny; i++) for (j=0; j<cfg->Nx; j++)	{
     			    total_load += Dq[i][j];
     			    GET_KREST(Krest, q, i,j);
     			    total_restitutive_force += (Krest*w[i][j]);
     		    }
-    		    if (verbose_level>=1) {
-    			    PRINT_SUMLINE("load: %+8.2e N   restit_force: %+8.2e N", total_restitutive_force*dx*dy, total_load*dx*dy);
+    		    if (cfg->verbose_level>=1) {
+    			    PRINT_SUMLINE("load: %+8.2e N   restit_force: %+8.2e N", total_restitutive_force*cfg->dx*cfg->dy, total_load*cfg->dx*cfg->dy);
 			    PRINT_GRID_INFO (w, "deflect. ", "m");
     		    }
     	    }
 	}
 
 	/*Resets deflection and load grids*/
-	for (i=0; i<Ny; i++)  for (j=0; j<Nx; j++)  Dq[i][j]=/*Dw[i][j]=*/0;
+	for (i=0; i<cfg->Ny; i++)  for (j=0; j<cfg->Nx; j++)  Dq[i][j]=/*Dw[i][j]=*/0;
 
 	return(1);
 }
@@ -662,7 +699,7 @@ int Elastic_Deflection()
 
 
 
-int move_Blocks()
+int move_Blocks(ModelConfig *cfg, ModelContext *ctx)
 {
 	int	*nshift_x, *nshift_y;
 	float	**new_thick;
@@ -673,12 +710,12 @@ int move_Blocks()
 	  Deforms the sediment above.
 	*/
 
-	new_thick = alloc_matrix(Ny, Nx);
-	nshift_x = calloc(numBlocks, sizeof(int));
-	nshift_y = calloc(numBlocks, sizeof(int));
+	new_thick = alloc_matrix(cfg->Ny, cfg->Nx);
+	nshift_x = calloc(ctx->numBlocks, sizeof(int));
+	nshift_y = calloc(ctx->numBlocks, sizeof(int));
 
-	for (int iu=0; iu<numBlocks; iu++) {
-		if (Blocks[iu].density == denssedim) {
+	for (int iu=0; iu<ctx->numBlocks; iu++) {
+		if (Blocks[iu].density == cfg->denssedim) {
 /*!!*/
 //Blocks[iu].vel_y[0][0] = 2.5e3/Matosec;
 //Blocks[iu].last_vel_time = Blocks[iu].age;
@@ -686,22 +723,22 @@ int move_Blocks()
 //Blocks[iu].last_shift_y  = 0;
 //Blocks[iu].time_stop     = 1e19;
 		/*DEFORM SEDIMENT Blocks*/
-		for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) 
+		for (int i=0; i<cfg->Ny; i++) for (int j=0; j<cfg->Nx; j++) 
 			new_thick[i][j] = Blocks[iu].thick[i][j];
-		for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++){
+		for (int i=0; i<cfg->Ny; i++) for (int j=0; j<cfg->Nx; j++){
 			float sedthick;
 			sedthick=Blocks[iu].thick[i][j];
 			/*Find the uppermost moving Block below this point in this sedim. Block*/
 			for (int ju=iu-1; ju>=0; ju--) {
 			/*Calculate the thickness of sediments between the top of this sed. Block and the moving Block*/
-			if (Blocks[ju].density == denssedim) {
+			if (Blocks[ju].density == cfg->denssedim) {
 				sedthick += Blocks[ju].thick[i][j];
 			}
 			else {
    			  /*Amount of cells to propagate the deformation: ~20 deg assumed.*/
-			  int nprop_x = SIGN(nshift_x[ju]) * (int) ceil(sedthick*3/dx);
+			  int nprop_x = SIGN(nshift_x[ju]) * (int) ceil(sedthick*3/cfg->dx);
 			  int j_unprop = j-nprop_x;
-			  int nprop_y = SIGN(nshift_y[ju]) * (int) ceil(sedthick*3/dy);
+			  int nprop_y = SIGN(nshift_y[ju]) * (int) ceil(sedthick*3/cfg->dy);
 			  int i_unprop = i+nprop_y;
 			  DOMAIN_LIMIT(i_unprop, j_unprop);
 			  if (Blocks[ju].thick[i_unprop][j_unprop]>.1) {
@@ -722,7 +759,7 @@ int move_Blocks()
 			}
 			}
 		}
-		for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) {
+		for (int i=0; i<cfg->Ny; i++) for (int j=0; j<cfg->Nx; j++) {
 			Dq[i][j] += g * (new_thick[i][j] - Blocks[iu].thick[i][j]) * Blocks[iu].density;
 			if (new_thick[i][j]<-1) PRINT_ERROR("negative sediment thickness: %.1f m", new_thick[i][j]);
 			Blocks[iu].thick[i][j] = new_thick[i][j];
@@ -730,7 +767,7 @@ int move_Blocks()
 		}
 		else //!!
 		{
-		  if (Blocks[iu].type == 'V' && Time < Blocks[iu].time_stop) {
+		  if (Blocks[iu].type == 'V' && ctx->Time < Blocks[iu].time_stop) {
 #ifdef THIN_SHEET
 			int i,j, n, m, nn, nincogn, nbanda, 
 			thicken_BC=1, /*0 means No temporal thickening variations on the boundaries, thickness=thickness_old; IBC_thicken!=0 -> No lateral variations of the thickening on the boundaries, d(thickness)/dx=d(thickness)/dy=0*/
@@ -743,40 +780,40 @@ int move_Blocks()
 			*vel_x_array, *vel_y_array, *vert_strain_rate, 
 			*layer_thickness;
 		/*THIN SHEET Block DEFORMATION*/
-		elapsed_time = Time-Blocks[iu].last_vel_time;
-		dt_aux = dt;
-		Lx = xmax-xmin; Ly = ymax-ymin;
-		n=Nx-1; m=Ny-1; nn=Nx*Ny; nincogn=2*nn; nbanda=4*(Nx)+7;
-		viscTer        =	alloc_array_dbl(Nx*Ny);
-		viscosity      =	alloc_array_dbl(Nx*Ny);
-		average_pressure=	alloc_array_dbl(Nx*Ny);
-		vel_x_array    =	alloc_array_dbl(Nx*Ny);
-		vel_y_array    =	alloc_array_dbl(Nx*Ny);
-		vert_strain_rate =	alloc_array_dbl(Nx*Ny);
-		layer_thickness =	alloc_array_dbl(Nx*Ny);
+		elapsed_time = ctx->Time-Blocks[iu].last_vel_time;
+		dt_aux = ctx->dt;
+		Lx = cfg->xmax-cfg->xmin; Ly = cfg->ymax-cfg->ymin;
+		n=cfg->Nx-1; m=cfg->Ny-1; nn=cfg->Nx*cfg->Ny; nincogn=2*nn; nbanda=4*(cfg->Nx)+7;
+		viscTer        =	alloc_array_dbl(cfg->Nx*cfg->Ny);
+		viscosity      =	alloc_array_dbl(cfg->Nx*cfg->Ny);
+		average_pressure=	alloc_array_dbl(cfg->Nx*cfg->Ny);
+		vel_x_array    =	alloc_array_dbl(cfg->Nx*cfg->Ny);
+		vel_y_array    =	alloc_array_dbl(cfg->Nx*cfg->Ny);
+		vert_strain_rate =	alloc_array_dbl(cfg->Nx*cfg->Ny);
+		layer_thickness =	alloc_array_dbl(cfg->Nx*cfg->Ny);
 		sprintf(tmpTSBCfilename, "%s"".TSBC.tmp", projectname);
-		reformat_file_thin_sheet_BC(tmpTSBCfilename);
+		reformat_file_thin_sheet_BC(cfg, ctx, tmpTSBCfilename);
 		PRINT_INFO("Deforming thin_sheet Block %d", iu);
-		for (i=0; i<Ny; i++) for (j=0; j<Nx; j++)  {
-			int k=(Ny-1-i)*Nx+j, l, m;
+		for (i=0; i<cfg->Ny; i++) for (j=0; j<cfg->Nx; j++)  {
+			int k=(cfg->Ny-1-i)*cfg->Nx+j, l, m;
 			viscTer[k] = Blocks[iu].viscTer[i][j];  /*.1e7*/  /* viscTer[Pa] = 1/2 * strength[Pa*m] / layer.thickness[m] */
 			/*AVERAGE PRESSURE*/
 			/*Water term*/
-			average_pressure[k] = g*denswater*h_water[i][j];
+			average_pressure[k] = g*cfg->denswater*h_water[i][j];
 			/*Blocks terms from the top to the thin_sheet*/
-			for (l=numBlocks-1; l>iu; l--) {
+			for (l=ctx->numBlocks-1; l>iu; l--) {
 				average_pressure[k] += g*Blocks[l].density*Blocks[l].thick[i][j];
 			}
 			/*Thin sheet term*/
 			average_pressure[k] += g/2*Blocks[iu].density*Blocks[iu].thick[i][j];
 			/*Asthenosphere restitutive push*/
-			average_pressure[k] += (densasthen-densenv)*g*w[i][j];
+			average_pressure[k] += (densasthen-cfg->densenv)*g*w[i][j];
 			/*change sign to <0, meaning compresion*/
 			average_pressure[k] *= -1; 
 
 			vert_strain_rate[k] = 0;
 			layer_thickness[k] = Blocks[iu].thick[i][j];
-			if (elapsed_time > dt) {
+			if (elapsed_time > ctx->dt) {
 				vel_x_array[k] = Blocks[iu].vel_x[i][j];
 				vel_y_array[k] = Blocks[iu].vel_y[i][j];
 				viscosity[k]   = Blocks[iu].visc[i][j];
@@ -790,8 +827,8 @@ int move_Blocks()
 		{
 			float apmin=1e19, apmax=-1e19;
 			float vimin=1e19, vimax=-1e19;
-			for (i=0; i<Ny; i++) for (j=0; j<Nx; j++)  {
-				int k=(Ny-1-i)*Nx+j;
+			for (i=0; i<cfg->Ny; i++) for (j=0; j<cfg->Nx; j++)  {
+				int k=(cfg->Ny-1-i)*cfg->Nx+j;
 				apmin = MIN_2(apmin, average_pressure[k]);
 				apmax = MAX_2(apmax, average_pressure[k]);
  				vimin = MIN_2(vimin, viscosity[k]);
@@ -816,8 +853,8 @@ int move_Blocks()
 			vel_x_array, vel_y_array, vert_strain_rate, layer_thickness, 
 			&thicken_BC
 		);
-		for (i=0; i<Ny; i++)  for (j=0; j<Nx; j++)  {
-			int k=(Ny-1-i)*Nx+j;
+		for (i=0; i<cfg->Ny; i++)  for (j=0; j<cfg->Nx; j++)  {
+			int k=(cfg->Ny-1-i)*cfg->Nx+j;
 			Dq[i][j] += g * (layer_thickness[k] - Blocks[iu].thick[i][j]) * Blocks[iu].density;
 			Blocks[iu].thick[i][j] = layer_thickness[k];
 			Blocks[iu].vel_x[i][j] = vel_x_array[k];
@@ -838,21 +875,21 @@ int move_Blocks()
 			int i, j, i_unshifted, j_unshifted;
 			float theor_shift_x, theor_shift_y;
 			/*MOVE BLOCKS*/
-			theor_shift_x = Blocks[iu].vel_x[0][0] * (Time-Blocks[iu].last_vel_time);
-			theor_shift_y = Blocks[iu].vel_y[0][0] * (Time-Blocks[iu].last_vel_time);
-			nshift_x[iu] = floor((theor_shift_x - Blocks[iu].last_shift_x) /dx +.5);
-			nshift_y[iu] = floor((theor_shift_y - Blocks[iu].last_shift_y) /dy +.5);
-			if (Time > Blocks[iu].time_stop + .1*dt) {nshift_x[iu]=0; nshift_y[iu]=0;}
-			Blocks[iu].shift_x += nshift_x[iu]*dx;
-			Blocks[iu].shift_y += nshift_y[iu]*dy;
-			Blocks[iu].last_shift_x += nshift_x[iu]*dx;
-			Blocks[iu].last_shift_y += nshift_y[iu]*dy;
-			for (i=0; i<Ny; i++) for (j=0; j<Nx; j++){
+			theor_shift_x = Blocks[iu].vel_x[0][0] * (ctx->Time-Blocks[iu].last_vel_time);
+			theor_shift_y = Blocks[iu].vel_y[0][0] * (ctx->Time-Blocks[iu].last_vel_time);
+			nshift_x[iu] = floor((theor_shift_x - Blocks[iu].last_shift_x) /cfg->dx +.5);
+			nshift_y[iu] = floor((theor_shift_y - Blocks[iu].last_shift_y) /cfg->dy +.5);
+			if (ctx->Time > Blocks[iu].time_stop + .1*ctx->dt) {nshift_x[iu]=0; nshift_y[iu]=0;}
+			Blocks[iu].shift_x += nshift_x[iu]*cfg->dx;
+			Blocks[iu].shift_y += nshift_y[iu]*cfg->dy;
+			Blocks[iu].last_shift_x += nshift_x[iu]*cfg->dx;
+			Blocks[iu].last_shift_y += nshift_y[iu]*cfg->dy;
+			for (i=0; i<cfg->Ny; i++) for (j=0; j<cfg->Nx; j++){
 				i_unshifted = i+nshift_y[iu];	j_unshifted = j-nshift_x[iu];	
 				DOMAIN_LIMIT(i_unshifted, j_unshifted);	/*[i][j], unshifted*/
 				new_thick[i][j] = Blocks[iu].thick[i_unshifted][j_unshifted];
 			}
-			for (i=0; i<Ny; i++) for (j=0; j<Nx; j++) {
+			for (i=0; i<cfg->Ny; i++) for (j=0; j<cfg->Nx; j++) {
 				Dq[i][j] += g * (new_thick[i][j] - Blocks[iu].thick[i][j]) * Blocks[iu].density;
 				Blocks[iu].thick[i][j] = new_thick[i][j];
 			}
@@ -860,7 +897,7 @@ int move_Blocks()
 		}
 	}
 
-	free_matrix(new_thick, Ny);
+	free_matrix(new_thick, cfg->Ny);
 	free(nshift_x);
 	free(nshift_y);
 	return(1);
@@ -869,7 +906,7 @@ int move_Blocks()
 
 
 
-int read_file_unit()
+int read_file_unit(ModelConfig *cfg, ModelContext *ctx)
 {
 	/*
 	  READS UNIT FILE NAMED 'projectname[NUM].UNIT' WHERE 'NUM' IS 1 FOR THE 
@@ -882,7 +919,7 @@ int read_file_unit()
 	float	time_stop=9999/*My*/, time_unit, 
 		erodibility_aux=NO_DATA, fill_up_to=NO_DATA, 
 		vel_x=0, vel_y=0, density=NO_DATA;
-	BOOL 	insert, cut_Blocks, cut_all, top, fault, switch_move, 
+	bool 	insert, cut_Blocks, cut_all, top, fault, switch_move, 
 		thin_sheet, ride, hidden, z_absol;
 	FILE 	*file;
 	char 	filename[MAXLENFILE];
@@ -897,7 +934,7 @@ int read_file_unit()
 	{
 		int nlines=0, nread, show, replace=0;
 		char str1[MAXLENLINE], str2[MAXLENLINE], line[MAXLENLINE+200], *lineptr;
-		show=(verbose_level>=3)? 1 : 0;
+		show=(cfg->verbose_level>=3)? 1 : 0;
 		rewind(file);
 		while ((lineptr=fgets(line, MAXLENLINE+200-1, file)) != NULL && nlines<NMAXHEADERLINES) {
 			nlines++; nread=sscanf(lineptr, "%s %s", str1, str2);
@@ -910,19 +947,19 @@ int read_file_unit()
 	}
 	time_unit *= Matosec;
 	/*Return if it isn't time yet to read the new unit file*/
-	if (time_unit>Time+.1*dt || time_unit<Timeini) return(0);
+	if (time_unit>ctx->Time+.1*ctx->dt || time_unit<ctx->Timeini) return(0);
 
 	PRINT_INFO("Reading '%s'", filename);
 	switch_move = fault = switch_gradual = 
 		insert = hidden = cut_Blocks = cut_all = 
-		thin_sheet = top = ride = z_absol = NO;
-	i_Block_insert = numBlocks;
+		thin_sheet = top = ride = z_absol = false;
+	i_Block_insert = ctx->numBlocks;
 
 	/*READS AND INTERPOLATES UNIT/LOAD FILE*/
 	{
 		int nlines=0, nread, show, replace=0;
 		char str1[MAXLENLINE], str2[MAXLENLINE], line[MAXLENLINE+200], *lineptr;
-		show=(verbose_level>=3)? 1 : 0;
+		show=(cfg->verbose_level>=3)? 1 : 0;
 		rewind(file); 
 		while ((lineptr=fgets(line, MAXLENLINE+200-1, file)) != NULL && nlines<NMAXHEADERLINES) {
 				nlines++; nread=sscanf(lineptr, "%s %s", str1, str2);
@@ -944,7 +981,7 @@ int read_file_unit()
 				Match_Param_Replace_int ( "cut_all",  		cut_all,   	0 )
 				Match_Param_Replace_int ( "thin_sheet",		thin_sheet,   	0 )
 				Match_Param_Replace_int ( "topoest",		switch_topoest,   	0 )
-				Match_Param_Replace_int ( "densenv",		densenv,   	0 )
+				Match_Param_Replace_int ( "densenv",		cfg->densenv,   	0 )
 				Match_Param_Replace_flt ( "fill_up_to", 	fill_up_to,   	0 )
 				/*Old versions:*/
 				Match_Param_Replace_int ( "fault_load", 	fault,   	1 )
@@ -963,9 +1000,9 @@ int read_file_unit()
 		rewind(file); 
 	}
 	if (fill_up_to == NO_DATA) 
-		readinterp2D(file, h_last_unit, mode_interp, 0, xmin, xmax, ymin, ymax, Nx, Ny);
+		readinterp2D(file, h_last_unit, mode_interp, 0, cfg->xmin, cfg->xmax, cfg->ymin, cfg->ymax, cfg->Nx, cfg->Ny);
 	else {
-		for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) h_last_unit[i][j] = MAX_2(0, fill_up_to-topo[i][j]);
+		for (int i=0; i<cfg->Ny; i++) for (int j=0; j<cfg->Nx; j++) h_last_unit[i][j] = MAX_2(0, fill_up_to-ctx->topo[i][j]);
 	}
 	fclose(file);
 
@@ -977,25 +1014,26 @@ int read_file_unit()
 
 	/*ACT ACCORDING TO THE SIGNALS*/
 	if (thin_sheet) {
-		switch_move = YES; 
+		switch_move = true; 
 	}
 	if (fault) {
-		switch_move = YES;
+		switch_move = true;
 	}
 
 	/*Check incompatibilities between unit file signals*/
 	if (switch_gradual && switch_move) {
 		PRINT_WARNING("Gradual & moving Blocks are not compatible. This one won't be gradual.");
-		switch_gradual = NO;
+		switch_gradual = false;
 	}
 	if (switch_gradual && hidden) {
 		PRINT_WARNING("Gradual & hidden Blocks are not compatible. This one won't be hidden.");
-		hidden = NO;
+		hidden = false;
 	}
 
 	/*Creates a Block of infill if switch_topoest; it will be filled later during Deflection*/
 	if (switch_topoest) {
 		insert_new_Block(i_first_Block_load);
+		ctx->numBlocks = numBlocks;
 		Blocks[i_first_Block_load].type = 'I'; 	/*stands for Infill*/
 		Blocks[i_first_Block_load].density = densinfill;
 		if (densinfill<2550) Blocks[i_first_Block_load].erodibility = erodibility_sed;
@@ -1005,61 +1043,62 @@ int read_file_unit()
 		i_Block_insert = 0;
 	}
 	if (top) {
-		for (int k=numBlocks-1; k>=0; k--) {
-			if (Blocks[k].density != denssedim) {
+		for (int k=ctx->numBlocks-1; k>=0; k--) {
+			if (Blocks[k].density != cfg->denssedim) {
 				i_Block_insert = k+1;
 				break;
 			}
 		}
 	}
 	if (cut_all) {
-		cut_Blocks = YES;
+		cut_Blocks = true;
 	}
 
 	if (fault && !top) i_Block_insert = 0;
 
 	if (fault) {
-		int numBlocks0=numBlocks;
+		int numBlocks0=ctx->numBlocks;
 		/*CUT BlockS*/
 		/*Make copies of all Blocks*/
-		PRINT_DEBUG("Cutting Blocks: numBlocks= %d", numBlocks);
+		PRINT_DEBUG("Cutting Blocks: numBlocks= %d", ctx->numBlocks);
 		for (int k=0; k<numBlocks0; k++) {
 			float **thick_aux, **vel_x_aux, **vel_y_aux;
-			insert_new_Block(numBlocks);
-			thick_aux = Blocks[numBlocks-1].thick;
-			vel_x_aux = Blocks[numBlocks-1].vel_x;
-			vel_y_aux = Blocks[numBlocks-1].vel_y;
-			Blocks[numBlocks-1] = Blocks[k];
-			Blocks[numBlocks-1].thick = thick_aux;
-			Blocks[numBlocks-1].vel_x = vel_x_aux;
-			Blocks[numBlocks-1].vel_y = vel_y_aux;
-			Blocks[numBlocks-1].vel_x[0][0] = vel_x;
-			Blocks[numBlocks-1].vel_y[0][0] = vel_y;
-			Blocks[numBlocks-1].last_vel_time = Time;
-			Blocks[numBlocks-1].last_shift_x = 0;
-			Blocks[numBlocks-1].last_shift_y = 0;
-			Blocks[numBlocks-1].time_stop = time_stop;
-			if (Blocks[numBlocks-1].type == 'V') {
+			insert_new_Block(ctx->numBlocks);
+			ctx->numBlocks = numBlocks;
+			thick_aux = Blocks[ctx->numBlocks-1].thick;
+			vel_x_aux = Blocks[ctx->numBlocks-1].vel_x;
+			vel_y_aux = Blocks[ctx->numBlocks-1].vel_y;
+			Blocks[ctx->numBlocks-1] = Blocks[k];
+			Blocks[ctx->numBlocks-1].thick = thick_aux;
+			Blocks[ctx->numBlocks-1].vel_x = vel_x_aux;
+			Blocks[ctx->numBlocks-1].vel_y = vel_y_aux;
+			Blocks[ctx->numBlocks-1].vel_x[0][0] = vel_x;
+			Blocks[ctx->numBlocks-1].vel_y[0][0] = vel_y;
+			Blocks[ctx->numBlocks-1].last_vel_time = ctx->Time;
+			Blocks[ctx->numBlocks-1].last_shift_x = 0;
+			Blocks[ctx->numBlocks-1].last_shift_y = 0;
+			Blocks[ctx->numBlocks-1].time_stop = time_stop;
+			if (Blocks[ctx->numBlocks-1].type == 'V') {
 			    if (thin_sheet) {
-				Blocks[numBlocks-1].vel_x  = alloc_matrix(Ny, Nx);
-				Blocks[numBlocks-1].vel_y  = alloc_matrix(Ny, Nx);
-				Blocks[numBlocks-1].visc   = alloc_matrix(Ny, Nx);
-				Blocks[numBlocks-1].viscTer= alloc_matrix(Ny, Nx);
+				Blocks[ctx->numBlocks-1].vel_x  = alloc_matrix(cfg->Ny, cfg->Nx);
+				Blocks[ctx->numBlocks-1].vel_y  = alloc_matrix(cfg->Ny, cfg->Nx);
+				Blocks[ctx->numBlocks-1].visc   = alloc_matrix(cfg->Ny, cfg->Nx);
+				Blocks[ctx->numBlocks-1].viscTer= alloc_matrix(cfg->Ny, cfg->Nx);
 			    }
 			    else {
-				Blocks[numBlocks-1].type = '-';
+				Blocks[ctx->numBlocks-1].type = '-';
 			    }
 			}
-			if (Blocks[numBlocks-1].type == 'S') {
-				Blocks[numBlocks-1].detr_ratio  = alloc_matrix(Ny, Nx);
-				Blocks[numBlocks-1].detr_grsize = alloc_matrix(Ny, Nx);
+			if (Blocks[ctx->numBlocks-1].type == 'S') {
+				Blocks[ctx->numBlocks-1].detr_ratio  = alloc_matrix(cfg->Ny, cfg->Nx);
+				Blocks[ctx->numBlocks-1].detr_grsize = alloc_matrix(cfg->Ny, cfg->Nx);
 			}
-			if (density         != NO_DATA && Blocks[numBlocks-1].type != 'S') Blocks[numBlocks-1].density = density;
-			if (erodibility_aux != NO_DATA && Blocks[numBlocks-1].type != 'S') Blocks[numBlocks-1].erodibility = erodibility_aux;
+			if (density         != NO_DATA && Blocks[ctx->numBlocks-1].type != 'S') Blocks[ctx->numBlocks-1].density = density;
+			if (erodibility_aux != NO_DATA && Blocks[ctx->numBlocks-1].type != 'S') Blocks[ctx->numBlocks-1].erodibility = erodibility_aux;
 		}
-		PRINT_DEBUG("Updating Blocks_base: numBlocks= %d", numBlocks);
+		PRINT_DEBUG("Updating Blocks_base: numBlocks= %d", ctx->numBlocks);
 		/*Modify Blocks_base and cut above the fault*/
-		for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) {
+		for (int i=0; i<cfg->Ny; i++) for (int j=0; j<cfg->Nx; j++) {
 			float z_fault=-h_last_unit[i][j], base_of_Block=Blocks_base[i][j];
 			if (z_absol) base_of_Block -= w[i][j];
 			h_last_unit[i][j] = MAX_2(0, Blocks_base[i][j]-z_fault);	/*Block thickness below fault (to create the new Block, see below)*/
@@ -1067,7 +1106,7 @@ int read_file_unit()
 			if (cut_Blocks) {
 				for (int k=0; k<numBlocks0; k++) {
 					float top_of_Block=base_of_Block+Blocks[k].thick[i][j];
-					if (Blocks[k].density == denssedim && !cut_all) {
+					if (Blocks[k].density == cfg->denssedim && !cut_all) {
 						break;
 					}
 					if (z_fault <= base_of_Block) {
@@ -1089,10 +1128,11 @@ int read_file_unit()
 	PRINT_DEBUG("Creating Block for this file: i_Block_insert= %d", i_Block_insert);
 	/*Create a new Block for the thickness in this file*/
 	insert_new_Block(i_Block_insert);
+	ctx->numBlocks = numBlocks;
 
 	/*Add the thickness in file to the new Block; Shrink the Blocks and basement if the thickness is negative*/
 	if (!switch_gradual && !hidden) {
-		for (int i=0; i<Ny; i++)  for (int j=0; j<Nx; j++) {
+		for (int i=0; i<cfg->Ny; i++)  for (int j=0; j<cfg->Nx; j++) {
 			if (h_last_unit[i][j]>=0) {
 				Blocks[i_Block_insert].thick[i][j] = h_last_unit[i][j];
 			}
@@ -1114,23 +1154,23 @@ int read_file_unit()
 		}
 	}
 	if (hidden) Blocks[i_Block_insert].type = 'H';
-	if (switch_gradual) Blocks[numBlocks-1].type = 'G';
+	if (switch_gradual) Blocks[ctx->numBlocks-1].type = 'G';
 	if (thin_sheet) {
 		float default_viscTerm = .5e7; /*.1e7*/
 		char filename[MAXLENFILE];
 		Blocks[i_Block_insert].type    = 'V';
-		Blocks[i_Block_insert].vel_x   = alloc_matrix(Ny, Nx);
-		Blocks[i_Block_insert].vel_y   = alloc_matrix(Ny, Nx);
-		Blocks[i_Block_insert].visc    = alloc_matrix(Ny, Nx);
-		Blocks[i_Block_insert].viscTer = alloc_matrix(Ny, Nx);
+		Blocks[i_Block_insert].vel_x   = alloc_matrix(cfg->Ny, cfg->Nx);
+		Blocks[i_Block_insert].vel_y   = alloc_matrix(cfg->Ny, cfg->Nx);
+		Blocks[i_Block_insert].visc    = alloc_matrix(cfg->Ny, cfg->Nx);
+		Blocks[i_Block_insert].viscTer = alloc_matrix(cfg->Ny, cfg->Nx);
 		sprintf(filename, "%s%d.VISC", projectname, nloads);
 		if ((file = fopen(filename, "rt")) == NULL) {
 			PRINT_WARNING("Cannot read thermal viscosity file '%s'.", filename);
-			for (int i=0; i<Ny; i++)  for (int j=0; j<Nx; j++) Blocks[i_Block_insert].viscTer[i][j] = default_viscTerm;
+			for (int i=0; i<cfg->Ny; i++)  for (int j=0; j<cfg->Nx; j++) Blocks[i_Block_insert].viscTer[i][j] = default_viscTerm;
 		}
 		else {
 			PRINT_INFO("Reading viscosity for unit %d from file '%s'.", nloads, filename);
-			readinterp2D(file, Blocks[i_Block_insert].viscTer, mode_interp, default_viscTerm, xmin, xmax, ymin, ymax, Nx, Ny);
+			readinterp2D(file, Blocks[i_Block_insert].viscTer, mode_interp, default_viscTerm, cfg->xmin, cfg->xmax, cfg->ymin, cfg->ymax, cfg->Nx, cfg->Ny);
 		}
 	}
 	Blocks[i_Block_insert].density = density;
@@ -1140,12 +1180,12 @@ int read_file_unit()
 	Blocks[i_Block_insert].time_stop = time_stop;
 
 	if (ride) {
-		for (int i_Block=i_Block_insert+1; i_Block<numBlocks; i_Block++) {
+		for (int i_Block=i_Block_insert+1; i_Block<ctx->numBlocks; i_Block++) {
 			Blocks[i_Block].vel_x         = Blocks[i_Block_insert].vel_x; 
 			Blocks[i_Block].vel_y         = Blocks[i_Block_insert].vel_y; 
 			Blocks[i_Block].last_shift_x  = 0; 
 			Blocks[i_Block].last_shift_y  = 0; 
-			Blocks[i_Block].last_vel_time = Time; 
+			Blocks[i_Block].last_vel_time = ctx->Time; 
 			Blocks[i_Block].time_stop     = Blocks[i_Block_insert].time_stop; 
 		}
 	}
@@ -1154,18 +1194,18 @@ int read_file_unit()
 		Gradual load, because then h_last_unit[] will be empty until tectload()
 		Topoest load, because the infill Block will be filled upon deflection.
 	*/
-	if (!switch_gradual && !switch_topoest) Repare_Blocks();
+	if (!switch_gradual && !switch_topoest) Repare_Blocks(cfg, ctx);
 
 	/*Increment the isostatic load for this time interval*/
 	if (!switch_gradual && !fault) 
-		for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) Dq[i][j] += (density-densenv)*g*h_last_unit[i][j];
+		for (int i=0; i<cfg->Ny; i++) for (int j=0; j<cfg->Nx; j++) Dq[i][j] += (density-cfg->densenv)*g*h_last_unit[i][j];
 
 	PRINT_INFO("Unit read from '%s'. ", filename);
 	PRINT_DEBUG("%d params; dens=%.0f kg/m3; erodibility=%.1e; ", nparams, density, erodibility_aux);
 	if (!fault) {
 		float load=0;
-		for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) load += (density-densenv)*h_last_unit[i][j];
-		fprintf(stdout, "%.2e kg. ", load*dx*dy);
+		for (int i=0; i<cfg->Ny; i++) for (int j=0; j<cfg->Nx; j++) load += (density-cfg->densenv)*h_last_unit[i][j];
+		fprintf(stdout, "%.2e kg. ", load*cfg->dx*cfg->dy);
 	}
 	if (switch_gradual) PRINT_INFO("Will be gradually loaded till %.2fMy.", time_stop/Matosec);
 	if (switch_move) PRINT_INFO("Vel= %.2fE,%.2fN km/My till T=%.2f My", vel_x*Matosec/1000, vel_y*Matosec/1000, time_stop/Matosec);
@@ -1194,7 +1234,7 @@ int syntax()
 	*/
 	char 	filename[MAXLENFILE], line[MAXLENLINE], *lineptr;
 	FILE 	*file;
-	BOOL 	print=NO;
+	bool 	print=false;
 
 	sprintf(filename, "%s/doc/tisc.info.txt", TISCDIR);
 	if ((file = fopen(filename, "rt")) == NULL) {
@@ -1205,8 +1245,8 @@ int syntax()
 	while (1) {
 		fgets(line, MAXLENLINE-1, file);
 		if ((lineptr=strstr(line, "2.- INTRO"))) break;;
-		if (print==YES) fprintf(stderr, "%s", line);
-		if (strstr(line, "SYNTAX")) print=YES;
+		if (print==true) fprintf(stderr, "%s", line);
+		if (strstr(line, "SYNTAX")) print=true;
 	}
 	fclose(file);
 	return (1);
@@ -1215,30 +1255,32 @@ int syntax()
 
 
 
-int surface_processes (float **topo_ant)
+int surface_processes (float **topo_ant, ModelConfig *cfg, ModelContext *ctx)
 {
 	/* 
 	CALCULATES EROSION AND SEDIMENTATION:
 	*/
-	BOOL	switch_horiz_record=NO;
+	bool	switch_horiz_record=false;
 	float	TimelastBlock;
 	int 	test;
 
 	total_sed_mass=total_bedrock_eros_mass=0;
-	if (!erosed_model && !hydro_model) return (0) ;
-	switch_topoest=NO;
+	ctx->total_sed_mass = 0;
+	ctx->total_bedrock_eros_mass = 0;
+	if (!cfg->erosed_model && !cfg->hydro_model) return (0) ;
+	switch_topoest=false;
 
 #ifdef SURFACE_TRANSPORT
 	/*Creates a new sediment Block if necessary*/
-	if (erosed_model) {
+	if (cfg->erosed_model) {
 	    int i;
 	    float TimelastBlock=-9999*Matosec;
-  	    for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) eros_now[i][j]=0;
+  	    for (int i=0; i<cfg->Ny; i++) for (int j=0; j<cfg->Nx; j++) eros_now[i][j]=0;
   	    for (int i=0; i<numBlocks; i++)
   		  if (Blocks[i].age > TimelastBlock && Blocks[i].density==denssedim) TimelastBlock = Blocks[i].age;
   	    for (int i=0; i<n_record_times; i++)
   		  if (Time>horiz_record_time[i]-dt/2 && Time<=horiz_record_time[i]+dt/2)
-  			  switch_horiz_record=YES;
+  			  switch_horiz_record=true;
   	    if (Time == Timeini
   	      || ((Time-TimelastBlock)>(dt_record-.001*dt) && dt_record && !n_record_times)
   	      || switch_horiz_record) {
@@ -1246,34 +1288,35 @@ int surface_processes (float **topo_ant)
   		  Blocks[numBlocks-1].type = 'S' ;
   		  Blocks[numBlocks-1].density = denssedim ;
   		  Blocks[numBlocks-1].erodibility = erodibility_sed ;
-		  Blocks[numBlocks-1].detr_ratio = alloc_matrix(Ny, Nx);
-		  Blocks[numBlocks-1].detr_grsize = alloc_matrix(Ny, Nx);
+		  Blocks[numBlocks-1].detr_ratio = alloc_matrix(cfg->Ny, cfg->Nx);
+		  Blocks[numBlocks-1].detr_grsize = alloc_matrix(cfg->Ny, cfg->Nx);
+		  ctx->numBlocks = numBlocks; /* IMPORTANT: Sync Context Struct! */
   	    }
 	}
 
 
 	/*Fluvial Transport: adds to the topo and the next load Dq and removes material from Blocks*/
-	Surface_Transport (topo, topo_ant, dt, dt_eros, erosed_model, lake_instant_fill);
+	Surface_Transport (cfg, ctx, topo_ant, lake_instant_fill);
 
 	/*Diffusive Erosion: adds to the topo and the next load Dq and removes material from Blocks*/
 	/*For grids of 100x100 needs dt of .01 My to converge*/
-	Diffusive_Eros (Kerosdif, dt, dt_eros/5);
+	Diffusive_Eros (cfg, ctx, Kerosdif);
 
-	Landslide_Transport (critical_slope, dt, dt_eros);
+	Landslide_Transport (cfg, ctx, critical_slope);
 
 	/*Adds background erosion and sea sedimentation*/
-	constant_rate_eros (topo, Keroseol, Ksedim, sea_level, water_load, dt, Time);
+	constant_rate_eros (cfg, ctx, Keroseol, Ksedim, water_load);
 #endif
 
 
 
 
 	{
-#define MASS2SEDTHICK(mass)	((mass) /(denssedim-sed_porosity*denswater)/dx/dy)	/*converts sediment mass into sediment thickness*/
+#define MASS2SEDTHICK_LOCAL(cfg, mass)	((mass) /(cfg->denssedim-sed_porosity*cfg->denswater)/cfg->dx/cfg->dy)
 	    int i, j;  float eros_meters, max=-1e19, min=1e19, vol=0;
-	    for (i=0; i<Ny; i++) for (j=0; j<Nx; j++) {
-	    	    eros_meters=MASS2SEDTHICK(eros_now[i][j])/dt;
-	    	    vol += eros_meters*dx*dy;
+	    for (i=0; i<cfg->Ny; i++) for (j=0; j<cfg->Nx; j++) {
+	    	    eros_meters=MASS2SEDTHICK_LOCAL(cfg, eros_now[i][j])/ctx->dt;
+	    	    vol += eros_meters*cfg->dx*cfg->dy;
 	    	    if (max<eros_meters)  max=eros_meters;
 	    	    if (min>eros_meters)  min=eros_meters;
 	    }
@@ -1282,13 +1325,13 @@ int surface_processes (float **topo_ant)
 
 	{
 	    float volume=0, total_vol_seds=0;
-    	    for (int i=numBlocks-1; i>=0; i--) {
+    	    for (int i=ctx->numBlocks-1; i>=0; i--) {
     		    int j, k;
-    		    for (volume=j=0; j<Ny; j++) for (k=0; k<Nx; k++) {
+    		    for (volume=j=0; j<cfg->Ny; j++) for (k=0; k<cfg->Nx; k++) {
     			    volume += Blocks[i].thick[j][k];
     		    }
-    		    volume *= (dx*dy);
-    		    if (Blocks[i].density==denssedim) total_vol_seds += volume;
+    		    volume *= (cfg->dx*cfg->dy);
+    		    if (Blocks[i].density==cfg->denssedim) total_vol_seds += volume;
     	    }
     	    PRINT_SUMLINE("sediment_vol: %.2e km3\n", total_vol_seds/1e9);
 	}
@@ -1299,56 +1342,56 @@ int surface_processes (float **topo_ant)
 
 
 
-int The_End()
+int The_End(ModelConfig *cfg, ModelContext *ctx)
 {
 	int 	i, j, k, action=2, status;
 	char 	command[MAXLENLINE];
 	float	volume, total_vol_seds=0, surface;
 
-	fprintf(stdout, "\n\n%d Blocks:", numBlocks);
+	fprintf(stdout, "\n\n%d Blocks:", ctx->numBlocks);
 	fprintf(stdout, "\nNo. Density Age  Volume  Surf.     Vel_x  Vel_y   Shft_x Shft_y erosL");
-	if (verbose_level>=2) fprintf(stdout, " AgeStop");
+	if (cfg->verbose_level>=2) fprintf(stdout, " AgeStop");
 	fprintf(stdout, "\n     kg/m3  My   1e3km3  1e3km2    km/My  km/My   km     km     [m] ");
-	if (verbose_level>=2) fprintf(stdout, "  My    ");
+	if (cfg->verbose_level>=2) fprintf(stdout, "  My    ");
 
-	for (i=numBlocks-1; i>=0; i--) { 
+	for (i=ctx->numBlocks-1; i>=0; i--) { 
 		float vel_x=0, vel_y=0;
-		for (volume=surface=j=0; j<Ny; j++) for (k=0; k<Nx; k++) {
+		for (volume=surface=j=0; j<cfg->Ny; j++) for (k=0; k<cfg->Nx; k++) {
 			volume += Blocks[i].thick[j][k];
-			if (Blocks[i].thick[j][k] > 1) surface += dx*dy;
+			if (Blocks[i].thick[j][k] > 1) surface += cfg->dx*cfg->dy;
 		}
-		volume *= (dx*dy);
+		volume *= (cfg->dx*cfg->dy);
 		if (Blocks[i].type=='V') {
-			for (j=0; j<Ny; j++) for (k=0; k<Nx; k++) {
+			for (j=0; j<cfg->Ny; j++) for (k=0; k<cfg->Nx; k++) {
 				vel_x += Blocks[i].vel_x[j][k];
 				vel_y += Blocks[i].vel_y[j][k];
 			}
-			vel_x /= (Nx*Ny);
-			vel_y /= (Nx*Ny);
+			vel_x /= (cfg->Nx*cfg->Ny);
+			vel_y /= (cfg->Nx*cfg->Ny);
 		}
 		else {
 			vel_x = Blocks[i].vel_x[0][0];
 			vel_y = Blocks[i].vel_y[0][0];
 		}
-		if (Blocks[i].density==denssedim) total_vol_seds += volume;
+		if (Blocks[i].density==cfg->denssedim) total_vol_seds += volume;
 		fprintf(stdout, "\n%2d: %5.0f %6.2f %7.1f %6.1f %6.1f %6.1f %6.1f %6.1f   %6.1e", 
 			i, Blocks[i].density, Blocks[i].age/Matosec, volume/1e12, surface/1e9, 
 			vel_x/1e3*Matosec, vel_y/1e3*Matosec, 
 			Blocks[i].shift_x/1e3, Blocks[i].shift_y/1e3, 
 			Blocks[i].erodibility); 
-		if (verbose_level>=2) fprintf(stdout, "%7.1f", 
+		if (cfg->verbose_level>=2) fprintf(stdout, "%7.1f", 
 			Blocks[i].time_stop/Matosec);
 		fprintf(stdout, "  %c", Blocks[i].type);
 		if (i==i_first_Block_load) 	fprintf(stdout, "  1st Block");
 	}
-	fprintf(stdout, "\n -: %5.0f %6.2f   -       -       0      0      0      0     %6.1e  ", denscrust, Timeini/Matosec, erodibility);
-	if (verbose_level>=2) fprintf(stdout, " -   ");
+	fprintf(stdout, "\n -: %5.0f %6.2f   -       -       0      0      0      0     %6.1e  ", cfg->denscrust, ctx->Timeini/Matosec, erodibility);
+	if (cfg->verbose_level>=2) fprintf(stdout, " -   ");
 	fprintf(stdout, "-  basement\n");
 	fprintf(stdout, "\nFinal total sediment volume: %.2f 1e3 km3\n", total_vol_seds/1e12);
 
-	if (switch_ps<2) Write_Ouput();
+	if (switch_ps<2) Write_Ouput(cfg, ctx);
 
-	if (verbose_level>=1) {time_t ltime; time(&ltime); fprintf(stdout, "\nTime end: %s", ctime(&ltime));}
+	if (cfg->verbose_level>=1) {time_t ltime; time(&ltime); fprintf(stdout, "\nTime end: %s", ctime(&ltime));}
 
 	sprintf(command, "rm -f %s*.tisc.tmp", projectname);
 	system(command) ;
@@ -1359,16 +1402,16 @@ int The_End()
 		sprintf(filename, "%s/.tiscdefaults", getenv ("HOME"));
 		if ((file = fopen(filename, "rt")) == NULL) {
 			sprintf(command, "echo First use of %s by `whoami` at `hostname` > %s; date >> %s", version, filename, filename);
-			if (verbose_level>=3) fprintf(stdout, "\n%s", command);
+			if (cfg->verbose_level>=3) fprintf(stdout, "\n%s", command);
 			system(command);
 			sprintf(command, "mail danielgc@ictja.csic.es < %s", filename);
-			if (verbose_level>=3) fprintf(stdout, "\n%s", command);
+			if (cfg->verbose_level>=3) fprintf(stdout, "\n%s", command);
 			system(command);
 			fclose (file);
 		}
 	}
 
-	if (verbose_level>=3) AUTHORSHIP;
+	if (cfg->verbose_level>=3) AUTHORSHIP;
 	fprintf(stdout, "\n");
 	free(Lake);
 
@@ -1379,10 +1422,10 @@ int The_End()
 
 
 
-int Viscous_Relaxation()
+int Viscous_Relaxation(ModelConfig *cfg, ModelContext *ctx)
 {
-	int 	i, j, NDi=2*Ny, NDs=2*Ny, Neqs=Nx*Ny, 
-		nonzeroes=13*Nx*Ny, nmax, ESP, FLAG, 
+	int 	i, j, NDi=2*cfg->Ny, NDs=2*cfg->Ny, Neqs=cfg->Nx*cfg->Ny, 
+		nonzeroes=13*cfg->Nx*cfg->Ny, nmax, ESP, FLAG, 
 		*R, *IC, *IA, *JA, *ISP;
 	double	**A, *b, *dwdt_aux, *mathlib_matrix, *RSP;
 	float 	**dwdt;
@@ -1393,29 +1436,29 @@ int Viscous_Relaxation()
 	  case 'l': 
 		A = alloc_matrix_dbl (Neqs, NDi+1+NDs);
 		b = (double *) calloc (Neqs, sizeof(double)); 
-		dwdt=alloc_matrix (Ny, Nx);
-		defineLESalmostdiagonalmatrix(A, b, q, Dq, w, 1);
-		solveLESalmostdiagonal(A, b, dwdt);
-		for (i=0; i<Ny; i++) for (j=0; j<Nx; j++)   Dw[i][j] = dwdt[i][j]*dt;
+		dwdt=alloc_matrix (cfg->Ny, cfg->Nx);
+		defineLESalmostdiagonalmatrix(cfg, A, b, q, Dq, w, 1);
+		solveLESalmostdiagonal(cfg, A, b, dwdt);
+		for (i=0; i<cfg->Ny; i++) for (j=0; j<cfg->Nx; j++)   Dw[i][j] = dwdt[i][j]*ctx->dt;
 		free_matrix_dbl (A, Neqs);
-		free_matrix (dwdt, Ny);
+		free_matrix (dwdt, cfg->Ny);
 		free(b);
 		break;
 	  case 'm': 
 		break;
 	}
 
-	for (i=0; i<Ny; i++) for (j=0; j<Nx; j++)  w[i][j] += Dw[i][j]; 
+	for (i=0; i<cfg->Ny; i++) for (j=0; j<cfg->Nx; j++)  w[i][j] += Dw[i][j]; 
 	if (switch_topoest) {
 		/*Defines the thickness of last infill Block*/
-		for (i=0; i<Ny; i++)  for (j=0; j<Nx; j++)  Blocks[i_first_Block_load-1].thick[i][j] +=  Dw[i][j] /*MAX(Dw[i][j], 0)*/ ;
+		for (i=0; i<cfg->Ny; i++)  for (j=0; j<cfg->Nx; j++)  Blocks[i_first_Block_load-1].thick[i][j] +=  Dw[i][j] /*MAX(Dw[i][j], 0)*/ ;
 	}
 
 	//calculate_topo(topo);
 
 	/*Prints DEFLECTION characteristics*/
-	if (verbose_level>=1) {
-		PRINT_GRID_INFO (topo, "topogr.V ", "m");
+	if (cfg->verbose_level>=1) {
+		PRINT_GRID_INFO (ctx->topo, "topogr.V ", "m");
 		PRINT_GRID_INFO (w, "deflect.V", "m");
 	}
 
@@ -1424,33 +1467,33 @@ int Viscous_Relaxation()
 
 
 
-int Write_Ouput()
+int Write_Ouput(ModelConfig *cfg, ModelContext *ctx)
 {
-	//write_file_time(w, h_water);
-	write_file_deflection();
-	write_file_Blocks();
-	write_file_cross_section();
-	write_file_drainage();
-	write_file_ice();
-	write_file_surftransp();
-	write_file_river_basins();
-	write_file_lakes();
-	write_file_velocity_field();
-	write_file_resume();
+	//write_file_time(cfg, ctx, w, h_water);
+	write_file_deflection(cfg, ctx);
+	write_file_Blocks(cfg, ctx);
+	write_file_cross_section(cfg, ctx);
+	write_file_drainage(cfg, ctx);
+	write_file_ice(cfg, ctx);
+	write_file_surftransp(cfg, ctx);
+	write_file_river_basins(cfg, ctx);
+	write_file_lakes(cfg, ctx);
+	write_file_velocity_field(cfg, ctx);
+	write_file_resume(cfg, ctx);
 
 	/*Make GMT Postscript*/
 	if (switch_ps) {
 		char 	command[300];
 		if (switch_ps<=2) {
 			sprintf(command, "tisc.gmt.job %s", projectname);
-			if (verbose_level>=3) 
+			if (cfg->verbose_level>=3) 
 				fprintf(stdout, "\nPostscript file '%s.ps' is going to be produced with command:\n%s\n", projectname, command) ;
 			system(command);
 		}
 		else {
 			if (strlen(gif_geom)<2) sprintf(gif_geom, " --elev 30 --fov 140");
 			sprintf(command, "tisc.plot.py %s %s; mv -f %s.jpg %s%03d.jpg", projectname, gif_geom, projectname, projectname, n_image);
-			if (verbose_level>=3) 
+			if (cfg->verbose_level>=3) 
 				fprintf(stdout, "\nPlot files '%s.xvg' and %s%03d.jpg to be produced with command:\n%s\n", projectname, projectname, n_image, command) ;
 			system(command);
 			n_image++;
@@ -1460,7 +1503,7 @@ int Write_Ouput()
 			if (strlen(gif_geom)<2) sprintf(gif_geom, "-trim -background Khaki -label 'TISC software: %s' -gravity South -append", projectname);
 			sprintf(command, "magick -density 300 %s.ps %s -interlace NONE  %s%03d.jpg", /*-fill \"#ffff99\" -draw \"rectangle 8,8 90,25\" -fill \"#000055\" -font helvetica -draw \"text 12,20 t_%+3.2f_My \" */
 				projectname, gif_geom, projectname, n_image);
-			if (verbose_level>=3)
+			if (cfg->verbose_level>=3)
 				fprintf(stdout, "\n%s\n", command) ;
 			system(command);
 			n_image++;
@@ -1469,5 +1512,3 @@ int Write_Ouput()
 
 	return (1);
 }
-
-

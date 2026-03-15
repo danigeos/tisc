@@ -7,8 +7,8 @@
 
 #include "tisc.h"
 
-#include "tisclib.c"
-#include "tiscio.c"
+#include "tisclib.h"
+#include "tiscio.h"
 #include "../lib/libreria.h"
 
 
@@ -58,8 +58,8 @@ int init_tisc_ (
 	Timeini=0; Time=1;
 
 	verbose_level = 1;
-	switch_topoest=NO;
-	switch_write_file=1;
+	switch_topoest=false;
+	switch_write_file=true;
 	lost_rate=.1;
 
 	if (verbose_level>=2) fprintf(stdout, "\nInitializing TISC: \n\t%dx%d ; x=[%.1f,%.1f] y=[%.1f,%.1f]",
@@ -71,7 +71,7 @@ int init_tisc_ (
 	windazimut=*ad_windazimut;
 	relative_humidity=*ad_relative_humidity;
 	if (rain || Krain) erosed_model = 6; else erosed_model = 1;
-	switch_write_file = YES;	switch_write_file_Blocks = YES;
+	switch_write_file = true;	switch_write_file_Blocks = true;
 	strcpy(projectname, "res_tisc");
 
 	dx = (xmax-xmin) / (Nx-1);
@@ -130,6 +130,13 @@ int call_surf_proc_ (
 	*/
 
 	int i, j;
+	ModelConfig cfg = {0};
+	ModelContext ctx = {0};
+
+	cfg.Nx = Nx; cfg.Ny = Ny; cfg.dx = dx; cfg.dy = dy; cfg.dxy = dxy;
+	cfg.erosed_model = erosed_model; cfg.denscrust = denscrust;
+	ctx.dt = *ad_dt; ctx.dt_eros = dt_eros; ctx.topo = topo; ctx.sea_level = sea_level;
+
 	total_sed_mass=total_bedrock_eros_mass=0;
 
 	dt = *ad_dt;
@@ -147,21 +154,25 @@ int call_surf_proc_ (
 
 	/*Diffusive Erosion: adds to the topo and the next load Dq and removes material from Blocks*/
 	if (verbose_level>=4) fprintf(stdout, "\nCalling Diffusive_Eros: ");	fflush(stdout);
-	Diffusive_Eros (Kerosdif, dt, dt_eros/5);
+	Diffusive_Eros (&cfg, &ctx, Kerosdif);
 
 	/*Fluvial Transport: adds to the topo and the next load Dq and removes material from Blocks*/
 	if (verbose_level>=4) fprintf(stdout, "\nCalling Fluvial_Transport: ");	fflush(stdout);
-	if (hydro_model) Surface_Transport (topo, topo, dt, dt_eros, erosed_model, lake_instant_fill);
+	if (hydro_model) Surface_Transport (&cfg, &ctx, topo, lake_instant_fill);
 	
+	/* Synchronize context with changes made by Surface_Transport */
+	ctx.nlakes = nlakes;
+	ctx.numBlocks = numBlocks;
+
 	if (*ad_write_files) {
 		//if (verbose_level>=4) 
 		fprintf(stdout, "\nWritting drainage file.  rain=%.2f l/m/a", rain/1e6*Matosec*1e3); fflush(stdout);
-		write_file_drainage ();
-		write_file_lakes();
+		write_file_drainage (&cfg, &ctx);
+		write_file_lakes(&cfg, &ctx);
 		/*if (verbose_level>=4) fprintf(stdout, "\nWritting basin file.");
-		write_file_river_basins ();*/
+		write_file_river_basins (&cfg, &ctx);*/
 		if (verbose_level>=4) fprintf(stdout, "\nWritting st file."); fflush(stdout);
-		write_file_surftransp ();
+		write_file_surftransp (&cfg, &ctx);
 	}
 
 	for (i=0; i<Ny; i++) for (j=0; j<Nx; j++) {
@@ -185,6 +196,8 @@ int call_flexure_ (
 
 	int i, j, NDi=2*Ny, NDs=2*Ny, Neqs=Nx*Ny;
 	double **A, *b;
+	ModelConfig cfg = {0};
+	cfg.Nx = Nx; cfg.Ny = Ny; cfg.dx = dx; cfg.dy = dy; cfg.Px = Px; cfg.Py = Py; cfg.Pxy = Pxy;
 
 	if (verbose_level>=4) fprintf(stdout, "\nCalculating Flexure: %dx%d ; write files = %d ",
 		Nx, Ny, *ad_write_files);
@@ -194,9 +207,9 @@ int call_flexure_ (
 	b = (double *) calloc (Neqs, sizeof(double));
 	A = alloc_matrix_dbl (Neqs, NDi+1+NDs);
 	if (verbose_level>=4) fprintf(stdout, "\nCalling LES_Matrix");
-	defineLESalmostdiagonalmatrix(A, b, q, Dq, w, 0); 
+	defineLESalmostdiagonalmatrix(&cfg, A, b, q, Dq, w, 0); 
 	if (verbose_level>=4) fprintf(stdout, "\nCalling solveLEScasiD");
-	solveLESalmostdiagonal(A, b, w);
+	solveLESalmostdiagonal(&cfg, A, b, w);
 	free_matrix_dbl (A, Neqs);
 	free(b);
 
@@ -213,6 +226,3 @@ int call_flexure_ (
 	}
 	fflush (stdout);
 }
-
-
-

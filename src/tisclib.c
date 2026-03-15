@@ -3,6 +3,23 @@ GENERAL  SUBS  LIBRARY  FOR  tisc.c
 Daniel Garcia-Castellanos
 */
 
+#include "tisc.h"
+#include "tisclib.h"
+#include "../lib/libreria.h"
+
+/* Definitions for tisc-specific global variables */
+struct GRIDNODE *sortcell;
+struct DRAINAGE **drainage;
+struct LAKE_INFO *Lake;
+struct BLOCK *Blocks;
+int erosed_model, hydro_model, mode_interp, nbasins, nlakes, n_ice_flow, n_image, n_insolation_input_points;
+float evaporation_ct, K_ice_eros, A_ice_rheo, A_ice_slide, dt_ice, total_rain, insolation_mean;
+float Px, Py, Pxy, CYrain, windazimut, xmin, xmax, ymin, ymax;
+float **D, **Dq, **Dw, **eros_now, **EET, **h_water, **h_last_unit, **ice_thickness, **ice_sedm_load;
+float **ice_velx_sl, **ice_vely_sl, **ice_velx_df, **ice_vely_df, **q, **evaporation, **precipitation;
+float **precipitation_snow, **precipitation_file, **topo, **accumul_erosion, **Blocks_base, **w;
+char boundary_conds[5], eros_bound_cond[5], solver_type, gif_geom[MAXLENLINE];
+int lake_instant_fill = 0, **lake_former_step;
 
 
 int Allocate_Memory_for_external_use()
@@ -79,24 +96,25 @@ int Allocate_Memory()
 
 
 
-float calculate_topo(float **topo_new)
+float calculate_topo(ModelConfig *cfg, ModelContext *ctx, float **topo_new)
 {
 	float mean=0;
 	/*Calculates current topography based on Blocks_base, Blocks, compaction, and deflection*/
 	PRINT_DEBUG("Entering");
-	for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) {
+	#pragma omp parallel for reduction(+:mean)
+	for (int i=0; i<cfg->Ny; i++) { for (int j=0; j<cfg->Nx; j++) {
 		float thickness_above=0;
-		for (int i_Block=0; i_Block<numBlocks; i_Block++) 
+		for (int i_Block=0; i_Block<ctx->numBlocks; i_Block++) 
 			thickness_above += Blocks[i_Block].thick[i][j];
 		topo_new[i][j] = Blocks_base[i][j]-w[i][j];
-		for (int i_Block=0; i_Block<numBlocks; i_Block++) {
+		for (int i_Block=0; i_Block<ctx->numBlocks; i_Block++) {
 			thickness_above -= Blocks[i_Block].thick[i][j];
 			topo_new[i][j] += Blocks[i_Block].thick[i][j];
-			if (Blocks[i_Block].density==denssedim) topo_new[i][j] -= compaction(sed_porosity, compact_depth, thickness_above, thickness_above+Blocks[i_Block].thick[i][j]);
+			if (Blocks[i_Block].density==cfg->denssedim) topo_new[i][j] -= compaction(sed_porosity, compact_depth, thickness_above, thickness_above+Blocks[i_Block].thick[i][j]);
 		}
 		mean += topo_new[i][j];
-	}
-	mean /= Nx*Ny;
+	}}
+	mean /= cfg->Nx*cfg->Ny;
 	return (mean);
 }
 
@@ -178,17 +196,17 @@ int insert_new_Block(int num_new_Block)
 
 
 
-int gradual_Block()
+int gradual_Block(ModelConfig *cfg, ModelContext *ctx)
 {
 	float 	Dhl;
 
 	/*Non-instantaneous loading of a file load (distributed along time).*/
 
 	/*interpolation can only last until next load because then the original load shape is lost*/
-	if (!switch_gradual || Time>Blocks[i_Block_insert].time_stop-dt*.1) return(0);
+	if (!switch_gradual || ctx->Time>Blocks[i_Block_insert].time_stop-ctx->dt*.1) return(0);
 
-	for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) { 
-		Dhl = h_last_unit[i][j]*dt/(Blocks[i_Block_insert].time_stop-Blocks[i_Block_insert].age);
+	for (int i=0; i<cfg->Ny; i++) for (int j=0; j<cfg->Nx; j++) { 
+		Dhl = h_last_unit[i][j]*ctx->dt/(Blocks[i_Block_insert].time_stop-Blocks[i_Block_insert].age);
 		/*Increments the load for this time interval*/
 		if (Blocks[i_Block_insert].type == 'H') 
 			Blocks[i_Block_insert].thick[i][j] = 0;
@@ -212,7 +230,7 @@ int gradual_Block()
 				}
 			}
 		}
-		Dq[i][j] += (Blocks[i_Block_insert].density-densenv)*g*Dhl;
+		Dq[i][j] += (Blocks[i_Block_insert].density-cfg->densenv)*g*Dhl;
 	}
 
 	return(1);
@@ -221,33 +239,34 @@ int gradual_Block()
 
 
 
-int defineLESalmostdiagonalmatrix (double **A, double *b, float **q, float **Dq, float **w, BOOL doing_visco)
+int defineLESalmostdiagonalmatrix (ModelConfig *cfg, double **A, double *b, float **q, float **Dq, float **w, bool doing_visco)
 {
 	/*
 		DEFINE LA MATRIZ EN BANDA 'A' Y EL TERMINO INDEPENDIENTE 'b' DE
 		COEFICIENTES DEL SISTEMA DE ECUACIONES  
-			A·x = b 
-		A[][Ny] es un elemento de la diagonal en la matriz en banda.
+			Aï¿½x = b 
+		A[][cfg->Ny] es un elemento de la diagonal en la matriz en banda.
 	*/
 
 	register int 	i, j, 
 			nodo, 			/* nodo = columna*Ny + fila */
-			NDi=2*Ny, NDs=2*Ny ;
-	double		dx4=dx*dx*dx*dx,   dy4=dy*dy*dy*dy,   
-			dx2dy2=dx*dx*dy*dy,  dx2=dx*dx,  
-			dy2=dy*dy,  dxdy=dx*dy ,
+			NDi=2*cfg->Ny, NDs=2*cfg->Ny ;
+	double		dx4=cfg->dx*cfg->dx*cfg->dx*cfg->dx,   dy4=cfg->dy*cfg->dy*cfg->dy*cfg->dy,   
+			dx2dy2=cfg->dx*cfg->dx*cfg->dy*cfg->dy,  dx2=cfg->dx*cfg->dx,  
+			dy2=cfg->dy*cfg->dy,  dxdy=cfg->dx*cfg->dy ,
 			D0, Dx, Dy, Dx2, Dy2, Dxy, Krest=0, bound_deflect;
 	char		filename[MAXLENFILE];
 
-	for (i=0; i<Ny*Nx; i++) {
+	for (i=0; i<cfg->Ny*cfg->Nx; i++) {
 		for (j=0; j<NDi+1+NDs; j++) A[i][j] = 0.;
 		b[i]= 0.;
 	}
 	
 	/* non B.C. nodes */
-	for (i=2; i<Ny-2; i++)  for (j=2; j<Nx-2; j++) {
+	#pragma omp parallel for private(j, nodo, D0, Dx, Dy, Dx2, Dy2, Dxy, Krest)
+	for (i=2; i<cfg->Ny-2; i++) {  for (j=2; j<cfg->Nx-2; j++) {
 				 /*'nodo' es el numero de orden asociado al nodo de malla (i, j)  	*/
-		nodo = j*Ny + i; /*Starting with node (0,0) y siguiendo con (1,0). 			*/
+		nodo = j*cfg->Ny + i; /*Starting with node (0,0) y siguiendo con (1,0). 			*/
 				 /*Corresponde tambien a la fila de A[][] en curso			*/
 		/*Define the restoring force value.*/
 		GET_KREST(Krest, Dq, i,j)
@@ -267,21 +286,21 @@ int defineLESalmostdiagonalmatrix (double **A, double *b, float **q, float **Dq,
 
 /* i  , j-2 */	A[nodo][0] 	= + 1*D0 / dx4     					- 2*Dx / 4/dx4 ;
 
-/* i-1, j-1 */	A[nodo][Ny-1] 	= + 2*D0 / dx2dy2  		- 2*Dx / 4/dx2dy2 + 2*Dy / 4/dx2dy2 						- 2*(1-nu)*Dxy / 16/dx2dy2 				- 2*Pxy / 4/dxdy ;
-/* i  , j-1 */	A[nodo][Ny] 	= - 4*D0 / dx4     		- 4*D0 / 1/dx2dy2  	+ 4*Dx / 4/dx4  	+ 4*Dx2 / 4/dx4 		+ nu*Dy2 / dx2dy2 			+ Dx / dx2dy2	+ Px / dx2 ;
-/* i+1, j-1 */	A[nodo][Ny+1] 	= + 2*D0 / dx2dy2  		- 2*Dx / 4/dx2dy2 - 2*Dy / 4/dx2dy2						+ 2*(1-nu)*Dxy / 16/dx2dy2 				+ 2*Pxy / 4/dxdy ;
+/* i-1, j-1 */	A[nodo][cfg->Ny-1] 	= + 2*D0 / dx2dy2  		- 2*Dx / 4/dx2dy2 + 2*Dy / 4/dx2dy2 						- 2*(1-nu)*Dxy / 16/dx2dy2 				- 2*cfg->Pxy / 4/dxdy ;
+/* i  , j-1 */	A[nodo][cfg->Ny] 	= - 4*D0 / dx4     		- 4*D0 / 1/dx2dy2  	+ 4*Dx / 4/dx4  	+ 4*Dx2 / 4/dx4 		+ nu*Dy2 / dx2dy2 			+ Dx / dx2dy2	+ cfg->Px / dx2 ;
+/* i+1, j-1 */	A[nodo][cfg->Ny+1] 	= + 2*D0 / dx2dy2  		- 2*Dx / 4/dx2dy2 - 2*Dy / 4/dx2dy2						+ 2*(1-nu)*Dxy / 16/dx2dy2 				+ 2*cfg->Pxy / 4/dxdy ;
 
-/* i-2, j   */	A[nodo][2*Ny-2]	= + 1*D0 / dy4 	   					+ 2*Dy / 4/dy4 ;
-/* i-1, j   */	A[nodo][2*Ny-1]	= - 4*D0 / dy4 	   		- 4*D0 / 1/dx2dy2  	- 4*Dy / 4/dy4  	+ 4*Dy2 / 4/dy4 		+ nu*Dx2 / dx2dy2  			- Dy / dx2dy2 	+ Py / dy2 ;
-/* i  , j   */	A[nodo][2*Ny] 	= + 6*D0 / dx4  + 6*D0 / dy4 	+ 8*D0 / 1/dx2dy2				- 2*Dx2 / 1/dx4 - 2*Dy2 / 1/dy4	- 2*nu*Dy2 / dx2dy2  - 2*nu*Dx2 / dx2dy2 		- 2*Px / dx2  - 2*Py / dy2   +  Krest ;
-/* i+1, j   */	A[nodo][2*Ny+1]	= - 4*D0 / dy4 	   		- 4*D0 / 1/dx2dy2  	+ 4*Dy / 4/dy4  	+ 4*Dy2 / 4/dy4 		+ nu*Dx2 / dx2dy2  			+ Dy / dx2dy2 	+ Py / dy2 ;
-/* i+2, j   */	A[nodo][2*Ny+2]	= + 1*D0 / dy4 	   					- 2*Dy / 4/dy4 ;
+/* i-2, j   */	A[nodo][2*cfg->Ny-2]	= + 1*D0 / dy4 	   					+ 2*Dy / 4/dy4 ;
+/* i-1, j   */	A[nodo][2*cfg->Ny-1]	= - 4*D0 / dy4 	   		- 4*D0 / 1/dx2dy2  	- 4*Dy / 4/dy4  	+ 4*Dy2 / 4/dy4 		+ nu*Dx2 / dx2dy2  			- Dy / dx2dy2 	+ cfg->Py / dy2 ;
+/* i  , j   */	A[nodo][2*cfg->Ny] 	= + 6*D0 / dx4  + 6*D0 / dy4 	+ 8*D0 / 1/dx2dy2				- 2*Dx2 / 1/dx4 - 2*Dy2 / 1/dy4	- 2*nu*Dy2 / dx2dy2  - 2*nu*Dx2 / dx2dy2 		- 2*cfg->Px / dx2  - 2*cfg->Py / dy2   +  Krest ;
+/* i+1, j   */	A[nodo][2*cfg->Ny+1]	= - 4*D0 / dy4 	   		- 4*D0 / 1/dx2dy2  	+ 4*Dy / 4/dy4  	+ 4*Dy2 / 4/dy4 		+ nu*Dx2 / dx2dy2  			+ Dy / dx2dy2 	+ cfg->Py / dy2 ;
+/* i+2, j   */	A[nodo][2*cfg->Ny+2]	= + 1*D0 / dy4 	   					- 2*Dy / 4/dy4 ;
 
-/* i-1, j+1 */	A[nodo][3*Ny-1]	= + 2*D0 / dx2dy2  		+ 2*Dx / 4/dx2dy2 + 2*Dy / 4/dx2dy2						+ 2*(1-nu)*Dxy / 16/dx2dy2 				+ 2*Pxy / 4/dxdy ;
-/* i  , j+1 */	A[nodo][3*Ny] 	= - 4*D0 / dx4     		- 4*D0 / 1/dx2dy2 	- 4*Dx / 4/dx4  	+ 4*Dx2 / 4/dx4 		+ nu*Dy2 / dx2dy2 			- Dx / dx2dy2	+ Px / dx2 ;
-/* i+1, j+1 */	A[nodo][3*Ny+1]	= + 2*D0 / dx2dy2  		+ 2*Dx / 4/dx2dy2 - 2*Dy / 4/dx2dy2 						- 2*(1-nu)*Dxy / 16/dx2dy2 				- 2*Pxy / 4/dxdy ;
+/* i-1, j+1 */	A[nodo][3*cfg->Ny-1]	= + 2*D0 / dx2dy2  		+ 2*Dx / 4/dx2dy2 + 2*Dy / 4/dx2dy2						+ 2*(1-nu)*Dxy / 16/dx2dy2 				+ 2*cfg->Pxy / 4/dxdy ;
+/* i  , j+1 */	A[nodo][3*cfg->Ny] 	= - 4*D0 / dx4     		- 4*D0 / 1/dx2dy2 	- 4*Dx / 4/dx4  	+ 4*Dx2 / 4/dx4 		+ nu*Dy2 / dx2dy2 			- Dx / dx2dy2	+ cfg->Px / dx2 ;
+/* i+1, j+1 */	A[nodo][3*cfg->Ny+1]	= + 2*D0 / dx2dy2  		+ 2*Dx / 4/dx2dy2 - 2*Dy / 4/dx2dy2 						- 2*(1-nu)*Dxy / 16/dx2dy2 				- 2*cfg->Pxy / 4/dxdy ;
 
-/* i  , j+2 */	A[nodo][4*Ny] 	= + 1*D0 / dx4     					+ 2*Dx / 4/dx4 ;
+/* i  , j+2 */	A[nodo][4*cfg->Ny] 	= + 1*D0 / dx4     					+ 2*Dx / 4/dx4 ;
 
 
 		/*Independent term*/
@@ -289,15 +308,15 @@ int defineLESalmostdiagonalmatrix (double **A, double *b, float **q, float **Dq,
 		    /*Elastic.*/
 		    case 0:
 			b[nodo] =
-			    Dq[i][j] - Px*(w[i][j+1]-2*w[i][j]+w[i][j-1])/dx2 - Py*(w[i+1][j]-2*w[i][j]+w[i-1][j])/dy2;
+			    Dq[i][j] - cfg->Px*(w[i][j+1]-2*w[i][j]+w[i][j-1])/dx2 - cfg->Py*(w[i+1][j]-2*w[i][j]+w[i-1][j])/dy2;
 			break;
 		    /*Viscoelastic.*/
 		    case 1:
 			b[nodo] =
-			    (q[i][j] - w[i][j]*Krest - Px*(w[i][j+1]-2*w[i][j]+w[i][j-1])/dx2 - Py*(w[i+1][j]-2*w[i][j]+w[i-1][j])/dy2) / tau /*Termino que deberia estar:+ Dq[i][j]/dt*/;
+			    (q[i][j] - w[i][j]*Krest - cfg->Px*(w[i][j+1]-2*w[i][j]+w[i][j-1])/dx2 - cfg->Py*(w[i+1][j]-2*w[i][j]+w[i-1][j])/dy2) / tau /*Termino que deberia estar:+ Dq[i][j]/dt*/;
 			break;
 		}
-	}
+	}}
 
 
 	/*BOUNDARY CONDITIONS:*/
@@ -305,36 +324,36 @@ int defineLESalmostdiagonalmatrix (double **A, double *b, float **q, float **Dq,
 	switch (boundary_conds[0]) {
 	    case '6':
 	    case '0':
-		for (i=2;  i <= Nx-3  ; i++) {
-			bound_deflect=0; nodo=i*Ny;
+		for (i=2;  i <= cfg->Nx-3  ; i++) {
+			bound_deflect=0; nodo=i*cfg->Ny;
 			if (boundary_conds[0]=='6')  bound_deflect=Dq[0][i]/Krest;
-			A[nodo][2*Ny] = 1;    b[nodo]   = bound_deflect ;
+			A[nodo][2*cfg->Ny] = 1;    b[nodo]   = bound_deflect ;
 			if (boundary_conds[0]=='6')  bound_deflect=Dq[1][i]/Krest;
-			A[nodo+1][2*Ny] = 1;  b[nodo+1] = bound_deflect ;
+			A[nodo+1][2*cfg->Ny] = 1;  b[nodo+1] = bound_deflect ;
 		}
 		if (boundary_conds[3]=='5') {
 			bound_deflect=0;
 			if (boundary_conds[0]=='6')  bound_deflect=Dq[0][1]/Krest;
-			A[Ny][2*Ny] = 1;  b[Ny] = bound_deflect;
+			A[cfg->Ny][2*cfg->Ny] = 1;  b[cfg->Ny] = bound_deflect;
 		}
 		if (boundary_conds[2]=='5') {
 			bound_deflect=0;
-			if (boundary_conds[0]=='6')  bound_deflect=Dq[0][Nx-2]/Krest;
-			A[Ny*(Nx-2)][2*Ny] = 1;  b[Ny*(Nx-2)] = bound_deflect;
+			if (boundary_conds[0]=='6')  bound_deflect=Dq[0][cfg->Nx-2]/Krest;
+			A[cfg->Ny*(cfg->Nx-2)][2*cfg->Ny] = 1;  b[cfg->Ny*(cfg->Nx-2)] = bound_deflect;
 		}
 		break;
 	    default:
-		for (i=1;  i <= Nx-2  ; i++) {
-			nodo = i*Ny; 		/* Derivada en y nula */
-			A[nodo][2*Ny] = 1;
-			A[nodo][2*Ny+1] = -1;
+		for (i=1;  i <= cfg->Nx-2  ; i++) {
+			nodo = i*cfg->Ny; 		/* Derivada en y nula */
+			A[nodo][2*cfg->Ny] = 1;
+			A[nodo][2*cfg->Ny+1] = -1;
 			b[nodo] = 0;
 		}
-		for (i=2;  i <= Nx-3  ; i++) {
-			nodo = i*Ny+1; 		/* Momento en y nulo */
-			A[nodo][2*Ny] = -2;
-			A[nodo][2*Ny+1] = +1;
-			A[nodo][2*Ny-1] = +1;
+		for (i=2;  i <= cfg->Nx-3  ; i++) {
+			nodo = i*cfg->Ny+1; 		/* Momento en y nulo */
+			A[nodo][2*cfg->Ny] = -2;
+			A[nodo][2*cfg->Ny+1] = +1;
+			A[nodo][2*cfg->Ny-1] = +1;
 			b[nodo] = 0 ;
 		}
 		break;
@@ -344,36 +363,36 @@ int defineLESalmostdiagonalmatrix (double **A, double *b, float **q, float **Dq,
 	switch (boundary_conds[1]) {
 	    case '6':
 	    case '0':
-		for (i=3;  i <= Nx-2  ; i++) {
-			bound_deflect=0; nodo=i*Ny-2;
-			if (boundary_conds[1]=='6')  bound_deflect=Dq[Ny-2][i-1]/Krest;
-			A[nodo][2*Ny] = 1;    b[nodo]   = bound_deflect ;
-			if (boundary_conds[1]=='6')  bound_deflect=Dq[Ny-1][i-1]/Krest;
-			A[nodo+1][2*Ny] = 1;  b[nodo+1] = bound_deflect ;
+		for (i=3;  i <= cfg->Nx-2  ; i++) {
+			bound_deflect=0; nodo=i*cfg->Ny-2;
+			if (boundary_conds[1]=='6')  bound_deflect=Dq[cfg->Ny-2][i-1]/Krest;
+			A[nodo][2*cfg->Ny] = 1;    b[nodo]   = bound_deflect ;
+			if (boundary_conds[1]=='6')  bound_deflect=Dq[cfg->Ny-1][i-1]/Krest;
+			A[nodo+1][2*cfg->Ny] = 1;  b[nodo+1] = bound_deflect ;
 		}
 		if (boundary_conds[3]=='5') {
 			bound_deflect=0;
-			if (boundary_conds[1]=='6')  bound_deflect=Dq[Ny-1][1]/Krest;
-			A[2*Ny-1][2*Ny] = 1;  b[2*Ny-1] = bound_deflect;
+			if (boundary_conds[1]=='6')  bound_deflect=Dq[cfg->Ny-1][1]/Krest;
+			A[2*cfg->Ny-1][2*cfg->Ny] = 1;  b[2*cfg->Ny-1] = bound_deflect;
 		}
 		if (boundary_conds[2]=='5') {
 			bound_deflect=0;
-			if (boundary_conds[1]=='6')  bound_deflect=Dq[Ny-1][Nx-2]/Krest;
-			A[Ny*(Nx-1)-1][2*Ny] = 1;  b[Ny*(Nx-1)-1] = bound_deflect;
+			if (boundary_conds[1]=='6')  bound_deflect=Dq[cfg->Ny-1][cfg->Nx-2]/Krest;
+			A[cfg->Ny*(cfg->Nx-1)-1][2*cfg->Ny] = 1;  b[cfg->Ny*(cfg->Nx-1)-1] = bound_deflect;
 		}
 		break;
 	    default:
-		for (i=1;  i <= Nx-2  ; i++) {
-			nodo = (i+1)*Ny-1; 	/* Derivada en y nula */
-			A[nodo][2*Ny] = 1;
-			A[nodo][2*Ny-1] = -1;
+		for (i=1;  i <= cfg->Nx-2  ; i++) {
+			nodo = (i+1)*cfg->Ny-1; 	/* Derivada en y nula */
+			A[nodo][2*cfg->Ny] = 1;
+			A[nodo][2*cfg->Ny-1] = -1;
 			b[nodo] = 0 ;
 		}
-		for (i=2;  i <= Nx-3  ; i++) {
-			nodo = (i+1)*Ny-2; 	/* Momento en y nulo */
-			A[nodo][2*Ny] = -2;
-			A[nodo][2*Ny+1] = +1;
-			A[nodo][2*Ny-1] = +1;
+		for (i=2;  i <= cfg->Nx-3  ; i++) {
+			nodo = (i+1)*cfg->Ny-2; 	/* Momento en y nulo */
+			A[nodo][2*cfg->Ny] = -2;
+			A[nodo][2*cfg->Ny+1] = +1;
+			A[nodo][2*cfg->Ny-1] = +1;
 			b[nodo] = 0 ;
 		}
 		break;
@@ -383,26 +402,26 @@ int defineLESalmostdiagonalmatrix (double **A, double *b, float **q, float **Dq,
 	switch (boundary_conds[2]) {
 	    case '6':
 	    case '0':
-		for (i=0;  i <= Ny-1 ; i++) { 
+		for (i=0;  i <= cfg->Ny-1 ; i++) { 
 			bound_deflect=0; 
-			if (boundary_conds[2]=='6')  bound_deflect=Dq[i][Nx-2]/Krest;
-			nodo = i+(Nx-2)*Ny;
-			A[nodo][2*Ny] = 1;   b[nodo] = bound_deflect ;
-			if (boundary_conds[2]=='6')  bound_deflect=Dq[i][Nx-1]/Krest;
-			nodo = i+(Nx-1)*Ny;
-			A[nodo][2*Ny] = 1;   b[nodo] = bound_deflect ;
+			if (boundary_conds[2]=='6')  bound_deflect=Dq[i][cfg->Nx-2]/Krest;
+			nodo = i+(cfg->Nx-2)*cfg->Ny;
+			A[nodo][2*cfg->Ny] = 1;   b[nodo] = bound_deflect ;
+			if (boundary_conds[2]=='6')  bound_deflect=Dq[i][cfg->Nx-1]/Krest;
+			nodo = i+(cfg->Nx-1)*cfg->Ny;
+			A[nodo][2*cfg->Ny] = 1;   b[nodo] = bound_deflect ;
 		}
 		break;
 	    default:
-		for (nodo=(Nx-1)*Ny;  nodo <= Nx*Ny-1 ; nodo++) { 
-			A[nodo][2*Ny] = 1;
-			A[nodo][1*Ny] = -1;	/*Last column: derivada en x nula*/
+		for (nodo=(cfg->Nx-1)*cfg->Ny;  nodo <= cfg->Nx*cfg->Ny-1 ; nodo++) { 
+			A[nodo][2*cfg->Ny] = 1;
+			A[nodo][1*cfg->Ny] = -1;	/*Last column: derivada en x nula*/
 			b[nodo] = 0 ;
 		}
-		for (nodo=(Nx-2)*Ny+1;  nodo <= (Nx-1)*Ny-2 ; nodo++) { 
-			A[nodo][2*Ny] = -2;
-			A[nodo][1*Ny] = +1;	/*2nd last column: momento en x nulo*/
-			A[nodo][3*Ny] = +1;
+		for (nodo=(cfg->Nx-2)*cfg->Ny+1;  nodo <= (cfg->Nx-1)*cfg->Ny-2 ; nodo++) { 
+			A[nodo][2*cfg->Ny] = -2;
+			A[nodo][1*cfg->Ny] = +1;	/*2nd last column: momento en x nulo*/
+			A[nodo][3*cfg->Ny] = +1;
 			b[nodo] = 0 ;
 		}
 		break;
@@ -413,34 +432,34 @@ int defineLESalmostdiagonalmatrix (double **A, double *b, float **q, float **Dq,
 	    case '6':
 	    case '0':
 		/*B.C. fixed: null deflection at boundary nodes and their neighbors*/
-		for (i=0;  i <= Ny-1 ; i++) { 
+		for (i=0;  i <= cfg->Ny-1 ; i++) { 
 			bound_deflect=0;
 			if (boundary_conds[3]=='6')  bound_deflect=Dq[i][0]/Krest; 
-			A[i][2*Ny] =    1;   b[i]    = bound_deflect ;
+			A[i][2*cfg->Ny] =    1;   b[i]    = bound_deflect ;
 			if (boundary_conds[3]=='6')  bound_deflect=Dq[i][1]/Krest; 
-			A[i+Ny][2*Ny] = 1;   b[i+Ny] = bound_deflect ;
+			A[i+cfg->Ny][2*cfg->Ny] = 1;   b[i+cfg->Ny] = bound_deflect ;
 		}
 		break;
 	    default:
 		/* Free B.C.: zero moment and derivate at boundaries*/
-		for (nodo=0;  nodo <= Ny-1 ; nodo++) {
-			A[nodo][2*Ny] = 1; 
-			A[nodo][3*Ny] = -1;   	/* First column:  derivada en x nula*/
+		for (nodo=0;  nodo <= cfg->Ny-1 ; nodo++) {
+			A[nodo][2*cfg->Ny] = 1; 
+			A[nodo][3*cfg->Ny] = -1;   	/* First column:  derivada en x nula*/
 			b[nodo] = 0 ;
 		}
-		for (nodo=Ny+1;  nodo <= 2*Ny-2 ; nodo++) { 
-			A[nodo][2*Ny] = -2;
-			A[nodo][1*Ny] = +1;   	/* 2nd column: momento en x nulo*/
-			A[nodo][3*Ny] = +1;
+		for (nodo=cfg->Ny+1;  nodo <= 2*cfg->Ny-2 ; nodo++) { 
+			A[nodo][2*cfg->Ny] = -2;
+			A[nodo][1*cfg->Ny] = +1;   	/* 2nd column: momento en x nulo*/
+			A[nodo][3*cfg->Ny] = +1;
 			b[nodo] = 0 ;
 		}
 		break;
 	}
 
 
-	if (verbose_level>=3 && switch_write_file && Nx*Ny<200) {
+	if (cfg->verbose_level>=3 && switch_write_file && cfg->Nx*cfg->Ny<200) {
 		sprintf(filename, "%s.mtrz", projectname); 
-		WriteAlmostDiagonalMatrix(A, b, Nx*Ny, filename, NDs, NDi);
+		WriteAlmostDiagonalMatrix(A, b, cfg->Nx*cfg->Ny, filename, NDs, NDi);
 	}
 
 	return(1);
@@ -450,19 +469,16 @@ int defineLESalmostdiagonalmatrix (double **A, double *b, float **q, float **Dq,
 				NORTH
 
 
-	0     Ny    2Ny    3Ny    .      .      .    (Nx-1)·Ny
+	0     Ny    2Ny    3Ny    .      .      .    (Nx-1)ï¿½Ny
 
 
-	1    Ny+1  2Ny+1  3Ny+1   .      .      .    (Nx-1)·Ny+1
+	1    Ny+1  2Ny+1  3Ny+1   .      .      .    (Nx-1)ï¿½Ny+1
 
 
-	2    Ny+2  2Ny+2  3Ny+2   .      .      .    (Nx-1)·Ny+2
+	2    Ny+2  2Ny+2  3Ny+2   .      .      .    (Nx-1)ï¿½Ny+2
 
 
-WEST	3    Ny+3  2Ny+3  3Ny+3   .      .      .    (Nx-1)·Ny+3	EAST
-
-
-	.      .      .      .    .      .      .      .
+WEST	3    Ny+3  2Ny+3  3Ny+3   .      .      .    (Nx-1)ï¿½Ny+3	EAST
 
 
 	.      .      .      .    .      .      .      .
@@ -471,7 +487,10 @@ WEST	3    Ny+3  2Ny+3  3Ny+3   .      .      .    (Nx-1)·Ny+3	EAST
 	.      .      .      .    .      .      .      .
 
 
-	Ny-1  2Ny-1  3Ny-1  4Ny-1 .      .      .      Nx·Ny-1
+	.      .      .      .    .      .      .      .
+
+
+	Ny-1  2Ny-1  3Ny-1  4Ny-1 .      .      .      Nxï¿½Ny-1
 
 
 				SOUTH
@@ -481,30 +500,30 @@ WEST	3    Ny+3  2Ny+3  3Ny+3   .      .      .    (Nx-1)·Ny+3	EAST
 
 
 
-int defineLESmatrix_for_mathlib (float *A, int *IA, int *JA, float *b, float **q, float **w, int *nonzeroes, BOOL doing_visco)
+int defineLESmatrix_for_mathlib (ModelConfig *cfg, float *A, int *IA, int *JA, float *b, float **q, float **w, int *nonzeroes, bool doing_visco)
 {
 	/* 
 		DEFINE LA MATRIZ 'A' Y EL TERMINO INDEPENDIENTE 'b' DE 
 		COEFICIENTES DEL SISTEMA DE ECUACIONES  
-		A·x = b 
+		Aï¿½x = b 
 
 		Uses mathlib library.
 		Only tied BC (#0) available with this solver.
 	*/
 
-	register int 	i, j, nodo, NDi=2*Ny, NDs=2*Ny, nz ;
-	float		dx4=dx*dx*dx*dx,   dy4=dy*dy*dy*dy,   dx2dy2=dx*dx*dy*dy,  dx2=dx*dx,  dy2=dy*dy,  dxdy=dx*dy ,
+	register int 	i, j, nodo, NDi=2*cfg->Ny, NDs=2*cfg->Ny, nz ;
+	float		dx4=cfg->dx*cfg->dx*cfg->dx*cfg->dx,   dy4=cfg->dy*cfg->dy*cfg->dy*cfg->dy,   dx2dy2=cfg->dx*cfg->dx*cfg->dy*cfg->dy,  dx2=cfg->dx*cfg->dx,  dy2=cfg->dy*cfg->dy,  dxdy=cfg->dx*cfg->dy ,
 			D0, Dx, Dy, Dx2, Dy2, Dxy, Krest;
 
 	nz=0;
 	IA[0]=1;
-	for (j=0; j<Nx; j++)  for (i=0; i<Ny; i++)  {
+	for (j=0; j<cfg->Nx; j++)  for (i=0; i<cfg->Ny; i++)  {
 					/*'nodo' es el numero de orden asociado al nodo de malla (i, j)  	*/
-		nodo = j*Ny + i + 1;	/*comenzando por (0,0) y siguiendo con (1,0). 				*/
+		nodo = j*cfg->Ny + i + 1;	/*comenzando por (0,0) y siguiendo con (1,0). 				*/
 					/*Corresponde tambien a la fila de A[][] en curso, osea, el no. de eq.	*/
 
 		/*Interior: donde gobierna la equacion*/
-		if (i>=2 && i<Ny-2 && j>=2 && j<Nx-2) {
+		if (i>=2 && i<cfg->Ny-2 && j>=2 && j<cfg->Nx-2) {
 			/*Decide the restoring force value.*/
 			if (switch_topoest) {
 				/*If the current i,j knot is below the load 
@@ -531,35 +550,35 @@ int defineLESmatrix_for_mathlib (float *A, int *IA, int *JA, float *b, float **q
 			/*Elemento de la matriz    Valor*/
 	
 			A[nz]	= + D0 / dx4  	- 2*Dx / 4 / dx4 ;
-			JA[nz] = nodo-2*Ny;	nz ++;
+			JA[nz] = nodo-2*cfg->Ny;	nz ++;
 
-			A[nz]	= + 2 * D0 / dx2dy2 	- 2*Dx / 4 / dx2dy2 	+ 2*Dy / 4 / dx2dy2 	- 2*(1-nu)*Dxy / 16 / dx2dy2 	- Pxy / 4 / dxdy ;
-			JA[nz] = nodo-Ny-1;	nz ++;
-			A[nz] 	= - 4 * D0 / dx4 	- 4 * D0 / dx2dy2  	+ Dx / dx4  	+ Dx2 / dx4  	+ nu*Dy2 / dx2dy2 	+ Dx / dx2dy2	+ Px / dx2 ;
-			JA[nz] = nodo-Ny; 	nz ++;
-			A[nz]	= + 2 * D0 / dx2dy2 	- 2*Dx / 4 / dx2dy2 	- 2*Dy / 4 / dx2dy2	+ 2*(1-nu)*Dxy / 16 / dx2dy2 	+ Pxy / 4 / dxdy ;
-			JA[nz] = nodo-Ny+1;	nz ++;
+			A[nz]	= + 2 * D0 / dx2dy2 	- 2*Dx / 4 / dx2dy2 	+ 2*Dy / 4 / dx2dy2 	- 2*(1-nu)*Dxy / 16 / dx2dy2 	- cfg->Pxy / 4 / dxdy ;
+			JA[nz] = nodo-cfg->Ny-1;	nz ++;
+			A[nz] 	= - 4 * D0 / dx4 	- 4 * D0 / dx2dy2  	+ Dx / dx4  	+ Dx2 / dx4  	+ nu*Dy2 / dx2dy2 	+ Dx / dx2dy2	+ cfg->Px / dx2 ;
+			JA[nz] = nodo-cfg->Ny; 	nz ++;
+			A[nz]	= + 2 * D0 / dx2dy2 	- 2*Dx / 4 / dx2dy2 	- 2*Dy / 4 / dx2dy2	+ 2*(1-nu)*Dxy / 16 / dx2dy2 	+ cfg->Pxy / 4 / dxdy ;
+			JA[nz] = nodo-cfg->Ny+1;	nz ++;
 
 			A[nz]	= + D0 / dy4 	+ 2 * Dy / 4 / dy4 ;
 			JA[nz] = nodo-2;	nz ++;
-			A[nz]	= - 4 * D0 / dy4 	- 4 * D0 / dx2dy2  	- Dy / dy4  	+ Dy2 / dy4  	+ nu*Dx2 / dx2dy2  	- Dy  / dx2dy2 	+ Py / dy2 ;
+			A[nz]	= - 4 * D0 / dy4 	- 4 * D0 / dx2dy2  	- Dy / dy4  	+ Dy2 / dy4  	+ nu*Dx2 / dx2dy2  	- Dy  / dx2dy2 	+ cfg->Py / dy2 ;
 			JA[nz] = nodo-1;	nz ++;
-			A[nz]	= + 6 * D0 / dx4	+ 6 * D0 / dy4	+ 8 * D0 / dx2dy2	- 2 * Dx2 / dx4	- 2 * Dy2 / dy4	- 2 * nu * Dy2 / dx2dy2	- 2 * nu * Dx2 / dx2dy2    -2*Px / dx2    - 2*Py / dy2	       + Krest ;
+			A[nz]	= + 6 * D0 / dx4	+ 6 * D0 / dy4	+ 8 * D0 / dx2dy2	- 2 * Dx2 / dx4	- 2 * Dy2 / dy4	- 2 * nu * Dy2 / dx2dy2	- 2 * nu * Dx2 / dx2dy2    -2*cfg->Px / dx2    - 2*cfg->Py / dy2	       + Krest ;
 			JA[nz] = nodo;	nz ++;
-			A[nz]	= - 4 * D0 / dy4 	- 4 * D0 / dx2dy2  	+ Dy / dy4  	+ Dy2 / dy4  	+ nu*Dx2 / dx2dy2  	+ Dy  / dx2dy2 	+ Py / dy2 ;
+			A[nz]	= - 4 * D0 / dy4 	- 4 * D0 / dx2dy2  	+ Dy / dy4  	+ Dy2 / dy4  	+ nu*Dx2 / dx2dy2  	+ Dy  / dx2dy2 	+ cfg->Py / dy2 ;
 			JA[nz] = nodo+1;	nz ++;
 			A[nz]	= + D0 / dy4 	- 2 * Dy / 4 / dy4 ;
 			JA[nz] = nodo+2;	nz ++;
 
-			A[nz]	= + 2 * D0 / dx2dy2 	+ 2*Dx / 4 / dx2dy2 	+ 2*Dy / 4 / dx2dy2	+ 2*(1-nu)*Dxy / 16 / dx2dy2 	+ Pxy / 4 / dxdy ;
-			JA[nz] = nodo+Ny-1;	nz ++;
-			A[nz]	= - 4 * D0 / dx4 	- 4 * D0 / dx2dy2 	- Dx / dx4  	+ Dx2 / dx4  	+ nu*Dy2 / dx2dy2 	- Dx / dx2dy2	+ Px / dx2 ;
-			JA[nz] = nodo+Ny;	nz ++;
-			A[nz]	= + 2 * D0 / dx2dy2 	+ 2*Dx / 4 / dx2dy2 	- 2*Dy / 4 / dx2dy2 	- 2*(1-nu)*Dxy / 16 / dx2dy2 	- Pxy / 4 / dxdy ;
-			JA[nz] = nodo+Ny+1;	nz ++;
+			A[nz]	= + 2 * D0 / dx2dy2 	+ 2*Dx / 4 / dx2dy2 	+ 2*Dy / 4 / dx2dy2	+ 2*(1-nu)*Dxy / 16 / dx2dy2 	+ cfg->Pxy / 4 / dxdy ;
+			JA[nz] = nodo+cfg->Ny-1;	nz ++;
+			A[nz]	= - 4 * D0 / dx4 	- 4 * D0 / dx2dy2 	- Dx / dx4  	+ Dx2 / dx4  	+ nu*Dy2 / dx2dy2 	- Dx / dx2dy2	+ cfg->Px / dx2 ;
+			JA[nz] = nodo+cfg->Ny;	nz ++;
+			A[nz]	= + 2 * D0 / dx2dy2 	+ 2*Dx / 4 / dx2dy2 	- 2*Dy / 4 / dx2dy2 	- 2*(1-nu)*Dxy / 16 / dx2dy2 	- cfg->Pxy / 4 / dxdy ;
+			JA[nz] = nodo+cfg->Ny+1;	nz ++;
 
 			A[nz] 	= + D0 / dx4  	+ 2*Dx / 4 / dx4 ;
-			JA[nz] = nodo+2*Ny;	nz ++;
+			JA[nz] = nodo+2*cfg->Ny;	nz ++;
 			
 			/*Termino independiente*/
 			switch (doing_visco) {
@@ -579,44 +598,44 @@ int defineLESmatrix_for_mathlib (float *A, int *IA, int *JA, float *b, float **q
 			else {
 				if (j==0) {
 					A[nz] = 1;	JA[nz] = nodo;		nz ++;
-					A[nz] = -1;	JA[nz] = nodo+Ny;	nz ++;
+					A[nz] = -1;	JA[nz] = nodo+cfg->Ny;	nz ++;
 					b[nodo-1] = 0 ;
 				}
-				if (j==Nx-1) {
-					A[nz] = 1;	JA[nz] = nodo-Ny;	nz ++;
+				if (j==cfg->Nx-1) {
+					A[nz] = 1;	JA[nz] = nodo-cfg->Ny;	nz ++;
 					A[nz] = -1;	JA[nz] = nodo;  	nz ++;
 					b[nodo-1] = 0 ;
 				}
-				if (i==0 && j!=0 && j!=Nx-1) {
+				if (i==0 && j!=0 && j!=cfg->Nx-1) {
 					A[nz] = 1;	JA[nz] = nodo;		nz ++;
 					A[nz] = -1;	JA[nz] = nodo+1;	nz ++;
 					b[nodo-1] = 0 ;
 				}
-				if (i==Ny-1 && j!=0 && j!=Nx-1) {
+				if (i==cfg->Ny-1 && j!=0 && j!=cfg->Nx-1) {
 					A[nz] = 1;	JA[nz] = nodo-1;	nz ++;
 					A[nz] = -1;	JA[nz] = nodo;  	nz ++;
 					b[nodo-1] = 0 ;
 				}
 				
-				if (j==1 && i!=0 && i!=Ny-1) {
-					A[nz] = 1;	JA[nz] = nodo-Ny;	nz ++;
+				if (j==1 && i!=0 && i!=cfg->Ny-1) {
+					A[nz] = 1;	JA[nz] = nodo-cfg->Ny;	nz ++;
 					A[nz] = -2;	JA[nz] = nodo;  	nz ++;
-					A[nz] = 1;	JA[nz] = nodo+Ny;	nz ++;
+					A[nz] = 1;	JA[nz] = nodo+cfg->Ny;	nz ++;
 					b[nodo-1] = 0 ;
 				}
-				if (j==Nx-2 && i!=0 && i!=Ny-1) {
-					A[nz] = 1;	JA[nz] = nodo-Ny;	nz ++;
+				if (j==cfg->Nx-2 && i!=0 && i!=cfg->Ny-1) {
+					A[nz] = 1;	JA[nz] = nodo-cfg->Ny;	nz ++;
 					A[nz] = -2;	JA[nz] = nodo;  	nz ++;
-					A[nz] = 1;	JA[nz] = nodo+Ny; 	nz ++;
+					A[nz] = 1;	JA[nz] = nodo+cfg->Ny; 	nz ++;
 					b[nodo-1] = 0 ;
 				}
-				if (i==1 && j!=0 && j!=1 && j!=Nx-2 && j!=Nx-1) {
+				if (i==1 && j!=0 && j!=1 && j!=cfg->Nx-2 && j!=cfg->Nx-1) {
 					A[nz] = 1;	JA[nz] = nodo-1;	nz ++;
 					A[nz] = -2;	JA[nz] = nodo;  	nz ++;
 					A[nz] = 1;	JA[nz] = nodo+1;	nz ++;
 					b[nodo-1] = 0 ;
 				}
-				if (i==Ny-2 && j!=0 && j!=1 && j!=Nx-2 && j!=Nx-1) {
+				if (i==cfg->Ny-2 && j!=0 && j!=1 && j!=cfg->Nx-2 && j!=cfg->Nx-1) {
 					A[nz] = 1;	JA[nz] = nodo-1;	nz ++;
 					A[nz] = -2;	JA[nz] = nodo;  	nz ++;
 					A[nz] = 1;	JA[nz] = nodo+1;  	nz ++;
@@ -685,7 +704,7 @@ int Perfil_info(float *perfil, int n, float *max, float *min)
 
 
 
-int Repare_Blocks()
+int Repare_Blocks(ModelConfig *cfg, ModelContext *ctx)
 {
 	int  	i_Block_max_arrange;
 
@@ -693,20 +712,21 @@ int Repare_Blocks()
 
 	PRINT_DEBUG("");
 
-	i_Block_max_arrange = (switch_topoest)? i_first_Block_load : numBlocks;
+	i_Block_max_arrange = (switch_topoest)? i_first_Block_load : ctx->numBlocks;
 	for (int i_Block=1; i_Block < i_Block_max_arrange; i_Block++) {
-		for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) {
+		for (int i=0; i<cfg->Ny; i++) for (int j=0; j<cfg->Nx; j++) {
 			Blocks[i_Block-1].thick[i][j] = MAX_2(Blocks[i_Block-1].thick[i][j], 0);
 		}
 	}
 	/*Delete empty Blocks*/
-	for (int i_Block=0; i_Block<numBlocks; i_Block++) {
+	for (int i_Block=0; i_Block<ctx->numBlocks; i_Block++) {
 		float Block_volume=0;
-		for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++)  Block_volume += Blocks[i_Block].thick[i][j];
-		Block_volume *= dx*dy;
+		for (int i=0; i<cfg->Ny; i++) for (int j=0; j<cfg->Nx; j++)  Block_volume += Blocks[i_Block].thick[i][j];
+		Block_volume *= cfg->dx*cfg->dy;
 		if (Block_volume<1e4 && Blocks[i_Block].type != 'G' /*&& Blocks[i_Block].type != 'H'*/ && Blocks[i_Block].type != 'I') {
-			PRINT_DEBUG("will remove Block %d (type %c) out of %d", i_Block, Blocks[i_Block].type, numBlocks);
+			PRINT_DEBUG("will remove Block %d (type %c) out of %d", i_Block, Blocks[i_Block].type, ctx->numBlocks);
 			Delete_Block(i_Block); i_Block--;
+			ctx->numBlocks = numBlocks; /* sync */
 		}
 	}
 	PRINT_DEBUG("Repare finished");
@@ -715,22 +735,22 @@ int Repare_Blocks()
 
 
 
-int solveLESalmostdiagonal (double **A, double *b, float **x)
+int solveLESalmostdiagonal (ModelConfig *cfg, double **A, double *b, float **x)
 {
-	register int i, j, numcorr, NDi=2*Ny, NDs=2*Ny;
+	register int i, j, numcorr, NDi=2*cfg->Ny, NDs=2*cfg->Ny;
 	float *xcorr ;
 
 	/*THIS ROUTINE CALLS THE ONES WHICH SOLVE THE EQUATION SYSTEM */
-	xcorr = alloc_array(Nx*Ny);
+	xcorr = alloc_array(cfg->Nx*cfg->Ny);
 
-	if ( TriangularizeAlmostDiagonalEquationSystem(A, b, Nx*Ny, NDs, NDi) ) {
+	if ( TriangularizeAlmostDiagonalEquationSystem(A, b, cfg->Nx*cfg->Ny, NDs, NDi) ) {
 			PRINT_ERROR("\aUNDETERMINED EQ. SYSTEM !!!"); getchar(); return 1;
 	}
 
-	SolveAlmostDiagonalTriangularEquationSystem(A, b, Nx*Ny, NDs, NDi, xcorr);
+	SolveAlmostDiagonalTriangularEquationSystem(A, b, cfg->Nx*cfg->Ny, NDs, NDi, xcorr);
 
-	for (i=0; i<Ny; i++) for (j=0; j<Nx; j++) {
-			numcorr = Ny*j + i ;
+	for (i=0; i<cfg->Ny; i++) for (j=0; j<cfg->Nx; j++) {
+			numcorr = cfg->Ny*j + i ;
 			x[i][j] = xcorr[numcorr] ;
 	}
 
@@ -742,23 +762,23 @@ int solveLESalmostdiagonal (double **A, double *b, float **x)
 float Sort_Matrix (float **matrix, struct GRIDNODE *orden, int Nx, int Ny)
 {
 	int	numorden, i, j, fil, col;
-	BOOL	**switch_done;
+	bool	**switch_done;
 	float	maxmatrix;
 
-	switch_done = (BOOL **) calloc (Ny, sizeof(BOOL *));
-	for (i=0; i<Ny; i++) switch_done[i] = (BOOL *) calloc (Nx, sizeof(BOOL));
+	switch_done = (bool **) calloc (Ny, sizeof(bool *));
+	for (i=0; i<Ny; i++) switch_done[i] = (bool *) calloc (Nx, sizeof(bool));
 
 	for (numorden=0; numorden < Nx*Ny; numorden++) {
 		maxmatrix=-1e12;
 		for (i=0; i<Ny; i++) for (j=0; j<Nx; j++) {
-			if ((maxmatrix < matrix[i][j])  &&  (switch_done[i][j] == NO)) {
+			if ((maxmatrix < matrix[i][j])  &&  (switch_done[i][j] == false)) {
 				maxmatrix = matrix[i][j];
 				fil=i;	col=j;
 			}
 		}
 		orden[numorden].row=fil;
 		orden[numorden].col=col;
-		switch_done[fil][col]=YES;
+		switch_done[fil][col]=true;
 		if (verbose_level>=1) fprintf(stdout, "\b\b\b%2d%%", (int) 100*numorden/(Nx*Ny-1) );
 	}
 
@@ -802,7 +822,7 @@ float ReSort_Matrix (float **matrix, struct GRIDNODE *orden, int Nx, int Ny)
 
 
 
-float calculate_sea_level()
+float calculate_sea_level(float current_time)
 {
 	/*
 	  Calculates the sea level
@@ -814,11 +834,11 @@ float calculate_sea_level()
 	if (n_sea_level_input_points) {
 	    int i;
 	    for (i=0; i<n_sea_level_input_points; i++) {
-			if (var_sea_level[i][0]>=Time) break;
+			if (var_sea_level[i][0]>=current_time) break;
         }
         if (i!=0 && i!=n_sea_level_input_points) {
-			sea_level = 	( (Time-var_sea_level[i-1][0])*var_sea_level[i][1] + 
-					  (var_sea_level[i][0]-Time)*var_sea_level[i-1][1] ) 
+			sea_level = 	( (current_time-var_sea_level[i-1][0])*var_sea_level[i][1] + 
+					  (var_sea_level[i][0]-current_time)*var_sea_level[i-1][1] ) 
 				     / (var_sea_level[i][0]-var_sea_level[i-1][0]);
 	    }
  	    else {
@@ -833,7 +853,7 @@ float calculate_sea_level()
 
 
 
-int calculate_water_load()
+int calculate_water_load(ModelConfig *cfg, ModelContext *ctx)
 {
 	/*
 	  Calculates the load related to changes 
@@ -845,32 +865,29 @@ int calculate_water_load()
 
 	if (!water_load) return(0);
 
-	for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) {
+	#pragma omp parallel for reduction(+:water_volume)
+	for (int i=0; i<cfg->Ny; i++) { for (int j=0; j<cfg->Nx; j++) {
 		float Dq_water, h_water_now=0;
-		if (hydro_model) {
+		if (cfg->hydro_model) {
 		    if ((drainage[i][j].lake)) {
 		    	/*sea lake already has its proper level defined*/
-				h_water_now = MAX_2(0, Lake[drainage[i][j].lake].alt-topo[i][j]);
+				h_water_now = MAX_2(0, Lake[drainage[i][j].lake].alt-ctx->topo[i][j]);
 		    }
 		}
 		else {
-		    h_water_now = MAX_2(0, sea_level-topo[i][j]);
+		    h_water_now = MAX_2(0, ctx->sea_level-ctx->topo[i][j]);
 		}
-		Dq_water = (h_water_now-h_water[i][j]) * g * (denswater-densenv);
+		Dq_water = (h_water_now-h_water[i][j]) * g * (cfg->denswater-cfg->densenv);
 		h_water[i][j] = h_water_now;
 		/*Don't load the initial water column. h_water[i][j] was initialized before time loop based on sea_level*/
-		if (Time>Timeini+1.5*dt || (Time>Timeini && !hydro_model)) {
+		if (ctx->Time>ctx->Timeini+1.5*ctx->dt || (ctx->Time>ctx->Timeini && !cfg->hydro_model)) {
 			Dq[i][j] += Dq_water;
 		}
 		water_volume += h_water[i][j];		
-	}
+	}}
 
 	if (n_sea_level_input_points) {
-		PRINT_SUMLINE("sea_level: %8.1f m   sea_volume = %.1f km3", sea_level, water_volume*dx*Nx/(Nx-1)*Ny/(Ny-1)/1e9);
+		PRINT_SUMLINE("sea_level: %8.1f m   sea_volume = %.1f km3", ctx->sea_level, water_volume*cfg->dx*cfg->Nx/(cfg->Nx-1)*cfg->Ny/(cfg->Ny-1)/1e9);
 	}
 	return(1);
 }
-
-
-
-

@@ -3,8 +3,8 @@
 */
 
 #include "tisc.h"
-#include "tisclib.c"
-#include "tiscio.c"
+#include "tisclib.h"
+#include "tiscio.h"
 
 int 	read_file_output_Blocks ();
 
@@ -16,7 +16,7 @@ int main(int argc, char **argv)
 
 	commstdout = stderr;
 	zini = 0;
-	switch_write_file = YES;
+	switch_write_file = true;
 
 	syntax(argc, argv);
 	for (iarg=1; iarg<argc; iarg++) {
@@ -43,7 +43,14 @@ int main(int argc, char **argv)
 
 	w = alloc_matrix(Ny, Nx);
 
-	write_file_cross_section();
+	ModelConfig cfg = {0}; ModelContext ctx = {0};
+	cfg.Nx = Nx; cfg.Ny = Ny; cfg.dx = dx; cfg.dy = dy; 
+	cfg.xmin = xmin; cfg.ymin = ymin; cfg.xmax = xmax; cfg.ymax = ymax;
+	cfg.denscrust = denscrust; cfg.denswater = denswater; cfg.densice = densice;
+	cfg.erosed_model = erosed_model; cfg.hydro_model = hydro_model;
+	ctx.numBlocks = numBlocks; ctx.Timeini = Timeini;
+
+	write_file_cross_section(&cfg, &ctx);
 
 	return(1);
 }

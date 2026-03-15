@@ -3,8 +3,12 @@ INPUT/OUTPUT  SUBROUTINES  FOR  tisc.c
 Daniel Garcia-Castellanos
 */
 
+#include "tisc.h"
+#include "tiscio.h"
+#include "tisclib.h"
+#include "../lib/libreria.h"
 
-int find_up_river (int row, int col, int *level, int *count, float *length, float *chi, FILE *file, BOOL **done, float ref_discharge);
+int find_up_river (ModelConfig *cfg, ModelContext *ctx, int row, int col, int *level, int *count, float *length, float *chi, FILE *file, bool **done, float ref_discharge);
 
 
 
@@ -12,7 +16,7 @@ int find_up_river (int row, int col, int *level, int *count, float *length, floa
 
 /*******************************  INPUT  **************************************/
 
-int reformat_file_thin_sheet_BC(char *tmpTSBCfilename)
+int reformat_file_thin_sheet_BC(ModelConfig *cfg, ModelContext *ctx, char *tmpTSBCfilename)
 {
 	/*
 	  READS THE THIN SHEET BOUNDARY CONDITIONS FILE *.TSBC AND TRANSLATES 
@@ -42,20 +46,20 @@ int reformat_file_thin_sheet_BC(char *tmpTSBCfilename)
 		      float xi;
 		      case 'N':
 		      case 'S':
-		    	  for (i=0; i<Nx; i++) {
-		    	      xi = xmin + i*dx;
+		    	  for (i=0; i<cfg->Nx; i++) {
+		    	      xi = cfg->xmin + i*cfg->dx;
 		    	      if (xi>x)
 		    		  fprintf(filetmp, "\n%d\t%d\t%d\t%E\t%E",
-		    		      i, (boundary=='S')? 0:Ny-1, type, u1, u2);
+		    		      i, (boundary=='S')? 0:cfg->Ny-1, type, u1, u2);
 		    	  }
 		    	  break;
 		      case 'E':
 		      case 'W':
-		    	  for (i=1; i<Ny-1; i++) {
-		    	      xi = ymin + i*dy;
+		    	  for (i=1; i<cfg->Ny-1; i++) {
+		    	      xi = cfg->ymin + i*cfg->dy;
 		    	      if (xi>x)
 		    		  fprintf(filetmp, "\n%d\t%d\t%d\t%E\t%E",
-		    		      (boundary=='W')? 0:Nx-1, i, type, u1, u2);
+		    		      (boundary=='W')? 0:cfg->Nx-1, i, type, u1, u2);
 		    	  }
 		    	  break;
 		    }
@@ -70,33 +74,33 @@ int reformat_file_thin_sheet_BC(char *tmpTSBCfilename)
 	        float xi;
 		case 'N':
 		case 'S':
-		    for (i=0; i<Nx; i++) {
-			xi = xmin + i*dx;
+		    for (i=0; i<cfg->Nx; i++) {
+			xi = cfg->xmin + i*cfg->dx;
 			if (x0==SIGNAL) { 
 			    if (xi<=x) 
 			    	fprintf(filetmp, "\n%d\t%d\t%d\t%E\t%E", 
-			    	    i, (boundary=='S')? 0:Ny-1, type, u1, u2);
+			    	    i, (boundary=='S')? 0:cfg->Ny-1, type, u1, u2);
 			}
 			else {
 			    if (xi>x0 && xi<=x) 
 			    	fprintf(filetmp, "\n%d\t%d\t%d\t%E\t%E", 
-			    	    i, (boundary=='S')? 0:Ny-1, type, LININTERP(xi,x0,x,u01,u1), LININTERP(xi,x0,x,u02,u2));
+			    	    i, (boundary=='S')? 0:cfg->Ny-1, type, LININTERP(xi,x0,x,u01,u1), LININTERP(xi,x0,x,u02,u2));
 			}
 		    }
 		    break;
 		case 'E':
 		case 'W':
-		    for (i=1; i<Ny-1; i++) {
-		    	xi = ymin + i*dy;
+		    for (i=1; i<cfg->Ny-1; i++) {
+		    	xi = cfg->ymin + i*cfg->dy;
 			if (x0==SIGNAL) {
 			    if (xi<=x) 
 			    	fprintf(filetmp, "\n%d\t%d\t%d\t%E\t%E", 
-			    	    (boundary=='W')? 0:Nx-1, i, type, u1, u2);
+			    	    (boundary=='W')? 0:cfg->Nx-1, i, type, u1, u2);
 			}
 			else {
 			    if (xi>x0 && xi<=x) 
 			    	fprintf(filetmp, "\n%d\t%d\t%d\t%E\t%E", 
-			    	    (boundary=='W')? 0:Nx-1, i, type, LININTERP(xi,x0,x,u01,u1), LININTERP(xi,x0,x,u02,u2));
+			    	    (boundary=='W')? 0:cfg->Nx-1, i, type, LININTERP(xi,x0,x,u01,u1), LININTERP(xi,x0,x,u02,u2));
 			}
 		    }
 		    break;
@@ -305,7 +309,7 @@ int read_file_parameters (int show, int reformat)
 	char 	*lineptr=NULL, str1[MAXLENLINE]="", str2[MAXLENLINE]="", 
 		line[MAXLENLINE+200], PRMfilename[MAXLENFILE];
 	FILE 	*file;
-	BOOL	switch_matched_vers=NO;
+	bool	switch_matched_vers=false;
 
 	/*
 	READ THE PARAMETERS FILE NAMED  'projectname.PRM'
@@ -332,7 +336,7 @@ int read_file_parameters (int show, int reformat)
 			if (!strcmp(str1, "version")) {
 				strcpy(version_input, str2);
 				if (!strcmp(version_input, version)) {
-					switch_matched_vers = YES;
+					switch_matched_vers = true;
 					nparams++;
 				}
 				if ((show && verbose_level>=3) || (reformat && verbose_level>=3)) fprintf(stderr, "\nInput file version: %s\n", version_input);
@@ -369,7 +373,7 @@ int read_file_parameters (int show, int reformat)
 
 int match_parameter (char *str1, char *str2, int show, int replace, char *line)
 {
-	BOOL switch_debug=NO;
+	bool switch_debug=false;
 	int nparams=0;
 
 	Match_Param_Replace_int ( "Nx", 	Nx,  	0 )
@@ -524,8 +528,8 @@ int read_file_resume(char *filename)
 	if (strcmp(version, version_aux)) PRINT_WARNING("version in resume file '%s' does not match present TISC version '%s'.", version_aux, version);
 	fread(version_input,	sizeof(char),		LENGTHVERS, 	file);
 
-	fread(&switch_ps, 	sizeof(BOOL),		1, 	file);
-	fread(&switch_write_file, sizeof(BOOL),		1, 	file);
+	fread(&switch_ps, 	sizeof(bool),		1, 	file);
+	fread(&switch_write_file, sizeof(bool),		1, 	file);
 
 
 	/*Defined in geomodel.h:*/
@@ -563,7 +567,7 @@ int read_file_resume(char *filename)
 		strcpy(projectname_aux,projectname);
 	}
 
-	fread(&switch_geograph_coor, sizeof(BOOL),	1, 	file);
+	fread(&switch_geograph_coor, sizeof(bool),	1, 	file);
 
 
 	/*Defined in tao+tisc.h:*/
@@ -585,11 +589,11 @@ int read_file_resume(char *filename)
 	fread(&last_time_file_time, 	sizeof(float),		1, 	file);
 	fread(&random_topo, 	sizeof(float),		1, 	file);
 
-	fread(&switch_file_out, 	sizeof(BOOL),		1, 	file);
-	fread(&switch_gradual, 	sizeof(BOOL),		1, 	file);
-	fread(&switch_topoest, 		sizeof(BOOL),		1, 	file);
-	fread(&switch_write_file_Blocks, sizeof(BOOL),		1, 	file);
-	fread(&deform_sed, sizeof(BOOL),		1, 	file);
+	fread(&switch_file_out, 	sizeof(bool),		1, 	file);
+	fread(&switch_gradual, 	sizeof(bool),		1, 	file);
+	fread(&switch_topoest, 		sizeof(bool),		1, 	file);
+	fread(&switch_write_file_Blocks, sizeof(bool),		1, 	file);
+	fread(&deform_sed, sizeof(bool),		1, 	file);
 
 
 	/*Defined in tisc.h:*/
@@ -868,7 +872,7 @@ int read_file_sea_level()
 
 
 
-int read_file_node_defs(float dt_st)
+int read_file_node_defs(ModelConfig *cfg, ModelContext *ctx, float dt_st)
 {
 	FILE 	*file;
 	char 	filename[MAXLENFILE];
@@ -878,7 +882,7 @@ int read_file_node_defs(float dt_st)
 	  certain nodes, e.g. in water flow.
 	*/
 	
-	if (!erosed_model) return(0);
+	if (!cfg->erosed_model) return(0);
 
 	sprintf(filename, "%s.NDEF", projectname);
 	if ((file = fopen(filename, "rt")) == NULL) {
@@ -891,27 +895,27 @@ int read_file_node_defs(float dt_st)
 		int i,j, type;
 		float x, y, type_aux, value;
 		TAKE_LINE_4(x, y, type_aux, value)
-		i = floor((ymax-y)/dy + .49999999);
-		j = floor((x-xmin)/dx + .49999999);
+		i = floor((cfg->ymax-y)/cfg->dy + .49999999);
+		j = floor((x-cfg->xmin)/cfg->dx + .49999999);
 		type = (int) type_aux;
 		DOMAIN_LIMIT(i,j);
 		PRINT_DEBUG("Node specified: %d,%d, %d, %f", i,j, type, value);
 		switch (type) {
 		    case 1:
-			if (rain_amp && rain_per) value *= (1-rain_amp*sin((Time-Timeini)/rain_per*2*3.1415927));
+			if (rain_amp && rain_per) value *= (1-rain_amp*sin((ctx->Time-ctx->Timeini)/rain_per*2*3.1415927));
 			/*IF INSOLATION FILE, inpterpolate insolation to this Time*/
 			if (n_insolation_input_points) {
 				float insolation;
 				int i;
-				if (Time<=var_insolation[0][0] || Time>=var_insolation[n_insolation_input_points-1][0]) {
-					if (Time<=var_insolation[0][0]) 
+				if (ctx->Time<=var_insolation[0][0] || ctx->Time>=var_insolation[n_insolation_input_points-1][0]) {
+					if (ctx->Time<=var_insolation[0][0]) 
 						{insolation = var_insolation[0][1];}
-					if (Time>=var_insolation[n_insolation_input_points-1][0]) 
+					if (ctx->Time>=var_insolation[n_insolation_input_points-1][0]) 
 						{insolation = var_insolation[n_insolation_input_points-1][1];}
 				}
 				else for (i=0; i<n_insolation_input_points-1; i++) {
-					if (Time>var_insolation[i][0] && Time<=var_insolation[i+1][0]) {
-						insolation = var_insolation[i][1]+(Time-var_insolation[i][0])*(var_insolation[i+1][1]-var_insolation[i][1])/(var_insolation[i+1][0]-var_insolation[i][0]); 
+					if (ctx->Time>var_insolation[i][0] && ctx->Time<=var_insolation[i+1][0]) {
+						insolation = var_insolation[i][1]+(ctx->Time-var_insolation[i][0])*(var_insolation[i+1][1]-var_insolation[i][1])/(var_insolation[i+1][0]-var_insolation[i][0]); 
 						break;
 					}
 				}
@@ -920,11 +924,11 @@ int read_file_node_defs(float dt_st)
 			}
 
 			drainage[i][j].discharge += value;
-			total_rain += value;
+			ctx->total_rain += value;
 			break;
 		    case 2:
 			drainage[i][j].masstr += value;
-			total_bedrock_eros_mass += value*dt_st;
+			ctx->total_bedrock_eros_mass += value*dt_st;
 			break;
 		}
 	}
@@ -941,7 +945,7 @@ int read_file_Te()
 {
 	int	i, j, mode_interp_local=mode_interp;
 	FILE 	*file;
-	BOOL 	switch_EET_file=NO;
+	bool 	switch_EET_file=false;
 	char 	filename[MAXLENFILE];
 
 	/* 
@@ -962,7 +966,7 @@ int read_file_Te()
 	else {
 		float	z_default=Te_default;
 		readinterp2D(file, EET, mode_interp_local, z_default, xmin, xmax, ymin, ymax, Nx, Ny);
-		switch_EET_file=YES;
+		switch_EET_file=true;
 		fclose(file);
 	}
 
@@ -1171,20 +1175,20 @@ int read_file_2D_CS (struct BLOCK *Blocks, struct CS2D *CrossSection, int Nx2D)
 /*******************************  OUTPUT  *************************************/
 
 
-int Calculate_2D_Cross_Section (struct BLOCK *Blocks, struct CS2D *CrossSection, int Nx2D)
+int Calculate_2D_Cross_Section (ModelConfig *cfg, ModelContext *ctx, struct BLOCK *Blocks, struct CS2D *CrossSection, int Nx2D)
 {
 	float	**hori_aux, **thickness_above;
 
-	hori_aux = alloc_matrix(Ny, Nx);
-	thickness_above = alloc_matrix(Ny, Nx);
+	hori_aux = alloc_matrix(cfg->Ny, cfg->Nx);
+	thickness_above = alloc_matrix(cfg->Ny, cfg->Nx);
 
 	/*Blocks_base horizon:*/
-	for (int i=0; i<Ny; i++)  for (int j=0; j<Nx; j++) {
+	for (int i=0; i<cfg->Ny; i++)  for (int j=0; j<cfg->Nx; j++) {
 		hori_aux[i][j] = Blocks_base[i][j] - w[i][j];
 	}
 	for (int i2D=0; i2D<Nx2D; i2D++) {
 		CrossSection[i2D].horiz[0] =
-			interpol_point_in_mesh (hori_aux, Nx, Ny, xmin, dx, ymin, dy, CrossSection[i2D].x, CrossSection[i2D].y) ;
+			interpol_point_in_mesh (hori_aux, cfg->Nx, cfg->Ny, cfg->xmin, cfg->dx, cfg->ymin, cfg->dy, CrossSection[i2D].x, CrossSection[i2D].y) ;
 	}
 
 /*
@@ -1205,97 +1209,97 @@ int Calculate_2D_Cross_Section (struct BLOCK *Blocks, struct CS2D *CrossSection,
 
 
 	/*Block horizons:*/
-	for (int i_Block=0; i_Block<numBlocks; i_Block++) 
-		for (int i=0; i<Ny; i++)  for (int j=0; j<Nx; j++) 
+	for (int i_Block=0; i_Block<ctx->numBlocks; i_Block++) 
+		for (int i=0; i<cfg->Ny; i++)  for (int j=0; j<cfg->Nx; j++) 
 			thickness_above[i][j] += Blocks[i_Block].thick[i][j];
-	for (int i_Block=0; i_Block<numBlocks; i_Block++) {
-		for (int i=0; i<Ny; i++)  for (int j=0; j<Nx; j++) {
+	for (int i_Block=0; i_Block<ctx->numBlocks; i_Block++) {
+		for (int i=0; i<cfg->Ny; i++)  for (int j=0; j<cfg->Nx; j++) {
 			thickness_above[i][j] -= Blocks[i_Block].thick[i][j];
 			hori_aux[i][j] += Blocks[i_Block].thick[i][j];
-			if (Blocks[i_Block].density==denssedim) hori_aux[i][j] -= compaction(sed_porosity, compact_depth, thickness_above[i][j], thickness_above[i][j]+Blocks[i_Block].thick[i][j]);
+			if (Blocks[i_Block].density==cfg->denssedim) hori_aux[i][j] -= compaction(sed_porosity, compact_depth, thickness_above[i][j], thickness_above[i][j]+Blocks[i_Block].thick[i][j]);
 		}
 		for (int i2D=0; i2D<Nx2D; i2D++) {
 			CrossSection[i2D].horiz[i_Block+1] =
-				interpol_point_in_mesh (hori_aux, Nx, Ny, xmin, dx, ymin, dy, CrossSection[i2D].x, CrossSection[i2D].y) ;
+				interpol_point_in_mesh (hori_aux, cfg->Nx, cfg->Ny, cfg->xmin, cfg->dx, cfg->ymin, cfg->dy, CrossSection[i2D].x, CrossSection[i2D].y) ;
 		}
 	}
     /*========Added By Michael Berry, adding lakes to cross section ===============*/
-    if (hydro_model){
-            for (int i=0; i<Ny; i++)  for (int j=0; j<Nx; j++){
+    if (cfg->hydro_model){
+            for (int i=0; i<cfg->Ny; i++)  for (int j=0; j<cfg->Nx; j++){
                     hori_aux[i][j] += h_water[i][j];
             }
             for (int i2D=0; i2D<Nx2D; i2D++) {
-                    CrossSection[i2D].horiz[numBlocks+1] =
-                            interpol_point_in_mesh (hori_aux, Nx, Ny, xmin, dx, ymin, dy, CrossSection[i2D].x, CrossSection[i2D].y) ;
+                    CrossSection[i2D].horiz[ctx->numBlocks+1] =
+                            interpol_point_in_mesh (hori_aux, cfg->Nx, cfg->Ny, cfg->xmin, cfg->dx, cfg->ymin, cfg->dy, CrossSection[i2D].x, CrossSection[i2D].y) ;
             }
     }
     /*==========end of addition ===================================================*/
 	/*ice horizon:*/
 	if (K_ice_eros) {
-		for (int i=0; i<Ny; i++)  for (int j=0; j<Nx; j++) {
+		for (int i=0; i<cfg->Ny; i++)  for (int j=0; j<cfg->Nx; j++) {
 			hori_aux[i][j] += ice_thickness[i][j];
 		}
 		for (int i2D=0; i2D<Nx2D; i2D++) {
-			CrossSection[i2D].horiz[numBlocks+2] =
-				interpol_point_in_mesh (hori_aux, Nx, Ny, xmin, dx, ymin, dy, CrossSection[i2D].x, CrossSection[i2D].y) ;
+			CrossSection[i2D].horiz[ctx->numBlocks+2] =
+				interpol_point_in_mesh (hori_aux, cfg->Nx, cfg->Ny, cfg->xmin, cfg->dx, cfg->ymin, cfg->dy, CrossSection[i2D].x, CrossSection[i2D].y) ;
 		}
 	}
 
-	free_matrix(hori_aux, Ny);
-	free_matrix(thickness_above, Ny);
+	free_matrix(hori_aux, cfg->Ny);
+	free_matrix(thickness_above, cfg->Ny);
 	return(1);
 }
 
 
 
 
-int write_file_cross_section ()
+int write_file_cross_section (ModelConfig *cfg, ModelContext *ctx)
 {
 	int 	i, j,
 		Nx2D=1001; 	/*Number of points of the 2D selected profile*/
 	FILE 	*file ;
-	BOOL 	switch_CrossSection;
+	bool 	switch_CrossSection;
 	struct CS2D *CrossSection;
 	/*
 	  CALCULATES AND WRITES 2D CROSS SECTION FILE
 	*/
 
 	CrossSection = (struct CS2D *) calloc(Nx2D, sizeof(struct CS2D));
-	for (i=0; i<Nx2D; i++)  CrossSection[i].horiz = (float *) calloc(numBlocks+3, sizeof(float));
+	for (i=0; i<Nx2D; i++)  CrossSection[i].horiz = (float *) calloc(ctx->numBlocks+3, sizeof(float));
 
 	switch_CrossSection = read_file_2D_CS(Blocks, CrossSection, Nx2D);
 
 	if (!switch_CrossSection) {for (i=0; i<Nx2D; i++)  free(CrossSection[i].horiz); free(CrossSection);}
 	Write_Open_Filename_Return (".pfl", "wt", !switch_CrossSection);
-	Calculate_2D_Cross_Section (Blocks, CrossSection, Nx2D);
+	Calculate_2D_Cross_Section (cfg, ctx, Blocks, CrossSection, Nx2D);
 
-	fprintf(file, "# x(km)  \t y(km)  \t  long(km)\t   z(m)-->\n#\t\t\t\t  Densities->\t%8.0f", denscrust) ;
-	for (i=0; i<numBlocks; i++) fprintf(file, "\t%8.0f", Blocks[i].density);
+	fprintf(file, "# x(km)  \t y(km)  \t  long(km)\t   z(m)-->\n#\t\t\t\t  Densities->\t%8.0f", cfg->denscrust) ;
+	for (i=0; i<ctx->numBlocks; i++) fprintf(file, "\t%8.0f", Blocks[i].density);
 
         /*====Added by Michael Berry====*/
-        if (hydro_model) fprintf(file,"\t%8.0f", denswater);
+        if (cfg->hydro_model) fprintf(file,"\t%8.0f", cfg->denswater);
         /*===end of added===============*/
 
-	if (K_ice_eros) fprintf(file, "\t%8.0f", densice);
-	fprintf(file, "\n#\t\t\t\t  Ages->\t%8.2f", Timeini/Matosec);
-	for (i=0; i<numBlocks; i++) fprintf(file, "\t%8.2f", Blocks[i].age/Matosec);
+	if (K_ice_eros) fprintf(file, "\t%8.0f", cfg->densice);
+	fprintf(file, "\n#\t\t\t\t  Ages->\t%8.2f", ctx->Timeini/Matosec);
+	for (i=0; i<ctx->numBlocks; i++) fprintf(file, "\t%8.2f", Blocks[i].age/Matosec);
 	for (i=0; i<Nx2D; i++) {
 		fprintf(file, "\n%8.1f\t%8.1f\t%8.1f  ",
 		CrossSection[i].x/1000,
 		CrossSection[i].y/1000,
 		CrossSection[i].l/1000) ;
-		for (j=0; j<numBlocks+1; j++) fprintf(file, "\t%8.1f", CrossSection[i].horiz[j] );
+		for (j=0; j<ctx->numBlocks+1; j++) fprintf(file, "\t%8.1f", CrossSection[i].horiz[j] );
             /*===========Added by Michael Berry====*/
-            if (hydro_model) fprintf(file,"\t%8.1f", CrossSection[i].horiz[numBlocks+1]);
+            if (cfg->hydro_model) fprintf(file,"\t%8.1f", CrossSection[i].horiz[ctx->numBlocks+1]);
             /*===========end of addition===========*/
-		if (K_ice_eros) fprintf(file, "\t%8.1f", CrossSection[i].horiz[numBlocks+2] );
+		if (K_ice_eros) fprintf(file, "\t%8.1f", CrossSection[i].horiz[ctx->numBlocks+2] );
 	}
 	fclose(file);
 
 	if (verbose_level>=1) {
 		float max2D=-1e9, min2D=1e9, *basam2D;
 		basam2D = alloc_array(Nx2D);
-		for(i=0; i<Nx2D; i++)  basam2D[i] = CrossSection[i].horiz[numBlocks];
+		for(i=0; i<Nx2D; i++)  basam2D[i] = CrossSection[i].horiz[ctx->numBlocks];
 		Perfil_info(basam2D, Nx2D, &max2D, &min2D);
 		fprintf(stdout, "\n  2D prof. :  max = %9.1f m     min = %9.1f m   ", max2D, min2D);
 		free(basam2D);
@@ -1309,7 +1313,7 @@ int write_file_cross_section ()
 
 
 
-int write_file_Blocks ()
+int write_file_Blocks (ModelConfig *cfg, ModelContext *ctx)
 {
 	FILE 	*file ;
 
@@ -1319,22 +1323,22 @@ int write_file_Blocks ()
 
 	Write_Open_Filename_Return (".hrz", "wt", !switch_write_file_Blocks);
 
-	fprintf(file, "# x(km)\t\t y(km)\t\t z(m)-->  \t\t(t=%.2f My)\n#    \tDens:\t%.0f", Time/Matosec, denscrust) ;
-	for (int k=0; k<numBlocks; k++) {
+	fprintf(file, "# x(km)\t\t y(km)\t\t z(m)-->  \t\t(t=%.2f My)\n#    \tDens:\t%.0f", ctx->Time/Matosec, cfg->denscrust) ;
+	for (int k=0; k<ctx->numBlocks; k++) {
 		fprintf(file, "\t%.0f", Blocks[k].density);
 	}
-	if (erosed_model>=2) fprintf(file, "\t   water");
-	for (int i=0; i<Ny; i++)  for (int j=0; j<Nx; j++) {
+	if (cfg->erosed_model>=2) fprintf(file, "\t   water");
+	for (int i=0; i<cfg->Ny; i++)  for (int j=0; j<cfg->Nx; j++) {
 		float thickness_above=0, top_block;
-		fprintf(file, "\n%9.3f\t%9.3f", (xmin+j*dx)/1000, (ymax-i*dy)/1000);
-		for (int i_Block=0; i_Block<numBlocks; i_Block++) 
+		fprintf(file, "\n%9.3f\t%9.3f", (cfg->xmin+j*cfg->dx)/1000, (cfg->ymax-i*cfg->dy)/1000);
+		for (int i_Block=0; i_Block<ctx->numBlocks; i_Block++) 
 			thickness_above += Blocks[i_Block].thick[i][j];
 		top_block = Blocks_base[i][j]-w[i][j];
 		fprintf(file, "\t%.1f",  top_block);
-		for (int i_Block=0; i_Block<numBlocks; i_Block++) {
+		for (int i_Block=0; i_Block<ctx->numBlocks; i_Block++) {
 			thickness_above -= Blocks[i_Block].thick[i][j];
 			top_block += Blocks[i_Block].thick[i][j];
-			if (Blocks[i_Block].density==denssedim) top_block -= compaction(sed_porosity, compact_depth, thickness_above, thickness_above+Blocks[i_Block].thick[i][j]);
+			if (Blocks[i_Block].density==cfg->denssedim) top_block -= compaction(sed_porosity, compact_depth, thickness_above, thickness_above+Blocks[i_Block].thick[i][j]);
 			fprintf(file, "\t%8.1f",  top_block);
 		}
 /*		if (erosed_model>=2) {
@@ -1351,7 +1355,7 @@ int write_file_Blocks ()
 
 #define NDERS 8	
 
-int write_file_drainage ()
+int write_file_drainage (ModelConfig *cfg, ModelContext *ctx)
 {
 	int 	i, j, k;
 	FILE 	*file;
@@ -1362,17 +1366,16 @@ int write_file_drainage ()
 	*/
 
 #ifdef SURFACE_TRANSPORT
-	Write_Open_Filename_Return (".xyw", "wt", !switch_write_file_Blocks || Time==Timeini || !hydro_model);
+	Write_Open_Filename_Return (".xyw", "wt", !switch_write_file_Blocks || ctx->Time==ctx->Timeini || !cfg->hydro_model);
 
 	//calculate_topo(topo);
-	fprintf(file, "#TISC output: drainage.  sea_level: %.1f m\n# x(km) y(km) water(m3/s) sed[kg/s] type topo[m] x-to y-to topo-to precipt[mm/y] evapora[mm/y] ice_thick[m] ice_sed_load[m] swim_dist[km]\n", sea_level);
-	for (i=0; i<Ny; i++) for (j=0; j<Nx; j++) {
+	fprintf(file, "#TISC output: drainage.  sea_level: %.1f m\n# x(km) y(km) water(m3/s) sed[kg/s] type topo[m] x-to y-to topo-to precipt[mm/y] evapora[mm/y] ice_thick[m] ice_sed_load[m] swim_dist[km]\n", ctx->sea_level);
+	for (i=0; i<cfg->Ny; i++) for (j=0; j<cfg->Nx; j++) {
 		int il, dcol=drainage[i][j].dr_col, drow=drainage[i][j].dr_row, switch_mouth, ik, jk;
 		char dr_type;
 		float dist, maxdist;
 		float **done;
-		done = (float **) calloc(Ny, sizeof(float *));
-		for (int i=0; i<Ny; i++) done[i] = (float *) calloc(Nx, sizeof(float));
+		done = alloc_matrix(cfg->Ny, cfg->Nx);
 		maxdist=0;
 		if (drow==SIGNAL && dcol==SIGNAL) {drow=i; dcol=j;}
 		dr_type = drainage[i][j].type;
@@ -1398,24 +1401,24 @@ int write_file_drainage ()
 				ild=drainage[id][jd].lake;
 			else
 				ild=0;
-			if (IN_DOMAIN(id,jd)) dist += sqrt((id-ik)*(id-ik)*dy*dy+(jd-jk)*(jd-jk)*dx*dx);
+			if (IN_DOMAIN(id,jd)) dist += sqrt((id-ik)*(id-ik)*cfg->dy*cfg->dy+(jd-jk)*(jd-jk)*cfg->dx*cfg->dx);
 			done[ik][jk]=dist; /*mark this node with the distance to i,j*/
-			switch_mouth=NO; 
+			switch_mouth=false; 
 			/*If this is not a lake and it drains to the sea, then it is a river mouth*/
 			if (!il) IF_LAKE_IS_SEA(ild)
-			    switch_mouth=YES;
+			    switch_mouth=true;
 			/*If it drains outside, it is the end of a river*/
 			if (OUT_DOMAIN(id,jd))
-				switch_mouth=YES;
+				switch_mouth=true;
 			/*If not a lake but it drains to an endorheic lake, it is the end of a river*/
 			if (!il && ild && !Lake[ild].n_sd) {
 				int j;
 				for (j=0; j<Lake[ild].n; j++) done[Lake[ild].row[j]][Lake[ild].col[j]]=dist;
-				switch_mouth=YES;
+				switch_mouth=true;
 			}
 			if (switch_mouth) 
 				break;
-			if (k>Nx*Ny) {break;} //WHY NEEDED?!! (bug in drainage.dr)
+			if (k>cfg->Nx*cfg->Ny) {break;} //WHY NEEDED?!! (bug in drainage.dr)
 			ik=id; jk=jd;
 		}
 		//2. Now follow the drainage network from all neigbours until a cell done above 
@@ -1432,20 +1435,20 @@ int write_file_drainage ()
 					ild=drainage[id][jd].lake;
 				else
 					ild=0;
-				if (IN_DOMAIN(id,jd)) distneighb += sqrt((id-ik)*(id-ik)*dy*dy+(jd-jk)*(jd-jk)*dx*dx);
-				switch_mouth=NO; 
+				if (IN_DOMAIN(id,jd)) distneighb += sqrt((id-ik)*(id-ik)*cfg->dy*cfg->dy+(jd-jk)*(jd-jk)*cfg->dx*cfg->dx);
+				switch_mouth=false; 
 				/*If the downstream cell is not in a lake but it drains to the sea, then it is a river mouth*/
 				if (!il) IF_LAKE_IS_SEA(ild)
-				    switch_mouth=YES;
+				    switch_mouth=true;
 				/*If it drains outside, it is the end of a river*/
 				if (OUT_DOMAIN(id,jd))
-				    switch_mouth=YES;
+				    switch_mouth=true;
 				/*If not a lake but it drains to an endorheic lake, it is the end of a river*/
 				if (!il && ild && !Lake[ild].n_sd)
-				    switch_mouth=YES;
+				    switch_mouth=true;
 				if (switch_mouth) {distneighb+=dist; break;}
 				if (done[id][jd]) {distneighb+=done[id][jd]; break;}
-				if (k>Nx*Ny) {break;} //WHY NEEDED?!! (bug in drainage.dr)
+				if (k>cfg->Nx*cfg->Ny) {break;} //WHY NEEDED?!! (bug in drainage.dr)
 				ik=id; jk=jd;
 			}
 			//Find the largest distance among all 8 neighbours
@@ -1453,18 +1456,17 @@ int write_file_drainage ()
 		}
 		
 		fprintf(file, "%7.2f\t%7.2f\t%.2f\t%.2f\t%c\t%.1f\t%7.2f\t%7.2f\t%.1f\t%7.1f\t%7.1f\t%6.1f\t%6.2f\t%6.2f\n",
-			(xmin+j*dx)/1000, (ymax-i*dy)/1000, 
+			(cfg->xmin+j*cfg->dx)/1000, (cfg->ymax-i*cfg->dy)/1000, 
 			drainage[i][j].discharge, 
 			drainage[i][j].masstr,
 			dr_type, 
-			topo[i][j], 
-			(xmin+dcol*dx)/1000, (ymax-drow*dy)/1000, topo[drow][dcol], 
+			ctx->topo[i][j], 
+			(cfg->xmin+dcol*cfg->dx)/1000, (cfg->ymax-drow*cfg->dy)/1000, ctx->topo[drow][dcol], 
 			precipitation[i][j]*secsperyr*1e3, evaporation[i][j]*secsperyr*1e3, 
 			(K_ice_eros)? ice_thickness[i][j] : 0, 
 			(K_ice_eros)? ice_sedm_load[i][j] : 0, 
 			maxdist/1e3 );
-		for (int i=0; i<Ny; i++) free(done[i]);
-		free(done);
+		free_matrix(done, cfg->Ny);
 	}
 	fclose(file);
 #endif
@@ -1474,7 +1476,7 @@ int write_file_drainage ()
 
 
 
-int find_up_river (int row, int col, int *level, int *count, float *length, float *chi, FILE *file, BOOL **done, float ref_discharge)
+int find_up_river (ModelConfig *cfg, ModelContext *ctx, int row, int col, int *level, int *count, float *length, float *chi, FILE *file, bool **done, float ref_discharge)
 {
 	int 	n_above=1;
 	float	tp, dtp;
@@ -1485,16 +1487,16 @@ int find_up_river (int row, int col, int *level, int *count, float *length, floa
 		PRINT_WARNING("drainage loop in [%d][%d]", row, col); 
 		return(0);
 	}
-	done[row][col] = YES;
+	done[row][col] = true;
 
 	(*level) ++;
-	for (int i=0; i<Ny; i++)  for (int j=0; j<Nx; j++) {
+	for (int i=0; i<cfg->Ny; i++)  for (int j=0; j<cfg->Nx; j++) {
 		if (drainage[i][j].dr_row == row && drainage[i][j].dr_col == col) {
-			float 	Dl = sqrt((col-j)*dx*(col-j)*dx + (row-i)*dy*(row-i)*dy), 
+			float 	Dl = sqrt((col-j)*cfg->dx*(col-j)*cfg->dx + (row-i)*cfg->dy*(row-i)*cfg->dy), 
 				weight = pow(drainage[row][col].discharge/ref_discharge, -spl_m/spl_n);
 			(*length) += Dl;
 			(*chi)    += Dl*weight;
-			n_above   += find_up_river (i, j, level, count, length, chi, file, done, ref_discharge);
+			n_above   += find_up_river (cfg, ctx, i, j, level, count, length, chi, file, done, ref_discharge);
 			(*length) -= Dl;
 			(*chi)    -= Dl*weight;
 		}
@@ -1505,13 +1507,13 @@ int find_up_river (int row, int col, int *level, int *count, float *length, floa
 	drow=drainage[row][col].dr_row;
 	dcol=drainage[row][col].dr_col;
 	if (OUT_DOMAIN(drow,dcol)) {drow=row; dcol=col;}
-	dl = sqrt((dcol-col)*dx*(dcol-col)*dx + (drow-row)*dy*(drow-row)*dy);
-	tp  = topo[ row][ col];	if (drainage[ row][ col].lake)  tp = Lake[drainage[ row][ col].lake].alt;
-	dtp = topo[drow][dcol];	if (drainage[drow][dcol].lake) dtp = Lake[drainage[drow][dcol].lake].alt;
+	dl = sqrt((dcol-col)*cfg->dx*(dcol-col)*cfg->dx + (drow-row)*cfg->dy*(drow-row)*cfg->dy);
+	tp  = ctx->topo[ row][ col];	if (drainage[ row][ col].lake)  tp = Lake[drainage[ row][ col].lake].alt;
+	dtp = ctx->topo[drow][dcol];	if (drainage[drow][dcol].lake) dtp = Lake[drainage[drow][dcol].lake].alt;
 	weight=pow(drainage[drow][dcol].discharge/ref_discharge, -spl_m/spl_n);
 	fprintf(file, "\n%7.2f\t%7.2f\t%.2f\t%.2f\t%c\t%.1f",
-		(xmin+col*dx)/1000,
-		(ymax-row*dy)/1000,
+		(cfg->xmin+col*cfg->dx)/1000,
+		(cfg->ymax-row*cfg->dy)/1000,
 		drainage[row][col].discharge,
 		drainage[row][col].masstr,
 		drainage[row][col].type,
@@ -1519,15 +1521,15 @@ int find_up_river (int row, int col, int *level, int *count, float *length, floa
 	fprintf(file, "\t%.2f\t%.2f\t%7.2f\t%7.2f\t%.1f",
 		(*length)/1000,
 		(*chi)/1000,
-		(xmin+dcol*dx)/1000,
-		(ymax-drow*dy)/1000,
+		(cfg->xmin+dcol*cfg->dx)/1000,
+		(cfg->ymax-drow*cfg->dy)/1000,
 		dtp); 
 	fprintf(file, "\t%.1f\t%.1f",
 		(*length - dl)/1000, 
 		(*chi - dl*weight)/1000); 
 	fprintf(file, "\t%.1f\t%.1f",
-		(erosed_model)? eros_now[row][col]/(dt/Matosec)/dx/dy/denscrust  :  0, 
-		(erosed_model)? accumul_erosion[row][col]/dx/dy/denscrust  :  0); 
+		(cfg->erosed_model)? eros_now[row][col]/(ctx->dt/Matosec)/cfg->dx/cfg->dy/cfg->denscrust  :  0, 
+		(cfg->erosed_model)? accumul_erosion[row][col]/cfg->dx/cfg->dy/cfg->denscrust  :  0); 
 	fprintf(file, "\t%d\t%d",
 		*level,
 		n_above);
@@ -1540,60 +1542,58 @@ int find_up_river (int row, int col, int *level, int *count, float *length, floa
 
 
 
-int write_file_river_basins ()
+int write_file_river_basins (ModelConfig *cfg, ModelContext *ctx)
 {
 	int 	id, jd, il, ild, 
 		count=0, level, n_river=0, river_nodes;
 	float 	length, chi, maxdisch=-1e9;
 	FILE 	*file;
-	BOOL 	switch_mouth, **done;
+	bool 	switch_mouth, **done;
 
 	/*
 	  WRITES INFORMATION ABOUT HYDROLOGICAL BASINS
 	*/
 
-	Write_Open_Filename_Return (".bas", "wt", !hydro_model || !switch_write_file || Time==Timeini);
+	Write_Open_Filename_Return (".bas", "wt", !cfg->hydro_model || !switch_write_file || ctx->Time==ctx->Timeini);
 
-	done = (BOOL **) calloc(Ny, sizeof(BOOL *));
-	for (int i=0; i<Ny; i++) done[i] = (BOOL *) calloc(Nx, sizeof(BOOL));
+	done = (bool **) alloc_matrix_int(cfg->Ny, cfg->Nx);
 
-	for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) maxdisch=MAX_2(maxdisch, drainage[i][j].discharge);
+	for (int i=0; i<cfg->Ny; i++) for (int j=0; j<cfg->Nx; j++) maxdisch=MAX_2(maxdisch, drainage[i][j].discharge);
 
 	fprintf(file, "#TISC output: river basins.\n#x[km] y[km] dischg[m3/s] masstr[kg/s] type topo[m] length[km] chi[km] x-to y-to topo-to[m] length-to[km] chi-to[km] eros_rate[m/My] accumul_erosion[m] level nodes_above");
-	if (verbose_level>=4) fprintf(stdout, "  %3.0f%%", count*100.0/Nx/Ny);
+	if (cfg->verbose_level>=4) fprintf(stdout, "  %3.0f%%", count*100.0/cfg->Nx/cfg->Ny);
 
 	/*Look for river mouths in sea, closed lakes or boundaries*/
-	for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) {
-	    switch_mouth=NO;
+	for (int i=0; i<cfg->Ny; i++) for (int j=0; j<cfg->Nx; j++) {
+	    switch_mouth=false;
 	    id=drainage[i][j].dr_row; jd=drainage[i][j].dr_col;
 	    il=drainage[i][j].lake;      
 	    if (IN_DOMAIN(id,jd)) 	ild=drainage[id][jd].lake;
 	    else 			ild=0;
  	    /*If this is not a lake and it drains to the sea, then it is a river mouth*/
  	    if (!il) IF_LAKE_IS_SEA(ild) 
-	    		switch_mouth=YES;
+	    		switch_mouth=true;
    	    /*If it drains outside (but is not an endorheic lake) and is above sea_level, it is the end of a river*/
-	    if (!il && OUT_DOMAIN(id,jd) && topo[i][j] >= sea_level)
- 	    		switch_mouth=YES;
+	    if (!il && OUT_DOMAIN(id,jd) && ctx->topo[i][j] >= ctx->sea_level)
+ 	    		switch_mouth=true;
  	    /*If it drains to an endorheic lake, it is the end of a river*/
 	    if (!il && ild && !Lake[ild].n_sd)
-  	    		switch_mouth=YES;
+  	    		switch_mouth=true;
 	    if (switch_mouth) {
-	    	if (verbose_level>=4) {fprintf(stdout, "\b\b\b\b%3.0f%%", count*100.0/Nx/Ny); fflush(stdout);}
+	    	if (cfg->verbose_level>=4) {fprintf(stdout, "\b\b\b\b%3.0f%%", count*100.0/cfg->Nx/cfg->Ny); fflush(stdout);}
 	    	n_river++; level=0; length=chi=0;
 	    	fprintf(file, "\n> begin river basin %d", n_river); fflush(file);
-	    	river_nodes = find_up_river (i, j, &level, &count, &length, &chi, file, done, maxdisch);
+	    	river_nodes = find_up_river (cfg, ctx, i, j, &level, &count, &length, &chi, file, done, maxdisch);
 	    	fprintf(file, "\n# END river basin %d of %.0f km2: %.2f m3/s %.2f kg/s at [%.0f,%.0f] km", 
-			n_river, river_nodes*dx*dy/1e6, drainage[i][j].discharge, drainage[i][j].masstr, 
-			(xmin+j*dx)/1000,  (ymax-i*dy)/1000); 
+			n_river, river_nodes*cfg->dx*cfg->dy/1e6, drainage[i][j].discharge, drainage[i][j].masstr, 
+			(cfg->xmin+j*cfg->dx)/1000,  (cfg->ymax-i*cfg->dy)/1000); 
 		fflush(file);
  	    }
 	}
-	if (verbose_level>=4) {fprintf(stdout, "\b\b\b\b     "); fflush(stdout);}
+	if (cfg->verbose_level>=4) {fprintf(stdout, "\b\b\b\b     "); fflush(stdout);}
 	fprintf(file, "\n");
 	fclose(file);
-	for (int i=0; i<Ny; i++) free(done[i]);
-	free(done);
+	free_matrix_int((int **) done, cfg->Ny);
 	return 1;
 }
 
@@ -1601,7 +1601,7 @@ int write_file_river_basins ()
 
 
 
-int write_file_lakes ()
+int write_file_lakes (ModelConfig *cfg, ModelContext *ctx)
 {
 	/*
 	  WRITES INFORMATION ABOUT LAKES
@@ -1611,19 +1611,19 @@ int write_file_lakes ()
 	FILE 	*file;
 
 #ifdef SURFACE_TRANSPORT
-	Write_Open_Filename_Return (".lak", "wt", !hydro_model || !switch_write_file || !nlakes || Time==Timeini);
+	Write_Open_Filename_Return (".lak", "wt", !cfg->hydro_model || !switch_write_file || !ctx->nlakes || ctx->Time==ctx->Timeini);
 
-	fprintf(file, "#TISC output: \n#Lakes: %d", nlakes);
-	for (i=1; i<=nlakes; i++) {
+	fprintf(file, "#TISC output: \n#Lakes: %d", ctx->nlakes);
+	for (i=1; i<=ctx->nlakes; i++) {
 		float vol, height_lake, lake_evaporation;
 		for (j=0, height_lake=-1e6; j<Lake[i].n; j++) //!!
-		    height_lake = MAX_2(height_lake, topo[Lake[i].row[j]][Lake[i].col[j]]);
+		    height_lake = MAX_2(height_lake, ctx->topo[Lake[i].row[j]][Lake[i].col[j]]);
 		for (j=0, vol=0; j<Lake[i].n; j++)
-		    vol += height_lake - topo[Lake[i].row[j]][Lake[i].col[j]];
-		vol *= dx*dy;
-		lake_evaporation = Lake[i].n * dx*dy * evaporation_ct;
+		    vol += height_lake - ctx->topo[Lake[i].row[j]][Lake[i].col[j]];
+		vol *= cfg->dx*cfg->dy;
+		lake_evaporation = Lake[i].n * cfg->dx*cfg->dy * evaporation_ct;
 		fprintf(file, "\n>Lake %d:  %d nodes", i, Lake[i].n);
-		if (Lake[i].n)    fprintf(file, "  %.3f km3  %.1f m  %2d outl.  %.2f m3/s inp", vol/1e9, height_lake, Lake[i].n_sd, Lake_Input_Discharge(i));
+		if (Lake[i].n)    fprintf(file, "  %.3f km3  %.1f m  %2d outl.  %.2f m3/s inp", vol/1e9, height_lake, Lake[i].n_sd, Lake_Input_Discharge(cfg, i));
 		if (Lake[i].n_sd) fprintf(file, "   %.2f m3/s evap.", lake_evaporation);
 		for (j=0; j<Lake[i].n; j++) {
 			int 	row=Lake[i].row[j], col=Lake[i].col[j], 
@@ -1634,12 +1634,12 @@ int write_file_lakes ()
 			if (drow==SIGNAL && dcol==SIGNAL) {drow=row; dcol=col;}
 			IF_LAKE_IS_SEA(i) dr_type = 'S';
 			fprintf(file, "\n%7.2f\t%7.2f\t%c",
-				(xmin+col*dx)/1000, (ymax-row*dy)/1000,
+				(cfg->xmin+col*cfg->dx)/1000, (cfg->ymax-row*cfg->dy)/1000,
 				dr_type);
 			if (drainage[row][col].type == 'E')
 				fprintf(file, "\t%.2f m3/s\t%.2f\t%.2f",
 					drainage[row][col].discharge,
-					(xmin+dcol*dx)/1000, (ymax-drow*dy)/1000  );
+					(cfg->xmin+dcol*cfg->dx)/1000, (cfg->ymax-drow*cfg->dy)/1000  );
 		}
 	}
 	fclose(file);
@@ -1650,7 +1650,7 @@ int write_file_lakes ()
 
 
 
-int write_file_ice ()
+int write_file_ice (ModelConfig *cfg, ModelContext *ctx)
 {
 	int 	i, j;
 	FILE 	*file;
@@ -1660,13 +1660,13 @@ int write_file_ice ()
 	*/
 
 #ifdef SURFACE_TRANSPORT
-	Write_Open_Filename_Return (".ice", "wt", !switch_write_file_Blocks || !hydro_model || !K_ice_eros || Time==Timeini);
+	Write_Open_Filename_Return (".ice", "wt", !switch_write_file_Blocks || !cfg->hydro_model || !K_ice_eros || ctx->Time==ctx->Timeini);
 
-	fprintf(file, "#TISC output: ice flow.  sea_level: %.1f m\n# x(km) y(km) topo[m] ice_thick[m]  vx_df vy_df[m/y]  vx_sl vy_sl  sol_prec[mm/y] ice_sed_load[m]\n", sea_level);
-	for (i=0; i<Ny; i++) for (j=0; j<Nx; j++) {
+	fprintf(file, "#TISC output: ice flow.  sea_level: %.1f m\n# x(km) y(km) topo[m] ice_thick[m]  vx_df vy_df[m/y]  vx_sl vy_sl  sol_prec[mm/y] ice_sed_load[m]\n", ctx->sea_level);
+	for (i=0; i<cfg->Ny; i++) for (j=0; j<cfg->Nx; j++) {
 		fprintf(file, "%7.2f\t%7.2f\t%.1f\t%.1f\t%.2f\t%.2f\t%.2f\t%.2f\t%.1f\t%.1f\n",
-			(xmin+j*dx)/1000, (ymax-i*dy)/1000,
-			topo[i][j], 
+			(cfg->xmin+j*cfg->dx)/1000, (cfg->ymax-i*cfg->dy)/1000,
+			ctx->topo[i][j], 
 			ice_thickness[i][j], 
 			ice_velx_df[i][j]*secsperyr, ice_vely_df[i][j]*secsperyr, 
 			ice_velx_sl[i][j]*secsperyr, ice_vely_sl[i][j]*secsperyr, 
@@ -1681,7 +1681,7 @@ int write_file_ice ()
 
 
 
-int write_file_resume()
+int write_file_resume(ModelConfig *cfg, ModelContext *ctx)
 {
 	int 	i, j, i_hori, end_check=123456;
 	FILE 	*file ;
@@ -1694,20 +1694,20 @@ int write_file_resume()
 	Write_Open_Filename_Return (".all", "wb", !switch_write_file || !switch_write_file_Blocks);
 
 	/*Defined in universal.h:*/
-	fwrite(&Nx, 		sizeof(int),		1, 	file);
-	fwrite(&Ny, 		sizeof(int),		1, 	file);
+	fwrite(&cfg->Nx, 		sizeof(int),		1, 	file);
+	fwrite(&cfg->Ny, 		sizeof(int),		1, 	file);
 	fwrite(&Nz, 		sizeof(int),		1, 	file);
 	fwrite(&verbose_level,	sizeof(int),		1, 	file);
 
-	fwrite(&dx, 		sizeof(float),		1, 	file);
-	fwrite(&dy, 		sizeof(float),		1, 	file);
+	fwrite(&cfg->dx, 		sizeof(float),		1, 	file);
+	fwrite(&cfg->dy, 		sizeof(float),		1, 	file);
 	fwrite(&dz, 		sizeof(float),		1, 	file);
 
 	fwrite(version, 	sizeof(char),		LENGTHVERS, 	file);
 	fwrite(version_input,	sizeof(char),		LENGTHVERS, 	file);
 
-	fwrite(&switch_ps, 	sizeof(BOOL),		1, 	file);
-	fwrite(&switch_write_file, sizeof(BOOL),		1, 	file);
+	fwrite(&switch_ps, 	sizeof(bool),		1, 	file);
+	fwrite(&switch_write_file, sizeof(bool),		1, 	file);
 
 
 	/*Defined in geomodel.h:*/
@@ -1726,16 +1726,16 @@ int write_file_resume()
 	fwrite(&densinfill, 	sizeof(float),		1, 	file);
 	fwrite(&sea_level, 	sizeof(float),		1, 	file);
 	fwrite(&temp_sea_level, 	sizeof(float),		1, 	file);
-	fwrite(&Time, 		sizeof(float),		1, 	file);
-	fwrite(&Timefinal, 	sizeof(float),		1, 	file);
-	fwrite(&Timeini, 	sizeof(float),		1, 	file);
-	fwrite(&dt, 		sizeof(float),		1, 	file);
-	fwrite(&dt_eros, 	sizeof(float),		1, 	file);
+	fwrite(&ctx->Time, 		sizeof(float),		1, 	file);
+	fwrite(&ctx->Timefinal, 	sizeof(float),		1, 	file);
+	fwrite(&ctx->Timeini, 	sizeof(float),		1, 	file);
+	fwrite(&ctx->dt, 		sizeof(float),		1, 	file);
+	fwrite(&ctx->dt_eros, 	sizeof(float),		1, 	file);
 	fwrite(&tau, 		sizeof(float),		1, 	file);
 
 	fwrite(projectname, 	sizeof(char),	MAXLENFILE, 	file);
 
-	fwrite(&switch_geograph_coor, sizeof(BOOL),	1, 	file);
+	fwrite(&switch_geograph_coor, sizeof(bool),	1, 	file);
 
 	/*Defined in tao+tisc.h:*/
 	fwrite(&nloads, 		sizeof(int),		1, 	file);
@@ -1744,7 +1744,7 @@ int write_file_resume()
 	fwrite(&n_record_times, 	sizeof(int),		1, 	file);
 	fwrite(&i_first_Block_load, sizeof(int),	1, 	file);
 	fwrite(&i_Block_insert, sizeof(int),		1, 	file);
-	fwrite(&numBlocks, 	sizeof(int),		1, 	file);
+	fwrite(&ctx->numBlocks, 	sizeof(int),		1, 	file);
 	fwrite(&nwrotenfiles, 	sizeof(int),		1, 	file);
 	fwrite(&run_type, 	sizeof(int),		1, 	file);
 
@@ -1756,11 +1756,11 @@ int write_file_resume()
 	fwrite(&last_time_file_time, 	sizeof(float),		1, 	file);
 	fwrite(&random_topo, 	sizeof(float),		1, 	file);
 
-	fwrite(&switch_file_out, 	sizeof(BOOL),		1, 	file);
-	fwrite(&switch_gradual, 	sizeof(BOOL),		1, 	file);
-	fwrite(&switch_topoest, 		sizeof(BOOL),		1, 	file);
-	fwrite(&switch_write_file_Blocks, sizeof(BOOL),		1, 	file);
-	fwrite(&deform_sed, sizeof(BOOL),		1, 	file);
+	fwrite(&switch_file_out, 	sizeof(bool),		1, 	file);
+	fwrite(&switch_gradual, 	sizeof(bool),		1, 	file);
+	fwrite(&switch_topoest, 		sizeof(bool),		1, 	file);
+	fwrite(&switch_write_file_Blocks, sizeof(bool),		1, 	file);
+	fwrite(&deform_sed, sizeof(bool),		1, 	file);
 
 
 	/*Defined in tisc.h:*/
@@ -1898,7 +1898,7 @@ int write_file_resume()
 
 
 
-int write_file_surftransp ()
+int write_file_surftransp (ModelConfig *cfg, ModelContext *ctx)
 {
 	FILE 	*file;
 
@@ -1906,13 +1906,13 @@ int write_file_surftransp ()
 	  EROSION and SEDIMENTATION file
 	*/
 
-	Write_Open_Filename_Return (".st", "wt", !erosed_model || !switch_write_file_Blocks || Time==Timeini);
+	Write_Open_Filename_Return (".st", "wt", !cfg->erosed_model || !switch_write_file_Blocks || ctx->Time==ctx->Timeini);
 
-	fprintf(file, "#TISC output drainage.  sea_level: %.1f m\n# x(km)  y(km) topo[m]  accumul_erosion[m] eros_rate[m/My]\n", sea_level);
-	for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) {
+	fprintf(file, "#TISC output drainage.  sea_level: %.1f m\n# x(km)  y(km) topo[m]  accumul_erosion[m] eros_rate[m/My]\n", ctx->sea_level);
+	for (int i=0; i<cfg->Ny; i++) for (int j=0; j<cfg->Nx; j++) {
 		fprintf(file, "%7.2f\t%7.2f\t%.1f\t%.1f\t%.1f\n",
-			(xmin+j*dx)/1000, (ymax-i*dy)/1000, topo[i][j], 
-			accumul_erosion[i][j] / dx/dy/denscrust, eros_now[i][j]/(dt/Matosec) / dx/dy/denscrust);
+			(cfg->xmin+j*cfg->dx)/1000, (cfg->ymax-i*cfg->dy)/1000, ctx->topo[i][j], 
+			accumul_erosion[i][j] / cfg->dx/cfg->dy/cfg->denscrust, eros_now[i][j]/(ctx->dt/Matosec) / cfg->dx/cfg->dy/cfg->denscrust);
 	}
 	fclose(file);
 	return (1);
@@ -1921,7 +1921,7 @@ int write_file_surftransp ()
 
 
 
-int write_file_time (float **xarxa1, float **xarxa2)
+int write_file_time (ModelConfig *cfg, ModelContext *ctx, float **xarxa1, float **xarxa2)
 {
 	/*
 	  WRITES deflection and elevation along time file
@@ -1931,18 +1931,18 @@ int write_file_time (float **xarxa1, float **xarxa2)
 	FILE 	*file;
 	char 	filename[MAXLENLINE], filename1[MAXLENLINE], filename2[MAXLENLINE], 
 		command[MAXLENLINE];
-	BOOL	return_cond;
+	bool	return_cond;
 	float	youngest_age=-1e16;
 
-	for (i=0; i<numBlocks; i++) youngest_age = MAX_2(Blocks[i].age, youngest_age);
+	for (i=0; i<ctx->numBlocks; i++) youngest_age = MAX_2(Blocks[i].age, youngest_age);
 	return_cond = !switch_write_file_Blocks 
 		|| !isost_model 
-		|| (((Time-last_time_file_time) < dt_record || (!dt_record && youngest_age!=Time)) && (Timefinal-Time) >= dt) 
-		||  (Time-last_time_file_time) == 0;
+		|| (((ctx->Time-last_time_file_time) < dt_record || (!dt_record && youngest_age!=ctx->Time)) && (ctx->Timefinal-ctx->Time) >= ctx->dt) 
+		||  (ctx->Time-last_time_file_time) == 0;
 
 	if (nwrotenfiles==0) {
 		Write_Open_Filename_Return (".xyzt", "wt", return_cond);
-		fprintf(file, "#\t\tTime: %.2f My\n#x(km)\ty(km)\tw(m)\th_water(m)\n", Time/Matosec);
+		fprintf(file, "#\t\tTime: %.2f My\n#x(km)\ty(km)\tw(m)\th_water(m)\n", ctx->Time/Matosec);
 	}
 	else {
 		if (return_cond) return (0);
@@ -1954,15 +1954,15 @@ int write_file_time (float **xarxa1, float **xarxa2)
 			PRINT_ERROR("Cannot open auxiliar output file %s.\n", filename1);
 			return (0);
 		}
-		fprintf(file,      "Time: %.2f My\nw(m)\th(m)\n", Time/Matosec);
+		fprintf(file,      "Time: %.2f My\nw(m)\th(m)\n", ctx->Time/Matosec);
 	}
 
-	for (i=0; i<Ny; i++) {
-		for (j=0; j<Nx; j++) {
+	for (i=0; i<cfg->Ny; i++) {
+		for (j=0; j<cfg->Nx; j++) {
 			if (nwrotenfiles==0) {
 				fprintf (file, "%7.2f\t%7.2f", 
-					(xmin+j*(xmax-xmin)/(Nx-1))/1000, 
-					(ymax-i*(ymax-ymin)/(Ny-1))/1000
+					(cfg->xmin+j*(cfg->xmax-cfg->xmin)/(cfg->Nx-1))/1000, 
+					(cfg->ymax-i*(cfg->ymax-cfg->ymin)/(cfg->Ny-1))/1000
 				);
 				fprintf(file, "\t%.1f\t%.1f\n",  xarxa1[i][j], xarxa2[i][j]);
 			}
@@ -1980,14 +1980,14 @@ int write_file_time (float **xarxa1, float **xarxa2)
 	}
 
 	nwrotenfiles++;
-	last_time_file_time = Time;
+	last_time_file_time = ctx->Time;
 
 	return (1);
 }
 
 
 
-int write_file_deflection ()
+int write_file_deflection (ModelConfig *cfg, ModelContext *ctx)
 {
 	/*
 	  WRITES deflection and elevation
@@ -1997,9 +1997,9 @@ int write_file_deflection ()
 	Write_Open_Filename_Return (".xyzt", "wt", !isost_model || !switch_write_file_Blocks);
 
 	fprintf(file, "#TISC output deflection. Te_default: %.1f m\n# x(km)  y(km) w[m] dw/dt[m/Myr] topo[m]\n", Te_default);
-	for (int i=0; i<Ny; i++) for (int j=0; j<Nx; j++) {
+	for (int i=0; i<cfg->Ny; i++) for (int j=0; j<cfg->Nx; j++) {
 		fprintf(file, "%7.2f\t%7.2f\t%.1f\t%.1f\t%.1f\n",
-			(xmin+j*dx)/1000, (ymax-i*dy)/1000, w[i][j], Dw[i][j]/dt*Matosec, topo[i][j]);
+			(cfg->xmin+j*cfg->dx)/1000, (cfg->ymax-i*cfg->dy)/1000, w[i][j], Dw[i][j]/ctx->dt*Matosec, ctx->topo[i][j]);
 	}
 	fclose(file);
 	return (1);
@@ -2007,7 +2007,7 @@ int write_file_deflection ()
 
 
 
-int write_file_velocity_field ()
+int write_file_velocity_field (ModelConfig *cfg, ModelContext *ctx)
 {
 	int 	i, j, k, thin_sheet_Blocks=0;
 	FILE 	*file;
@@ -2017,21 +2017,19 @@ int write_file_velocity_field ()
 	  THIN SHEET BlockS
 	*/
 
-	for (k=0; k<numBlocks; k++) if (Blocks[k].type == 'V') thin_sheet_Blocks++;
+	for (k=0; k<ctx->numBlocks; k++) if (Blocks[k].type == 'V') thin_sheet_Blocks++;
 	Write_Open_Filename_Return (".vel", "wt", !switch_write_file_Blocks || !thin_sheet_Blocks);
 
-	fprintf(file, "# x(km)\ty(km) \tvel_x(km/My) vel_y(km/My)  viscosity(Pa s-1)-->  \t\t(t=%.2f My)\n#    \tDens:\t", Time/Matosec) ;
-	for (k=0; k<numBlocks; k++) {
+	fprintf(file, "# x(km)\ty(km) \tvel_x(km/My) vel_y(km/My)  viscosity(Pa s-1)-->  \t\t(t=%.2f My)\n#    \tDens:\t", ctx->Time/Matosec) ;
+	for (k=0; k<ctx->numBlocks; k++) {
 		if (Blocks[k].type == 'V') fprintf(file, "\t\t\t%.0f", Blocks[k].density);
 	}
-	for (i=0; i<Ny; i++)  for (j=0; j<Nx; j++) {
-		fprintf(file, "\n%7.2f\t%7.2f", (xmin+j*dx)/1000, (ymax-i*dy)/1000);
-		for (k=0; k<numBlocks; k++) {
+	for (i=0; i<cfg->Ny; i++)  for (j=0; j<cfg->Nx; j++) {
+		fprintf(file, "\n%7.2f\t%7.2f", (cfg->xmin+j*cfg->dx)/1000, (cfg->ymax-i*cfg->dy)/1000);
+		for (k=0; k<ctx->numBlocks; k++) {
 			if (Blocks[k].type == 'V') fprintf(file, "\t%.2f\t%.2f\t\t%.5e", Blocks[k].vel_x[i][j]/1000*Matosec, Blocks[k].vel_y[i][j]/1000*Matosec, Blocks[k].visc[i][j]);
 		}
 	}
 	fclose(file);
 	return 1;
 }
-
-

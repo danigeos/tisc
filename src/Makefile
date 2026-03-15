@@ -41,29 +41,36 @@ backup:
 	cp -f	tisc*	$(BACKUPS)
 
 clean:
-	rm -f $(OBJ)/*.o $(LIB)/*.o $(LIB)/*.a
+	rm -f $(OBJ)/*.o $(LIB)/*.o $(LIB)/*.a $(BIN)/.dSYM 
 
 
-blockxyz: blockxyz.c 
-	$(CC) blockxyz.c $(OPTS) $(LIB)/libreria.o $(LIBS) -I$(INCL) -o $(BIN)/blockxyz 
+TISC_OBJS = tisclib.o tiscio.o globals.o
+
+$(TISC_OBJS): %.o: %.c
+	$(CC) $(OPTS) -D'VERSION="$(VERSION)"' -D'TISCDIR="$(tisc_DIR)"' -I$(INCL) -c $< $(DEFS)
+
+blockxyz: blockxyz.c globals.o
+	$(CC) blockxyz.c globals.o $(OPTS) $(LIB)/libreria.o $(LIBS) -I$(INCL) -o $(BIN)/blockxyz 
 	chmod a+x $(BIN)/blockxyz
 
-cuthrz: cuthrz.c tisclib.c tiscio.c libreria
-	$(CC) cuthrz.c -o $(BIN)/cuthrz $(OPTS) $(LIBS) $(LIB)/libreria.o $(SP_LIBS) \
+cuthrz: cuthrz.o $(TISC_OBJS) libreria
+	$(CC) cuthrz.o $(TISC_OBJS) -o $(BIN)/cuthrz $(OPTS) $(LIBS) $(LIB)/libreria.o $(SP_LIBS) \
 		-D'TISCDIR="$(tisc_DIR)"' -I$(INCL)
 
+cuthrz.o: cuthrz.c
+	$(CC) $(OPTS) -I$(INCL) -c cuthrz.c $(DEFS)
 
-invertfile: invertfile.c 
-	$(CC) invertfile.c $(OPTS) $(LIBS) -I$(INCL) -o $(BIN)/invertfile
+invertfile: invertfile.c globals.o
+	$(CC) invertfile.c globals.o $(OPTS) $(LIBS) -I$(INCL) -o $(BIN)/invertfile
 	chmod a+x $(BIN)/invertfile
 
-outin: outin.c 
-	$(CC) outin.c $(OPTS) $(LIB)/libreria.o $(LIBS) -I$(INCL) -o $(BIN)/outin 
+outin: outin.c globals.o
+	$(CC) outin.c globals.o $(OPTS) $(LIB)/libreria.o $(LIBS) -I$(INCL) -o $(BIN)/outin 
 	chmod a+x $(BIN)/outin
 
 
-lonlat2xy: lonlat2xy.c libreria
-	$(CC) lonlat2xy.c -o $(BIN)/lonlat2xy $(OPTS) $(LIBS) $(LIB)/libreria.o -I$(INCL)
+lonlat2xy: lonlat2xy.c libreria globals.o
+	$(CC) lonlat2xy.c globals.o -o $(BIN)/lonlat2xy $(OPTS) $(LIBS) $(LIB)/libreria.o -I$(INCL)
 
 projbanda:
 	if [ $(findstring THIN_SHEET,$(DEFS)) ]; then \
@@ -79,13 +86,13 @@ projbanda:
 $(SP_LIBS) : surf_proc.c 
 	$(CC) -c -o surf_proc.o $(OPTS) -I$(INCL) surf_proc.c
 
-tisc:	tisc.o libreria $(SP_LIBS) thin_sheet notify
-	$(LC)  tisc.o $(LIB)/libreria.o $(SP_LIBS)  \
+tisc:	tisc.o $(TISC_OBJS) libreria $(SP_LIBS) thin_sheet notify
+	$(LC)  tisc.o $(TISC_OBJS) $(LIB)/libreria.o $(SP_LIBS)  \
 		$(LIBS) $(TS_LIBS) -o $(BIN)/tisc
 	chmod a+x $(BIN)/tisc
 
 
-tisc.o: tisc.c tisclib.c tiscio.c 
+tisc.o: tisc.c tisclib.h tiscio.h 
 	@echo; echo tisc HOME DIRECTORY: $(tisc_DIR);  echo ARCH=$(ARCH);  
 	@echo OP. SYSTEM=$(OS);  echo User home: $(HOME_DIR); 
 	@echo You are currently $(shell whoami)	using the shell $(SHELL) ; echo
@@ -101,7 +108,7 @@ call_tisc.o : call_tisc.c
 	fi
 
 libreria :
-	(cd $(LIB)  ; make libreria.o ; )
+	$(CC) -c -o $(LIB)/libreria.o $(OPTS) -I$(INCL) $(LIB)/libreria.c
 
 thin_sheet :
 	if [ $(findstring THIN_SHEET,$(DEFS)) ]; then \
@@ -113,4 +120,3 @@ notify :
 	then echo ; else echo First compilation of TISC in `hostname` by `whoami`>../doc/.first_compilation.txt; pwd>>../doc/.first_compilation.txt; \
 		date>>../doc/.first_compilation.txt ; echo>> ../doc/.first_compilation.txt; finger `whoami` >> ../doc/.first_compilation.txt; mail danielgc@ictja.csic.es<../doc/.first_compilation.txt; \
 	fi
-

@@ -10,13 +10,13 @@
 
 extern float 	
 	pi, 			/*PI number*/
-	CGU, 			/*Constant of Universal Gravitation [m3·s-2·kg-1]*/
+	CGU, 			/*Constant of Universal Gravitation [m3ï¿½s-2ï¿½kg-1]*/
 	Rearth;			/*Earth's radius*/
 
 extern int	
 	verbose_level;
 
-extern BOOL	
+extern bool	
 	switch_geograph_coor;			/*1 if x-y are geographycal coordinates in decimal degrees*/
 
 
@@ -239,7 +239,7 @@ float dist_2D(
 
 
 float distVincenty(float lat1, float lon1, float lat2, float lon2) {
-	/* LGPL license © 2002-2008 Chris Veness
+	/* LGPL license ï¿½ 2002-2008 Chris Veness
 	 * Calculate geodesic distance (in m) between two points specified by 
 	 * latitude/longitude (in decimal degrees)
 	 * using Vincenty inverse formula for ellipsoids
@@ -268,7 +268,7 @@ float distVincenty(float lat1, float lon1, float lat2, float lon2) {
           cosSqAlpha = 1 - sinAlpha*sinAlpha;
           cos2SigmaM = cosSigma - 2*sinU1*sinU2/cosSqAlpha;
           sprintf(aux,"%f", cos2SigmaM);
-          if (strstr(aux, "NaN")!=NULL) cos2SigmaM = 0;  // equatorial line: cosSqAlpha=0 (§6)
+          if (strstr(aux, "NaN")!=NULL) cos2SigmaM = 0;  // equatorial line: cosSqAlpha=0 (ï¿½6)
           C = f/16*cosSqAlpha*(4+f*(4-3*cosSqAlpha));
           lambdaP = lambda;
           lambda = L + (1-C) * f * sinAlpha *
@@ -963,12 +963,12 @@ int interpol2D (
 		*/
 		for (i=0; i<Ny; i++)  for (j=0; j<Nx; j++) {
 			float interp_z=SIGNAL;  /*initializes this variable at every loop*/
-			BOOL switch_in;
+			bool switch_in;
 			x = xmin + dx*j;
 			y = ymin + dy*(Ny-i-1);
-			switch_in = NO;
+			switch_in = false;
 			for (k=0; k<npols; k++) {
-			    BOOL switch_in_old;
+			    bool switch_in_old;
 			    switch_in_old = switch_in;
 			    dist_old = dist;
 			    switch_in = outin(x, y, Xpol[k], Ypol[k], n_points_pol[k]);
@@ -1646,24 +1646,29 @@ float ReSort_Array (float *array, int *orden, int Nx)
 
 
 int SolveAlmostDiagonalTriangularEquationSystem (
-		double **A, 		/* Almost diagonal matrix of coeficients of the sistem A·x = b */
+		double **A, 		/* Almost diagonal matrix of coeficients of the sistem Aï¿½x = b */
 		double *b, 		/* Independent term */
 		int num_ecs, 		/* Number of ecuations (rows of the matrix A)*/
 		int NDsre, int NDire, 	/* Number of upper and lower diagonals */
 		float *x)		/* Returning solution vector */
 {
-	/* RESUELVE UN SISTEMA DE ECUACIONES CASI DIAGONAL Y TRIANGULARIZADO:  A·x = b */
+	/* RESUELVE UN SISTEMA DE ECUACIONES CASI DIAGONAL Y TRIANGULARIZADO:  Aï¿½x = b */
 
 	register int i, j;
 
 	for (i=num_ecs-1; i>=0; i--)
 	{
-		x[i] = b[i];
-		for (j=NDire+1; (j<NDire+NDsre+1)&&(i+j-NDire<num_ecs); j++)
+		double *row_i = A[i];
+		double sum = b[i];
+		int j_end = NDire + NDsre + 1;
+		int max_j = num_ecs - i + NDire;
+		if (j_end > max_j) j_end = max_j;
+
+		for (j = NDire + 1; j < j_end; j++)
 		{
-			x[i] -= A[i][j] * ( x [i+j-NDire] );
+			sum -= row_i[j] * x[i + j - NDire];
 		}
-		x[i] /= A[i][NDire];
+		x[i] = sum / row_i[NDire];
 	}
 	return(1);
 }
@@ -1775,43 +1780,62 @@ double surface_topo(
 
 
 int TriangularizeAlmostDiagonalEquationSystem(
-		double **A,		/* Almost diagonal matrix of coeficients of the sistem A·x = b */
+		double **A,		/* Almost diagonal matrix of coeficients of the sistem Aï¿½x = b */
 		double *b, 		/* Independent term */
 		int num_rows, 		/* Number of ecuations (rows of the matrix A)*/
 		int NDsre, int NDire) 	/* Number of upper and lower diagonals */
 {
-	/*Toma una matriz en banda y la triangulariza devolviendo 
-	la matriz sin las NDire diagonales inferiores.
-	El valor de retorno es 1 si ha habido error.	*/
+	/* Toma una matriz en banda y la triangulariza devolviendo 
+	   la matriz sin las NDire diagonales inferiores.
+	   Optimized for branchless innermost loops and pointer hoisting. */
 
-	register	int 	i, j, k, l, cont = 0, contant=0, ndiagonales=NDire+NDsre+1  ;
-	register	double 	aux, fac;
+	register int i, j, k, ndiagonales = NDire + NDsre + 1;
+	register double aux, fac;
 
 	for (i=0 ;  i< num_rows-1 ; i++)
 	{
-		if (!A[i][NDire])	/*si el de la diagonal principal es 0*/
-		{			/*    cambiar esa l¡nea por otra*/
-			for (j=i+1; j<i+1+NDire; j++) {
-				if (j<num_rows) {
-				if (A[j][i+NDire-j]) {
-					for (k=i+NDire-j ; k < ndiagonales ; k++) {	/*  la cambia por esta  */
-						aux=A[j][k] ;
-						if ((k-i+j) < ndiagonales) {A[j][k]=A[i][k-i+j]; A[i][k-i+j]=aux ;} 
-						else 		A[j][k]=0 ;
+		if (!A[i][NDire])	/* si el de la diagonal principal es 0 */
+		{			        /* cambiar esa linea por otra */
+			for (j = i + 1; j < i + 1 + NDire && j < num_rows; j++) {
+				int offset = j - i;
+				if (A[j][NDire - offset]) {
+					int k_end = ndiagonales - offset;
+					double *row_j = A[j];
+					double *row_i = A[i];
+					for (k = NDire - offset; k < k_end; k++) {
+						aux = row_j[k];
+						row_j[k] = row_i[k + offset];
+						row_i[k + offset] = aux;
 					}
+					for (k = k_end; k < ndiagonales; k++) {
+						row_j[k] = 0;
+					}
+					/* Fix: You must also swap the RHS independent term! */
+					aux = b[j];
+					b[j] = b[i];
+					b[i] = aux;
 					break ;
 				}
-				}
 			}
-			if (j==(i+1+NDire)) return 1;		/*  si no ha podido => sist. indeterminado   */
+			if (j == (i + 1 + NDire) || j == num_rows) return 1;	/* sist. indeterminado */
 		}
-		for (j=i+1; (j<i+1+NDire) && (j<num_rows) ; j++)  {	/*  resta a las siguientes filas esta por un factor tal que les haga cero el primer termino  */
-			fac=A[j][i+NDire-j]/A[i][NDire] ;
-			for (k=i+NDire-j;k<ndiagonales;k++)  {
-				if ((k+j-i)<ndiagonales) aux=A[i][k+j-i]; else aux=0;
-				A[j][k] -= aux*fac;
+		
+		double pivot = A[i][NDire];
+		double *row_i = A[i];
+		
+		for (j = i + 1; j < i + 1 + NDire && j < num_rows; j++) {
+			int offset = j - i;
+			double *row_j = A[j];
+			fac = row_j[NDire - offset] / pivot;
+			
+			/* Skip if fac is 0, avoiding an entire inner loop of doing nothing */
+			if (fac != 0.0) {
+				int k_end = ndiagonales - offset;
+				for (k = NDire - offset; k < k_end; k++) {
+					row_j[k] -= row_i[k + offset] * fac;
+				}
+				b[j] -= b[i] * fac;
 			}
-			b[j] -= b[i]*fac;
 		}
 	}
 	return 0;

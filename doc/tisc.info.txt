@@ -711,6 +711,9 @@ No. Density Age Volume Surf.  Vel_x Vel_y Shft_x Shft_y erosL
   TISC_2025-11-06
   	Precipitation proportional to insolation file in *.INS.
   	Python graphic output available through script/tisc.plot.py 
+  TISC_2026-03-14_factorized 
+  	Full refactorisation of the code using Gemini. Optimisation and slight 
+  	parallelisation.
 
 
 11.- MODEL LIMITATIONS
