@@ -105,7 +105,7 @@ set dens 	= `awk '(NR==2) {print $0; exit;}' $prj.pfl`
 set numcols 	= `awk '(NR==4) {print NF; exit;}' $prj.
 `
 
-awk '{if (NR>2) print $0}' $prj.pfl | invertfile > $tmp.pflinv.tmp
+awk '{if (NR>2) print $0}' $prj.pfl | tail -r > $tmp.pflinv.tmp
 
 awk -v sl=$sea_level -v zmin=$zmin '{if (NR>2) {z=$NF; if (z>sl) z=sl; if (z<zmin) z=zmin; print x=$1, y=$2, z, $3}}' $prj.pfl > $tmp.sea.xz.tmp
 awk '{print $1,$2,sl,$3}'  sl=$sea_level $tmp.pflinv.tmp >> $tmp.sea.xz.tmp

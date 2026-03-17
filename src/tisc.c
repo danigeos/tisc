@@ -167,12 +167,13 @@ int inputs (int argc, char **argv)
 	/*Version of TISC is matched against the parameters file *.PRM*/
 	/*¡¡ UPDATE template.PRM !!*/
 	//defined in tisc/config.mk
-	strcpy(version, VERSION);
+	strncpy(version, VERSION, sizeof(version) - 1);
+	version[sizeof(version) - 1] = '\0';
 
 	/*Default parameter values are read from ./tisc/doc/template.PRM:*/
-	sprintf(projectname, "%s/doc/template", TISCDIR);
+	snprintf(projectname, sizeof(projectname), "%s/doc/template", TISCDIR);
 	success_def_prm = read_file_parameters(0, 0);
-	sprintf(projectname, "");
+	projectname[0] = '\0';
 
 	for (iarg=1; iarg<argc; iarg++) {
 		if (argv[iarg][0] == '-') {
@@ -189,24 +190,29 @@ int inputs (int argc, char **argv)
 					break;
 				case 'F':
 					run_type=2;
-					if (strlen(prm)>0) strcpy (resume_filename, prm);
-					else sprintf(resume_filename, "%s"".all", projectname);
+					if (strlen(prm)>0) {
+						strncpy(resume_filename, prm, sizeof(resume_filename) - 1);
+						resume_filename[sizeof(resume_filename) - 1] = '\0';
+					}
+					else snprintf(resume_filename, sizeof(resume_filename), "%s.all", projectname);
 					break;
 				case 'h':
 					switch (argv[iarg][2]) {
 						case 'p':
 							fprintf(stderr, "\nFile ./tisc/doc/template.PRM (sample parameters file) follows in stdout:\n") ;
-							sprintf(command, "cat %s/doc/template.PRM", TISCDIR);
+							snprintf(command, sizeof(command), "cat %s/doc/template.PRM", TISCDIR);
 							system(command) ;
 							break;
 						case 'c':
 							fprintf(stderr, "\nFile ./tisc/doc/template.PRM (sample parameters file) follows in stdout:\n") ;
-							sprintf(command, "cat %s/doc/template.PRM | %s/script/cleanPRM", TISCDIR, TISCDIR);
+							// The cleanPRM script might not exist or be needed anymore. If it's just for display, cat is enough.
+							// If it's a real script, ensure it's in PATH. For now, assuming it's a script that processes the PRM.
+							snprintf(command, sizeof(command), "cat %s/doc/template.PRM | %s/script/cleanPRM", TISCDIR, TISCDIR);
 							system(command) ;
 							break;
 						case 'u':
 							fprintf(stderr, "\nFile ./tisc/doc/template.UNIT (sample unit file) follows in stdout:\n") ;
-							sprintf(command, "cat %s/doc/template.UNIT", TISCDIR);
+							snprintf(command, sizeof(command), "cat %s/doc/template.UNIT", TISCDIR);
 							system(command) ;
 							break;
 						default:
@@ -219,14 +225,15 @@ int inputs (int argc, char **argv)
 				case '-':
 					if (strcmp(argv[iarg], "--help") == 0) {
 						fprintf(stderr, "\nFile ./tisc/doc/tisc.info.txt follows:\n") ;
-						sprintf(command, "more %s/doc/tisc.info.txt", TISCDIR);
+						snprintf(command, sizeof(command), "more %s/doc/tisc.info.txt", TISCDIR);
 						system(command) ;
 						exit(0);
 					}
 					break;
 				case 'Q':
 					run_type=1;
-					strcpy(load_file_name, prm);
+					strncpy(load_file_name, prm, sizeof(load_file_name) - 1);
+					load_file_name[sizeof(load_file_name) - 1] = '\0';
 					break;
 				case 'V':
 					verbose_level = 1;
@@ -236,7 +243,10 @@ int inputs (int argc, char **argv)
 		}
 		else {
 			if (run_type != 2) run_type=10;
-			if (strlen(projectname)<1) strcpy(projectname, argv[iarg]);
+			if (strlen(projectname)<1) {
+				strncpy(projectname, argv[iarg], sizeof(projectname) - 1);
+				projectname[sizeof(projectname) - 1] = '\0';
+			}
 		}
 	}
 
@@ -283,7 +293,7 @@ int inputs (int argc, char **argv)
 			}
 			interpr_command_line_opts(argc, argv);
 			if (reformat) {
-				sprintf(projectname, "%s/doc/template", TISCDIR);
+				snprintf(projectname, sizeof(projectname), "%s/doc/template", TISCDIR);
 				read_file_parameters(0, reformat);
 				exit(0);
 			}
@@ -292,7 +302,7 @@ int inputs (int argc, char **argv)
 
 	{
 		char filename[MAXLENLINE]; FILE *file;
-		sprintf(filename, "%s.out", projectname);
+		snprintf(filename, sizeof(filename), "%s.out", projectname);
 		if (switch_file_out) {
 			if ((file = fopen(filename, "w")) == NULL) {
 				PRINT_ERROR("Cannot open standard output file %s.\n", filename);
@@ -354,7 +364,7 @@ int inputs (int argc, char **argv)
 	if (tau<=0 && isost_model==2)  		{ isost_model=1; 	PRINT_WARNING("Negative tau will be ignored: elastic plate is assumed.");}
 	if (Nx<6 || Ny<6)					{					PRINT_WARNING("Too coarse %dx%d gridding.", Nx, Ny); }
 
-	sprintf(command, "rm -f .*.tisc.tmp %s.mtrz", projectname);
+	snprintf(command, sizeof(command), "rm -f .*.tisc.tmp %s.mtrz", projectname);
 	system(command);
 
 	read_file_sea_level(); sea_level = calculate_sea_level(Time);
@@ -400,7 +410,8 @@ int interpr_command_line_opts(int argc, char **argv)
 			PRINT_DEBUG("\aArgument: %s", argv[iarg]);
 			switch (argv[iarg][1]) {
 				case 'B':
-					strcpy(boundary_conds, prm);
+					strncpy(boundary_conds, prm, sizeof(boundary_conds) - 1);
+					boundary_conds[sizeof(boundary_conds) - 1] = '\0';
 					break;
 				case 'D':
 					if (run_type!=2) {
@@ -449,13 +460,19 @@ int interpr_command_line_opts(int argc, char **argv)
 					switch_write_file_Blocks=true;
 					if (argv[iarg][2] == 'c') {
 						switch_ps=2;
-						strcpy(gif_geom, "");
-						if (strlen(prm2)>0) strcpy(gif_geom, prm2);
+						gif_geom[0] = '\0'; // Clear gif_geom
+						if (strlen(prm2)>0) { // Check if prm2 is not empty
+							strncpy(gif_geom, prm2, sizeof(gif_geom) - 1); // Use strncpy for safety
+							gif_geom[sizeof(gif_geom) - 1] = '\0'; // Ensure null termination
+						}
 					}
 					if (argv[iarg][2] == 'p') {
 						switch_ps=3;
-						strcpy(gif_geom, "");
-						if (strlen(prm2)>0) strcpy(gif_geom, prm2);
+						gif_geom[0] = '\0'; // Clear gif_geom
+						if (strlen(prm2)>0) { // Check if prm2 is not empty
+							strncpy(gif_geom, prm2, sizeof(gif_geom) - 1); // Use strncpy for safety
+							gif_geom[sizeof(gif_geom) - 1] = '\0'; // Ensure null termination
+						}
 					}
 					break;
 				case 'p':
@@ -1094,42 +1111,43 @@ int read_file_unit(ModelConfig *cfg, ModelContext *ctx)
 	if (fault) {
 		int numBlocks0=ctx->numBlocks;
 		/*CUT BlockS*/
-		/*Make copies of all Blocks*/
+		/*Make deep copies of all Blocks*/ // Deep copy for faulting
 		PRINT_DEBUG("Cutting Blocks: numBlocks= %d", ctx->numBlocks);
 		for (int k=0; k<numBlocks0; k++) {
-			float **thick_aux, **vel_x_aux, **vel_y_aux;
+			// Create a new block at the end
 			insert_new_Block(ctx->numBlocks);
 			ctx->numBlocks = numBlocks;
-			thick_aux = Blocks[ctx->numBlocks-1].thick;
-			vel_x_aux = Blocks[ctx->numBlocks-1].vel_x;
-			vel_y_aux = Blocks[ctx->numBlocks-1].vel_y;
-			Blocks[ctx->numBlocks-1] = Blocks[k];
-			Blocks[ctx->numBlocks-1].thick = thick_aux;
-			Blocks[ctx->numBlocks-1].vel_x = vel_x_aux;
-			Blocks[ctx->numBlocks-1].vel_y = vel_y_aux;
-			Blocks[ctx->numBlocks-1].vel_x[0][0] = vel_x;
-			Blocks[ctx->numBlocks-1].vel_y[0][0] = vel_y;
-			Blocks[ctx->numBlocks-1].last_vel_time = ctx->Time;
-			Blocks[ctx->numBlocks-1].last_shift_x = 0;
-			Blocks[ctx->numBlocks-1].last_shift_y = 0;
-			Blocks[ctx->numBlocks-1].time_stop = time_stop;
-			if (Blocks[ctx->numBlocks-1].type == 'V') {
-			    if (thin_sheet) {
-				Blocks[ctx->numBlocks-1].vel_x  = alloc_matrix(cfg->Ny, cfg->Nx);
-				Blocks[ctx->numBlocks-1].vel_y  = alloc_matrix(cfg->Ny, cfg->Nx);
-				Blocks[ctx->numBlocks-1].visc   = alloc_matrix(cfg->Ny, cfg->Nx);
-				Blocks[ctx->numBlocks-1].viscTer= alloc_matrix(cfg->Ny, cfg->Nx);
-			    }
-			    else {
-				Blocks[ctx->numBlocks-1].type = '-';
-			    }
+			struct BLOCK *new_block = &Blocks[ctx->numBlocks-1];
+			struct BLOCK *src_block = &Blocks[k];
+
+			// Allocate memory for new_block's 2D arrays
+			new_block->thick = alloc_matrix(cfg->Ny, cfg->Nx);
+			new_block->vel_x = alloc_matrix(cfg->Ny, cfg->Nx);
+			new_block->vel_y = alloc_matrix(cfg->Ny, cfg->Nx);
+			new_block->visc = alloc_matrix(cfg->Ny, cfg->Nx);
+			new_block->viscTer = alloc_matrix(cfg->Ny, cfg->Nx);
+
+			// Deep copy contents of 2D arrays
+			memcpy(new_block->thick[0], src_block->thick[0], cfg->Nx * cfg->Ny * sizeof(float));
+			if (src_block->type == 'S') {
+				memcpy(new_block->detr_ratio[0], src_block->detr_ratio[0], cfg->Nx * cfg->Ny * sizeof(float));
+				memcpy(new_block->detr_grsize[0], src_block->detr_grsize[0], cfg->Nx * cfg->Ny * sizeof(float));
+				memcpy(new_block->thickgypsum[0], src_block->thickgypsum[0], cfg->Nx * cfg->Ny * sizeof(float));
+				memcpy(new_block->thickhalite[0], src_block->thickhalite[0], cfg->Nx * cfg->Ny * sizeof(float));
 			}
-			if (Blocks[ctx->numBlocks-1].type == 'S') {
-				Blocks[ctx->numBlocks-1].detr_ratio  = alloc_matrix(cfg->Ny, cfg->Nx);
-				Blocks[ctx->numBlocks-1].detr_grsize = alloc_matrix(cfg->Ny, cfg->Nx);
-				Blocks[ctx->numBlocks-1].thickgypsum = alloc_matrix(cfg->Ny, cfg->Nx);
-				Blocks[ctx->numBlocks-1].thickhalite = alloc_matrix(cfg->Ny, cfg->Nx);
-			}
+			memcpy(new_block->vel_x[0], src_block->vel_x[0], cfg->Nx * cfg->Ny * sizeof(float));
+			memcpy(new_block->vel_y[0], src_block->vel_y[0], cfg->Nx * cfg->Ny * sizeof(float));
+			memcpy(new_block->visc[0], src_block->visc[0], cfg->Nx * cfg->Ny * sizeof(float));
+			memcpy(new_block->viscTer[0], src_block->viscTer[0], cfg->Nx * cfg->Ny * sizeof(float));
+
+			// Copy scalar members
+			*new_block = *src_block; // Shallow copy of scalars
+			new_block->vel_x[0][0] = vel_x; // Override velocity
+			new_block->vel_y[0][0] = vel_y; // Override velocity
+			new_block->last_vel_time = ctx->Time;
+			new_block->last_shift_x = 0;
+			new_block->last_shift_y = 0;
+			new_block->time_stop = time_stop;
 			if (density         != NO_DATA && Blocks[ctx->numBlocks-1].type != 'S') Blocks[ctx->numBlocks-1].density = density;
 			if (erodibility_aux != NO_DATA && Blocks[ctx->numBlocks-1].type != 'S') Blocks[ctx->numBlocks-1].erodibility = erodibility_aux;
 		}

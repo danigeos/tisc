@@ -1,11 +1,11 @@
 /*
 INPUT/OUTPUT  SUBROUTINES  FOR  tisc.c
-Daniel Garcia-Castellanos
 */
 
 #include "tisc.h"
 #include "tiscio.h"
 #include "tisclib.h"
+#include "param_config.h" // Include the new parameter config header
 #include "../lib/libreria.h"
 
 extern float initial_grain_size;
@@ -15,7 +15,7 @@ extern float C_Ca_SEA, C_SO4_SEA, C_Na_SEA, C_Cl_SEA;
 extern float C_Ca_RIV, C_SO4_RIV, C_Na_RIV, C_Cl_RIV;
 extern float GYPSUM_PRECIP_CN, HALITE_PRECIP_CN;
 
-int find_up_river (ModelConfig *cfg, ModelContext *ctx, int row, int col, int *level, int *count, float *length, float *chi, FILE *file, bool **done, float ref_discharge);
+int find_up_river (ModelConfig *cfg, ModelContext *ctx, int row, int col, int *level, int *count, float *length, float *chi, FILE *file, int **done, float ref_discharge);
 
 
 
@@ -34,10 +34,12 @@ int reformat_file_thin_sheet_BC(ModelConfig *cfg, ModelContext *ctx, char *tmpTS
 	*/
 	int	i, j;
 	FILE 	*file, *filetmp;
-	char	boundary=0, *lin, auxstr[MAXLENFILE];
+	char	boundary=0, *lin, auxstr[MAXLENLINE];
 	float 	x,u1,u2, x0,u01,u02;
 
-	Read_Open_Filename_Return(".TSBC", "rt", "Thin sheet boundary conditions")
+	Read_Open_Filename_Return(".TSBC", "rt", "Thin sheet boundary conditions");
+
+	// Use snprintf for safety
 	if ((filetmp=fopen(tmpTSBCfilename,"wt"))==NULL) {PRINT_WARNING("Could not open output file '%s'.", tmpTSBCfilename); return 0;}
 	PRINT_INFO("Writing intermediate file '%s' for thin_sheet.",tmpTSBCfilename);
 	fprintf(filetmp, "#temporary file for thin sheet boundary conditions (produced by TISC).");
@@ -141,8 +143,13 @@ int read_file_horiz_record_time()
 
 	n_record_times=0;
 	aux1 = calloc(nmax_input_points, sizeof(float));
-	for (;;) {
-		TAKE_LINE_1(aux1[n_record_times]);
+	if (!aux1) { PRINT_ERROR("Memory allocation failed for aux1 in %s.", __func__); return 0; }
+
+	char line[MAXLENLINE];
+	while (fgets(line, sizeof(line), file) != NULL) {
+		// Skip comments and empty lines
+		if (line[0] == '#' || line[0] == '\n' || line[0] == '\r') continue;
+		if (sscanf(line, "%f", &aux1[n_record_times]) != 1) continue;
 		n_record_times++;
 		if (n_record_times>=nmax_input_points-1 ) {
 			PRINT_ERROR("Too many points (>%d) in horizon recording times file.", n_record_times-1);
@@ -312,66 +319,55 @@ int read_file_initial_rivers()
 
 int read_file_parameters (int show, int reformat) 
 {
-	int	nread=0, nparams=0, nline=0, verbose_level_ant=verbose_level;
-	char 	*lineptr=NULL, str1[MAXLENLINE]="", str2[MAXLENLINE]="", 
-		line[MAXLENLINE+200], PRMfilename[MAXLENFILE];
-	FILE 	*file;
-	bool	switch_matched_vers=false;
+    int nread = 0, nparams = 0, verbose_level_ant = verbose_level;
+    char line[MAXLENLINE + 200], PRMfilename[MAXLENFILE];
+    char str1[MAXLENLINE], str2[MAXLENLINE];
+    FILE *file;
+    bool switch_matched_vers = false;
 
-	/*
-	READ THE PARAMETERS FILE NAMED  'projectname.PRM'
-	You have an explanation of these parameters in the example (and default) 
-	parameters file (doc/template.PRM), in function match_parameter you have 
-	the name of the variable related to each parameter. The use of most 
-	variables is described in the include files '*.h'.
-	*/
+    snprintf(PRMfilename, sizeof(PRMfilename), "%s.PRM", projectname);
+    
+    if (show && verbose_level >= 3) 
+        fprintf(stdout, "\nCurrent TISC project: %s", projectname);
+        
+    if ((file = fopen(PRMfilename, "rt")) == NULL) {
+        PRINT_INFO("Can't open parameters file '%s'.\n", PRMfilename);
+        return 0;
+    }
 
-	sprintf(PRMfilename, "%s.PRM", projectname);
-	if (show && verbose_level>=3) fprintf(stdout, "\nCurrent TISC project: %s", projectname);
-	if ((file = fopen(PRMfilename, "rt")) == NULL) {
-		PRINT_INFO("Can't open parameters file '%s'.\n", PRMfilename);
-		return(0);
-	}
+    if (show) fprintf(stdout, "\nParameters at '%s'.", PRMfilename);
+    if (reformat == 1) fprintf(stdout, "\n\n");
 
-	if (show) fprintf(stdout, "\nParameters at '%s'.", PRMfilename);
-	if (reformat==1) fprintf(stdout, "\n\n");
-	while ((lineptr=fgets(line, MAXLENLINE+200-1, file)) != NULL) {
-		int status;
-		status=0;
-		nread=sscanf(lineptr, "%s %s", str1, str2);
-		if (nread >= 2) {
-			if (!strcmp(str1, "version")) {
-				strcpy(version_input, str2);
-				if (!strcmp(version_input, version)) {
-					switch_matched_vers = true;
-					nparams++;
-				}
-				if ((show && verbose_level>=3) || (reformat && verbose_level>=3)) fprintf(stderr, "\nInput file version: %s\n", version_input);
-				if (reformat) {fprintf(stdout, "version\t%s\n", version); }
-			}
-			status=match_parameter(str1, str2, show, reformat, line);
-			nparams += status; 
-			if (!strcmp(str1, "version")) status=1;
-		}
-		/*If no parameter matched then just reproduce the entire line*/
-		if (reformat==1 && !status) fprintf(stdout, "%s", line);
-		nline++;
-	}
-	if (verbose_level_ant>=2) fprintf(stdout, " (%d parameters matched)", nparams);
-	if (!switch_matched_vers) {
-		if (verbose_level_ant>=2) 
-		    fprintf(stderr,
-			"\nInfo: Present version name '%s' not matched in PRM file. See 'tisc/doc/template.PRM'.", version);
-		if (nparams<2) {
-		    PRINT_ERROR("\aWrong format in parameters file '%s'. Only %d parameters were matched. Current version is '%s'. "
-			"\nSee example file 'tisc/doc/template.PRM'.\nEND.\n", 
-			PRMfilename, nparams, version);
-		    exit(0); 
-		}
-	}
+    while (fgets(line, sizeof(line), file) != NULL) {
+        nread = sscanf(line, "%s %s", str1, str2);
+        if (nread < 2) {
+            if (reformat == 1) fprintf(stdout, "%s", line);
+            continue;
+        }
 
-	fclose(file);
-	return(1);
+        if (strcmp(str1, "version") == 0) {
+            strncpy(version_input, str2, sizeof(version_input) - 1);
+            if (strcmp(version_input, version) == 0) switch_matched_vers = true;
+            if (reformat) fprintf(stdout, "version\t%s\n", version);
+            nparams++;
+            continue;
+        }
+
+        int status = match_parameter(str1, str2, show, reformat, line);
+        nparams += status;
+
+        if (reformat == 1 && !status) fprintf(stdout, "%s", line);
+    }
+
+    if (verbose_level_ant >= 2) fprintf(stdout, " (%d parameters matched)", nparams);
+    
+    if (!switch_matched_vers && nparams < 2) {
+        PRINT_ERROR("\aInvalid PRM format or version mismatch. matched=%d, current=%s", nparams, version);
+        exit(EXIT_FAILURE);
+    }
+
+    fclose(file);
+    return 1;
 }
 
 
@@ -380,108 +376,58 @@ int read_file_parameters (int show, int reformat)
 
 int match_parameter (char *str1, char *str2, int show, int replace, char *line)
 {
-	bool switch_debug=false;
-	int nparams=0;
+    extern ParameterEntry param_table[];
+    extern const int num_params;
+    extern bool switch_debug;
+    
+    for (int i = 0; i < num_params; i++) {
+        if (strcmp(str1, param_table[i].name) == 0) {
+            if (param_table[i].is_old_version && verbose_level >= 2) {
+                fprintf(stderr, "\nWarning: Old parameter '%s' used. Please update your PRM file.", str1);
+            }
 
-	Match_Param_Replace_int ( "Nx", 	Nx,  	0 )
-	Match_Param_Replace_int ( "Ny", 	Ny,  	0 )
-	Match_Param_Replace_flt ( "xmin", 	xmin,  	0 )
-	Match_Param_Replace_flt ( "xmax", 	xmax,  	0 )
-	Match_Param_Replace_flt ( "ymin", 	ymin,  	0 )
-	Match_Param_Replace_flt ( "ymax", 	ymax,  	0 )
-	Match_Param_Replace_flt ( "Te",		Te_default,  	0 )
-	Match_Param_Replace_flt ( "zini",	zini,  	0 )
-	Match_Param_Replace_flt ( "random_topo",	random_topo,  	0 )
-	Match_Param_Replace_int ( "mode_interp",	mode_interp,  	0 )
-	Match_Param_Replace_flt ( "densasthen",	densasthen,  	0 )
-	Match_Param_Replace_flt ( "densmantle",	densmantle,  	0 )
-	Match_Param_Replace_flt ( "denscrust",	denscrust,  	0 )
-	Match_Param_Replace_flt ( "densinfill",	densinfill,  	0 )
-	Match_Param_Replace_flt ( "denssedim",	denssedim,  	0 )
-	Match_Param_Replace_flt ( "densenv",	densenv,  	0 )
-	Match_Param_Replace_flt ( "sed_porosity",	sed_porosity,  	0 )
-	Match_Param_Replace_flt ( "compact_depth",	compact_depth, 	0 )
-	Match_Param_Replace_chr ( "boundary_conds",	boundary_conds,  	0 )
-	Match_Param_Replace_flt ( "Px", 	Px,  	0 )
-	Match_Param_Replace_flt ( "Py", 	Py,  	0 )
-	Match_Param_Replace_flt ( "Pxy",	Pxy,  	0 )
-	Match_Param_Replace_int ( "hydro_model",	hydro_model,  	0 )
-	Match_Param_Replace_flt ( "rain",	rain,  	0 )
-	Match_Param_Replace_flt ( "Krain",	Krain,  	0 )
-	Match_Param_Replace_flt ( "relhumid",	relative_humidity,  	0 )
-	Match_Param_Replace_flt ( "windazimut",	windazimut,  	0 )
-	Match_Param_Replace_flt ( "CXrain",	CXrain,  	0 )
-	Match_Param_Replace_flt ( "CYrain",	CYrain,  	0 )
-	Match_Param_Replace_flt ( "rain_per",	rain_per,  	0 )
-	Match_Param_Replace_flt ( "rain_amp",	rain_amp,  	0 )
-	Match_Param_Replace_flt ( "evaporation",	evaporation_ct,  	0 )
-	Match_Param_Replace_flt ( "lost_rate",	lost_rate,  	0 )
-	Match_Param_Replace_flt ( "permeability",	permeability,  	0 )
-	Match_Param_Replace_int ( "erosed_model",	erosed_model,  	0 )
-	Match_Param_Replace_flt ( "Kerosdif",	Kerosdif,  	0 )
-	Match_Param_Replace_flt ( "Keroseol",	Keroseol, 	0 )
-	Match_Param_Replace_flt ( "Ksedim",	Ksedim, 	0 )
-	Match_Param_Replace_flt ( "critical_slope",	critical_slope,  	0 )
-	Match_Param_Replace_flt ( "K_river_cap",	K_river_cap,  	0 )
-	Match_Param_Replace_flt ( "erodibility",	erodibility,  	0 )
-	Match_Param_Replace_flt ( "erodibility_sed",	erodibility_sed,  	0 )
-	Match_Param_Replace_flt ( "critical_stress",	critical_stress,  	0 )
-	Match_Param_Replace_flt ( "grain_size",	initial_grain_size,  	0 )
-	Match_Param_Replace_flt ( "grain_size_decay",	distance_half_grainsize,  	0 )
-
-	Match_Param_Replace_flt ( "l_fluv_sedim",	l_fluv_sedim,  	0 )
-	Match_Param_Replace_flt ( "temp_sea_level",	temp_sea_level,  	0 )
-	Match_Param_Replace_int ( "deform_sed",  	deform_sed, 	0 )
-	Match_Param_Replace_flt ( "K_ice_eros",	K_ice_eros,  	0 )
-	Match_Param_Replace_flt ( "dt_ice",	dt_ice,  	0 )
-	Match_Param_Replace_int ( "n_ice_flow",	n_ice_flow,  	0 )
-	Match_Param_Replace_flt ( "A_ice_rheo",	A_ice_rheo,  	0 )
-	Match_Param_Replace_flt ( "A_ice_slide",	A_ice_slide,  	0 )
-	Match_Param_Replace_chr ( "eros_bound_cond",	eros_bound_cond,  	0 )
-	Match_Param_Replace_flt ( "Timeini",	Timeini,  	0 )
-	Match_Param_Replace_flt ( "Timefinal",	Timefinal,  	0 )
-	Match_Param_Replace_flt ( "tau",	tau,  	0 )
-	Match_Param_Replace_flt ( "dt",		dt,  	0 )
-	Match_Param_Replace_flt ( "dt_eros",	dt_eros,  	0 )
-	Match_Param_Replace_flt ( "dt_record",	dt_record,  	0 )
-	Match_Param_Replace_int ( "isost_model",	isost_model,  	0 )
-	Match_Param_Replace_int ( "water_load", 	water_load,  	0 )
-	Match_Param_Replace_int ( "switch_topoest", 	switch_topoest,  	0 )
-	Match_Param_Replace_int ( "switch_files",	switch_write_file,  	0 )
-	Match_Param_Replace_int ( "switch_ps",  	switch_ps,  	0 )
-	Match_Param_Replace_int ( "verbose_level",	verbose_level,  	0 )
-
-	/*Old versions:*/
-	Match_Param_Replace_flt ( "erodability",	erodibility,  	1 )
-	Match_Param_Replace_flt ( "erodability_sed",	erodibility_sed,  	1 )
-	Match_Param_Replace_int ( "switch_verbose",	verbose_level,  	1 )
-	Match_Param_Replace_int ( "switch_debug",	switch_debug,  	1 )
-	if (switch_debug) verbose_level=3;
-	Match_Param_Replace_flt ( "alt0",	zini,  	1 )
-	Match_Param_Replace_int ( "lith_type",	isost_model,  	1 )
-	Match_Param_Replace_int ( "erosed_type",	erosed_model,  	1 )
-	Match_Param_Replace_int ( "switch_hydro",	hydro_model,  	1 )
-	Match_Param_Replace_flt ( "leng_fluv_eros",	erodibility,  	1 )
-
-	Match_Param_Replace_flt ( "C_Ca_SEA",	C_Ca_SEA,  	0 )
-	Match_Param_Replace_flt ( "C_SO4_SEA",	C_SO4_SEA,  	0 )
-	Match_Param_Replace_flt ( "C_Na_SEA",	C_Na_SEA,  	0 )
-	Match_Param_Replace_flt ( "C_Cl_SEA",	C_Cl_SEA,  	0 )
-	Match_Param_Replace_flt ( "C_Ca_RIV",	C_Ca_RIV,  	0 )
-	Match_Param_Replace_flt ( "C_SO4_RIV",	C_SO4_RIV,  	0 )
-	Match_Param_Replace_flt ( "C_Na_RIV",	C_Na_RIV,  	0 )
-	Match_Param_Replace_flt ( "C_Cl_RIV",	C_Cl_RIV,  	0 )
-	Match_Param_Replace_flt ( "GYPSUM_PRECIP_CN",	GYPSUM_PRECIP_CN,  	0 )
-	Match_Param_Replace_flt ( "HALITE_PRECIP_CN",	HALITE_PRECIP_CN,  	0 )
-
-	Match_Param_Replace_flt ( "leng_fluv_sedim",	l_fluv_sedim,  	1 )
-	Match_Param_Replace_int ( "switch_erosed",	erosed_model,  	1 )
-	Match_Param_Replace_int ( "switch_sea", 	water_load,  	1 )
-	Match_Param_Replace_flt ( "l_fluv_eros",	erodibility,  	1 )
-	Match_Param_Replace_flt ( "l_fluv_eros_sed",	erodibility_sed,  	1 )
-	Match_Param_Replace_flt ( "dtmemounit",	dt_record,  	1 )
-
-	return (nparams);
+            if (replace) {
+                char newstr2[MAXLENLINE];
+                switch (param_table[i].type) {
+                    case PARAM_TYPE_INT:    snprintf(newstr2, sizeof(newstr2), "%d", *(int*)param_table[i].ptr); break;
+                    case PARAM_TYPE_FLOAT:  snprintf(newstr2, sizeof(newstr2), "%.4g", *(float*)param_table[i].ptr); break;
+                    case PARAM_TYPE_STRING: snprintf(newstr2, sizeof(newstr2), "%s", (char*)param_table[i].ptr); break;
+                    case PARAM_TYPE_BOOL:   snprintf(newstr2, sizeof(newstr2), "%d", *(bool*)param_table[i].ptr); break;
+                }
+                char *newline = replace_word(line, str2, newstr2);
+                if (newline) {
+                    fprintf(stdout, "%s", newline);
+                    free(newline);
+                }
+            } else {
+                switch (param_table[i].type) {
+                    case PARAM_TYPE_INT:
+                        *(int*)param_table[i].ptr = atoi(str2);
+                        if (show && verbose_level >= 3) fprintf(stdout, "\n%s\t%d", str1, *(int*)param_table[i].ptr);
+                        break;
+                    case PARAM_TYPE_FLOAT:
+                        *(float*)param_table[i].ptr = atof(str2);
+                        if (show && verbose_level >= 3) fprintf(stdout, "\n%s\t%.4g", str1, *(float*)param_table[i].ptr);
+                        break;
+                    case PARAM_TYPE_STRING:
+                        strncpy((char*)param_table[i].ptr, str2, param_table[i].size - 1);
+                        ((char*)param_table[i].ptr)[param_table[i].size - 1] = '\0';
+                        if (show && verbose_level >= 3) fprintf(stdout, "\n%s\t%s", str1, (char*)param_table[i].ptr);
+                        break;
+                    case PARAM_TYPE_BOOL:
+                        *(bool*)param_table[i].ptr = (bool)atoi(str2);
+                        if (show && verbose_level >= 3) fprintf(stdout, "\n%s\t%d", str1, *(bool*)param_table[i].ptr);
+                        break;
+                }
+            }
+            // Special handling for switch_debug which sets verbose_level
+            if (strcmp(str1, "switch_debug") == 0 && switch_debug) {
+                verbose_level = 3;
+            }
+            return 1; // Parameter matched and processed
+        }
+    }
+    return 0; // Parameter not matched
 }
 
 
@@ -690,16 +636,16 @@ int read_file_resume(char *filename)
 
 	/*Arrays:*/
 	Allocate_Memory();
-	for (i=0; i<Ny; i++) fread(w[i], sizeof(float), Nx, file);
-	for (i=0; i<Ny; i++) fread(D[i], sizeof(float), Nx, file);
-	for (i=0; i<Ny; i++) fread(q[i], sizeof(float), Nx, file);
-	for (i=0; i<Ny; i++) fread(Dw[i], sizeof(float), Nx, file);
-	for (i=0; i<Ny; i++) fread(Dq[i], sizeof(float), Nx, file);
-	for (i=0; i<Ny; i++) fread(h_water[i], sizeof(float), Nx, file);
-	for (i=0; i<Ny; i++) fread(h_last_unit[i], sizeof(float), Nx, file);
-	for (i=0; i<Ny; i++) fread(EET[i], sizeof(float), Nx, file);
-	for (i=0; i<Ny; i++) fread(topo[i], sizeof(float), Nx, file);
-	for (i=0; i<Ny; i++) fread(Blocks_base[i], sizeof(float), Nx, file);
+	if (fread(w[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read w array."); goto error_read_resume; }
+	if (fread(D[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read D array."); goto error_read_resume; }
+	if (fread(q[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read q array."); goto error_read_resume; }
+	if (fread(Dw[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read Dw array."); goto error_read_resume; }
+	if (fread(Dq[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read Dq array."); goto error_read_resume; }
+	if (fread(h_water[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read h_water array."); goto error_read_resume; }
+	if (fread(h_last_unit[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read h_last_unit array."); goto error_read_resume; }
+	if (fread(EET[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read EET array."); goto error_read_resume; }
+	if (fread(topo[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read topo array."); goto error_read_resume; }
+	if (fread(Blocks_base[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read Blocks_base array."); goto error_read_resume; }
 
 	horiz_record_time = calloc(n_record_times, sizeof(float));
 	fread(horiz_record_time, sizeof(float), n_record_times, file);
@@ -717,72 +663,83 @@ int read_file_resume(char *filename)
 
 	if (hydro_model) {
 		fread(sortcell, sizeof(struct GRIDNODE), Nx*Ny, file);
-		for (i=0; i<Ny; i++) fread(drainage[i], sizeof(struct DRAINAGE), Nx, file);
-		for (i=0; i<Ny; i++) fread(lake_former_step[i], sizeof(int), Nx, file);
+		if (fread(drainage[0], sizeof(struct DRAINAGE), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read drainage array."); goto error_read_resume; }
+		if (fread(lake_former_step[0], sizeof(int), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read lake_former_step array."); goto error_read_resume; }
 		if (K_ice_eros) {
-			for (i=0; i<Ny; i++) fread(ice_thickness[i], sizeof(float), Nx, file);
-			for (i=0; i<Ny; i++) fread(ice_sedm_load[i], sizeof(float), Nx, file);
-			for (i=0; i<Ny; i++) fread(ice_velx_sl[i],  sizeof(float), Nx, file);
-			for (i=0; i<Ny; i++) fread(ice_vely_sl[i],  sizeof(float), Nx, file);
-			for (i=0; i<Ny; i++) fread(ice_velx_df[i],  sizeof(float), Nx, file);
-			for (i=0; i<Ny; i++) fread(ice_vely_df[i],  sizeof(float), Nx, file);
+			if (fread(ice_thickness[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read ice_thickness array."); goto error_read_resume; }
+			if (fread(ice_sedm_load[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read ice_sedm_load array."); goto error_read_resume; }
+			if (fread(ice_velx_sl[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read ice_velx_sl array."); goto error_read_resume; }
+			if (fread(ice_vely_sl[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read ice_vely_sl array."); goto error_read_resume; }
+			if (fread(ice_velx_df[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read ice_velx_df array."); goto error_read_resume; }
+			if (fread(ice_vely_df[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read ice_vely_df array."); goto error_read_resume; }
 		}
 	}
 
 	/*numBlocks and i_Block_insert are special*/
 	for (j=0; j<numBlocks_aux; j++) {
 		insert_new_Block(numBlocks);
-		auxptr1 = Blocks[numBlocks-1].thick;
+		struct BLOCK *current_block = &Blocks[numBlocks-1];
+		float **t = current_block->thick;
+		float **vx = current_block->vel_x;
+		float **vy = current_block->vel_y;
+		float **vi = current_block->visc;
+		float **vt = current_block->viscTer;
+
 		fread(&Blocks[numBlocks-1], sizeof(struct BLOCK), 1, file);
-		Blocks[numBlocks-1].thick = 	auxptr1;
+
+		current_block->thick = t;
+		current_block->vel_x = vx;
+		current_block->vel_y = vy;
+		current_block->visc = vi;
+		current_block->viscTer = vt;
 	}
 	if (numBlocks_aux != numBlocks) PRINT_ERROR("%d Blocks?!", numBlocks_aux);
 	i_Block_insert=i_Block_insert_aux;
 	for (j=0; j<numBlocks; j++) {
-		for (i=0; i<Ny; i++) 	fread(Blocks[j].thick[i], 	sizeof(float),	Nx, 	file);
+		if (fread(Blocks[j].thick[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read Blocks[%d].thick array.", j); goto error_read_resume; } // Check return value
 	}
 	for (j=0; j<numBlocks; j++) {
 	    if (Blocks[j].type == 'V') {
+		free_matrix(Blocks[j].vel_x, 1);
+		free_matrix(Blocks[j].vel_y, 1);
+		free_matrix(Blocks[j].visc, 1);
+		free_matrix(Blocks[j].viscTer, 1);
 		Blocks[j].vel_x = alloc_matrix(Ny, Nx);
 		Blocks[j].vel_y = alloc_matrix(Ny, Nx);
 		Blocks[j].visc  = alloc_matrix(Ny, Nx);
 		Blocks[j].viscTer = alloc_matrix(Ny, Nx);
-		for (i=0; i<Ny; i++) {
-			fread(Blocks[j].vel_x[i], 	sizeof(float),	Nx, 	file);
-			fread(Blocks[j].vel_y[i], 	sizeof(float),	Nx, 	file);
-			fread(Blocks[j].visc[i], 	sizeof(float),	Nx, 	file);
-			fread(Blocks[j].viscTer[i], 	sizeof(float),	Nx, 	file);
-		}
+		if (fread(Blocks[j].vel_x[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read Blocks[%d].vel_x array.", j); goto error_read_resume; } // Check return value
+		if (fread(Blocks[j].vel_y[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read Blocks[%d].vel_y array.", j); goto error_read_resume; } // Check return value
+		if (fread(Blocks[j].visc[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read Blocks[%d].visc array.", j); goto error_read_resume; } // Check return value
+		if (fread(Blocks[j].viscTer[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read Blocks[%d].viscTer array.", j); goto error_read_resume; } // Check return value
 	    }
 	    else {
 		Blocks[j].vel_x = alloc_matrix(1, 1);
 		Blocks[j].vel_y = alloc_matrix(1, 1);
-		fread(&Blocks[j].vel_x[0][0], 	sizeof(float),	1, 	file);
-		fread(&Blocks[j].vel_y[0][0], 	sizeof(float),	1, 	file);
+		if (fread(&Blocks[j].vel_x[0][0], sizeof(float), 1, file) != 1) { PRINT_ERROR("Failed to read Blocks[%d].vel_x[0][0].", j); goto error_read_resume; } // Check return value
+		if (fread(&Blocks[j].vel_y[0][0], sizeof(float), 1, file) != 1) { PRINT_ERROR("Failed to read Blocks[%d].vel_y[0][0].", j); goto error_read_resume; } // Check return value
 	    }
 	    if (Blocks[j].type == 'S') {
 		Blocks[j].detr_ratio = alloc_matrix(Ny, Nx);
 		Blocks[j].detr_grsize = alloc_matrix(Ny, Nx);
 		Blocks[j].thickgypsum = alloc_matrix(Ny, Nx);
 		Blocks[j].thickhalite = alloc_matrix(Ny, Nx);
-		for (i=0; i<Ny; i++) {
-			fread(Blocks[j].detr_ratio[i], 	sizeof(float),	Nx, 	file);
-			fread(Blocks[j].detr_grsize[i], 	sizeof(float),	Nx, 	file);
-			fread(Blocks[j].thickgypsum[i], 	sizeof(float),	Nx, 	file);
-			fread(Blocks[j].thickhalite[i], 	sizeof(float),	Nx, 	file);
-		}
+		if (fread(Blocks[j].detr_ratio[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read Blocks[%d].detr_ratio array.", j); goto error_read_resume; } // Check return value
+		if (fread(Blocks[j].detr_grsize[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read Blocks[%d].detr_grsize array.", j); goto error_read_resume; } // Check return value
+		if (fread(Blocks[j].thickgypsum[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read Blocks[%d].thickgypsum array.", j); goto error_read_resume; } // Check return value
+		if (fread(Blocks[j].thickhalite[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read Blocks[%d].thickhalite array.", j); goto error_read_resume; } // Check return value
 	    }
 	}
 
 	if (erosed_model) {
-		for (i=0; i<Ny; i++) fread(eros_now[i], sizeof(float), Nx, file);
-		for (i=0; i<Ny; i++) fread(accumul_erosion[i], sizeof(float), Nx, file);
+		if (fread(eros_now[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read eros_now array."); goto error_read_resume; } // Check return value
+		if (fread(accumul_erosion[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read accumul_erosion array."); goto error_read_resume; } // Check return value
 	}
 	if (hydro_model) {
-		for (i=0; i<Ny; i++) fread(evaporation[i], sizeof(float), Nx, file);
-		for (i=0; i<Ny; i++) fread(precipitation[i], sizeof(float), Nx, file);
-		for (i=0; i<Ny; i++) fread(precipitation_snow[i], sizeof(float), Nx, file);
-		for (i=0; i<Ny; i++) fread(precipitation_file[i], sizeof(float), Nx, file);
+		if (fread(evaporation[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read evaporation array."); goto error_read_resume; } // Check return value
+		if (fread(precipitation[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read precipitation array."); goto error_read_resume; } // Check return value
+		if (fread(precipitation_snow[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read precipitation_snow array."); goto error_read_resume; } // Check return value
+		if (fread(precipitation_file[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read precipitation_file array."); goto error_read_resume; } // Check return value
 		Lake = calloc (nlakes+1, sizeof(struct LAKE_INFO));
 		fread(Lake, sizeof(struct LAKE_INFO), nlakes+1, file);
 		for (j=1; j<=nlakes; j++) {
@@ -820,6 +777,7 @@ int read_file_resume(char *filename)
 	}
 
 	fclose(file);
+error_read_resume: // Label for error handling
 	return 1;
 }
 
@@ -842,9 +800,13 @@ int read_file_insolation()
 	n_insolation_input_points=0;
 	aux1 = calloc(nmax_input_points, sizeof(float));
 	aux2 = calloc(nmax_input_points, sizeof(float));
-	
-	for (;;) {
-		{char auxstr[MAXLENLINE], *lin; int nfields=0; while (nfields<2) {lin=fgets(auxstr, MAXLENLINE-1, file); if (lin==NULL) break; nfields=sscanf(lin, "%f %f", &aux1[n_insolation_input_points], &aux2[n_insolation_input_points]);}; if (lin==NULL) break;}
+	if (!aux1 || !aux2) { PRINT_ERROR("Memory allocation failed for aux1/aux2 in %s.", __func__); return 0; }
+
+	char line[MAXLENLINE];
+	while (fgets(line, sizeof(line), file) != NULL) {
+		// Skip comments and empty lines
+		if (line[0] == '#' || line[0] == '\n' || line[0] == '\r') continue;
+		if (sscanf(line, "%f %f", &aux1[n_insolation_input_points], &aux2[n_insolation_input_points]) != 2) continue;
 		n_insolation_input_points++;
 		if (n_insolation_input_points>=nmax_input_points-1 ) {
 			PRINT_ERROR("Too many data (%d) in insolation file.", n_insolation_input_points);
@@ -886,11 +848,16 @@ int read_file_sea_level()
 	aux2 = calloc(nmax_input_points, sizeof(float));
 	aux3 = calloc(nmax_input_points, sizeof(float));
 	for (i=0; i<nmax_input_points; i++) aux3[i]=NO_DATA;
-	
-	for (;;) {
-		{char auxstr[MAXLENLINE], *lin; int nfields=0; while (nfields<2) {lin=fgets(auxstr, MAXLENLINE-1, file); if (lin==NULL) break; nfields=sscanf(lin, "%f %f %f", &aux1[n_sea_level_input_points], &aux2[n_sea_level_input_points], &aux3[n_sea_level_input_points]);}; if (lin==NULL) break;}
+	if (!aux1 || !aux2 || !aux3) { PRINT_ERROR("Memory allocation failed for aux1/aux2/aux3 in %s.", __func__); return 0; }
+
+	char line[MAXLENLINE];
+	while (fgets(line, sizeof(line), file) != NULL) {
+		// Skip comments and empty lines
+		if (line[0] == '#' || line[0] == '\n' || line[0] == '\r') continue;
+		int nfields = sscanf(line, "%f %f %f", &aux1[n_sea_level_input_points], &aux2[n_sea_level_input_points], &aux3[n_sea_level_input_points]);
+		if (nfields < 2) continue;
 		n_sea_level_input_points++;
-		if (aux3[n_sea_level_input_points-1]!=NO_DATA) 
+		if (nfields == 3) 
 			n_eros_level_input_points++;
 		if (n_sea_level_input_points>=nmax_input_points-1 ) {
 			PRINT_ERROR("Too many points (%d) in sea level file.", n_sea_level_input_points);
@@ -937,10 +904,14 @@ int read_file_node_defs(ModelConfig *cfg, ModelContext *ctx, float dt_st)
 	}
 	PRINT_DEBUG("Reading Node definitions at '%s'", filename);
 
-	for (;;) {
+	char line[MAXLENLINE];
+	while (fgets(line, sizeof(line), file) != NULL) {
+		// Skip comments and empty lines
+		if (line[0] == '#' || line[0] == '\n' || line[0] == '\r') continue;
 		int i,j, type;
 		float x, y, type_aux, value;
-		TAKE_LINE_4(x, y, type_aux, value)
+		if (sscanf(line, "%f %f %f %f", &x, &y, &type_aux, &value) != 4) continue; // Ensure 4 fields are read
+
 		i = floor((cfg->ymax-y)/cfg->dy + .49999999);
 		j = floor((x-cfg->xmin)/cfg->dx + .49999999);
 		type = (int) type_aux;
@@ -1097,8 +1068,11 @@ int read_file_output_Blocks ()
 	sscanf(auxstr, "%f %f", &xmin, &ymax);
 	xa=xmin; ya=ymax;
 	Nx=Ny=1;
-	while (1) {
-		TAKE_LINE_3(x, y, hori)
+	char line[MAXLENLINE];
+	while (fgets(line, sizeof(line), file) != NULL) {
+		// Skip comments and empty lines
+		if (line[0] == '#' || line[0] == '\n' || line[0] == '\r') continue;
+		if (sscanf(line, "%f %f %f", &x, &y, &hori) != 3) continue; // Ensure 3 fields are read
 		if (y==ymax) Nx++;
 		if (x<xa) Ny++;
 		xa=x; ya=y;
@@ -1592,7 +1566,7 @@ int write_file_drainage (ModelConfig *cfg, ModelContext *ctx)
 
 
 
-int find_up_river (ModelConfig *cfg, ModelContext *ctx, int row, int col, int *level, int *count, float *length, float *chi, FILE *file, bool **done, float ref_discharge)
+int find_up_river (ModelConfig *cfg, ModelContext *ctx, int row, int col, int *level, int *count, float *length, float *chi, FILE *file, int **done, float ref_discharge)
 {
 	int 	n_above=1;
 	float	tp, dtp;
@@ -1603,7 +1577,7 @@ int find_up_river (ModelConfig *cfg, ModelContext *ctx, int row, int col, int *l
 		PRINT_WARNING("drainage loop in [%d][%d]", row, col); 
 		return(0);
 	}
-	done[row][col] = true;
+	done[row][col] = 1;
 
 	(*level) ++;
 	for (int i=0; i<cfg->Ny; i++)  for (int j=0; j<cfg->Nx; j++) {
@@ -1664,7 +1638,8 @@ int write_file_river_basins (ModelConfig *cfg, ModelContext *ctx)
 		count=0, level, n_river=0, river_nodes;
 	float 	length, chi, maxdisch=-1e9;
 	FILE 	*file;
-	bool 	switch_mouth, **done;
+	bool 	switch_mouth;
+	int 	**done;
 
 	/*
 	  WRITES INFORMATION ABOUT HYDROLOGICAL BASINS
@@ -1672,7 +1647,7 @@ int write_file_river_basins (ModelConfig *cfg, ModelContext *ctx)
 
 	Write_Open_Filename_Return (".bas", "wt", !cfg->hydro_model || !switch_write_file);
 
-	done = (bool **) alloc_matrix_int(cfg->Ny, cfg->Nx);
+	done = alloc_matrix_int(cfg->Ny, cfg->Nx);
 
 	for (int i=0; i<cfg->Ny; i++) for (int j=0; j<cfg->Nx; j++) maxdisch=MAX_2(maxdisch, drainage[i][j].discharge);
 
@@ -1951,16 +1926,16 @@ int write_file_resume(ModelConfig *cfg, ModelContext *ctx)
 
 
 	/*Arrays:*/
-	for (i=0; i<Ny; i++) fwrite(w[i], sizeof(float), Nx, file);
-	for (i=0; i<Ny; i++) fwrite(D[i], sizeof(float), Nx, file);
-	for (i=0; i<Ny; i++) fwrite(q[i], sizeof(float), Nx, file);
-	for (i=0; i<Ny; i++) fwrite(Dw[i], sizeof(float), Nx, file);
-	for (i=0; i<Ny; i++) fwrite(Dq[i], sizeof(float), Nx, file);
-	for (i=0; i<Ny; i++) fwrite(h_water[i], sizeof(float), Nx, file);
-	for (i=0; i<Ny; i++) fwrite(h_last_unit[i], sizeof(float), Nx, file);
-	for (i=0; i<Ny; i++) fwrite(EET[i], sizeof(float), Nx, file);
-	for (i=0; i<Ny; i++) fwrite(topo[i], sizeof(float), Nx, file);
-	for (i=0; i<Ny; i++) fwrite(Blocks_base[i], sizeof(float), Nx, file);
+	if (fwrite(w[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to write w array."); return 0; }
+	if (fwrite(D[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to write D array."); return 0; }
+	if (fwrite(q[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to write q array."); return 0; }
+	if (fwrite(Dw[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to write Dw array."); return 0; }
+	if (fwrite(Dq[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to write Dq array."); return 0; }
+	if (fwrite(h_water[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to write h_water array."); return 0; }
+	if (fwrite(h_last_unit[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to write h_last_unit array."); return 0; }
+	if (fwrite(EET[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to write EET array."); return 0; }
+	if (fwrite(topo[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to write topo array."); return 0; }
+	if (fwrite(Blocks_base[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to write Blocks_base array."); return 0; }
 
 	fwrite(horiz_record_time, sizeof(float), n_record_times, file);
 

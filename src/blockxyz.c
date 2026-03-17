@@ -1,7 +1,7 @@
 /*
   Makes a xy grid from xyz sparse points.
 */
-#include <tisc.h>
+#include "tisc.h"
 
 int main(int argc, char **argv)
 {
@@ -81,7 +81,7 @@ int main(int argc, char **argv)
 
 
 	for (;;) {
-		char	linea[MAXLONLINE], *lin, zstr[MAXLONLINE];
+		char	linea[MAXLONLINE], *lin;
 		int 	nfields;
 		lin = fgets(linea, MAXLONLINE-1, file);
 		if ( lin == NULL ) { 
@@ -90,7 +90,9 @@ int main(int argc, char **argv)
 			if (verbose_level>=2) fprintf(stderr, "\t%d points were checked.\n", n_input_points);
 			break;
 		}
-		nfields=sscanf(lin, "%f %f %f", &x, &y, &z);
+		// Skip comments and empty lines
+		if (linea[0] == '#' || linea[0] == '\n' || linea[0] == '\r') continue;
+		nfields=sscanf(linea, "%f %f %f", &x, &y, &z); // Use sscanf directly on the line
 		if (nfields >= 3) {
 			int ii, jj;
 			j = floor((x-xmin)/dx+.5);

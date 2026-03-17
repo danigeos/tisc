@@ -61,11 +61,13 @@ float **alloc_matrix (int n_fil, int n_col)
 		printf("\nERROR: alloc_matrix: There isn't memory enough for a net of %dx%d knots of 16 bits.\n", n_col, n_fil);
 		exit(0);
 	}
+	float *data_block = (float *) calloc(n_fil * n_col, sizeof(float));
+	if (data_block == NULL) {
+		printf("\nERROR: alloc_matrix: There isn't memory enough for the data block.\n");
+		exit(0);
+	}
 	for (int i=0; i<n_fil; i++) {
-		if ((new_matrix[i] = (float *) calloc(n_col , sizeof(float))) == NULL) {
-			printf("\nERROR: There isn't memory enough for a net of %dx%d knots of 16 bits.\n", n_col, n_fil);
-			exit(0);
-		}
+		new_matrix[i] = data_block + i * n_col;
 	}	
 	return (new_matrix);
 }
@@ -81,12 +83,13 @@ double **alloc_matrix_dbl (int n_fil, int n_col)
 		printf("\nERROR: alloc_matrix_dbl: There isn't memory enough for a net of %dx%d knots of 32 bits.\n", n_col, n_fil);
 		exit(0);
 	}
+	double *data_block = (double *) calloc(n_fil * n_col, sizeof(double));
+	if (data_block == NULL) {
+		printf("\nERROR: alloc_matrix_dbl: There isn't memory enough for the data block.\n");
+		exit(0);
+	}
 	for (int i=0; i<n_fil; i++) {
-		if ((new_matrix[i] = (double *) calloc(n_col , sizeof(double))) == NULL) {
-			printf("\nERROR: There isn't memory enough for a net of %dx%d knots of 32 bits.\n", n_col, n_fil);
-			exit(0);
-		}
-
+		new_matrix[i] = data_block + i * n_col;
 	}
 	return (new_matrix);
 }
@@ -100,15 +103,16 @@ int **alloc_matrix_int (int n_fil, int n_col)
 	int 	**new_matrix;
 	if (!n_fil || !n_col) return (NULL);
 	if ((new_matrix = (int **) calloc(n_fil , sizeof(int *))) == NULL) {
-		printf("\nERROR: alloc_matrix_dbl: There isn't memory enough for a net of %dx%d knots of 32 bits.\n", n_col, n_fil);
+		printf("\nERROR: alloc_matrix_int: There isn't memory enough for a net of %dx%d knots.\n", n_col, n_fil);
+		exit(0);
+	}
+	int *data_block = (int *) calloc(n_fil * n_col, sizeof(int));
+	if (data_block == NULL) {
+		printf("\nERROR: alloc_matrix_int: There isn't memory enough for the data block.\n");
 		exit(0);
 	}
 	for (int i=0; i<n_fil; i++) {
-		if ((new_matrix[i] = (int *) calloc(n_col , sizeof(int))) == NULL) {
-			printf("\nERROR: There isn't memory enough for a net of %dx%d knots of 8? bits.\n", n_col, n_fil);
-			exit(0);
-		}
-
+		new_matrix[i] = data_block + i * n_col;
 	}
 	return (new_matrix);
 }
@@ -530,15 +534,10 @@ float evaluate_xy_points(
 int free_matrix (float **matrix, int n_fil)
 {
 	/* FREES THE MEMORY ALLOCATED FOR A FLOAT MATRIX */
-
-	int 	i;
-
-	for (i=0; i<n_fil; i++) {
-		if (matrix[i]) free(matrix[i]);
-		else PRINT_DEBUG("invalid address");
-	}	
-	if (matrix) free(matrix);
-	else PRINT_DEBUG("invalid address (2)");
+	if (matrix) {
+		if (matrix[0]) free(matrix[0]); // Free the contiguous data block
+		free(matrix);                   // Free the row pointers
+	}
 
 	return (1);
 }
@@ -548,13 +547,10 @@ int free_matrix (float **matrix, int n_fil)
 int free_matrix_dbl (double **matrix, int n_fil)
 {
 	/* FREES THE MEMORY ALLOCATED FOR A FLOAT MATRIX */
-
-
-	for (int i=0; i<n_fil; i++) {
-		free(matrix[i]);
-	}	
-	free(matrix);
-
+	if (matrix) {
+		if (matrix[0]) free(matrix[0]);
+		free(matrix);
+	}
 	return (1);
 }
 
@@ -564,12 +560,10 @@ int free_matrix_dbl (double **matrix, int n_fil)
 int free_matrix_int (int **matrix, int n_fil)
 {
 	/* FREES THE MEMORY ALLOCATED FOR A FLOAT MATRIX */
-
-	for (int i=0; i<n_fil; i++) {
-		free(matrix[i]);
-	}	
-	free(matrix);
-
+	if (matrix) {
+		if (matrix[0]) free(matrix[0]);
+		free(matrix);
+	}
 	return (1);
 }
 
@@ -1423,22 +1417,13 @@ int readinterp2D (
 #ifndef NMAXHEADERLINES
 #define NMAXHEADERLINES 100
 #endif
-#ifndef Match_Param_int
-#define Match_Param_int(x, y)  if (!strcasecmp(str1, x)) {y=atoi(str2); if (verbose_level>=3) fprintf(stdout, "\n"x"\t%d", y);}
-#endif
-#ifndef Match_Param_flt
-#define Match_Param_flt(x, y)  if (!strcasecmp(str1, x)) {y=atof(str2);; if (verbose_level>=3) fprintf(stdout, "\n"x"\t%f", y);}
-#endif
-#ifndef Match_Param_char
-#define Match_Param_char(x, y) if (!strcasecmp(str1, x)) {strcpy(y,str2); if (verbose_level>=3) fprintf(stdout, "\n"x"\t%s", y);}
-#endif
 	    rewind(file); 
  	    while ((lineptr=fgets(line, MAXLENLINE+200-1, file)) != NULL && nlines<NMAXHEADERLINES) {
  	    	nlines++; nread=sscanf(lineptr, "%s %s", str1, str2);
  	    	if (nread == 2) {
-	    	    Match_Param_int ( "mode_interp",	    mode_interp )
-	    	    Match_Param_flt ( "add_random", 	    add_random )
-	    	    Match_Param_flt ( "z_default",	    z_default )
+				if (!strcasecmp(str1, "mode_interp")) {mode_interp=atoi(str2); if (verbose_level>=3) fprintf(stdout, "\nmode_interp\t%d", mode_interp);}
+				if (!strcasecmp(str1, "add_random")) {add_random=atof(str2); if (verbose_level>=3) fprintf(stdout, "\nadd_random\t%f", add_random);}
+				if (!strcasecmp(str1, "z_default")) {z_default=atof(str2); if (verbose_level>=3) fprintf(stdout, "\nz_default\t%f", z_default);}
 		}
 	    }
 	    rewind(file);
@@ -1908,7 +1893,7 @@ char *replace_word(char *s, char *old, char *new)
 		}
 	}
 
-	ret = malloc(i + count * (newlen - oldlen));
+	ret = malloc(i + count * (newlen - oldlen) + 1);
 	if (ret == NULL)
 	exit(EXIT_FAILURE);
 

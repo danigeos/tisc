@@ -72,7 +72,10 @@ int main(int argc, char **argv)
 		exit(0);
 	}
 	for (i=0;;i++) {
-		TAKE_LINE_2(polygonX[i], polygonY[i])
+		char line[MAXLENLINE];
+		if (fgets(line, sizeof(line), file) == NULL) break;
+		if (line[0] == '#' || line[0] == '\n' || line[0] == '\r') continue;
+		if (sscanf(line, "%f %f", &polygonX[i], &polygonY[i]) != 2) continue;
 	}
 
 	fin_lectura:;

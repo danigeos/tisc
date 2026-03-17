@@ -5,21 +5,9 @@ Daniel Garcia-Castellanos
 
 #include "tisc.h"
 #include "tisclib.h"
+#include "param_config.h" // Include the new parameter config header
 #include "../lib/libreria.h"
 
-/* Definitions for tisc-specific global variables */
-struct GRIDNODE *sortcell;
-struct DRAINAGE **drainage;
-struct LAKE_INFO *Lake;
-struct BLOCK *Blocks;
-int erosed_model, hydro_model, mode_interp, nbasins, nlakes, n_ice_flow, n_image, n_insolation_input_points;
-float evaporation_ct, K_ice_eros, A_ice_rheo, A_ice_slide, dt_ice, total_rain, insolation_mean;
-float Px, Py, Pxy, CYrain, windazimut, xmin, xmax, ymin, ymax;
-float **D, **Dq, **Dw, **eros_now, **EET, **h_water, **h_last_unit, **ice_thickness, **ice_sedm_load;
-float **ice_velx_sl, **ice_vely_sl, **ice_velx_df, **ice_vely_df, **q, **evaporation, **precipitation;
-float **precipitation_snow, **precipitation_file, **topo, **accumul_erosion, **Blocks_base, **w;
-char boundary_conds[5], eros_bound_cond[5], solver_type, gif_geom[MAXLENLINE];
-int lake_instant_fill = 0, **lake_former_step;
 
 
 int Allocate_Memory_for_external_use()

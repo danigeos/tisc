@@ -11,57 +11,27 @@
 
 include config.mk
 
-all:
-	@echo; echo; echo Compiling version $(VERSION)
-	(cd src; make all)
-	@echo; echo; echo Compilation succeeded!
+.PHONY: all clean clean_for_tar help
+
+.DEFAULT_GOAL := all
+
+all: ## Compile the project
+	@printf "\n\nCompiling version $(VERSION)\n"
+	$(MAKE) -C src all
+	@printf "\n\nCompilation succeeded!\n"
 	@echo "Updating version in doc/template.PRM"
 	LANG=C sed -E -i.bak 's/^version[[:space:]]+.*/version\t\t$(VERSION)/' doc/template.PRM
-	@(echo "ADD TO YOUR PATH: `pwd`/bin/  AND  `pwd`/script/")
-	@(echo "ADD IN .cshrc:    setenv tisc_dir `pwd` ")
-	@(echo "ADD IN .bashrc:   export tisc_dir=`pwd` ")
+	@echo "ADD TO YOUR PATH: $(CURDIR)/bin/  AND  $(CURDIR)/script/"
+	@echo "ADD IN .cshrc:    setenv tisc_dir $(CURDIR) "
+	@echo "ADD IN .bashrc:   export tisc_dir=$(CURDIR) "
+
+clean: ## Clean generated files for packaging
+	$(MAKE) -C src clean
 
 clean_for_tar:
-	(cd src; make clean)
-	(cd demo; rm -f `find . -name '*.all' -print`)
-	(cd demo; rm -f `find . -name '*.bas' -print`)
-	(cd demo; rm -f `find . -name '*.lak' -print`)
-	(cd demo; rm -f `find . -name '*.tmp' -print`)
-	(cd demo; rm -f `find . -name '*[0-9][0-9][2-9].jpg' -print`)
-	(rm -f `find . -name core -print`)
+	$(MAKE) -C src clean
+	find demo -type f \( -name '*.all' -o -name '*.bas' -o -name '*.lak' -o -name '*.tmp' -o -name '*[0-9][0-9][2-9].jpg' \) -delete
+	find . -type f -name 'core' -delete
 
-
-vers: 	clean_for_tar
-	echo "CLEANING for packing"
-	rm -R -f tmp tisc_copy_for_upload
-	mkdir tmp tmp/bin
-	cp -R -L Makefile config.mk README demo doc include lib script src   tmp 
-	rm -f tmp/doc/.first_compilation.txt
-	if [ $(findstring THIN_SHEET,$(DEFS)) ]; then echo Including thin sheet stuff; else \
-		echo Removing thin sheet stuff; \
-		rm tmp/lib/*thin_sheet* ; \
-		rm tmp/lib/sistbanda* ; \
-	fi
-	if [ $(findstring SURFACE_TRANSPORT,$(DEFS)) ]; then echo Including surface processes stuff; else \
-		echo Removing surface processes stuff; \
-		rm tmp/src/*surf_proc* ; \
-	fi
-	echo "PACKING"
-	tar -chf $(VERSION).tar tmp
-	chmod og-r $(VERSION).tar
-	gzip -f $(VERSION).tar
-	touch tmp/bin/touch_something #needed by git add
-	mv tmp tisc_copy_for_upload
-	#make upload
-
-
-upload:
-	echo "UPLOADING to github."
-	cd tisc_copy_for_upload
-	#For initialization:  
-	#git init; git remote add tisc https://github.com/danigeos/tisc; git add Makefile README config.mk bin demo doc include lib script src; git rm --cached doc/.first_compilation.txt
-	git commit -a -m$(VERSION)
-	git config http.postBuffer 524288000; git config http.maxRequestBuffer 100M; git config core.compression 0
-	#add --force to pass by the remote version 
-	git push -u -f tisc master
-
+help: ## Show this help message
+	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n\nTargets:\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)

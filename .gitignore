@@ -10,6 +10,8 @@ more_on_TISC/
 *.a
 *.so
 *.dSYM/
+build/
+*.d
 .DS_Store
 
 # === Ignored Untracked Files ===
