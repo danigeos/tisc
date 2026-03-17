@@ -29,6 +29,7 @@
 90	../lib/thin_sheet.f	/^ 90            FORMAT (\/' ERROR: Encountered bad data after ',$/;"	l	subroutine:READ_BC	file:
 99	../lib/thin_sheet.f	/^ 99	CONTINUE$/;"	l	subroutine:READ_BC	file:
 999	../lib/thin_sheet.f	/^999    CONTINUE $/;"	l	subroutine:velocity_field	file:
+AREA_TRIANGLE	../../tao+tisc_commons/src/libreria.c	/^#define AREA_TRIANGLE(/;"	d	file:
 AUTHORSHIP	../include/tisc.h	/^#define AUTHORSHIP	/;"	d
 A_ice_rheo	globals.c	/^float evaporation_ct, K_ice_eros, A_ice_rheo, A_ice_slide, dt_ice, total_rain, insolation_mean;$/;"	v
 A_ice_slide	globals.c	/^float evaporation_ct, K_ice_eros, A_ice_rheo, A_ice_slide, dt_ice, total_rain, insolation_mean;$/;"	v
@@ -97,6 +98,8 @@ ModelConfig	../include/tisc.h	/^} ModelConfig;$/;"	t	typeref:struct:__anon1
 ModelContext	../include/tisc.h	/^} ModelContext;$/;"	t	typeref:struct:__anon2
 NDERS	surf_proc.c	/^#define	NDERS /;"	d	file:
 NDERS	tiscio.c	/^#define NDERS /;"	d	file:
+NMAXHEADERLINES	../../tao+tisc_commons/src/libreria.c	/^#define NMAXHEADERLINES /;"	d	file:
+NMAXPOINTS	../../tao+tisc_commons/src/libreria.c	/^#define NMAXPOINTS /;"	d	file:
 New_Lake	surf_proc.c	/^int New_Lake ()$/;"	f
 NmaxBlocks	../include/tisc.h	/^#define	NmaxBlocks	/;"	d
 Nx	../include/tisc.h	/^	int Nx, Ny;$/;"	m	struct:__anon1
@@ -115,11 +118,13 @@ Pxy	globals.c	/^float Px, Py, Pxy, CYrain, windazimut, xmin, xmax, ymin, ymax;$/
 Py	../include/tisc.h	/^	float Px, Py, Pxy;$/;"	m	struct:__anon1
 Py	globals.c	/^float Px, Py, Pxy, CYrain, windazimut, xmin, xmax, ymin, ymax;$/;"	v
 READ_BC	../lib/thin_sheet.f	/^      SUBROUTINE READ_BC /;"	s
+ReSort_Array	../../tao+tisc_commons/src/libreria.c	/^float ReSort_Array (float *array, int *orden, int Nx)$/;"	f
 ReSort_Matrix	tisclib.c	/^float ReSort_Matrix (float **matrix, struct GRIDNODE *orden, int Nx, int Ny)$/;"	f
 Rearth	globals.c	/^float Rearth = 6378e3;$/;"	v
 Repare_Blocks	tisclib.c	/^int Repare_Blocks(ModelConfig *cfg, ModelContext *ctx)$/;"	f
 Rise_Damn_Node	surf_proc.c	/^int Rise_Damn_Node ($/;"	f
 Sediment	surf_proc.c	/^int Sediment (ModelConfig *cfg, ModelContext *ctx, double d_mass, int row, int col, float grainsize) $/;"	f
+SolveAlmostDiagonalTriangularEquationSystem	../../tao+tisc_commons/src/libreria.c	/^int SolveAlmostDiagonalTriangularEquationSystem ($/;"	f
 Sort_Matrix	tisclib.c	/^float Sort_Matrix (float **matrix, struct GRIDNODE *orden, int Nx, int Ny)$/;"	f
 Surface_Transport	surf_proc.c	/^int Surface_Transport (ModelConfig *cfg, ModelContext *ctx, float **topo_ant, int lake_instant_fill) $/;"	f
 THICK2SEDMASS	surf_proc.c	/^#define THICK2SEDMASS(/;"	d	file:
@@ -132,10 +137,19 @@ Timefinal	../include/tisc.h	/^	float Time, Timeini, Timefinal;$/;"	m	struct:__an
 Timefinal	globals.c	/^float Time = 0, Timeini = 0, Timefinal = 0;$/;"	v
 Timeini	../include/tisc.h	/^	float Time, Timeini, Timefinal;$/;"	m	struct:__anon2
 Timeini	globals.c	/^float Time = 0, Timeini = 0, Timefinal = 0;$/;"	v
+TriangularizeAlmostDiagonalEquationSystem	../../tao+tisc_commons/src/libreria.c	/^int TriangularizeAlmostDiagonalEquationSystem($/;"	f
 Unify_Lakes	surf_proc.c	/^int Unify_Lakes (ModelConfig *cfg, ModelContext *ctx, int i_lake, int i_lake_to_delete)$/;"	f
+VERTANOMCONTRIB	../../tao+tisc_commons/src/libreria.c	/^#define VERTANOMCONTRIB(/;"	d	file:
 Viscous_Relaxation	tisc.c	/^int Viscous_Relaxation(ModelConfig *cfg, ModelContext *ctx)$/;"	f
+WriteAlmostDiagonalMatrix	../../tao+tisc_commons/src/libreria.c	/^int WriteAlmostDiagonalMatrix (double **A, double *b, int rango, char *filename, int NDs, int NDi)$/;"	f
 Write_Ouput	tisc.c	/^int Write_Ouput(ModelConfig *cfg, ModelContext *ctx)$/;"	f
 accumul_erosion	globals.c	/^float **precipitation_snow, **precipitation_file, **topo, **accumul_erosion, **Blocks_base, **w;$/;"	v
+alloc_array	../../tao+tisc_commons/src/libreria.c	/^float *alloc_array (int n)$/;"	f
+alloc_array_dbl	../../tao+tisc_commons/src/libreria.c	/^double *alloc_array_dbl (int n)$/;"	f
+alloc_matrix	../../tao+tisc_commons/src/libreria.c	/^float **alloc_matrix (int n_fil, int n_col)$/;"	f
+alloc_matrix_dbl	../../tao+tisc_commons/src/libreria.c	/^double **alloc_matrix_dbl (int n_fil, int n_col)$/;"	f
+alloc_matrix_int	../../tao+tisc_commons/src/libreria.c	/^int **alloc_matrix_int (int n_fil, int n_col)$/;"	f
+anombloq	../../tao+tisc_commons/src/libreria.c	/^float anombloq(register float x1, register float x2, float z1, float z2, float contrdens)$/;"	f
 boundary_conds	globals.c	/^char boundary_conds[5], eros_bound_cond[5], solver_type, gif_geom[MAXLENLINE];$/;"	v
 calculate_sea_level	tisclib.c	/^float calculate_sea_level(float current_time)$/;"	f
 calculate_topo	tisclib.c	/^float calculate_topo(ModelConfig *cfg, ModelContext *ctx, float **topo_new)$/;"	f
@@ -143,6 +157,7 @@ calculate_water_load	tisclib.c	/^int calculate_water_load(ModelConfig *cfg, Mode
 call_flexure_	call_tisc.c	/^int call_flexure_ ($/;"	f
 call_surf_proc_	call_tisc.c	/^int call_surf_proc_ ($/;"	f
 compact_depth	globals.c	/^float zini, dt_record, sed_porosity, compact_depth, last_time_file_time, random_topo = 0;$/;"	v
+compaction	../../tao+tisc_commons/src/libreria.c	/^float compaction(float phi0, float comp_depth, float z1, float z2) $/;"	f
 constant_rate_eros	surf_proc.c	/^int constant_rate_eros (ModelConfig *cfg, ModelContext *ctx, float Keroseol, float Ksedim, int water_load) $/;"	f
 critical_slope	globals.c	/^float Kerosdif, Keroseol, Ksedim, critical_slope, K_river_cap, erodibility, erodibility_sed, critical_stress;$/;"	v
 critical_stress	globals.c	/^float Kerosdif, Keroseol, Ksedim, critical_slope, K_river_cap, erodibility, erodibility_sed, critical_stress;$/;"	v
@@ -163,6 +178,12 @@ denssedim	../include/tisc.h	/^	float densenv, denssedim, denscrust, denswater, d
 denssedim	globals.c	/^float densasthen, densmantle, denscrust, densinfill, denssedim, densenv;$/;"	v
 denswater	../include/tisc.h	/^	float densenv, denssedim, denscrust, denswater, densice;$/;"	m	struct:__anon1
 denswater	globals.c	/^float denswater = 1020;$/;"	v
+diffusion_2D	../../tao+tisc_commons/src/libreria.c	/^int diffusion_2D(float **Matrix, float **d_Matrix, int Nx, int Ny, float Kdiff, float dx, float dy, float dteros)$/;"	f
+distVincenty	../../tao+tisc_commons/src/libreria.c	/^float distVincenty(float lat1, float lon1, float lat2, float lon2) {$/;"	f
+dist_2D	../../tao+tisc_commons/src/libreria.c	/^float dist_2D($/;"	f
+dist_xy_line	../../tao+tisc_commons/src/libreria.c	/^float dist_xy_line($/;"	f
+dist_xy_pol	../../tao+tisc_commons/src/libreria.c	/^float dist_xy_pol($/;"	f
+dist_xy_segment	../../tao+tisc_commons/src/libreria.c	/^float dist_xy_segment($/;"	f
 distance_half_grainsize	globals.c	/^float distance_half_grainsize = 5000.0;$/;"	v
 drainage	globals.c	/^struct DRAINAGE **drainage;$/;"	v	typeref:struct:DRAINAGE
 dt	../include/tisc.h	/^	float dt, dt_eros;$/;"	m	struct:__anon2
@@ -184,13 +205,19 @@ eros_bound_cond	globals.c	/^char boundary_conds[5], eros_bound_cond[5], solver_t
 eros_now	globals.c	/^float **D, **Dq, **Dw, **eros_now, **EET, **h_water, **h_last_unit, **ice_thickness, **ice_sedm_load;$/;"	v
 erosed_model	../include/tisc.h	/^	int erosed_model;$/;"	m	struct:__anon1
 erosed_model	globals.c	/^int erosed_model, hydro_model, mode_interp, nbasins, nlakes, n_ice_flow, n_image, n_insolation_input_points;$/;"	v
+evaluate_xy_points	../../tao+tisc_commons/src/libreria.c	/^float evaluate_xy_points($/;"	f
 evaporation	globals.c	/^float **ice_velx_sl, **ice_vely_sl, **ice_velx_df, **ice_vely_df, **q, **evaporation, **precipitation;$/;"	v
 evaporation_ct	globals.c	/^float evaporation_ct, K_ice_eros, A_ice_rheo, A_ice_slide, dt_ice, total_rain, insolation_mean;$/;"	v
 find_up_river	tiscio.c	/^int find_up_river (ModelConfig *cfg, ModelContext *ctx, int row, int col, int *level, int *count, float *length, float *chi, FILE *file, int **done, float ref_discharge)$/;"	f
+free_matrix	../../tao+tisc_commons/src/libreria.c	/^int free_matrix (float **matrix, int n_fil)$/;"	f
+free_matrix_dbl	../../tao+tisc_commons/src/libreria.c	/^int free_matrix_dbl (double **matrix, int n_fil)$/;"	f
+free_matrix_int	../../tao+tisc_commons/src/libreria.c	/^int free_matrix_int (int **matrix, int n_fil)$/;"	f
 g	globals.c	/^float g = 9.81;$/;"	v
+geoidanompolyg	../../tao+tisc_commons/src/libreria.c	/^float geoidanompolyg($/;"	f
 gif_geom	globals.c	/^char boundary_conds[5], eros_bound_cond[5], solver_type, gif_geom[MAXLENLINE];$/;"	v
 gradual_Block	tisclib.c	/^int gradual_Block(ModelConfig *cfg, ModelContext *ctx)$/;"	f
 grav_anom_type	globals.c	/^int grav_anom_type, isost_model, water_load;$/;"	v
+gravanompolyg	../../tao+tisc_commons/src/libreria.c	/^float gravanompolyg($/;"	f
 h_last_unit	globals.c	/^float **D, **Dq, **Dw, **eros_now, **EET, **h_water, **h_last_unit, **ice_thickness, **ice_sedm_load;$/;"	v
 h_water	globals.c	/^float **D, **Dq, **Dw, **eros_now, **EET, **h_water, **h_last_unit, **ice_thickness, **ice_sedm_load;$/;"	v
 horiz_record_time	globals.c	/^float **var_sea_level, **var_eros_level, **var_insolation, *horiz_record_time;$/;"	v
@@ -209,6 +236,9 @@ initial_grain_size	globals.c	/^float initial_grain_size = 1.0;$/;"	v
 inputs	tisc.c	/^int inputs (int argc, char **argv)$/;"	f
 insert_new_Block	tisclib.c	/^int insert_new_Block(int num_new_Block)$/;"	f
 insolation_mean	globals.c	/^float evaporation_ct, K_ice_eros, A_ice_rheo, A_ice_slide, dt_ice, total_rain, insolation_mean;$/;"	v
+interpol2D	../../tao+tisc_commons/src/libreria.c	/^int interpol2D ($/;"	f
+interpol_in_xy_data	../../tao+tisc_commons/src/libreria.c	/^float interpol_in_xy_data ($/;"	f
+interpol_point_in_mesh	../../tao+tisc_commons/src/libreria.c	/^float interpol_point_in_mesh ($/;"	f
 interpr_command_line_opts	tisc.c	/^int interpr_command_line_opts(int argc, char **argv) $/;"	f
 isost_model	globals.c	/^int grav_anom_type, isost_model, water_load;$/;"	v
 l_fluv_sedim	globals.c	/^float spl_m, spl_n, l_fluv_sedim, lost_rate, permeability, rain, Krain, relative_humidity, CXrain;$/;"	v
@@ -241,12 +271,17 @@ numBlocks	globals.c	/^int i_first_Block_load, i_Block_insert, numBlocks, nwroten
 num_params	globals.c	/^const int num_params = sizeof(param_table) \/ sizeof(ParameterEntry);/;"	v
 number_e	globals.c	/^float number_e = 2.7182818;$/;"	v
 nwrotenfiles	globals.c	/^int i_first_Block_load, i_Block_insert, numBlocks, nwrotenfiles, run_type;$/;"	v
+outin	../../tao+tisc_commons/src/libreria.c	/^int outin($/;"	f
 param_table	globals.c	/^ParameterEntry param_table[] = {$/;"	v
 permeability	globals.c	/^float spl_m, spl_n, l_fluv_sedim, lost_rate, permeability, rain, Krain, relative_humidity, CXrain;$/;"	v
 pi	globals.c	/^float pi = 3.14159265;$/;"	v
+polygon_area	../../tao+tisc_commons/src/libreria.c	/^float polygon_area($/;"	f
 precipitation	globals.c	/^float **ice_velx_sl, **ice_vely_sl, **ice_velx_df, **ice_vely_df, **q, **evaporation, **precipitation;$/;"	v
 precipitation_file	globals.c	/^float **precipitation_snow, **precipitation_file, **topo, **accumul_erosion, **Blocks_base, **w;$/;"	v
 precipitation_snow	globals.c	/^float **precipitation_snow, **precipitation_file, **topo, **accumul_erosion, **Blocks_base, **w;$/;"	v
+prism_vert_grav	../../tao+tisc_commons/src/libreria.c	/^double prism_vert_grav ($/;"	f
+project_xy_line	../../tao+tisc_commons/src/libreria.c	/^float project_xy_line($/;"	f
+project_xy_segment	../../tao+tisc_commons/src/libreria.c	/^float project_xy_segment($/;"	f
 projectname	globals.c	/^char projectname[MAXLONFICH], title[MAXLONLINE];$/;"	v
 q	globals.c	/^float **ice_velx_sl, **ice_vely_sl, **ice_velx_df, **ice_vely_df, **q, **evaporation, **precipitation;$/;"	v
 rain	globals.c	/^float spl_m, spl_n, l_fluv_sedim, lost_rate, permeability, rain, Krain, relative_humidity, CXrain;$/;"	v
@@ -267,12 +302,16 @@ read_file_rain	tiscio.c	/^int read_file_rain(float **precipitation_file)$/;"	f
 read_file_resume	tiscio.c	/^int read_file_resume(char *filename)$/;"	f
 read_file_sea_level	tiscio.c	/^int read_file_sea_level()$/;"	f
 read_file_unit	tisc.c	/^int read_file_unit(ModelConfig *cfg, ModelContext *ctx)$/;"	f
+readinterp2D	../../tao+tisc_commons/src/libreria.c	/^int readinterp2D ($/;"	f
+readinterplin	../../tao+tisc_commons/src/libreria.c	/^int readinterplin ($/;"	f
 reformat_file_thin_sheet_BC	tiscio.c	/^int reformat_file_thin_sheet_BC(ModelConfig *cfg, ModelContext *ctx, char *tmpTSBCfilename)$/;"	f
 relative_humidity	globals.c	/^float spl_m, spl_n, l_fluv_sedim, lost_rate, permeability, rain, Krain, relative_humidity, CXrain;$/;"	v
+replace_word	../../tao+tisc_commons/src/libreria.c	/^char *replace_word(char *s, char *old, char *new)$/;"	f
 run_type	globals.c	/^int i_first_Block_load, i_Block_insert, numBlocks, nwrotenfiles, run_type;$/;"	v
 sea_level	../include/tisc.h	/^	float sea_level;$/;"	m	struct:__anon2
 sea_level	globals.c	/^float sea_level = 0, temp_sea_level;$/;"	v
 sed_porosity	globals.c	/^float zini, dt_record, sed_porosity, compact_depth, last_time_file_time, random_topo = 0;$/;"	v
+sistecslintriang	../../tao+tisc_commons/src/libreria.c	/^void sistecslintriang(float **a, float *b, int nx, float *x)$/;"	f
 solveLESalmostdiagonal	tisclib.c	/^int solveLESalmostdiagonal (ModelConfig *cfg, double **A, double *b, float **x)$/;"	f
 solver_type	globals.c	/^char boundary_conds[5], eros_bound_cond[5], solver_type, gif_geom[MAXLENLINE];$/;"	v
 sortcell	globals.c	/^struct GRIDNODE *sortcell;$/;"	v	typeref:struct:GRIDNODE
@@ -280,6 +319,7 @@ spl_m	globals.c	/^float spl_m, spl_n, l_fluv_sedim, lost_rate, permeability, rai
 spl_n	globals.c	/^float spl_m, spl_n, l_fluv_sedim, lost_rate, permeability, rain, Krain, relative_humidity, CXrain;$/;"	v
 sqrt2	globals.c	/^float sqrt2 = 1.4142136;$/;"	v
 surface_processes	tisc.c	/^int surface_processes (float **topo_ant, ModelConfig *cfg, ModelContext *ctx)$/;"	f
+surface_topo	../../tao+tisc_commons/src/libreria.c	/^double surface_topo($/;"	f
 switch_debug	globals.c	/^bool switch_debug = false;$/;"	v
 switch_file_out	globals.c	/^bool switch_file_out = false, switch_gradual, switch_topoest, switch_write_file_Blocks, deform_sed;$/;"	v
 switch_geograph_coor	globals.c	/^bool switch_geograph_coor, switch_write_file;$/;"	v
@@ -314,6 +354,7 @@ total_rain	../include/tisc.h	/^	float total_rain, total_sed_mass, total_bedrock_
 total_rain	globals.c	/^float evaporation_ct, K_ice_eros, A_ice_rheo, A_ice_slide, dt_ice, total_rain, insolation_mean;$/;"	v
 total_sed_mass	../include/tisc.h	/^	float total_rain, total_sed_mass, total_bedrock_eros_mass;$/;"	m	struct:__anon2
 total_sed_mass	globals.c	/^float rain_per, rain_amp, total_bedrock_eros_mass, total_sed_mass;$/;"	v
+triangularizar	../../tao+tisc_commons/src/libreria.c	/^int triangularizar(float **a, float *b, int nx)$/;"	f
 upper_crust_thick_default	globals.c	/^float Te_default, crust_thick_default, upper_crust_thick_default;$/;"	v
 var_eros_level	globals.c	/^float **var_sea_level, **var_eros_level, **var_insolation, *horiz_record_time;$/;"	v
 var_insolation	globals.c	/^float **var_sea_level, **var_eros_level, **var_insolation, *horiz_record_time;$/;"	v

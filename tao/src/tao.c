@@ -671,7 +671,6 @@ int surface_processes(ModelConfig *cfg, ModelContext *ctx)
 
 	/*Creates a new sediment Block if necessary*/
 	if (erosed_model) {
-		int i;
 		float TimelastBlock=-9999*Matosec;
 		for (int i=0; i<Nx; i++) eros_now[i]=0;
 		for (int i=0; i<numBlocks; i++) 
@@ -715,7 +714,6 @@ int surface_processes(ModelConfig *cfg, ModelContext *ctx)
 	if (cfg->verbose_level>=1) {
 		if (cfg->erosed_model>1) {
 			int i, i_biggest_nosea=0, n_biggest_nosea=0;
-			double error_water;
 			for (i=1; i<=ctx->nlakes; i++) {
 				if (Lake[i].n > n_biggest_nosea) {
 					if (Lake[i].n_sd) {
@@ -726,7 +724,6 @@ int surface_processes(ModelConfig *cfg, ModelContext *ctx)
 				}
 			}
 			for (i=1; i<=ctx->nlakes; i++) {
-				float vol=0;
 				if (i==i_biggest_nosea || (Lake[i].n>ceil((double) cfg->Nx/100) && cfg->verbose_level>=3) || cfg->verbose_level>=4) {
 				PRINT_SUMLINE("lake %d/%d: %6.2f km2 %6.1f km%5.0f m ", 
 					i, ctx->nlakes, Lake[i].vol/1e6, Lake[i].n*cfg->dx/1e3, Lake[i].alt);
@@ -1002,7 +999,6 @@ int move_Blocks(ModelConfig *cfg, ModelContext *ctx)
 		/*DEFORM SEDIMENT UNITS*/
 		for (int i=0; i<cfg->Nx; i++) new_thick[i] = Blocks[iu].thick[i];
 		for (int i=0; i<cfg->Nx; i++) {
-			float sedthick;
 			/*CRAWL DOWN Blocks to find the uppermost moving Block below this point*/
 			for (int ju=iu-1, sedthick=Blocks[iu].thick[i]; ju>=0; ju--) {
 			/*Calculate the thickness of sediments between the top of this sed. Block and the moving Block*/
@@ -1111,8 +1107,9 @@ int read_file_unit(ModelConfig *cfg, ModelContext *ctx)
 
 	/*READS AND INTERPOLATES UNIT/LOAD FILE*/
 	{
-		int nlines=0, nread, show, replace=0;
+		int nlines=0, nread, show=0, replace=0;
 		char str1[MAXLENLINE], str2[MAXLENLINE], line[MAXLENLINE+200], *lineptr;
+		show=(cfg->verbose_level>=3)? 1 : 0;
 		rewind(file); 
 		while ((lineptr=fgets(line, MAXLENLINE+200-1, file)) != NULL && nlines<NMAXHEADERLINES) {
 				nlines++; nread=sscanf(lineptr, "%s %s", str1, str2);
@@ -1281,14 +1278,13 @@ int read_file_unit(ModelConfig *cfg, ModelContext *ctx)
 	}
 
 	if (cut_Block) {
-		int numBlocks0=ctx->numBlocks;
 		float *thick_aux;
 		if (cut_Block<0) {
 			/*Search the biggest Block with density close to -cut_Block*/
 			float vol, volmax=0, Blockvolmax=-1;
 			for (int k=0; k<ctx->numBlocks; k++) {
 				for (int i=vol=0; i<cfg->Nx; i++)  vol += Blocks[k].thick[i];
-				if (vol>volmax && fabs(Blocks[k].density-fabs(cut_Block))<.5) {volmax=vol; Blockvolmax=k;}
+				if (vol>volmax && fabs(Blocks[k].density-abs(cut_Block))<.5) {volmax=vol; Blockvolmax=k;}
 			}
 			cut_Block = Blockvolmax+1;
 		}

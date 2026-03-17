@@ -1,22 +1,12 @@
 #!/bin/csh
 ##############################################################################
 #job file to produce postscript graphic files of tisc results with GMT 4.0
-#	Daniel Garcia-Castellanos, 1994-2004.
-##############################################################################
-#Syntax: 	tisc.gmt.job 'model-root-name' 
+#Called by tisc with this Syntax: 	tisc.gmt.job 'model-root-name' 
 #This script uses bc unix command as a calculator. 
 ##############################################################################
 
 set prj 	= $1
 
-
-#cat <<END> $prj.PRFL
-#-48160	500000
-#-48160	0
-#260573	0
-#260573	500000
-#END
-#cuthrz $prj
 
 set width = 11
 set separation = .8
@@ -27,17 +17,17 @@ echo Region = $Region
 
 
 #3D TOPOGRAPHY:
-set size = $width/`echo $width \* $Ly \/ $Lx  | bc `
+set size = `echo $width $Ly $Lx | awk '{printf "%s/%.4f", $1, $1*$2/$3}'`
 set view_ang_ini = 240 #150 #250
 set view_ang_final = 150 #150
-set view_azimut = `echo $view_ang_ini + \($Timenow \- $Timeini \) \* \($view_ang_final\-$view_ang_ini\) \/ \($Timefinal \- $Timeini\)  | bc -l`
+set view_azimut = `echo $view_ang_ini $Timenow $Timeini $view_ang_final $Timefinal | awk '{printf "%.2f", $1 + ($2 - $3) * ($4 - $1) / ($5 - $3)}'`
 set view_elevation = 60
 set vert_size	= 5
 set zmin  	= -14999
 set zmax  	= 8000
 set ZRegion = $zmin/$zmax
 
-set size_lake_squares   = `echo  19  \/ $Nx | bc -l`
+set size_lake_squares = `echo 19 $Nx | awk '{printf "%.4f", $1/$2}'`
 set col_lake = 20/80/255
 set col_lake_endorheic = 80/70/255
 set color_thrust =  170/110/10  # $color_basement
@@ -52,15 +42,6 @@ psbasemap -JX$size -JZ$vert_size -R$Region/$ZRegion -E$view_azimut/$view_elevati
 	-Ba200f100:"         longitude (km)":/200f100:"latitude (km)":/a$zmax\f2000:"        elevation (m)":nWESZ -Y10 -X+4 \
 	-K -P > $ps 
 
-#Geology with topo-relief:
-#awk '{if (NR==2) for (i=3; i<=NF; i++) dens[i]=$i; if (NR>2) {for (i=NF; i>3; i--) if ($i-$(i-1)>1) break; if (i>16) d=dens[i]-10; else d=dens[i]; if ($NF>=0) print $1,$2,d; else print $1,$2,1000}}' $prj.hrz > $tmp.geol.xyd.tmp
-#xyz2grd	 $tmp.geol.xyd.tmp -G$tmp.geol.grd.tmp -I$dx/$dy -R$Region
-#grdview	$tmp.top.grd.tmp -JX -JZ -R$Region/$ZRegion -E$view_azimut/$view_elevation \
-#	-Qs -I$tmp.intensity.top.grd.tmp -B -G$tmp.geol.grd.tmp \
-#	-C$tmp.geol_palet.tmp -K -O >> $ps 
-#grdcontour $tmp.top.grd.tmp -JX$size -JZ$vert_size -R$Region/$ZRegion -E$view_azimut/$view_elevation \
-#	-B -C1000 -K -O -W15 -Z1/10000 >> $ps 
-
 pstext	-JX -JZ -E$view_azimut/$view_elevation -R -N -O -G0 -W255/255/255 -K <<END >> $ps 
 	330	660	17 0 1 MC	$Timenow Ma
 #	$xtime	$ytime	13 0 1 MC	$Timenow Ma
@@ -68,13 +49,13 @@ END
 pstext	-JX -JZ -E$view_azimut/$view_elevation -R -N -O -G0 -W255/255/255 -K <<END >> $ps 
 	510	660	17 0 1 MC	N
 END
-psxyz -JX -JZ -R -E$view_azimut/$view_elevation -Sv0.20c/0.36c/0.33c -N -W1/0 -G120/120/120 -O -K <<END>> $ps
+psxyz -JX -JZ -R -E$view_azimut/$view_elevation -Sv0.20c/0.36c/0.33c -N -W1p,black -G120/120/120 -O -K <<END>> $ps
 	485	635 	$zmin	90	1.2
 END
 
 set tect_arrows = `awk -v t=$Timenow 'BEGIN{if (t<-28) print 1; else print 0}'`
 if ($tect_arrows) then
-psxyz -JX -JZ -R -E$view_azimut/$view_elevation -Svh0.4c/0.5c/0.6c -N -W1/0 -G255/0/0 -O -K <<END>> $ps
+psxyz -JX -JZ -R -E$view_azimut/$view_elevation -Svh0.4c/0.5c/0.6c -N -W1p,black -G255/0/0 -O -K <<END>> $ps
 	0	$yf 	0	-90	1.
 	100	$yf 	0	-90	1.
 	200	$yf 	0	-90	1.
@@ -86,38 +67,34 @@ END
 endif 
 
 #Topography:
-grdview	$tmp.top.grd.tmp -JX -JZ -E$view_azimut/$view_elevation -W2/0 \
-	-R -Qs -I$tmp.intensity.top.grd.tmp -B \
+grdview	$tmp.top.grd.tmp -JX -JZ -R$Region/$ZRegion -E$view_azimut/$view_elevation \
+	-Qs -I$tmp.intensity.top.grd.tmp -B \
 	-C$tmp.topo_palet.tmp -K -O >> $ps 
 
 #Drainage:
 if (-r $prj.xyw) then 
-awk '{if ($3>1.5 && NR>2 && $5!="S" && $5!="L") {print $1,$2,$6; print $7,$8,$9; print ">"}}' $prj.xyw | \
-	psxyz -JX -JZ -R -M -W1/$col_river -E$view_azimut/$view_elevation -O -K >> $ps 
-awk '{if ($3>15  && NR>2 && $5!="S" && $5!="L") {print $1,$2,$6; print $7,$8,$9; print ">"}}' $prj.xyw | \
-	psxyz -JX -JZ -R -M -W4/$col_river -E$view_azimut/$view_elevation -O -K >> $ps 
-awk '{if ($3>80 && NR>2 && $5!="S" && $5!="L") {print $1,$2,$6; print $7,$8,$9; print ">"}}' $prj.xyw | \
-	psxyz -JX -JZ -R -M -W9/$col_river -E$view_azimut/$view_elevation -O -K >> $ps 
+awk '/^[^#]/ {if ($3>1.5 && $3<=15 && $5!="S" && $5!="L") {print ">"; print $1,$2,$6; print $7,$8,$9}}' $prj.xyw | \
+	psxyz -JX -JZ -R -M -W1p,$col_river -E$view_azimut/$view_elevation -O -K >> $ps 
+awk '/^[^#]/ {if ($3>15 && $3<=80 && $5!="S" && $5!="L") {print ">"; print $1,$2,$6; print $7,$8,$9}}' $prj.xyw | \
+	psxyz -JX -JZ -R -M -W4p,$col_river -E$view_azimut/$view_elevation -O -K >> $ps 
+awk '/^[^#]/ {if ($3>80 && $5!="S" && $5!="L") {print ">"; print $1,$2,$6; print $7,$8,$9}}' $prj.xyw | \
+	psxyz -JX -JZ -R -M -W9p,$col_river -E$view_azimut/$view_elevation -O -K >> $ps 
+
 #lakes:
 awk '{fc=substr($0,1,1); if (fc==">") {disch=1.0*$11; alt=$7; sds=$9} else {if (fc!="#" && (sds>0  && disch>2.5) && $3!="S") print $1, $2, alt;};}' $prj.lak | \
 	psxyz -JX -JZ -R -Ss$size_lake_squares -G$col_lake -E$view_azimut/$view_elevation -O -K >> $ps 
 awk '{fc=substr($0,1,1); if (fc==">") {disch=1.0*$11; alt=$7; sds=$9} else {if (fc!="#" && (sds==0 && disch>2.5) && $3!="S") print $1, $2, alt;};}' $prj.lak | \
 	psxyz -JX -JZ -R -Ss$size_lake_squares -G$col_lake_endorheic -E$view_azimut/$view_elevation -O -K >> $ps 
-#awk '{if ($5=="L") print $1, $2, $6}' $prj.xyw | \
-#	psxyz -JX -JZ -R -Ss$size_lake_squares -G$col_lake -E$view_azimut/$view_elevation -O -K >> $ps 
-#awk '{if ($5=="E") print $1, $2, $6}' $prj.xyw | \
-#	psxyz -JX -JZ -R -Ss$size_lake_squares -G$col_lake -E$view_azimut/$view_elevation -O -K >> $ps 
-#grdcontour $tmp.lakes.grd.tmp -JX -JZ -R -C$tmp.lakes_cpt.tmp -E$view_azimut/$view_elevation -O -K >> $ps
-#psxyz $tmp.lakes.xy.tmp -JX -JZ -R -M -L -W0/$col_river -G220/30/255 -E$view_azimut/$view_elevation -O -K >> $ps
 endif
 
 
 if (-r $prj.xyw) then 
-	awk '{print($1,$2,$10/1e3)}' $prj.xyw |\
-		xyz2grd	-G$tmp.rain.grd.tmp -I$dx/$dy -R -H2
+	awk '/^[^#]/ {print $1, $2, $10/1e3}' $prj.xyw |\
+		xyz2grd -G$tmp.rain.grd.tmp -I$dx/$dy -R
 	grdclip $tmp.rain.grd.tmp -G$tmp.rain.grd.tmp -Sb$min_rain/NaN
-	grdview $tmp.rain.grd.tmp -JX -JZ -E$view_azimut/$view_elevation \
-		-C$tmp.rain_cpt.tmp -R -Qs -O -K >> $ps
+	# Commenting out the rain plane as it draws a flat blue surface near Z=0 that obscures the topography
+	#grdview $tmp.rain.grd.tmp -JX -JZ -R$Region/$ZRegion -E$view_azimut/$view_elevation \
+	#	-C$tmp.rain_cpt.tmp -Qs -O -K >> $ps
 endif
 
 #2D CROSS SECTION:
@@ -125,28 +102,33 @@ if (-r $prj.pfl) then
 set dens 	= `awk '(NR==2) {print $0; exit;}' $prj.pfl`
 set numcols 	= `awk '(NR==4) {print NF; exit;}' $prj.pfl`
 
-awk '{if (NR>2) print $0}' $prj.pfl | invertfile > $tmp.pflinv.tmp
+# Reverse lines without requiring `invertfile` or `tac` binaries
+awk '{if (NR>2) {lines[NR]=$0}} END {for(i=NR; i>2; i--) print lines[i]}' $prj.pfl > $tmp.pflinv.tmp
+
+# The cross section forms the 3D block's vertical walls. Crop them based on visibility!
+set crop_limit1 = $Ly
+set crop_limit2 = `echo $Ly $Lx | awk '{print $1 + $2}'`
 
 awk -v sl=$sea_level -v zmin=$zmin '{if (NR>2) {z=$NF; if (z>sl) z=sl; if (z<zmin) z=zmin; print x=$1, y=$2, z, $3}}' $prj.pfl > $tmp.sea.xz.tmp
 awk '{print $1,$2,sl,$3}'  sl=$sea_level $tmp.pflinv.tmp >> $tmp.sea.xz.tmp
-awk -v va=$view_azimut '{if ((va<180 && $4>500) || (va>=180 && $4<1208)) print $0}' $tmp.sea.xz.tmp > $tmp.sea_crop.xz.tmp
+awk -v va=$view_azimut -v L1=$crop_limit1 -v L2=$crop_limit2 '{if ((va<180 && $4>L1) || (va>=180 && $4<L2)) print $0}' $tmp.sea.xz.tmp > $tmp.sea_crop.xz.tmp
 
 awk -v zmin=$zmin    '{if (NR>2) {z=$4;  if (z<zmin) z=zmin; print x=$1, y=$2, z, $3}}'  $prj.pfl > $tmp.basement.xz.tmp
 awk '{print $1,$2,zmin,$3}'  zmin=$zmin    $tmp.pflinv.tmp >> $tmp.basement.xz.tmp
-awk -v va=$view_azimut '{if ((va<180 && $4>500) || (va>=180 && $4<1208)) print $0}' $tmp.basement.xz.tmp > $tmp.basement_crop.xz.tmp
+awk -v va=$view_azimut -v L1=$crop_limit1 -v L2=$crop_limit2 '{if ((va<180 && $4>L1) || (va>=180 && $4<L2)) print $0}' $tmp.basement.xz.tmp > $tmp.basement_crop.xz.tmp
 
-psxyz -JX -JZ -R -E$view_azimut/$view_elevation -O -K -M -W3/0 <<END>> $ps
+psxyz -JX -JZ -R -E$view_azimut/$view_elevation -O -K -M -W3p,black <<END>> $ps
 	$x0 $y0 0
 	$xf $y0 0
 END
 set right_view = `awk -v va=$view_azimut 'BEGIN{if (va<180) print 0; else print 1}'`
 if ($right_view) then
-psxyz -JX -JZ -R -E$view_azimut/$view_elevation -O -K -M -W3/0 <<END>> $ps
+psxyz -JX -JZ -R -E$view_azimut/$view_elevation -O -K -M -W3p,black <<END>> $ps
 	$x0 $y0 0
 	$x0 $yf 0
 END
 else
-psxyz -JX -JZ -R -E$view_azimut/$view_elevation -O -K -M -W3/0 <<END>> $ps
+psxyz -JX -JZ -R -E$view_azimut/$view_elevation -O -K -M -W3p,black <<END>> $ps
 	$xf $y0 0
 	$xf $yf 0
 END
@@ -157,18 +139,18 @@ set col = 4
 while ($col < $numcols)
 	awk -v col=$col -v zmin=$zmin '{if (NR>2) {z=$(col+1); if (z<zmin) z=zmin; print $1, $2, z, $3}}' $prj.pfl       >  $tmp.unit.tmp
 	awk -v col=$col -v zmin=$zmin '{          {z=$(col  ); if (z<zmin) z=zmin; print $1, $2, z, $3}}' $tmp.pflinv.tmp >> $tmp.unit.tmp
-	awk -v va=$view_azimut '{if ((va<180 && $4>500) || (va>=180 && $4<1208)) print $0}' $tmp.unit.tmp > $tmp.unit_crop.tmp
+	awk -v va=$view_azimut -v L1=$crop_limit1 -v L2=$crop_limit2 '{if ((va<180 && $4>L1) || (va>=180 && $4<L2)) print $0}' $tmp.unit.tmp > $tmp.unit_crop.tmp
 
 	if ($dens[$col] >= 2400) then
 		set color = $color_thrust
 	else
 		set color = $color_sediment
 	endif
-	psxyz $tmp.unit_crop.tmp -JX -JZ -R -E$view_azimut/$view_elevation -O -K -L -M -G$color -W1/0 >> $ps
+	psxyz $tmp.unit_crop.tmp -JX -JZ -R -E$view_azimut/$view_elevation -O -K -L -M -G$color -W1p,black >> $ps
 	set col = `echo $col + 1 | bc`
 end
 
-psxyz -JX -JZ -R -E$view_azimut/$view_elevation -O -K -M -W3/0 <<END>> $ps
+psxyz -JX -JZ -R -E$view_azimut/$view_elevation -O -K -M -W3p,black <<END>> $ps
 	$x0 $y0 $zmin
 	$x0 $y0 2000
 >
@@ -180,7 +162,7 @@ endif
 
 set tect_arrows = `awk -v t=$Timenow 'BEGIN{if (t>-51 && t<-27) print 1; else print 0}'`
 if ($tect_arrows) then
-psxyz -JX -JZ -R -E$view_azimut/$view_elevation -Svh0.4c/0.3c/0.6c -N -W1/0 -G255/0/0 -O -K <<END>> $ps
+psxyz -JX -JZ -R -E$view_azimut/$view_elevation -Svh0.4c/0.3c/0.6c -N -W1p,black -G255/0/0 -O -K <<END>> $ps
 	0	$y0 	0	90	.6
 	100	$y0 	0	90	.6
 	200	$y0 	0	90	.6
@@ -189,7 +171,7 @@ endif
 
 set tect_arrows = `awk -v t=$Timenow 'BEGIN{if (t>-56 && t<-27) print 1; else print 0}'`
 if ($tect_arrows) then
-psxyz -JX -JZ -R -E$view_azimut/$view_elevation -Svh0.4c/0.3c/0.6c -N -W1/0 -G255/0/0 -O -K <<END>> $ps
+psxyz -JX -JZ -R -E$view_azimut/$view_elevation -Svh0.4c/0.3c/0.6c -N -W1p,black -G255/0/0 -O -K <<END>> $ps
 	400	$y0 	0	90	.6
 	500	$y0 	0	90	.6
 	600	$y0 	0	90	.6
@@ -198,7 +180,7 @@ endif
 
 set tect_arrows = `awk -v t=$Timenow 'BEGIN{if (t>-24.5 && t<-3) print 1; else print 0}'`
 if ($tect_arrows) then
-psxyz -JX -JZ -R -E$view_azimut/$view_elevation -Sv0.4c/0.5c/0.6c -N -W1/0 -G255/0/0 -O -K <<END>> $ps
+psxyz -JX -JZ -R -E$view_azimut/$view_elevation -Sv0.4c/0.5c/0.6c -N -W1p,black -G255/0/0 -O -K <<END>> $ps
 	500	$y0 	0	-45	1.4
 	600	$y0 	0	-45	1.4
 	$xf	0 	0	-45	1.4
@@ -207,7 +189,7 @@ psxyz -JX -JZ -R -E$view_azimut/$view_elevation -Sv0.4c/0.5c/0.6c -N -W1/0 -G255
 END
 endif 
 
-psxyz -JX -JZ -R -E$view_azimut/$view_elevation -Ss -W1/$col_river  -O <<END>> $ps 
+psxyz -JX -JZ -R -E$view_azimut/$view_elevation -O -T >> $ps 
 END
 
 rm -f  $tmp.*.tmp 

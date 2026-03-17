@@ -12,7 +12,7 @@ bin/*
 *.so
 *.d
 *.dSYM/
-build/
+tao+tisc_commons/build/
 .DS_Store
 
 # === Ignored Untracked Files ===

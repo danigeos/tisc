@@ -151,7 +151,6 @@ float compaction(float phi0, float comp_depth, float z1, float z2)
 	//when bringing the layer z2-z1 to depth 0 or viceversa. 
 	//z2>z1>0 (positive downwards) 
 	//z1 is the top
-	float z;
 	if (!comp_depth) return(0);
 	if (z1<0) z1=0; 
 	if (z2<z1) z2=z1+1.; 
@@ -169,7 +168,7 @@ float compaction(float phi0, float comp_depth, float z1, float z2)
 
 int diffusion_2D(float **Matrix, float **d_Matrix, int Nx, int Ny, float Kdiff, float dx, float dy, float dteros)
 {
-	int 	i, ii, j, jj, k;
+	int 	i, ii, j, jj;
 	float	deriv2x, deriv2y, 
 		mean_height, change, change_max;
 
@@ -591,7 +590,7 @@ float geoidanompolyg(
 */
 
 	double 	N=0, a2, mi, bi, ci, di, mi2, ci2,
-		ni=0, aux1, aux2, aux5, 
+		ni=0, aux1, aux2, 
 		zi, zh, yi, yh, 
 		Dyi, Dzi, Dyh, Dzh, Dyi2, Dzi2, Dyh2, Dzh2,
 		t1,  t2,  t3,  t4,  t5,  t6,  t7,  t8,  t9,  t10, 
@@ -719,10 +718,8 @@ float geoidanompolyg(
 
 int WriteAlmostDiagonalMatrix (double **A, double *b, int rango, char *filename, int NDs, int NDi)
 {
-	int	charsize;
 	FILE	*fich;
 
-	charsize = (int) 600/rango;
 	fich = fopen(filename, "wt");
 	if (fich) {
 		PRINT_INFO("Writing matrix in file '%s'.", filename); 
@@ -1027,7 +1024,7 @@ float interpol_point_in_mesh (
 {
 	/*INTERPOLATES THE Z VALUE OF A POINT WITH A GIVEN x-y-z MESH.*/	
 
-	int	i1, j1, i2, j2, i3, j3, i4, j4 , i0,j0;
+	int	i1, j1, i2, j2, i3, j3, i4, j4;
 	float	result, ymax=ymin+(Ny-1)*dy, 
 		d1, d2, d3, d4;
 
@@ -1122,8 +1119,8 @@ int outin(
 	*/
 
 	int	i;
-	float 	circulation=0, partial_circ, L, L2, D, D2, E, E2, x0, y0, xf, yf, 
-		b, K, sq, disc, pol_length=0;
+	float 	circulation=0, partial_circ, L, L2, D, D2, E, E2, x0, y0, xf, yf,
+		b, K, sq, disc;
 
 	for (i=0; i<np; i++){
 		x0 = polygonX[i];
@@ -1137,7 +1134,6 @@ int outin(
 		L = sqrt(L2);					/*Length of this polygon side.*/
 		D = sqrt(D2);					/*Distance from the point to the first point of the side*/
 		E = sqrt(E2);					/*Distance from the point to the secnd point of the side*/
-		pol_length += L;
 		K = ((x0-x)*(yf-y0) - (y0-y)*(xf-x0)) / L;	/*(x0-x,y0-y) x (xf-x0,yf-y0) / L */
 		b = ((x0-x)*(xf-x0) + (y0-y)*(yf-y0)) * 2 / L;	/*(x0-x,y0-y) * (xf-x0,yf-y0) * 2 / L */
 		disc = b*b-4*D2;
@@ -1604,7 +1600,7 @@ int readinterplin (
 float ReSort_Array (float *array, int *orden, int Nx)
 {
 	/* SORTS ARRAY NODES GIVEN A PREVIOUS SORT */
-	register int 	numorden, i, j, aux1;
+	register int 	numorden, i, aux1;
 	for (numorden=0; numorden < Nx-1; numorden++) {
 		if ( array[orden[numorden]] < array[orden[numorden+1]] ) {
 			aux1 = orden[numorden+1];

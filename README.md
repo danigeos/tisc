@@ -28,4 +28,4 @@ To compile both projects, simply run `make` from this root directory:
 make
 ```
 
-This will place all executables in the root `bin/` directory and all object files in the root `build/` directory.
+This will place all executables in the root `bin/` directory.

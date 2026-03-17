@@ -122,6 +122,11 @@ int Delete_Block(int i_Block)
 		free_matrix (Blocks[i_Block].vel_y,    Ny);
 		free_matrix (Blocks[i_Block].visc,     Ny);
 		free_matrix (Blocks[i_Block].viscTer,  Ny);
+	} else {
+		free_matrix (Blocks[i_Block].vel_x,    1);
+		free_matrix (Blocks[i_Block].vel_y,    1);
+		free_matrix (Blocks[i_Block].visc,     1);
+		free_matrix (Blocks[i_Block].viscTer,  1);
 	}
 	if (Blocks[i_Block].type == 'S') {
 		free_matrix (Blocks[i_Block].detr_ratio,  Ny);
@@ -500,7 +505,7 @@ int defineLESmatrix_for_mathlib (ModelConfig *cfg, float *A, int *IA, int *JA, f
 		Only tied BC (#0) available with this solver.
 	*/
 
-	register int 	i, j, nodo, NDi=2*cfg->Ny, NDs=2*cfg->Ny, nz ;
+	register int 	i, j, nodo, nz ;
 	float		dx4=cfg->dx*cfg->dx*cfg->dx*cfg->dx,   dy4=cfg->dy*cfg->dy*cfg->dy*cfg->dy,   dx2dy2=cfg->dx*cfg->dx*cfg->dy*cfg->dy,  dx2=cfg->dx*cfg->dx,  dy2=cfg->dy*cfg->dy,  dxdy=cfg->dx*cfg->dy ,
 			D0, Dx, Dy, Dx2, Dy2, Dxy, Krest;
 
@@ -750,7 +755,7 @@ int solveLESalmostdiagonal (ModelConfig *cfg, double **A, double *b, float **x)
 
 float Sort_Matrix (float **matrix, struct GRIDNODE *orden, int Nx, int Ny)
 {
-	int	numorden, i, j, fil, col;
+	int	numorden, i, j, fil=0, col=0;
 	bool	**switch_done;
 	float	maxmatrix;
 
@@ -781,7 +786,7 @@ float Sort_Matrix (float **matrix, struct GRIDNODE *orden, int Nx, int Ny)
 
 float ReSort_Matrix (float **matrix, struct GRIDNODE *orden, int Nx, int Ny)
 {
-	register int 	numorden, i, j, aux1, aux2;
+	register int 	numorden, i, aux1, aux2;
 
 	/* SORTS MATRIX NODES GIVEN A PREVIOUS SORT */
 

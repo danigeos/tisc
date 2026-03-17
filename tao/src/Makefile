@@ -9,22 +9,28 @@ tao_DIR = $(abspath ..)
 HOME_DIR = $(HOME)
 OS 	= $(shell uname -s)
 ARCH 	= $(shell uname -m)
+PROCESSOR = $(shell uname -p)
+USERNAME = $(shell whoami)
 BIN	= ../../bin
-OBJ	= ../../build
-LIB	= ../lib
+OBJ	= ../../tao+tisc_commons/build
+LIB	= ../../tao+tisc_commons/lib
 INCL	= ../include 
 
 # --- Fancy output & verbosity control ---
-V ?= 0
+V ?= 1
 ifeq ($(V),0)
   Q = @
 else
   Q =
 endif
 
-BLUE  = \033[34m
-GREEN = \033[32m
-RESET = \033[0m
+BOLD    := \033[1m
+CYAN    := \033[36m
+BLUE    := \033[34m
+GREEN   := \033[32m
+YELLOW  := \033[33m
+MAGENTA := \033[35m
+RESET   := \033[0m
 
 .PHONY: all backup clean notify help
 
@@ -38,40 +44,47 @@ clean: ## Remove generated object files and binaries
 	$(RM) -f $(OBJ)/*.o $(OBJ)/*.d $(LIB)/*.o $(LIB)/*.a $(BIN)/.dSYM 
 
 DEPFLAGS = -MMD -MP
-CFLAGS = $(OPTS) -I$(INCL) -I../../tao+tisc_commons/include $(DEPFLAGS)
+CFLAGS = $(OPTS) -I$(INCL) -I../../tao+tisc_commons/include $(DEPFLAGS) -Wall
 	
 TAO_OBJS = $(OBJ)/tao.o $(OBJ)/taosp.o $(OBJ)/globals.o $(OBJ)/taolib.o $(OBJ)/taoio.o
 
 $(OBJ):
 	mkdir -p $(OBJ)
 
-tao :	$(TAO_OBJS) $(OBJ)/libreria.o notify
-	@printf "$(GREEN)[LD]$(RESET) $@\n"
+$(BIN):
+	mkdir -p $(BIN)
+
+tao :	$(TAO_OBJS) $(OBJ)/libreria.o notify | $(BIN)
+	@printf "\n$(MAGENTA)$(BOLD)============================================================$(RESET)\n"
+	@printf "$(GREEN)$(BOLD)  [✨] LINKING FINAL tAo EXECUTABLE: $@$(RESET)\n"
+	@printf "$(MAGENTA)$(BOLD)============================================================$(RESET)\n"
 	$(Q)$(CC) $(TAO_OBJS) $(OBJ)/libreria.o $(LIBS) -o $(BIN)/tao
 	$(Q)chmod a+x $(BIN)/tao
+	@printf "$(YELLOW)$(BOLD)  ✅ tAo BUILD COMPLETE!$(RESET)\n"
+	@printf "$(MAGENTA)$(BOLD)============================================================$(RESET)\n\n"
 
 $(OBJ)/tao.o : tao.c | $(OBJ)
-	@printf "$(BLUE)[CC]$(RESET) $<\n"
+	@printf "$(BLUE)$(BOLD)[CC]$(RESET) $<\n"
 	$(Q)$(CC) $(CFLAGS) -c -o $@ -DVERSION=\"$(VERSION)\" -D'TAODIR="$(tao_DIR)"' tao.c
 	$(Q)if [ -x /usr/bin/ctags ]; then \
-		ctags *.c ../lib/libreria.c ../include/*.h 2>/dev/null;\
+		ctags *.c ../../tao+tisc_commons/src/libreria.c ../include/*.h ;\
 		mv -f tags tao.tags; echo tags file produced.;\
 	fi
 
 $(OBJ)/%.o: %.c | $(OBJ)
-	@printf "$(BLUE)[CC]$(RESET) $<\n"
+	@printf "$(BLUE)$(BOLD)[CC]$(RESET) $<\n"
 	$(Q)$(CC) $(CFLAGS) -c $< -o $@
 
 $(OBJ)/call_taosp.o : call_taosp.c | $(OBJ)
-	@printf "$(BLUE)[CC]$(RESET) $<\n"
+	@printf "$(BLUE)$(BOLD)[CC]$(RESET) $<\n"
 	$(Q)$(CC) $(CFLAGS) -c -o $@ call_taosp.c
 
 $(OBJ)/libreria.o : ../../tao+tisc_commons/src/libreria.c | $(OBJ)
-	@printf "$(BLUE)[CC]$(RESET) $<\n"
+	@printf "$(BLUE)$(BOLD)[CC]$(RESET) $<\n"
 	$(Q)$(CC) $(CFLAGS) -c $< -o $@
 
-taofit : $(OBJ)/libreria.o $(OBJ)/globals.o $(OBJ)/taofit.o | $(OBJ)
-	@printf "$(GREEN)[LD]$(RESET) $@\n"
+taofit : $(OBJ)/libreria.o $(OBJ)/globals.o $(OBJ)/taofit.o | $(OBJ) $(BIN)
+	@printf "$(GREEN)$(BOLD)[LD]$(RESET) $@\n"
 	$(Q)$(CC) $(OBJ)/taofit.o $(OBJ)/globals.o $(OBJ)/libreria.o -lc -lm -o $(BIN)/taofit
 	$(Q)chmod a+x $(BIN)/taofit
 

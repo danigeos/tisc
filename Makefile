@@ -1,29 +1,57 @@
 # --- Root Makefile for tAo and TISC Monorepo ---
 
 BIN := $(CURDIR)/bin
-BUILD := $(CURDIR)/build
+BUILD := $(CURDIR)/tao+tisc_commons/build
 
-.PHONY: all clean help tao tisc dirs
+OS        := $(shell uname -s)
+ARCH      := $(shell uname -m)
+PROCESSOR := $(shell uname -p)
+USERNAME  := $(shell whoami)
+
+BOLD    := \033[1m
+CYAN    := \033[36m
+BLUE    := \033[34m
+GREEN   := \033[32m
+YELLOW  := \033[33m
+MAGENTA := \033[35m
+RESET   := \033[0m
+
+.PHONY: all clean help tao tisc dirs info
 
 .DEFAULT_GOAL := all
 
-all: dirs tao tisc ## Compile both tAo and TISC
+all: info dirs tao tisc ## Compile both tAo and TISC
+	@printf "\n"
+	@printf "$(MAGENTA)$(BOLD)============================================================$(RESET)\n"
+	@printf "$(GREEN)$(BOLD)      🎉 SUCCESS! TISC and tAo are ready to use! 🎉$(RESET)\n"
+	@printf "$(MAGENTA)$(BOLD)============================================================$(RESET)\n"
 	@echo ""
 	@echo "======================================================================="
 	@echo "To run the executables, add the following to your shell profile (e.g., .bashrc or .zshrc):"
 	@echo "  export tisc_dir=\"$(CURDIR)\""
-	@echo "  export PATH=\"$$PATH:$(BIN)\""
+	@echo "  export PATH=\"\$$PATH:$(BIN)\""
 	@echo "======================================================================="
 
+info:
+	@printf "\n"
+	@printf "$(MAGENTA)$(BOLD)============================================================$(RESET)\n"
+	@printf "$(YELLOW)$(BOLD)      🌟 COMPILING TISC (Tectonics, Isostasy, Surface) 🌟$(RESET)\n"
+	@printf "$(MAGENTA)$(BOLD)============================================================$(RESET)\n"
+	@printf "$(CYAN)  User:$(RESET)        $(USERNAME)\n"
+	@printf "$(CYAN)  OS:$(RESET)          $(OS)\n"
+	@printf "$(CYAN)  Arch:$(RESET)        $(ARCH)\n"
+	@printf "$(CYAN)  Processor:$(RESET)   $(PROCESSOR)\n"
+	@printf "$(MAGENTA)$(BOLD)============================================================$(RESET)\n\n"
+
 tao: ## Compile tAo
-	@$(MAKE) -C tao
+	@$(MAKE) -C tao/src all
 
 tisc: ## Compile TISC
-	@$(MAKE) -C tisc
+	@$(MAKE) -C tisc/src all
 
 clean: ## Clean generated files for both projects
-	@$(MAKE) -C tao clean
-	@$(MAKE) -C tisc clean
+	@$(MAKE) -C tao/src clean
+	@$(MAKE) -C tisc/src clean
 	@rm -rf $(BIN) $(BUILD)
 	@echo "Cleaned both tAo and TISC."
 

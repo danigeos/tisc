@@ -1267,7 +1267,7 @@ int Fluvial_Transport(struct GRIDNODE *sortcell, ModelConfig *cfg, ModelContext 
 				}
 
 				switch (erosed_model) {
-#define ERODED_ERODIBILITY   /*Takes a mean erodibility*/ float depth2average=10., dh, weight, totalweight=0, basedepth=0, erodibility_aux=0;\
+#define ERODED_ERODIBILITY   /*Takes a mean erodibility*/ float depth2average=10., weight, totalweight=0, basedepth=0, erodibility_aux=0;\
 					for (int i=numBlocks-1; i>=0; i--) {\
 						basedepth+=Blocks[i].thick[row][col];\
 						basedepth=MIN_2(basedepth,depth2average+.1);\
@@ -1316,6 +1316,7 @@ int Fluvial_Transport(struct GRIDNODE *sortcell, ModelConfig *cfg, ModelContext 
 						spl_m = 1/3;
 						spl_n = 2/3;
 						ERODED_ERODIBILITY;
+						float dh;
 						/*bedrock channel incision*/
 						dh = erodibility_aux		/*Eq. 11 of T&S*/
 							* pow((double)drainage[row][col].discharge, (double)spl_m)
@@ -1370,6 +1371,7 @@ int Fluvial_Transport(struct GRIDNODE *sortcell, ModelConfig *cfg, ModelContext 
 						spl_n = 7*a/10;		  /*=1.05*/ PRINT_DEBUGPLUS("Exponents m, n (%.2e %.2e", spl_m, spl_n)
 						/*bedrock channel incision*/
 						ERODED_ERODIBILITY;
+						float dh;
 							dh = erodibility_aux/secsperyr * pow(1020*g, a)
 								* pow((double).05/Kw, (double) 3*a/5)
 								* pow((double)drainage[row][col].discharge, (double)spl_m) 
@@ -1395,6 +1397,7 @@ int Fluvial_Transport(struct GRIDNODE *sortcell, ModelConfig *cfg, ModelContext 
 						spl_n = a;
 						/*bedrock channel incision*/
 						ERODED_ERODIBILITY;
+						float dh;
 						dh = erodibility_aux/secsperyr * pow(1020*g, a) / Kw 
 							* pow((double)drainage[row][col].discharge, (double)spl_m) 
 							* pow((double)slope, 			(double)spl_n) 
@@ -1418,6 +1421,7 @@ int Fluvial_Transport(struct GRIDNODE *sortcell, ModelConfig *cfg, ModelContext 
 
 						/*bedrock channel incision, same as #6 with tau_c (critical shear stress) and pulled exp out of individual powers*/
 						ERODED_ERODIBILITY;
+						float dh;
 						double in_eqn = 1020 * g 
 							* pow((double).05/Kw,(double) 3/5) 
 							* pow((double)drainage[row][col].discharge, (double)(3*(1-aw))/5) 

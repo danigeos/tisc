@@ -1,3 +1,4 @@
+AREA_TRIANGLE	../../tao+tisc_commons/src/libreria.c	/^#define AREA_TRIANGLE(area, a, b, c)	{\/*Heron's f/
 Add_Node_To_Lake	taosp.c	/^int Add_Node_To_Lake (int ncell, int i_lake)$/
 Add_Saddle_To_Lake	taosp.c	/^int Add_Saddle_To_Lake (int sd, int tr, int i_lake/
 Allocate_Memory	taolib.c	/^int Allocate_Memory(ModelConfig *cfg, ModelContext/
@@ -33,33 +34,65 @@ New_Lake	taosp.c	/^int New_Lake (ModelConfig *cfg, ModelContext *ctx)/
 Orographic_Precipitation	taosp.c	/^float Orographic_Precipitation (ModelConfig *cfg, /
 Orographic_Precipitation_Evaporation_conservative	taosp.c	/^int Orographic_Precipitation_Evaporation_conservat/
 PRINT_ARRAY_INFO_1D	../include/tao.h	/^#define PRINT_ARRAY_INFO_1D(array, name, units, un/
+ReSort_Array	../../tao+tisc_commons/src/libreria.c	/^float ReSort_Array (float *array, int *orden, int /
 Read_Param	../include/tao.h	/^#define Read_Param(x, y)  {char line[MAXLENLINE+20/
 Repare_Blocks	taolib.c	/^int Repare_Blocks(ModelConfig *cfg, ModelContext */
 Rheo_Flex_Iter	taolib.c	/^int Rheo_Flex_Iter (ModelConfig *cfg, ModelContext/
 Sediment	taosp.c	/^int Sediment (ModelConfig *cfg, ModelContext *ctx,/
+SolveAlmostDiagonalTriangularEquationSystem	../../tao+tisc_commons/src/libreria.c	/^int SolveAlmostDiagonalTriangularEquationSystem ($/
 Surface_Transport	taosp.c	/^int Surface_Transport (ModelConfig *cfg, ModelCont/
 THICK2SEDMASS_1D	../include/tao.h	/^#define THICK2SEDMASS_1D(cfg, thick)	((thick)*(cfg/
 The_End	tao.c	/^int The_End(ModelConfig *cfg, ModelContext *ctx)$/
+TriangularizeAlmostDiagonalEquationSystem	../../tao+tisc_commons/src/libreria.c	/^int TriangularizeAlmostDiagonalEquationSystem($/
 Unify_Lakes	taosp.c	/^int Unify_Lakes (ModelConfig *cfg, ModelContext *c/
+VERTANOMCONTRIB	../../tao+tisc_commons/src/libreria.c	/^#define VERTANOMCONTRIB(s,x,y,z) {\\$/
 Viscous_Relaxation	tao.c	/^int Viscous_Relaxation(ModelConfig *cfg, ModelCont/
+WriteAlmostDiagonalMatrix	../../tao+tisc_commons/src/libreria.c	/^int WriteAlmostDiagonalMatrix (double **A, double /
 Write_Ouput	tao.c	/^int Write_Ouput(ModelConfig *cfg, ModelContext *ct/
+alloc_array	../../tao+tisc_commons/src/libreria.c	/^float *alloc_array (int n)$/
+alloc_array_dbl	../../tao+tisc_commons/src/libreria.c	/^double *alloc_array_dbl (int n)$/
+alloc_matrix	../../tao+tisc_commons/src/libreria.c	/^float **alloc_matrix (int n_fil, int n_col)$/
+alloc_matrix_dbl	../../tao+tisc_commons/src/libreria.c	/^double **alloc_matrix_dbl (int n_fil, int n_col)$/
+alloc_matrix_int	../../tao+tisc_commons/src/libreria.c	/^int **alloc_matrix_int (int n_fil, int n_col)$/
+anombloq	../../tao+tisc_commons/src/libreria.c	/^float anombloq(register float x1, register float x/
 calculate_sea_level	taolib.c	/^float calculate_sea_level(float current_time)$/
 calculate_topo	taolib.c	/^float calculate_topo(ModelConfig *cfg, ModelContex/
 calculate_water_load	taolib.c	/^int calculate_water_load(ModelConfig *cfg, ModelCo/
 call_surf_proc_	call_taosp.c	/^int call_surf_proc_ ($/
+compaction	../../tao+tisc_commons/src/libreria.c	/^float compaction(float phi0, float comp_depth, flo/
 constant_rate_eros	taosp.c	/^int constant_rate_eros (ModelConfig *cfg, ModelCon/
+diffusion_2D	../../tao+tisc_commons/src/libreria.c	/^int diffusion_2D(float **Matrix, float **d_Matrix,/
+distVincenty	../../tao+tisc_commons/src/libreria.c	/^float distVincenty(float lat1, float lon1, float l/
+dist_2D	../../tao+tisc_commons/src/libreria.c	/^float dist_2D($/
+dist_xy_line	../../tao+tisc_commons/src/libreria.c	/^float dist_xy_line($/
+dist_xy_pol	../../tao+tisc_commons/src/libreria.c	/^float dist_xy_pol($/
+dist_xy_segment	../../tao+tisc_commons/src/libreria.c	/^float dist_xy_segment($/
+evaluate_xy_points	../../tao+tisc_commons/src/libreria.c	/^float evaluate_xy_points($/
 flexural_stats	taolib.c	/^int flexural_stats (ModelConfig *cfg, ModelContext/
+free_matrix	../../tao+tisc_commons/src/libreria.c	/^int free_matrix (float **matrix, int n_fil)$/
+free_matrix_dbl	../../tao+tisc_commons/src/libreria.c	/^int free_matrix_dbl (double **matrix, int n_fil)$/
+free_matrix_int	../../tao+tisc_commons/src/libreria.c	/^int free_matrix_int (int **matrix, int n_fil)$/
+geoidanompolyg	../../tao+tisc_commons/src/libreria.c	/^float geoidanompolyg($/
 gradual_Block	taolib.c	/^int gradual_Block(ModelConfig *cfg, ModelContext */
+gravanompolyg	../../tao+tisc_commons/src/libreria.c	/^float gravanompolyg($/
 gravity_anomaly	tao.c	/^int gravity_anomaly(ModelConfig *cfg, ModelContext/
 init_surf_proc_	call_taosp.c	/^int init_surf_proc_ ($/
 inputs	tao.c	/^int inputs(ModelConfig *cfg, ModelContext *ctx, in/
 insert_new_Block	taolib.c	/^int insert_new_Block(ModelConfig *cfg, ModelContex/
+interpol2D	../../tao+tisc_commons/src/libreria.c	/^int interpol2D ($/
+interpol_in_xy_data	../../tao+tisc_commons/src/libreria.c	/^float interpol_in_xy_data ($/
+interpol_point_in_mesh	../../tao+tisc_commons/src/libreria.c	/^float interpol_point_in_mesh ($/
 interpr_command_line_opts	tao.c	/^int interpr_command_line_opts(int argc, char **arg/
 make_gravi_body	taolib.c	/^int make_gravi_body(ModelConfig *cfg, float *upper/
 match_parameter	taolib.c	/^int match_parameter(char *str1, char *str2, int sh/
 moment_calculator	taolib.c	/^float moment_calculator (ModelConfig *cfg,$/
 moment_calculator_hist	taolib.c	/^float moment_calculator_hist (ModelConfig *cfg,$/
 move_Blocks	tao.c	/^int move_Blocks(ModelConfig *cfg, ModelContext *ct/
+outin	../../tao+tisc_commons/src/libreria.c	/^int outin($/
+polygon_area	../../tao+tisc_commons/src/libreria.c	/^float polygon_area($/
+prism_vert_grav	../../tao+tisc_commons/src/libreria.c	/^double prism_vert_grav ($/
+project_xy_line	../../tao+tisc_commons/src/libreria.c	/^float project_xy_line($/
+project_xy_segment	../../tao+tisc_commons/src/libreria.c	/^float project_xy_segment($/
 read_file_Crust_Thick	taoio.c	/^int read_file_Crust_Thick(float crust_thick_defaul/
 read_file_Te	taoio.c	/^int read_file_Te()$/
 read_file_Temperature	taoio.c	/^int read_file_Temperature(ModelConfig *cfg, ModelC/
@@ -72,10 +105,16 @@ read_file_parameters	taoio.c	/^int read_file_parameters (int show, int reformat)
 read_file_resume	taoio.c	/^int read_file_resume(char *filename)$/
 read_file_sea_level	taoio.c	/^int read_file_sea_level()$/
 read_file_unit	tao.c	/^int read_file_unit(ModelConfig *cfg, ModelContext /
+readinterp2D	../../tao+tisc_commons/src/libreria.c	/^int readinterp2D ($/
+readinterplin	../../tao+tisc_commons/src/libreria.c	/^int readinterplin ($/
+replace_word	../../tao+tisc_commons/src/libreria.c	/^char *replace_word(char *s, char *old, char *new)$/
+sistecslintriang	../../tao+tisc_commons/src/libreria.c	/^void sistecslintriang(float **a, float *b, int nx,/
 solveLES	taolib.c	/^int solveLES (double **A, double *b, int Nx, int n/
 surface_processes	tao.c	/^int surface_processes(ModelConfig *cfg, ModelConte/
+surface_topo	../../tao+tisc_commons/src/libreria.c	/^double surface_topo($/
 syntax	tao.c	/^int syntax()$/
 tectload	tao.c	/^int tectload(ModelConfig *cfg, ModelContext *ctx)$/
+triangularizar	../../tao+tisc_commons/src/libreria.c	/^int triangularizar(float **a, float *b, int nx)$/
 write_file_Blocks	taoio.c	/^int write_file_Blocks(ModelConfig *cfg, ModelConte/
 write_file_Te	taoio.c	/^int write_file_Te (ModelConfig *cfg, ModelContext /
 write_file_Temperature	taoio.c	/^int write_file_Temperature (ModelConfig *cfg, Mode/

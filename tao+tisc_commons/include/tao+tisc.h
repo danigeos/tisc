@@ -27,7 +27,7 @@ typedef struct {
 */
 
 #define NMAXHEADERLINES	100
-#define Match_Param_Replace_int(x, y, old)  if (!strcasecmp(str1, x)) {int i; nparams=1; \
+#define Match_Param_Replace_int(x, y, old)  if (!strcasecmp(str1, x)) {nparams=1; \
 		if (replace==0) {\
 			y=atoi(str2); \
 			if (old) {PRINT_INFO("Old-fashioned parameter: "x"\t%d", y);}\
@@ -36,7 +36,7 @@ typedef struct {
 			sprintf(newstr2, "%d", y); newline=replace_word(line, str2, newstr2); \
 			fprintf(stdout, "%s", newline); free(newline);}\
 	} 
-#define Match_Param_Replace_flt(x, y, old)  if (!strcasecmp(str1, x)) {int i; nparams=1; \
+#define Match_Param_Replace_flt(x, y, old)  if (!strcasecmp(str1, x)) {nparams=1; \
 		if (replace==0) {\
 			y=atof(str2); \
 			if (old) {PRINT_INFO("Old-fashioned parameter: "x"\t%e", y);}\
@@ -45,7 +45,7 @@ typedef struct {
 			sprintf(newstr2, "%.4g", y); newline=replace_word(line, str2, newstr2); \
 			fprintf(stdout, "%s", newline); free(newline);}\
 	} 
-#define Match_Param_Replace_chr(x, y, old)  if (!strcasecmp(str1, x)) {int i; nparams=1; \
+#define Match_Param_Replace_chr(x, y, old)  if (!strcasecmp(str1, x)) {nparams=1; \
 		if (replace==0) {\
 			strcpy(y,str2); \
 			if (old) {PRINT_INFO("Old-fashioned parameter: "x"\t%s", y);}\

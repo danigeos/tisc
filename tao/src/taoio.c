@@ -56,7 +56,6 @@ int read_file_horiz_record_time()
 
 int read_file_initial_topo(float *h)
 {
-	int 	i ;
 	FILE 	*file ;
 
 	/*READS INITIAL TOPOGRAPHY IF EXISTS FILE WITH NAME 'projectname.ZINI'*/
@@ -73,7 +72,6 @@ int read_file_initial_topo(float *h)
 
 int read_file_initial_deflection(float *w)
 {
-	int 	i ;
 	FILE 	*file ;
 
 	/*READS INITIAL DEFLECTION IF DOES EXIST FILE WITH NAME 'projectname.WINI'*/
@@ -135,8 +133,8 @@ int read_file_Upper_Crust_Thick(float crust_thick_supdefault)
 
 int read_file_parameters (int show, int reformat) 
 {
-	int	nread, nparams=0, nline=0, verbose_level_ant=verbose_level;
-	char 	*lineptr, str1[MAXLENLINE], str2[MAXLENLINE], 
+	int	nread, nparams=0, verbose_level_ant=verbose_level;
+	char 	str1[MAXLENLINE], str2[MAXLENLINE], 
 		line[MAXLENLINE+200], PRMfilename[MAXLENFILE];
 	FILE 	*file;
 	bool	switch_matched_vers=false;
@@ -182,7 +180,6 @@ int read_file_parameters (int show, int reformat)
 		}
 		/*If no parameter matched then just reproduce the entire line*/
 		if (reformat==1 && !status) fprintf(stdout, "%s", line);
-		nline++;
 	} // End while
 	if (verbose_level_ant >= 2) fprintf(stdout, " (%d parameters matched)", nparams);
 	if (!switch_matched_vers) {
@@ -385,7 +382,7 @@ int read_file_resume(char *filename)
 
 
 	for (i=0; i<numBlocks_aux; i++) {
-		float *ptr1, *ptr2, *ptr3;
+		float *ptr1;
 		ModelConfig tmp_cfg = {0}; ModelContext tmp_ctx = {0};
 		tmp_cfg.Nx = Nx; tmp_ctx.numBlocks = numBlocks; tmp_ctx.Time = Time;
 		insert_new_Block(&tmp_cfg, &tmp_ctx, numBlocks);
@@ -565,7 +562,7 @@ int read_file_Temperature(ModelConfig *cfg, ModelContext *ctx)
 {
 	/*READS TEMPERATURE FILE 'projectname.TMP'*/
 
-	int 	i, n_fld, ix, iz, i_x_temp, i_zinp, 
+	int 	n_fld, ix, iz, i_x_temp, i_zinp, 
 		nz_temp_input, n_max_input_temp=100;
 	FILE 	*file;
 	bool	last_line=false;

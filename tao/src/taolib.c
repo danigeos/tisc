@@ -344,16 +344,13 @@ int LES_matrix (ModelConfig *cfg, ModelContext *ctx,
 		A[i][4] = (double) -2*D[i]   -2*D[i+1]		+1*horz_force*dx2;
 		A[i][5] = (double) +1*D[i+1];
 		
-		switch (doing_visco) {
-			case 0:	/* ELASTIC EQUATION */
-				/*Term of horz_force is justified in Karner, 1992.*/
-				b[i] = (double) dx4 * ((Dq[i] - horz_force*(w[i+1]-2*w[i]+w[i-1])/dx2)); 
-				break;
-
-			case 1:	/* VISCOELASTIC EQUATION */
-				/*Viscoelastic equation, see Nadai (1963); Lambeck (1983)*/
-				b[i] = (double) dx4 * ((q[i] - w[i]*Krest - horz_force*(w[i+1]-2*w[i]+w[i-1])/dx2) / tau /*termino que deberia estar:+Dq[i]/ctx->dt*/);
-				break;
+		if (!doing_visco) {	/* ELASTIC EQUATION */
+			/*Term of horz_force is justified in Karner, 1992.*/
+			b[i] = (double) dx4 * ((Dq[i] - horz_force*(w[i+1]-2*w[i]+w[i-1])/dx2)); 
+		}
+		else {			/* VISCOELASTIC EQUATION */
+			/*Viscoelastic equation, see Nadai (1963); Lambeck (1983)*/
+			b[i] = (double) dx4 * ((q[i] - w[i]*Krest - horz_force*(w[i+1]-2*w[i]+w[i-1])/dx2) / tau /*termino que deberia estar:+Dq[i]/ctx->dt*/);
 		}
 	}
 
@@ -476,14 +473,14 @@ float moment_calculator (ModelConfig *cfg,
 	/* RETURNS THE CALCULATED MOMENT IN THE PLATE WHITH THE YIELD STRESS 
 	ENVELOPE TAKING INTO ACCOUNT DECOUPLING IN SUBLAYERS */
 
-	int	i, iter, j, itop, ifloor, layer=0, numlayers, numiter=50, k;
+	int	i, iter, j, itop, ifloor, layer=0, numlayers, numiter=50;
 	float	stress_distrib_slope,			/*Slope of the linear part.*/
 			total_moment=0, momentlayer, 	/*Total and layer moments.*/
 			z, 	/*Depth.*/
 			ztoplayer[10], zfloorlayer[10], /*Top & base of each layer.*/
 			linearstress, z_null_strs, 
-			pressurelayer, pressure, 
-			abspressure, mecanthick=0, 
+			pressurelayer, 
+			abspressure, 
 			criterio, 
 			Dsigma, 
 			backpressure, refstress=0, 
@@ -537,7 +534,6 @@ float moment_calculator (ModelConfig *cfg,
 						iz--
 					) ;
 					zfloorlayer[layer] = iz*cfg->dz ;
-					mecanthick += zfloorlayer[layer] - ztoplayer[layer];
 					layer++;
 					break;
 				}
@@ -550,7 +546,6 @@ float moment_calculator (ModelConfig *cfg,
 
 	/*Distribute bending stresses along each decoupled layer.*/
 	for (i=0 ; i<cfg->Nz; i++) stress[i]=0 ;
-	pressure = 0 ;
 	for (layer=0; layer<numlayers ; layer++) {
 		/*We need to find the depth where flexural bending stress is zero, crossing from positive to negative. This depth must accomplish that the integrated force equals horz_force*/
 		z_null_strs = (zfloorlayer[layer]+ztoplayer[layer])/2 ;
@@ -588,7 +583,6 @@ float moment_calculator (ModelConfig *cfg,
 			for (i=itop ; i<ifloor; i++) stress[i]=refstressv[i] ;
 		}
 		total_moment += momentlayer ; 
-		pressure += pressurelayer ;
 	}
 
 	free(refstressv);
@@ -611,7 +605,7 @@ float moment_calculator_hist (ModelConfig *cfg,
 	/* RETURNS THE CALCULATED MOMENT IN THE PLATE WITH THE YIELD STRESS 
 	ENVELOPE TAKING INTO ACCOUNT DECOUPLING IN SUBLAYERS */
 
-	int	i, ix, iz, iter, j, k, itop, ibot, layer=0, 
+	int	i, iz, j, itop, ibot, layer=0, 
 		numlayers, numiter=20;
 	float	stress_distrib_slope,		/*Slope of the linear part.*/
 		cumulmoment=0, cumulmomentlayer,/*Total and layer cumulative moments.*/
@@ -619,9 +613,7 @@ float moment_calculator_hist (ModelConfig *cfg,
 		z, 				/*Depth.*/
 		ztoplayer[10], zbotlayer[10],	/*Top & base of each layer.*/
 		layerforceincre, 
-		totalforceincre, 
 		layerabsforceincre, 
-		mecanthick=0, 
 		Dsigma, 
 		*newstress;
 	bool	switch_saturatedlayer;
@@ -651,7 +643,6 @@ float moment_calculator_hist (ModelConfig *cfg,
 					) ;
 					zbotlayer[layer] = iz*cfg->dz ;
 					/*fprintf(stdout, "\tBase of layer: %.2f", zbotlayer[layer]);*/
-					mecanthick += zbotlayer[layer] - ztoplayer[layer];
 					layer++;
 					break;
 				}
@@ -660,7 +651,6 @@ float moment_calculator_hist (ModelConfig *cfg,
 	}
 	numlayers=layer;
 
-	totalforceincre = 0;
 	if (!d2wdx2) d2wdx2 = 1e-12; /*very little*/
 	stress_distrib_slope = - d2wdx2 * E / (1-nu*nu);
 	newstress = calloc(cfg->Nz, sizeof(float));
@@ -710,7 +700,6 @@ float moment_calculator_hist (ModelConfig *cfg,
 
 		cumulmoment += cumulmomentlayer;
 		incremoment += incremomentlayer;
-		totalforceincre += layerforceincre;
 		/*if (verbose_level>=3) fprintf(stderr, "\n\t%d iters. en la capa %d, que tiene momento %.2e. Fuerza acumulada=%.2e", i, layer+1, momentlayer, totalforceincre);*/
 	}
 	free(newstress);
@@ -797,14 +786,12 @@ int read_file_YSE(ModelConfig *cfg)
 
 
 int Rheo_Flex_Iter (ModelConfig *cfg, ModelContext *ctx) {
-	int 	i, ix, iz, i_x_temp, j, rheoiter, 
+	int 	i, ix, iz, rheoiter, 
 		ncapas, NDs=3, NDi=3;
 	float 	d2wdx2=SIGNAL, criterioconv, 
 		Te_ant, 
-		refstress, xpos, incremoment, 
+		refstress, incremoment, 
 		mechanical_thickness;	/*[m] */
-	FILE 	*file, *file_temp ;
-	char  	fileout[MAXLENFILE], gmtcommand[MAXLENLINE] ;
 	float	*want, *x_stress, momentmax, *moment;
 	double  **A, *b;
 
@@ -843,7 +830,6 @@ int Rheo_Flex_Iter (ModelConfig *cfg, ModelContext *ctx) {
 			fprintf(stdout, "\b\b%2d", rheoiter);  fflush(stdout);
 			/*For each x position calculates stress distribution & EET:*/
 			for (ix=0, criterioconv=momentmax=0; ix<cfg->Nx; ix++) {
-				xpos=cfg->x0+cfg->dx*ix;
 				/*Curvature from previous deflection (positive at forebulge)*/
 				if (ix>0 && ix<cfg->Nx-1)	d2wdx2 = (w[ix+1] -2*w[ix] + w[ix-1]) /cfg->dx/cfg->dx ;
 				if (ix==0)			d2wdx2 = (Dw[2] -2*Dw[1] + Dw[0]) /cfg->dx/cfg->dx;
@@ -916,7 +902,6 @@ int Rheo_Flex_Iter (ModelConfig *cfg, ModelContext *ctx) {
 			fprintf(stdout, "\b\b%2d", rheoiter);  fflush(stdout);
 			/*For each x position calculates stress distribution & EET:*/
 			for (ix=0, criterioconv=momentmax=0; ix<cfg->Nx; ix++) {
-				xpos=cfg->x0+cfg->dx*ix;
 				/*Curvature increment from previous deflection (positive at forebulge)*/
 				if (ix>0 && ix<cfg->Nx-1) 	d2wdx2 = (Dw[ix+1] -2*Dw[ix] + Dw[ix-1]) /cfg->dx/cfg->dx;
 				if (ix==0)	  	d2wdx2 = (Dw[2] -2*Dw[1] + Dw[0]) /cfg->dx/cfg->dx;
@@ -992,10 +977,10 @@ int Rheo_Flex_Iter (ModelConfig *cfg, ModelContext *ctx) {
 int flexural_stats (ModelConfig *cfg, ModelContext *ctx, float *moment) {
 	if (cfg->verbose_level>=1) {
 		/*prints flexural statistics*/
-		int 	i, iwmindt=SIGNAL, iwmaxdt=SIGNAL, idwmindt=SIGNAL, idwmaxdt=SIGNAL, ihmaxdt=SIGNAL;
+		int 	i, iwmindt=SIGNAL, iwmaxdt=SIGNAL, idwmindt=SIGNAL, idwmaxdt=SIGNAL;
 		float	shear=0, shearmax=-1e19, xshearmax=-1e19, shearmin=+1e19, xshearmin=+1e19, 
 			momentmax=-1e19, xmomentmax=-1e19, momentmin=+1e19, xmomentmin=+1e19, 
-			xfirstnodo=0, xpos, 
+			xfirstnodo=0, 
 			wmaxdt=-1e19, wmindt=+1e19, dwmaxdt=-1e19, dwmindt=+1e19;
 		float 	Warea=0, Dmean=0;
 
@@ -1080,7 +1065,7 @@ int yield_stress_envelope_semibrittle (
 		
 	float	alpha_exten=.75, 
 		alpha_compr=3, 
-		alpha_strik=1.2, 
+//		alpha_strik=1.2, 
 		lambda=.4, 
 		Quc = 140e3, 			/*Power flow activation energies*/
 		Qlc = 250e3, 
@@ -1094,14 +1079,12 @@ int yield_stress_envelope_semibrittle (
 		z, Q = SIGNAL, T, 
 		brittle_exten, 
 		brittle_compr, 
-		brittle_strik, 
 		espmecan=0;
 	double	strainrate = 1e-16,		/*This is the assumed strain rate, which corresponds with a strain of .1 in 31.6 Ma */
 		strainrateref = SIGNAL, 
 		ductil_power_law, 
-		ductil_Dorn_law, 
 		ductil, 
-		aux1,aux2,aux3;
+		aux1;
 	bool	switch_competente=false;
 
 
@@ -1121,7 +1104,6 @@ int yield_stress_envelope_semibrittle (
 		/*Brittle failure: (Ranalli, p. 248)*/
 		brittle_exten =  alpha_exten * g * cfg->denscrust * (z + z0) * (1-lambda);
 		brittle_compr = -alpha_compr * g * cfg->denscrust * (z + z0) * (1-lambda);
-		brittle_strik =  alpha_strik * g * cfg->denscrust * (z + z0) * (1-lambda);
 
 		/*Ductil flow ('plastic'):*/
 		/*Power law flow (Bodine et al. 1981; Lynch & Morgan, 1987):*/
@@ -1194,7 +1176,7 @@ int yield_stress_envelope (
 		ductil_power_law, 
 		ductil_Dorn_law, 
 		ductil, 
-		aux1,aux2,aux3;
+		aux1;
 	bool	switch_competente=false;
 
 
@@ -1303,7 +1285,7 @@ int calculate_water_load(ModelConfig *cfg, ModelContext *ctx)
 		int il;
 		float Dq_water, h_water_now=0;
 		if (cfg->hydro_model) {
-			if (il=drainage[i].lake) {
+			if ((il=drainage[i].lake)) {
 				/*sea lake already has its proper level defined*/
 			h_water_now = MAX_2(0, Lake[il].alt-ctx->topo[i]);
 			}

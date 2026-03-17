@@ -9,6 +9,7 @@
 #include "tisclib.h"
 #include "tiscio.h"
 #include "libreria.h"
+#include <string.h>
 
 int main(int argc, char **argv)
 {
@@ -141,7 +142,7 @@ int inputs (int argc, char **argv)
 			switch (argv[iarg][1]) {
 				case 'f':
 					reformat=1;
-					if (argv[iarg][2]) reformat = value;
+					if (argv[iarg][2]) reformat = (int)value;
 					break;
 				case 'F':
 					run_type=2;
@@ -192,7 +193,7 @@ int inputs (int argc, char **argv)
 					break;
 				case 'V':
 					verbose_level = 1;
-					if (argv[iarg][2]) verbose_level = value;
+					if (argv[iarg][2]) verbose_level = (int)value;
 					break;
 			}
 		}
@@ -411,7 +412,7 @@ int interpr_command_line_opts(int argc, char **argv)
 					switch_file_out=true;
 					break;
 				case 'P':
-					switch_ps=(strlen(prm)>0)?value:1; /*default is 1 to keep old command line syntax with -Pc*/
+					switch_ps=(strlen(prm)>0)?(int)value:1; /*default is 1 to keep old command line syntax with -Pc*/
 					switch_write_file_Blocks=true;
 					if (argv[iarg][2] == 'c') {
 						switch_ps=2;
@@ -503,7 +504,7 @@ int interpr_command_line_opts(int argc, char **argv)
 					break;
 				case 'V':
 					verbose_level = 2;
-					if (argv[iarg][2]) verbose_level = value;
+					if (argv[iarg][2]) verbose_level = (int)value;
 					break;
 				case 'v':
 					{
@@ -599,11 +600,8 @@ int tectload(ModelConfig *cfg, ModelContext *ctx)
 
 int Elastic_Deflection(ModelConfig *cfg, ModelContext *ctx)
 {
-	int 	i, j, NDi=2*cfg->Ny, NDs=2*cfg->Ny, Neqs=cfg->Nx*cfg->Ny, 
-		nonzeroes=13*cfg->Nx*cfg->Ny, ESP, PATH, FLAG, NSP, 
-		*R, *C, *IC, *IA, *JA, *ISP;
-	double	**A, *b, *w_aux;
-	float 	*B, *Z, *mathlib_matrix, *RSP;
+	int 	i, j, NDi=2*cfg->Ny, NDs=2*cfg->Ny, Neqs=cfg->Nx*cfg->Ny;
+	double	**A, *b;
 	bool	load_changes=false;
 
 	for (i=0; i<cfg->Ny; i++) for (j=0; j<cfg->Nx; j++) if (Dq[i][j]) load_changes = true;
@@ -629,6 +627,9 @@ int Elastic_Deflection(ModelConfig *cfg, ModelContext *ctx)
     			free(b);
     			break;
     		case 'm':
+			{
+    		    int nonzeroes=13*cfg->Nx*cfg->Ny, ESP, PATH, FLAG, NSP, *R, *C, *IC, *IA, *JA, *ISP;
+    		    float *B, *Z, *mathlib_matrix, *RSP;
     		    NSP = 40*(6*Neqs+2+nonzeroes);
     		    PATH = 1;
 		    B = (float *) calloc (Neqs, sizeof(float));
@@ -654,6 +655,7 @@ int Elastic_Deflection(ModelConfig *cfg, ModelContext *ctx)
     		    free(Z); free(B); free(mathlib_matrix);
     		    free(R); free(C);free(IC); free(IA); free(JA); free(ISP); free(RSP);
     		    break;
+			}
     	      }
 	    }
 
@@ -710,7 +712,9 @@ int move_Blocks(ModelConfig *cfg, ModelContext *ctx)
 {
 	int	*nshift_x, *nshift_y;
 	float	**new_thick;
+#ifdef THIN_SHEET
 	char 	tmpTSBCfilename[84]="";
+#endif
 
 	/*
 	  Moves the Blocks and calculates the isostatic load and thickness change at each cell.
@@ -1075,12 +1079,52 @@ int read_file_unit(ModelConfig *cfg, ModelContext *ctx)
 			struct BLOCK *new_block = &Blocks[ctx->numBlocks-1];
 			struct BLOCK *src_block = &Blocks[k];
 
-			// Allocate memory for new_block's 2D arrays
-			new_block->thick = alloc_matrix(cfg->Ny, cfg->Nx);
-			new_block->vel_x = alloc_matrix(cfg->Ny, cfg->Nx);
-			new_block->vel_y = alloc_matrix(cfg->Ny, cfg->Nx);
-			new_block->visc = alloc_matrix(cfg->Ny, cfg->Nx);
-			new_block->viscTer = alloc_matrix(cfg->Ny, cfg->Nx);
+			// Save pointers allocated by insert_new_Block
+			float **new_thick = new_block->thick;
+			float **new_vel_x = new_block->vel_x;
+			float **new_vel_y = new_block->vel_y;
+			float **new_visc = new_block->visc;
+			float **new_viscTer = new_block->viscTer;
+
+			// Handle 'V' type blocks
+			if (src_block->type == 'V') {
+				free_matrix(new_vel_x, 1);
+				free_matrix(new_vel_y, 1);
+				free_matrix(new_visc, 1);
+				free_matrix(new_viscTer, 1);
+				new_vel_x = alloc_matrix(cfg->Ny, cfg->Nx);
+				new_vel_y = alloc_matrix(cfg->Ny, cfg->Nx);
+				new_visc = alloc_matrix(cfg->Ny, cfg->Nx);
+				new_viscTer = alloc_matrix(cfg->Ny, cfg->Nx);
+			}
+
+			// Allocate 'S' type arrays if needed
+			float **new_detr_ratio = NULL;
+			float **new_detr_grsize = NULL;
+			float **new_thickgypsum = NULL;
+			float **new_thickhalite = NULL;
+			if (src_block->type == 'S') {
+				new_detr_ratio = alloc_matrix(cfg->Ny, cfg->Nx);
+				new_detr_grsize = alloc_matrix(cfg->Ny, cfg->Nx);
+				new_thickgypsum = alloc_matrix(cfg->Ny, cfg->Nx);
+				new_thickhalite = alloc_matrix(cfg->Ny, cfg->Nx);
+			}
+
+			// Copy scalar members
+			*new_block = *src_block; // Shallow copy of scalars
+
+			// Restore pointers
+			new_block->thick = new_thick;
+			new_block->vel_x = new_vel_x;
+			new_block->vel_y = new_vel_y;
+			new_block->visc = new_visc;
+			new_block->viscTer = new_viscTer;
+			if (src_block->type == 'S') {
+				new_block->detr_ratio = new_detr_ratio;
+				new_block->detr_grsize = new_detr_grsize;
+				new_block->thickgypsum = new_thickgypsum;
+				new_block->thickhalite = new_thickhalite;
+			}
 
 			// Deep copy contents of 2D arrays
 			memcpy(new_block->thick[0], src_block->thick[0], cfg->Nx * cfg->Ny * sizeof(float));
@@ -1090,13 +1134,18 @@ int read_file_unit(ModelConfig *cfg, ModelContext *ctx)
 				memcpy(new_block->thickgypsum[0], src_block->thickgypsum[0], cfg->Nx * cfg->Ny * sizeof(float));
 				memcpy(new_block->thickhalite[0], src_block->thickhalite[0], cfg->Nx * cfg->Ny * sizeof(float));
 			}
-			memcpy(new_block->vel_x[0], src_block->vel_x[0], cfg->Nx * cfg->Ny * sizeof(float));
-			memcpy(new_block->vel_y[0], src_block->vel_y[0], cfg->Nx * cfg->Ny * sizeof(float));
-			memcpy(new_block->visc[0], src_block->visc[0], cfg->Nx * cfg->Ny * sizeof(float));
-			memcpy(new_block->viscTer[0], src_block->viscTer[0], cfg->Nx * cfg->Ny * sizeof(float));
+			if (src_block->type == 'V') {
+				memcpy(new_block->vel_x[0], src_block->vel_x[0], cfg->Nx * cfg->Ny * sizeof(float));
+				memcpy(new_block->vel_y[0], src_block->vel_y[0], cfg->Nx * cfg->Ny * sizeof(float));
+				memcpy(new_block->visc[0], src_block->visc[0], cfg->Nx * cfg->Ny * sizeof(float));
+				memcpy(new_block->viscTer[0], src_block->viscTer[0], cfg->Nx * cfg->Ny * sizeof(float));
+			} else {
+				new_block->vel_x[0][0] = src_block->vel_x[0][0];
+				new_block->vel_y[0][0] = src_block->vel_y[0][0];
+				new_block->visc[0][0] = src_block->visc[0][0];
+				new_block->viscTer[0][0] = src_block->viscTer[0][0];
+			}
 
-			// Copy scalar members
-			*new_block = *src_block; // Shallow copy of scalars
 			new_block->vel_x[0][0] = vel_x; // Override velocity
 			new_block->vel_y[0][0] = vel_y; // Override velocity
 			new_block->last_vel_time = ctx->Time;
@@ -1169,6 +1218,10 @@ int read_file_unit(ModelConfig *cfg, ModelContext *ctx)
 		float default_viscTerm = .5e7; /*.1e7*/
 		char filename[MAXLENFILE];
 		Blocks[i_Block_insert].type    = 'V';
+		free_matrix(Blocks[i_Block_insert].vel_x, 1);
+		free_matrix(Blocks[i_Block_insert].vel_y, 1);
+		free_matrix(Blocks[i_Block_insert].visc, 1);
+		free_matrix(Blocks[i_Block_insert].viscTer, 1);
 		Blocks[i_Block_insert].vel_x   = alloc_matrix(cfg->Ny, cfg->Nx);
 		Blocks[i_Block_insert].vel_y   = alloc_matrix(cfg->Ny, cfg->Nx);
 		Blocks[i_Block_insert].visc    = alloc_matrix(cfg->Ny, cfg->Nx);
@@ -1191,8 +1244,12 @@ int read_file_unit(ModelConfig *cfg, ModelContext *ctx)
 
 	if (ride) {
 		for (int i_Block=i_Block_insert+1; i_Block<ctx->numBlocks; i_Block++) {
-			Blocks[i_Block].vel_x         = Blocks[i_Block_insert].vel_x; 
-			Blocks[i_Block].vel_y         = Blocks[i_Block_insert].vel_y; 
+			if (Blocks[i_Block].type == 'V' || Blocks[i_Block_insert].type == 'V') {
+				PRINT_WARNING("Cannot apply ride to thin_sheet blocks or from thin_sheet blocks.");
+			} else {
+				Blocks[i_Block].vel_x[0][0]   = Blocks[i_Block_insert].vel_x[0][0]; 
+				Blocks[i_Block].vel_y[0][0]   = Blocks[i_Block_insert].vel_y[0][0]; 
+			}
 			Blocks[i_Block].last_shift_x  = 0; 
 			Blocks[i_Block].last_shift_y  = 0; 
 			Blocks[i_Block].last_vel_time = ctx->Time; 
@@ -1270,8 +1327,6 @@ int surface_processes (float **topo_ant, ModelConfig *cfg, ModelContext *ctx)
 	CALCULATES EROSION AND SEDIMENTATION:
 	*/
 	bool	switch_horiz_record=false;
-	float	TimelastBlock;
-	int 	test;
 
 	total_sed_mass=total_bedrock_eros_mass=0;
 	ctx->total_sed_mass = 0;
@@ -1355,7 +1410,7 @@ int surface_processes (float **topo_ant, ModelConfig *cfg, ModelContext *ctx)
 
 int The_End(ModelConfig *cfg, ModelContext *ctx)
 {
-	int 	i, j, k, action=2, status;
+	int 	i, j, k;
 	char 	command[MAXLENLINE];
 	float	volume, total_vol_seds=0, surface;
 
@@ -1435,10 +1490,8 @@ int The_End(ModelConfig *cfg, ModelContext *ctx)
 
 int Viscous_Relaxation(ModelConfig *cfg, ModelContext *ctx)
 {
-	int 	i, j, NDi=2*cfg->Ny, NDs=2*cfg->Ny, Neqs=cfg->Nx*cfg->Ny, 
-		nonzeroes=13*cfg->Nx*cfg->Ny, nmax, ESP, FLAG, 
-		*R, *IC, *IA, *JA, *ISP;
-	double	**A, *b, *dwdt_aux, *mathlib_matrix, *RSP;
+	int 	i, j, NDi=2*cfg->Ny, NDs=2*cfg->Ny, Neqs=cfg->Nx*cfg->Ny;
+	double	**A, *b;
 	float 	**dwdt;
 
 	if (isost_model!=2 || !Te_default) return(0);

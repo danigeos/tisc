@@ -225,7 +225,7 @@ int read_file_initial_rivers()
 	FILE 	*file;
 	int	num_fields, n_riv_pts=0, n_rivers=0, 
 		i, j, ia, ja, ii, jj, iia, jja;
-	float	x, y, z, xa, ya, topoant, toporiv=SIGNAL,
+	float	x, y, z, xa, ya, topoant,
 		min_descent = .1;
 
 #ifdef SURFACE_TRANSPORT
@@ -239,7 +239,6 @@ int read_file_initial_rivers()
 			lin=fgets(auxstr, MAXLENLINE-1, file);
 			if (lin==NULL) break;
 			if ((num_fields = sscanf(lin, "%f %f %f", &x, &y, &z)) >= 2) {
-				if (num_fields>2) toporiv=z; else toporiv=SIGNAL;
 				if (n_riv_pts==0) {
 					n_riv_pts = 1;
 					xa=x; ya=y;
@@ -474,7 +473,6 @@ int read_file_resume(char *filename)
 	*/
 
 	int 	i, j, numBlocks_aux, i_Block_insert_aux, run_type_aux, end_check;
-	float 	**auxptr1;
 	FILE 	*file;
 	char  	version_aux[LENGTHVERS], projectname_aux[MAXLENFILE];
 
@@ -713,8 +711,6 @@ int read_file_resume(char *filename)
 		if (fread(Blocks[j].viscTer[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read Blocks[%d].viscTer array.", j); goto error_read_resume; } // Check return value
 	    }
 	    else {
-		Blocks[j].vel_x = alloc_matrix(1, 1);
-		Blocks[j].vel_y = alloc_matrix(1, 1);
 		if (fread(&Blocks[j].vel_x[0][0], sizeof(float), 1, file) != 1) { PRINT_ERROR("Failed to read Blocks[%d].vel_x[0][0].", j); goto error_read_resume; } // Check return value
 		if (fread(&Blocks[j].vel_y[0][0], sizeof(float), 1, file) != 1) { PRINT_ERROR("Failed to read Blocks[%d].vel_y[0][0].", j); goto error_read_resume; } // Check return value
 	    }
@@ -1020,10 +1016,10 @@ int read_file_Te()
 
 int read_file_output_Blocks ()
 {
-	int 	i, j, k, num_fields;
+	int 	i, j, k;
 	FILE 	*file ;
-	float 	longperfil, hori, horiant, dens[160], x, y, xa, ya;
-	char	auxstr[MAXLENLINE], *lin, word[MAXLENLINE];
+	float 	hori, horiant, dens[160], x, y, xa, ya;
+	char	auxstr[MAXLENLINE], word[MAXLENLINE];
 
 	/*
 	  This routine is not used by tisc, but by related programs such 
@@ -1124,7 +1120,7 @@ int read_file_2D_CS (struct BLOCK *Blocks, struct CS2D *CrossSection, int Nx2D)
 	/* 
 	  READ THE CROSS SECTION POLIGON FILE *.PRFL 
 	*/
-	int	i, j, i2D, num_fields, nmax_input_points=10000, 
+	int	i, i2D, num_fields, nmax_input_points=10000, 
 		n_2D_CS_pol;			/*Sides of the cross section poligon*/ 
 	FILE 	*file;
 	char	auxstr[MAXLENFILE], *lin ;
@@ -1439,7 +1435,7 @@ int write_file_thicksalt (ModelConfig *cfg, ModelContext *ctx)
 
 int write_file_drainage (ModelConfig *cfg, ModelContext *ctx)
 {
-	int 	i, j, k;
+	int 	i, j;
 	FILE 	*file;
 	int 	ro[NDERS], co[NDERS];
 
@@ -1697,7 +1693,7 @@ int write_file_lakes (ModelConfig *cfg, ModelContext *ctx)
 	  WRITES INFORMATION ABOUT LAKES
 	*/
 
-	int 	i, j, k;
+	int 	i, j;
 	FILE 	*file;
 
 #ifdef SURFACE_TRANSPORT
@@ -1773,7 +1769,7 @@ int write_file_ice (ModelConfig *cfg, ModelContext *ctx)
 
 int write_file_resume(ModelConfig *cfg, ModelContext *ctx)
 {
-	int 	i, j, i_hori, end_check=123456;
+	int 	i, j, end_check=123456;
 	FILE 	*file ;
 
 	/*

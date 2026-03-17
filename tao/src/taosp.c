@@ -18,7 +18,7 @@ int Surface_Transport (ModelConfig *cfg, ModelContext *ctx, float *topo)
 	  TO FLUVIAL EROSION/TRANSPORT/SEDIMENTATION.
 	*/
 
-	int 	i, k, iter, n_iters;	/*Number of substeps to subdivide fluvial processes*/
+	int 	i, iter, n_iters;	/*Number of substeps to subdivide fluvial processes*/
 	float	dt_fv, 
 		total_lost_sed_mass=0;
 
@@ -89,7 +89,7 @@ int Calculate_Discharge (int *sortcell, ModelConfig *cfg, ModelContext *ctx)
 	  Modifies the drainage information to account for evaporation.
 	*/
 
-	int 	i, k, l, il, iter, isort, 
+	int 	i, il, isort, 
 		ind, dind ;
 	float	rain_here_now, 
 		dd=0;
@@ -386,7 +386,7 @@ int Define_Drainage_Net (int *sortcell, ModelConfig *cfg, ModelContext *ctx)
 	
 	/*Define lakes ascending in the topo grid.*/
 	for (isort=cfg->Nx-1; isort>=0; isort--) {
-		int undef_lake_adj=0, n_nonposders=0, n_zeroders=0, n_negders=0, n_posders=0;
+		int undef_lake_adj=0, n_nonposders=0, n_zeroders=0, n_negders=0;
 		int imaxderneg=SIGNAL, imaxderneg_noundef=SIGNAL, n_negders_nonundef_lake=0; 
 		float deriv=SIGNAL,   maxderneg=0, maxderneg_noundef=0;
 		bool switch_change_in_next_height=false, switch_saddle=false;
@@ -405,7 +405,6 @@ int Define_Drainage_Net (int *sortcell, ModelConfig *cfg, ModelContext *ctx)
 				undef_lake_adj = drainage[i-1].lake;
 			else
 				if (deriv<maxderneg_noundef) {maxderneg_noundef=deriv; imaxderneg_noundef=i-1;}
-			if (deriv>0)  	n_posders++; 
 			if (deriv<=0) 	n_nonposders++;
 			if (deriv==0) 	n_zeroders++;
 		}
@@ -420,7 +419,6 @@ int Define_Drainage_Net (int *sortcell, ModelConfig *cfg, ModelContext *ctx)
 				undef_lake_adj = drainage[i+1].lake;
 			else
 				if (deriv<maxderneg_noundef) {maxderneg_noundef=deriv; imaxderneg_noundef=i+1;}
-			if (deriv>0)  	n_posders++; 
 			if (deriv<=0) 	n_nonposders++;
 			if (deriv==0) 	n_zeroders++;
 		}
@@ -545,7 +543,7 @@ int Define_Drainage_Net (int *sortcell, ModelConfig *cfg, ModelContext *ctx)
 	*/
 	for (l=1; l<=ctx->nlakes; l++) {
 	    if (Lake[l].n == Lake[l].n_sd) {
-		if (Lake[l].n > 2) PRINT_ERROR("'Lake' %d should consist of maximum 2 saddles.", l, Lake[l].n);
+		if (Lake[l].n > 2) PRINT_ERROR("'Lake' %d (%d nodes) should consist of maximum 2 saddles.", l, Lake[l].n);
 		/*
 		  Determines drainage of the new non-lake (river) nodes.
 		  Add transferring and other information to 'drainage'.
@@ -753,9 +751,8 @@ int Fluvial_Transport (ModelConfig *cfg, ModelContext *ctx, float *topo, float d
 	  	  Sedimentation as in continent with discharge=0
 	  	  Bathymetric minima as in continental lakes.
 	*/
-	int 	i, isort, k, ind, dind, n_limited_sed=0, n_limited_eros=0;
-	float	total_lost_sed_mass=0, 
-		minsorr_trib, minsorr, maxsorr=SIGNAL, 
+	int 	i, isort, ind, dind, n_limited_sed=0, n_limited_eros=0;
+	float	minsorr_trib, minsorr, maxsorr=SIGNAL, 
 		main_tribut_slope;
 
 	    /*
@@ -811,7 +808,7 @@ int Fluvial_Transport (ModelConfig *cfg, ModelContext *ctx, float *topo, float d
 			}
 
 			switch (cfg->erosed_model) {
-#define ERODED_ERODIBILITY   /*Takes a mean erodibility*/ float depth2average=10., dh, weight, totalweight=0, basedepth=0, erodibility_aux=0;\
+#define ERODED_ERODIBILITY   /*Takes a mean erodibility*/ float depth2average=10., weight, totalweight=0, basedepth=0, erodibility_aux=0;\
 				for (i=ctx->numBlocks-1; i>=0; i--) {\
 					basedepth+=Blocks[i].thick[ind];\
 					basedepth=MIN_2(basedepth,depth2average+.1);\
@@ -858,6 +855,7 @@ int Fluvial_Transport (ModelConfig *cfg, ModelContext *ctx, float *topo, float d
 				spl_m = 1/3;
 				spl_n = 2/3;
 				ERODED_ERODIBILITY;
+				float dh;
 	    			/*bedrock channel incision*/
 				dh = erodibility_aux		/*Eq. 11 of T&S*/
 					* pow((double)drainage[ind].discharge, (double)spl_m)
@@ -887,6 +885,7 @@ int Fluvial_Transport (ModelConfig *cfg, ModelContext *ctx, float *topo, float d
 				spl_m = 3*a*(1-aw)/5;
 				spl_n = 7*a/10;
 			  	ERODED_ERODIBILITY;
+				float dh;
 			  	/*bedrock channel incision*/
 	    		    	dh = erodibility_aux/secsperyr * pow(1020*g, a)
 	    			    * pow((double).05/Kw, (double)3*a/5)
@@ -917,6 +916,7 @@ int Fluvial_Transport (ModelConfig *cfg, ModelContext *ctx, float *topo, float d
 				spl_m = (1-aw);
 				spl_n = a;
 			  	ERODED_ERODIBILITY;
+				float dh;
 			  	/*bedrock channel incision*/
 			  	dh = erodibility_aux/secsperyr * pow(1020*g, a) / Kw 
 			  		* pow((double)drainage[ind].discharge, (double)spl_m) 
@@ -1025,7 +1025,7 @@ int Fluvial_Transport (ModelConfig *cfg, ModelContext *ctx, float *topo, float d
 					/*Keep commented, otherwise it doubles the presence of masstr, not preserving mass*/
 					/*drainage[drainage[dind].dr].masstr += drainage[dind].masstr*/;
 				else 
-					total_lost_sed_mass += drainage[dind].masstr * dt_fv;
+					/*total_lost_sed_mass += drainage[dind].masstr * dt_fv*/;
 			    }
 			    /*If draining to a CLOSED lake:*/
 			    else {
@@ -1045,7 +1045,6 @@ int Fluvial_Transport (ModelConfig *cfg, ModelContext *ctx, float *topo, float d
 		  }
 		  else {
 			/*Transfers out of model.*/
-			total_lost_sed_mass += drainage[ind].masstr * dt_fv;
 		  }
 		}
 	    }
@@ -1079,7 +1078,7 @@ int Lake_Fill (
 	  ind is index number of the lake node receiving sediments.
 	*/
 
-	int	i, j, k, m, il, incr=0;
+	int	i, il, incr=0;
 	float 	d_mass, Dhsedmax, Dhsed, l_fluv_sedim_aux=l_fluv_sedim; /* Global from tao.h */
 
 	if (!drainage[ind].masstr) return(0);
@@ -1138,8 +1137,8 @@ int Lake_Fill (
 
 int Landslide_Transport (ModelConfig *cfg, ModelContext *ctx, float critical_slope)
 {
-	float	Dheros, dl;
-	int 	i, j, k, n_iters;
+	float	Dheros;
+	int 	j, k, n_iters;
 	
 	/*
 	  COMPUTES THE LOAD, HEIGHT & Block-THICKNESS INCREMENTS DUE TO 
@@ -1332,7 +1331,7 @@ int Attempt_Delete_Node_From_Lake (ModelConfig *cfg, ModelContext *ctx, int ncel
 	  Checks if it is necessary to divide lake when deleting node by evaporation.
 	  Returns the number of subdivided lakes (>=2, 0 means no subdivision).
 	*/
-	int 	i, j, k, il, splitting=0;
+	int 	il, splitting=0;
 
 	il = drainage[ncell].lake;
 	/*Locate neighbours of the same lake*/
@@ -1369,7 +1368,7 @@ int Deallocate_Lake (ModelContext *ctx, int i_lake)
 	  Frees memory of a lake
 	*/
 
-	int i, j, il, kjhjhfk;
+	int i, j, il;
 
 	il = fabs((float) i_lake);
 
@@ -1490,7 +1489,7 @@ int Delete_Node_From_Lake (ModelConfig *cfg, ModelContext *ctx, int ln)
 		    	    int imindist=-1;
 			    float mindist=1e24, dist;
 		    	    for (k=0; k<Lake[il].n_sd; k++) {
-		    		dist = fabs(Lake[il].sd[k]-ls) * cfg->dx;
+		    		dist = abs(Lake[il].sd[k]-ls) * cfg->dx;
 		    		if (dist < mindist) {imindist=k; mindist=dist;}
 		    	    }
 		    	    drainage[ls].dr = Lake[il].sd[imindist];
@@ -1537,8 +1536,7 @@ int Divide_Lake (ModelConfig *cfg, ModelContext *ctx, int ind)
 	  removed from the lake (by evaporation) is 
 	  the only connexion between two or more parts of the lake.
 	*/
-	int 	i, j, k, lake_delete, il, i_saddle, 
-		indi, indj, 
+	int 	i, j, il, i_saddle, 
 		imaxderneg, 
 		local_num_lakes=0;
 	float 	lake_evaporation, maxderneg=0;
@@ -1783,7 +1781,7 @@ int Calculate_Precipitation_Evaporation (ModelConfig *cfg, ModelContext *ctx)
 		for (i=0; i<cfg->Nx; i++) {
 		     if (DX>cfg->dx) {
 		     	 int j, jl, n_smooth;
-		     	 float factor=2/DX/sqrt(3.1415927)*cfg->dx, weight, tweight=0, adimdist;
+ 		     	 float weight, tweight=0, adimdist;
 		     	 precipitation[i]=0;
 		     	 n_smooth=ceil(2*DX/cfg->dx);
 		     	 for (j=i-n_smooth; j<=i+n_smooth; j++) {
@@ -1812,7 +1810,7 @@ int Calculate_Precipitation_Evaporation (ModelConfig *cfg, ModelContext *ctx)
 		for (i=0; i<cfg->Nx; i++) {
 		     if (DX>cfg->dx) {
  		     	 int j, jl, n_smooth;
- 		     	 float factor=2/DX/sqrt(3.1415927)*cfg->dx, weight, tweight=0, adimdist;
+ 		     	 float weight, tweight=0, adimdist;
 		     	 precipitation[i]=0;
  		     	 n_smooth=ceil(3*DX/cfg->dx);
  		     	 for (j=i-n_smooth; j<=i+n_smooth; j++) {
@@ -1853,17 +1851,17 @@ float Orographic_Precipitation (ModelConfig *cfg, ModelContext *ctx, int i, floa
 		/*Tetens formula for Clausius-Clapeyron, giving the saturation vapor pressure in the surface*/
 	esat = es0 * exp(a*(Ts-TEMP_FREEZE_WATER)/(Ts-b));
 	if (i>0 && i<cfg->Nx-1) {
-		topoR=ctx->topo[i+1];   if (il=drainage[i+1].lake) topoR = ctx->topo[Lake[il].cell[Lake[il].n-1]];
-		topoL=ctx->topo[i-1];   if (il=drainage[i-1].lake) topoL = ctx->topo[Lake[il].cell[Lake[il].n-1]];
+		topoR=ctx->topo[i+1];   if ((il=drainage[i+1].lake)) topoR = ctx->topo[Lake[il].cell[Lake[il].n-1]];
+		topoL=ctx->topo[i-1];   if ((il=drainage[i-1].lake)) topoL = ctx->topo[Lake[il].cell[Lake[il].n-1]];
 		slope = (topoR - topoL) / cfg->dx / 2;
 	}
 	else {
 		if (i==0) {
-			topoR = ctx->topo[i+1];   if (il=drainage[i+1].lake) topoR = ctx->topo[Lake[il].cell[Lake[il].n-1]];
+			topoR = ctx->topo[i+1];   if ((il=drainage[i+1].lake)) topoR = ctx->topo[Lake[il].cell[Lake[il].n-1]];
 			slope = (topoR - topoC) / cfg->dx;
 		}
 		if (i==cfg->Nx-1) {
-			topoL = ctx->topo[i-1];   if (il=drainage[i-1].lake) topoL = ctx->topo[Lake[il].cell[Lake[il].n-1]];
+			topoL = ctx->topo[i-1];   if ((il=drainage[i-1].lake)) topoL = ctx->topo[Lake[il].cell[Lake[il].n-1]];
 			slope = (topoC - topoL) / cfg->dx;
 		}
 	}
