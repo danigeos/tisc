@@ -1,0 +1,11 @@
+This is the load file #1 used in Example_C
+
+time	0
+density	2800
+gradual	1
+time_stop 2
+topoest	1
+
+450e3	0
+500e3	7000
+550e3	0

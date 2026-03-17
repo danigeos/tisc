@@ -1,0 +1,8 @@
+#!/bin/csh
+#This job makes a PostScript image file from the output gravity model from tao
+#using GMT software.
+
+set ps  	= $1.grv_mod.ps
+set region	= -100/500/-50000/10000	# -1100/2100/-70000/10000
+
+psxy $1.grv_mod  -JX9/5 -R$region -B100/10000 -M -L > $ps

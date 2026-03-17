@@ -1,0 +1,20 @@
+load file containing the fault 
+geometry of the first fault in 
+example 1:
+
+time	0
+density	2820
+fault	1
+vel	1 #mm/yr velocity
+
+
+x	height
+
+20e3	8600
+60e3	8400
+90e3	8000
+112e3	7300
+133e3	6300
+147e3	5000
+155e3	3000
+160e3	0

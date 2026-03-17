@@ -1,0 +1,18 @@
+#!/bin/csh
+#job file to convert tao3D results along the selected 
+#profile into tao inputs (2D)
+#
+#Syntax: 	3Dto2D.job 'model-root-name'
+#
+#2D files will have the same root-name with '2D' added.
+
+set name 	= $1
+set numcols 	= `gawk '(NR==4) {print NF}' $name.pfl`
+
+gawk '{if (NR!=1) print $3 "\t" $4}'  $name.pfl > $name\2D.CMP 
+invertfile $name.pfl | \
+	gawk '{if (NR!=1) print $3 "\t" $NF}' >> $name\2D.CMP 
+
+echo -9999	2700 	> $name\2D0.CRG 
+gawk '{if (NR!=1) print $3*1000 "\t" $NF-$4}' $name.pfl >> $name\2D0.CRG 
+

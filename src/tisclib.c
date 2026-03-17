@@ -5,7 +5,7 @@ Daniel Garcia-Castellanos
 
 #include "tisc.h"
 #include "tisclib.h"
-#include "../lib/libreria.h"
+#include "libreria.h"
 
 
 

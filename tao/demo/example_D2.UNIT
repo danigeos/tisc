@@ -1,0 +1,19 @@
+load file containing the fault 
+geometry of the second fault in 
+example 1:
+
+time	10
+density	2820
+fault	1
+ride	1
+cut_sed 1
+vel	2
+time_stop 35
+
+
+x	height
+
+187e3	5000
+195e3	3000
+200e3	0
+220e3	-8000

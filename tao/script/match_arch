@@ -1,0 +1,110 @@
+#!/bin/bash
+
+# 
+# $Id: macharch,v 1.10 1993/12/03 19:20:41 billa Exp $ 
+# 
+# Figure out machine architecture
+#
+PATH=/bin:/usr/bin:/usr/ucb:/etc:/usr/convex:${PATH} export PATH
+
+a=arch
+m=machine
+u=uname
+
+ARCH=unknown
+
+if [ -f /etc/$a -o -f /bin/$a -o -f /usr/bin/$a -o -f /usr/ucb/$a -o -f /usr/convex/$a ]; then
+  ARCH="`$a`"
+elif [ -f /etc/$m -o -f /bin/$m -o -f /usr/bin/$m -o -f /usr/ucb/$m ]; then
+  ARCH="`$m`"
+elif [ -f /etc/$u -o -f /bin/$u -o -f /usr/bin/$u ]; then
+  ARCH="`uname`"
+  case "$ARCH" in
+    AIX*) ARCH=rs6000;;
+    IRIX) ARCH=sgi;;
+    dgux) ARCH=dg;;
+    unicos) ARCH="`uname -m | sed 's/ .*//'`";;
+    sn[0-9]*)  ARCH="`uname -m | sed 's/ .*//'`"
+  esac
+fi
+
+case "$ARCH" in
+  sgi)    ARCH=SGI;;
+  rs6000) ARCH=RS6000;;
+  dg)     ARCH=DG;;
+  sun4)   ARCH=SPARC;;
+  c2mp)   ARCH=CONVEX;;
+  unknown)case "`exec 2>/dev/null; head -2 /etc/motd`" in
+	    *"FPS Model 500"*)	ARCH=FPS;;
+	    *)			ARCH=unknown;;
+	  esac
+esac
+
+# is this solaris?
+if [ "$ARCH" = "SPARC" ] ; then
+    OS_VERS="`uname -r | sed 's/\..*//`";
+    if [ "$OS_VERS" = "5" ] ; then
+	ARCH=SOLARIS
+    fi
+fi
+
+echo $ARCH
+exit 0
+
+# RS6000 machine type code
+# UNIQ=`uname -m | cut -c3-10`
+# TYPE=`echo $UNIQ | cut -c7-8`
+# UNIQ=`echo $UNIQ | cut -c1-6`
+# STRING="You are the proud owner of a model "
+# case $TYPE in
+#   "10") MODEL="530 or 730"
+#         ;;
+#   "11") MODEL="540"
+#         ;;
+#   "14") MODEL="540"
+#         ;;
+#   "18") MODEL="530H"
+#         ;;
+#   "1C") MODEL="550"
+#         ;;
+#   "20") MODEL="930"
+#         ;;
+#   "2E") MODEL="950 or 950E"
+#         ;;
+#   "30") MODEL="520"
+#         ;;
+#   "31") MODEL="320"
+#         ;;
+#   "35") MODEL="320H"
+#         ;;
+#   "37") MODEL="340"
+#         ;;
+#   "38") MODEL="350"
+#         ;;
+#   "41") MODEL="220"
+#         ;;
+#   "5C") MODEL="560"
+#         ;;
+#      *) MODEL="that has not yet been announced, please return it. "
+# esac
+# echo $STRING $MODEL. " The machine unique ID of "$UNIQ "is not the \c"
+# echo "machine's serial number."
+# 
+# $Log: macharch,v $
+# Revision 1.10  1993/12/03  19:20:41  billa
+# Changes to treat SOLARIS as a new architecture shayne
+#
+# Revision 1.9  1993/09/08  18:20:40  kgora
+# Fix for new CRAY OS (Unicos 7.0.5)
+#
+# Revision 1.8  1992/10/22  18:21:34  kgora
+# Added Cray definitions.
+#
+# Revision 1.7  1992/06/02  16:12:57  tpaquett
+# fixed logic error
+#
+# Revision 1.6  1992/06/01  23:09:25  tpaquett
+# new versions that use uname for determining arch/os.
+# more portable, and easier to change
+# 
+# 

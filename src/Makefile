@@ -58,7 +58,7 @@ clean: ## Remove generated object files and binaries
 	$(RM) -r $(OBJ)/*.o $(OBJ)/*.d $(LIB)/*.o $(LIB)/*.a $(BIN)/.dSYM 
 
 DEPFLAGS = -MMD -MP
-CFLAGS = $(OPTS) -I$(INCL) $(DEFS) $(DEPFLAGS)
+CFLAGS = $(OPTS) -I$(INCL) -I../../tao+tisc_commons/include $(DEFS) $(DEPFLAGS)
 
 TISC_OBJS = $(OBJ)/tisclib.o $(OBJ)/tiscio.o $(OBJ)/globals.o
 
@@ -119,7 +119,7 @@ $(OBJ)/call_tisc.o : call_tisc.c | $(OBJ)
 		$(CC) -c -o $@ $(CFLAGS) -DSURFACE_TRANSPORT call_tisc.c ; \
 	fi
 
-$(OBJ)/libreria.o : ../lib/libreria.c | $(OBJ)
+$(OBJ)/libreria.o : ../../tao+tisc_commons/src/libreria.c | $(OBJ)
 	@printf "$(BLUE)[CC]$(RESET) $<\n"
 	$(Q)$(CC) $(CFLAGS) -c $< -o $@
 

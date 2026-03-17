@@ -1,0 +1,15 @@
+This is the load file used in Example_C
+
+time	5
+density	2800
+gradual 1
+time_stop	10
+topoest 1
+
+
+
+This is the load profile, a triangle:
+ x (m)	height (m)
+430e3	0
+520e3	5000
+590e3	0

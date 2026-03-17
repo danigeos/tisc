@@ -1,0 +1,52 @@
+#!/bin/csh
+set prj = $1
+set ps = $1.time-graphs.ps
+set timeini	= `gawk '{if ($1=="Timeini") print $2}' $prj.PRM`
+set timefinal 	= `gawk '{if ($1=="Timefinal") print $2}' $prj.PRM`
+set dt   	= `gawk '{if ($1=="dt") print $2}' $prj.PRM`
+
+echo Timeini= $timeini, dt= $dt, ps= $ps
+
+
+
+
+#process screen output:
+gawk '{if ($1=="total") print time, $4, $9; if ($1=="T=") time=$2;}' \
+	$1.screen > totalerosed.tmp
+gawk '{if ($1=="noSed") print time, $3/10/dt/1e9, $6/10/dt/1e9, $9/10/dt/1e9; if ($1=="T=") time=$2;}' dt=$dt \
+	$1.screen > erosedrate.tmp
+gawk '{if ($1=="lake" && $16!="Sea")  print time, $3, $5, $7, $9, $(NF-1); if ($1=="T=") time=$2;}' \
+	$1.screen > lake.tmp
+gawk '{if ($1=="T=") time=$2; if ($1=="divide:" && $5!="") print time, $4, $5;}' \
+	$1.screen > divide.tmp
+
+set totalerosedmax = `gawk 'BEGIN{totalerosedmax=100}  {if (totalerosedmax<1.*$2) totalerosedmax=1.*$2;} END{print totalerosedmax}' totalerosed.tmp`
+set erosedratemax =  `gawk 'BEGIN{erosedratemax=200}   {if (erosedratemax<1.*$2)  erosedratemax=1.*$2;}  END{print erosedratemax}'  erosedrate.tmp`
+#echo totalerosedmax = $totalerosedmax
+#echo erosedratemax = $erosedratemax
+
+gawk '{print $1, $2}' totalerosed.tmp | psxy -JX7 -R$timeini/$timefinal/0/$totalerosedmax -W4 -Ba1f.5:"time (My)":/a20:"eros/sed. (km@+2@-)":nSeW -K -P -X2 -Y21 >! $ps
+gawk '{print $1, $3}' totalerosed.tmp | psxy -JX  -R -W2/0t15_5:0 -K -O >> $ps
+
+gawk '{print $1, $2}' erosedrate.tmp | psxy -JX  -R$timeini/$timefinal/0/$erosedratemax -W4 -Ba1f.5:"time (My)":/a100f50g50:"rate eros/sed. 10@+3@+kg/m/y":nSeW -O -K -X10 >> $ps
+gawk '{print $1, $3}' erosedrate.tmp | psxy -JX  -R -W1/0t5_5:0 -K -O >> $ps
+
+
+
+#LAKES EVOL:
+
+set heightmax = `gawk 'BEGIN{heightmax=1000} {if (heightmax<1.*$4) heightmax=1.*$6}END{print heightmax}' lake.tmp`
+set volmax = `echo $heightmax \/ 10 | bc -l`
+#echo heightmax = $heightmax
+
+gawk '{print $1, $4}' lake.tmp | psxy -JX7 -R$timeini/$timefinal/0/$heightmax -W4 -Ba1f.5g10:"time (My)":/a200f100g200:"lake elevation (m)":nSeW -N -O -K -X-10 -Y-9 >> $ps
+gawk '{print $1, $3}' divide.tmp | psxy -JX -R -W2ta -O -K >> $ps
+gawk '{print $1, $2}' lake.tmp | psxy -JX -R$timeini/$timefinal/0/$volmax -W2/255/0/0 -B/a10f5:"lake volume (km@+2@+)":nsEw -O -K >> $ps
+if (-r $1.SLV) psxy $1.SLV -JX -R -W4/0/0/200 -O -N -K >> $ps
+
+gawk '{print $1, $6}' lake.tmp | psxy -JX -R$timeini/$timefinal/0/.015 -W4 -Ba1f.5g10:"time (My)":/a.002f.001g.002:"lake discharge (10@+3@+ m@+2@+/s)":nSeW -O -K -X10 >> $ps
+gawk '{print $1, $3}' lake.tmp | psxy -JX -R$timeini/$timefinal/0/150 -W4/255/0/0 -Ba/a20f10:"lake surface (km)":nsEw -O >> $ps
+
+gawk '{tf=$1; if (hmax<$4) {hmax=$4; tcapt=$1; surfhmax=$3}; if ($3<=surfhmax/2 && tirrev==0) tirrev=$1;} END{print "time capture =", tcapt; print "time irreversibility =", tirrev; print "time end lake =", tf; }' lake.tmp 
+
+rm *.tmp

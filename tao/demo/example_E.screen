@@ -1,0 +1,419 @@
+
+**** tAo: 2D LITHOSPHERIC FLEXURE, EROSION/SEDIMENTATION, AND FORELAND BASIN MODELING ****
+Version: tAo_2009-12-07 (40 parameters matched)
+Plate model: 4 	BC=1	Nx=601 from 0.00 to 600000.00 (dx=1000.000000 m)
+Densities: asthenosphere =3200.000000; mantle=3250.000000; crust=2850.00
+Timing: from 0.00 to 20.00 every 1.00 My
+
+Info: Reading Crustal thickness at 'example_E.CRUST'
+Info: Reading Upper crustal thickness at 'example_E.UCRUST'
+Temperature at 'example_E.TMP'. 3 geotherms read from x=60.0 to 230.0 km
+Info: Writing file 'example_E.tempini'.
+T= 0.0000 My
+  topogr.:	max= 100.0 m @x= 100.0 km	min= 100.0 m @x= 100.0 km	integr= 2.01e+07 m2
+time	0.000000
+Reading 'example_E1.UNIT'
+fault	1
+vel	2.000000   u
+Unit read from 'example_E1.UNIT'. 3 params; dens=2850 kg/m3; erodibility=1.2e+05;    lF
+time	10.000000
+  tectload:	max= 35786.9 kN/m2 @x= 127.0 km	min= 0.0 kN/m2 @x= 132.0 km	integr= 3.70e+11 N/m
+  water:	max= 0.0 m @x= 100.0 km	min= 0.0 m @x= 100.0 km	integr= 0.00e+00 m2   d   e   Rh  
+Info: Writing matrix in file 'example_E.mtrz'. 0
+Info: Writing matrix in file 'example_E.mtrz'. 1
+Info: Writing matrix in file 'example_E.mtrz'. 2
+Info: Writing matrix in file 'example_E.mtrz'. 2
+Info: Writing matrix in file 'example_E.mtrz'.   u
+Debug: Diffusive erosion will be distributed in 5000 steps, 1.0000, 0.000200
+  erosion.nosd   =  +1.53e+11 N/m  sedim.inc=  +3.60e+10 N/m  outp.seds=  +0.00e+00 N/m  
+  tWarning: seds._balance: -76.5% (>0 => sed>eros)
+  total_eros.    =      1.9 km2	total_sedtn.=      4.4 km2	vol.sediment=      1.9 km2
+  erosion_max.   =    654.5 m  	@x= 129.0 km
+  sediment.max.  =    352.7 m  	@x= 132.0 km
+  max.altit.sed. =    575.6 m  	@x= 125.0 km
+T= 1.0000 My
+  topogr.:	max= 778.2 m @x= 132.0 km	min= 3.1 m @x= 146.0 km	integr= 2.22e+07 m2
+time	10.000000
+  tectload:	max= 29300.3 kN/m2 @x= 132.0 km	min= -190.8 kN/m2 @x= 300.0 km	integr= 3.36e+11 N/m
+  water:	max= 0.0 m @x= 100.0 km	min= 0.0 m @x= 100.0 km	integr= 0.00e+00 m2   d   e   Rh  
+Info: Writing matrix in file 'example_E.mtrz'. 0
+Info: Writing matrix in file 'example_E.mtrz'. 1
+Info: Writing matrix in file 'example_E.mtrz'. 2
+Info: Writing matrix in file 'example_E.mtrz'. 2
+Info: Writing matrix in file 'example_E.mtrz'.
+Debug: Diffusive erosion will be distributed in 5000 steps, 1.0000, 0.000200
+  erosion.nosd   =  +1.63e+11 N/m  sedim.inc=  +7.36e+10 N/m  outp.seds=  +0.00e+00 N/m  
+  tWarning: seds._balance: -54.8% (>0 => sed>eros)
+  total_eros.    =      5.7 km2	total_sedtn.=      9.2 km2	vol.sediment=      5.8 km2
+  erosion_max.   =   1598.4 m  	@x= 129.0 km
+  sediment.max.  =    605.5 m  	@x= 134.0 km
+  max.altit.sed. =    963.8 m  	@x= 125.0 km
+T= 2.0000 My
+  topogr.:	max= 1095.5 m @x= 125.0 km	min= -0.0 m @x= 146.0 km	integr= 2.69e+07 m2
+time	10.000000
+  tectload:	max= 29909.6 kN/m2 @x= 134.0 km	min= -194.0 kN/m2 @x= 300.0 km	integr= 3.72e+11 N/m
+  water:	max= 46.3 m @x= 142.0 km	min= 0.0 m @x= 100.0 km	integr= 1.75e+05 m2   d   e   Rh  
+Info: Writing matrix in file 'example_E.mtrz'. 0
+Info: Writing matrix in file 'example_E.mtrz'. 1
+Info: Writing matrix in file 'example_E.mtrz'. 2
+Info: Writing matrix in file 'example_E.mtrz'. 2
+Info: Writing matrix in file 'example_E.mtrz'.
+Debug: Diffusive erosion will be distributed in 5000 steps, 1.0000, 0.000200
+  erosion.nosd   =  +1.66e+11 N/m  sedim.inc=  +1.03e+11 N/m  outp.seds=  +0.00e+00 N/m  
+  tWarning: seds._balance: -37.9% (>0 => sed>eros)
+  total_eros.    =     10.8 km2	total_sedtn.=     14.1 km2	vol.sediment=     11.2 km2
+  erosion_max.   =   2583.0 m  	@x= 129.0 km
+  sediment.max.  =    758.7 m  	@x= 136.0 km
+  max.altit.sed. =   1236.4 m  	@x= 125.0 km
+T= 3.0000 My
+  topogr.:	max= 1321.3 m @x= 125.0 km	min= -0.0 m @x= 148.0 km	integr= 3.19e+07 m2
+time	10.000000
+  tectload:	max= 29661.3 kN/m2 @x= 136.0 km	min= -196.1 kN/m2 @x= 300.0 km	integr= 4.06e+11 N/m
+  water:	max= 61.5 m @x= 144.0 km	min= 0.0 m @x= 100.0 km	integr= 2.20e+05 m2   d   e   Rh  
+Info: Writing matrix in file 'example_E.mtrz'. 0
+Info: Writing matrix in file 'example_E.mtrz'. 1
+Info: Writing matrix in file 'example_E.mtrz'. 2
+Info: Writing matrix in file 'example_E.mtrz'. 2
+Info: Writing matrix in file 'example_E.mtrz'.
+Debug: Diffusive erosion will be distributed in 5000 steps, 1.0000, 0.000200
+  erosion.nosd   =  +1.71e+11 N/m  sedim.inc=  +1.24e+11 N/m  outp.seds=  +0.00e+00 N/m  
+  tWarning: seds._balance: -27.3% (>0 => sed>eros)
+  total_eros.    =     16.6 km2	total_sedtn.=     19.3 km2	vol.sediment=     17.3 km2
+  erosion_max.   =   3626.3 m  	@x= 129.0 km
+  sediment.max.  =    864.4 m  	@x= 138.0 km
+  max.altit.sed. =   1174.0 m  	@x= 134.0 km
+T= 4.0000 My
+  topogr.:	max= 1545.6 m @x= 125.0 km	min= -0.0 m @x= 160.0 km	integr= 3.64e+07 m2
+time	10.000000
+  tectload:	max= 29463.0 kN/m2 @x= 138.0 km	min= -196.6 kN/m2 @x= 300.0 km	integr= 4.22e+11 N/m
+  water:	max= 71.3 m @x= 145.0 km	min= 0.0 m @x= 100.0 km	integr= 2.17e+05 m2   d   e   Rh  
+Info: Writing matrix in file 'example_E.mtrz'. 0
+Info: Writing matrix in file 'example_E.mtrz'. 1
+Info: Writing matrix in file 'example_E.mtrz'. 2
+Info: Writing matrix in file 'example_E.mtrz'. 2
+Info: Writing matrix in file 'example_E.mtrz'.
+Debug: Diffusive erosion will be distributed in 5000 steps, 1.0000, 0.000200
+  erosion.nosd   =  +1.75e+11 N/m  sedim.inc=  +1.43e+11 N/m  outp.seds=  +0.00e+00 N/m  
+  tWarning: seds._balance: -18.0% (>0 => sed>eros)
+  total_eros.    =     22.7 km2	total_sedtn.=     24.7 km2	vol.sediment=     23.8 km2
+  erosion_max.   =   4733.8 m  	@x= 130.0 km
+  sediment.max.  =    958.0 m  	@x= 140.0 km
+  max.altit.sed. =   1419.4 m  	@x= 134.0 km
+T= 5.0000 My
+  topogr.:	max= 1725.0 m @x= 125.0 km	min= -0.0 m @x= 150.0 km	integr= 4.04e+07 m2
+time	10.000000
+  tectload:	max= 29310.5 kN/m2 @x= 140.0 km	min= -195.9 kN/m2 @x= 300.0 km	integr= 4.28e+11 N/m
+  water:	max= 76.8 m @x= 147.0 km	min= 0.0 m @x= 100.0 km	integr= 2.24e+05 m2   d   e   Rh  
+Info: Writing matrix in file 'example_E.mtrz'. 0
+Info: Writing matrix in file 'example_E.mtrz'. 1
+Info: Writing matrix in file 'example_E.mtrz'. 2
+Info: Writing matrix in file 'example_E.mtrz'. 3
+Info: Writing matrix in file 'example_E.mtrz'. 3
+Info: Writing matrix in file 'example_E.mtrz'.   u
+Debug: Diffusive erosion will be distributed in 5000 steps, 1.0000, 0.000200
+  erosion.nosd   =  +1.78e+11 N/m  sedim.inc=  +1.49e+11 N/m  outp.seds=  +0.00e+00 N/m  
+  tWarning: seds._balance: -16.2% (>0 => sed>eros)
+  total_eros.    =     28.8 km2	total_sedtn.=     30.2 km2	vol.sediment=     30.2 km2
+  erosion_max.   =   5905.7 m  	@x= 130.0 km
+  sediment.max.  =   1051.8 m  	@x= 142.0 km
+  max.altit.sed. =   1615.1 m  	@x= 134.0 km
+T= 6.0000 My
+  topogr.:	max= 1882.0 m @x= 132.0 km	min= -0.0 m @x= 155.0 km	integr= 4.41e+07 m2
+time	10.000000
+  tectload:	max= 29139.4 kN/m2 @x= 142.0 km	min= -194.2 kN/m2 @x= 300.0 km	integr= 4.30e+11 N/m
+  water:	max= 65.4 m @x= 149.0 km	min= 0.0 m @x= 100.0 km	integr= 2.20e+05 m2   d   e   Rh  
+Info: Writing matrix in file 'example_E.mtrz'. 0
+Info: Writing matrix in file 'example_E.mtrz'. 1
+Info: Writing matrix in file 'example_E.mtrz'. 2
+Info: Writing matrix in file 'example_E.mtrz'. 2
+Info: Writing matrix in file 'example_E.mtrz'.
+Debug: Diffusive erosion will be distributed in 5000 steps, 1.0000, 0.000200
+  erosion.nosd   =  +1.81e+11 N/m  sedim.inc=  +1.48e+11 N/m  outp.seds=  +0.00e+00 N/m  
+  tWarning: seds._balance: -18.3% (>0 => sed>eros)
+  total_eros.    =     34.7 km2	total_sedtn.=     35.9 km2	vol.sediment=     36.5 km2
+  erosion_max.   =   7103.9 m  	@x= 130.0 km
+  sediment.max.  =   1148.3 m  	@x= 144.0 km
+  max.altit.sed. =   1694.4 m  	@x= 125.0 km
+T= 7.0000 My
+  topogr.:	max= 1994.5 m @x= 132.0 km	min= -0.0 m @x= 153.0 km	integr= 4.75e+07 m2
+time	10.000000
+  tectload:	max= 28973.9 kN/m2 @x= 144.0 km	min= -191.8 kN/m2 @x= 300.0 km	integr= 4.28e+11 N/m
+  water:	max= 59.9 m @x= 150.0 km	min= 0.0 m @x= 100.0 km	integr= 2.21e+05 m2   d   e   Rh  
+Info: Writing matrix in file 'example_E.mtrz'. 0
+Info: Writing matrix in file 'example_E.mtrz'. 1
+Info: Writing matrix in file 'example_E.mtrz'. 2
+Info: Writing matrix in file 'example_E.mtrz'. 3
+Info: Writing matrix in file 'example_E.mtrz'. 3
+Info: Writing matrix in file 'example_E.mtrz'.
+Debug: Diffusive erosion will be distributed in 5000 steps, 1.0000, 0.000200
+  erosion.nosd   =  +1.84e+11 N/m  sedim.inc=  +1.43e+11 N/m  outp.seds=  +0.00e+00 N/m  
+  tWarning: seds._balance: -22.4% (>0 => sed>eros)
+  total_eros.    =     40.4 km2	total_sedtn.=     41.9 km2	vol.sediment=     42.5 km2
+  erosion_max.   =   8319.8 m  	@x= 130.0 km
+  sediment.max.  =   1246.0 m  	@x= 146.0 km
+  max.altit.sed. =   1740.0 m  	@x= 125.0 km
+T= 8.0000 My
+  topogr.:	max= 2074.2 m @x= 132.0 km	min= -0.0 m @x= 158.0 km	integr= 5.06e+07 m2
+time	10.000000
+  tectload:	max= 28807.9 kN/m2 @x= 146.0 km	min= -189.0 kN/m2 @x= 300.0 km	integr= 4.24e+11 N/m
+  water:	max= 61.5 m @x= 152.0 km	min= 0.0 m @x= 100.0 km	integr= 2.23e+05 m2   d   e   Rh  
+Info: Writing matrix in file 'example_E.mtrz'. 0
+Info: Writing matrix in file 'example_E.mtrz'. 1
+Info: Writing matrix in file 'example_E.mtrz'. 2
+Info: Writing matrix in file 'example_E.mtrz'. 3
+Info: Writing matrix in file 'example_E.mtrz'. 3
+Info: Writing matrix in file 'example_E.mtrz'.
+Debug: Diffusive erosion will be distributed in 5000 steps, 1.0000, 0.000200
+  erosion.nosd   =  +1.87e+11 N/m  sedim.inc=  +1.35e+11 N/m  outp.seds=  +0.00e+00 N/m  
+  tWarning: seds._balance: -27.7% (>0 => sed>eros)
+  total_eros.    =     45.9 km2	total_sedtn.=     48.1 km2	vol.sediment=     48.1 km2
+  erosion_max.   =   9545.8 m  	@x= 130.0 km
+  sediment.max.  =   1343.1 m  	@x= 148.0 km
+  max.altit.sed. =   1771.2 m  	@x= 125.0 km
+T= 9.0000 My
+  topogr.:	max= 2131.0 m @x= 132.0 km	min= -0.0 m @x= 158.0 km	integr= 5.35e+07 m2
+time	10.000000
+  tectload:	max= 28653.9 kN/m2 @x= 148.0 km	min= -185.9 kN/m2 @x= 300.0 km	integr= 4.19e+11 N/m
+  water:	max= 61.6 m @x= 154.0 km	min= 0.0 m @x= 100.0 km	integr= 2.21e+05 m2   d   e   Rh  
+Info: Writing matrix in file 'example_E.mtrz'. 0
+Info: Writing matrix in file 'example_E.mtrz'. 1
+Info: Writing matrix in file 'example_E.mtrz'. 2
+Info: Writing matrix in file 'example_E.mtrz'. 3
+Info: Writing matrix in file 'example_E.mtrz'. 3
+Info: Writing matrix in file 'example_E.mtrz'.
+Debug: Diffusive erosion will be distributed in 5000 steps, 1.0000, 0.000200
+  erosion.nosd   =  +1.90e+11 N/m  sedim.inc=  +1.27e+11 N/m  outp.seds=  +0.00e+00 N/m  
+  tWarning: seds._balance: -33.2% (>0 => sed>eros)
+  total_eros.    =     51.0 km2	total_sedtn.=     54.4 km2	vol.sediment=     53.4 km2
+  erosion_max.   =  10777.5 m  	@x= 130.0 km
+  sediment.max.  =   1438.3 m  	@x= 150.0 km
+  max.altit.sed. =   1789.8 m  	@x= 125.0 km
+T= 10.0000 My
+  topogr.:	max= 2173.4 m @x= 132.0 km	min= -0.0 m @x= 162.0 km	integr= 5.62e+07 m2
+time	10.000000
+Reading 'example_E2.UNIT'
+fault	1
+ride	1
+vel	2.000000   u   u   u
+Unit read from 'example_E2.UNIT'. 4 params; dens=2850 kg/m3; erodibility=1.2e+05;    lFR
+  tectload:	max= 43449.3 kN/m2 @x= 160.0 km	min= -28342.8 kN/m2 @x= 128.0 km	integr= 4.88e+11 N/m
+  water:	max= 3.7 m @x= 250.0 km	min= 0.0 m @x= 100.0 km	integr= 3.53e+04 m2   d   e   Rh  
+Info: Writing matrix in file 'example_E.mtrz'. 0
+Info: Writing matrix in file 'example_E.mtrz'. 1
+Info: Writing matrix in file 'example_E.mtrz'. 2
+Info: Writing matrix in file 'example_E.mtrz'. 3
+Info: Writing matrix in file 'example_E.mtrz'. 4
+Info: Writing matrix in file 'example_E.mtrz'. 4
+Info: Writing matrix in file 'example_E.mtrz'.   u
+Debug: Diffusive erosion will be distributed in 5000 steps, 1.0000, 0.000200
+  erosion.nosd   =  +1.76e+11 N/m  sedim.inc=  +1.34e+11 N/m  outp.seds=  +0.00e+00 N/m  
+  tWarning: seds._balance: -24.0% (>0 => sed>eros)
+  total_eros.    =     56.7 km2	total_sedtn.=     60.0 km2	vol.sediment=     59.6 km2
+  erosion_max.   =  11389.2 m  	@x= 130.0 km
+  sediment.max.  =   1300.8 m  	@x= 150.0 km
+  max.altit.sed. =   1216.7 m  	@x= 124.0 km
+T= 11.0000 My
+  topogr.:	max= 1862.1 m @x= 134.0 km	min= -0.0 m @x= 160.0 km	integr= 5.94e+07 m2
+  tectload:	max= 30221.0 kN/m2 @x= 160.0 km	min= -16853.5 kN/m2 @x= 129.0 km	integr= 5.18e+11 N/m
+  water:	max= 69.3 m @x= 169.0 km	min= 0.0 m @x= 100.0 km	integr= 2.80e+05 m2   d   e   Rh  
+Info: Writing matrix in file 'example_E.mtrz'. 0
+Info: Writing matrix in file 'example_E.mtrz'. 1
+Info: Writing matrix in file 'example_E.mtrz'. 2
+Info: Writing matrix in file 'example_E.mtrz'. 3
+Info: Writing matrix in file 'example_E.mtrz'. 3
+Info: Writing matrix in file 'example_E.mtrz'.
+Debug: Diffusive erosion will be distributed in 5000 steps, 1.0000, 0.000200
+  erosion.nosd   =  +1.75e+11 N/m  sedim.inc=  +1.34e+11 N/m  outp.seds=  +0.00e+00 N/m  
+  tWarning: seds._balance: -23.1% (>0 => sed>eros)
+  total_eros.    =     63.2 km2	total_sedtn.=     65.8 km2	vol.sediment=     66.2 km2
+  erosion_max.   =  11673.5 m  	@x= 130.0 km
+  sediment.max.  =   1454.8 m  	@x= 166.0 km
+  max.altit.sed. =   1261.7 m  	@x= 158.0 km
+T= 12.0000 My
+  topogr.:	max= 1635.5 m @x= 136.0 km	min= -0.0 m @x= 178.0 km	integr= 6.21e+07 m2
+  tectload:	max= 25048.8 kN/m2 @x= 162.0 km	min= -10863.5 kN/m2 @x= 131.0 km	integr= 5.30e+11 N/m
+  water:	max= 79.3 m @x= 171.0 km	min= 0.0 m @x= 100.0 km	integr= 2.90e+05 m2   d   e   Rh  
+Info: Writing matrix in file 'example_E.mtrz'. 0
+Info: Writing matrix in file 'example_E.mtrz'. 1
+Info: Writing matrix in file 'example_E.mtrz'. 2
+Info: Writing matrix in file 'example_E.mtrz'. 3
+Info: Writing matrix in file 'example_E.mtrz'. 3
+Info: Writing matrix in file 'example_E.mtrz'.
+Debug: Diffusive erosion will be distributed in 5000 steps, 1.0000, 0.000200
+  erosion.nosd   =  +1.84e+11 N/m  sedim.inc=  +1.36e+11 N/m  outp.seds=  +0.00e+00 N/m  
+  tWarning: seds._balance: -26.0% (>0 => sed>eros)
+  total_eros.    =     70.9 km2	total_sedtn.=     73.0 km2	vol.sediment=     73.1 km2
+  erosion_max.   =  11822.8 m  	@x= 130.0 km
+  sediment.max.  =   1616.0 m  	@x= 168.0 km
+  max.altit.sed. =   1701.2 m  	@x= 158.0 km
+T= 13.0000 My
+  topogr.:	max= 1689.7 m @x= 156.0 km	min= -0.0 m @x= 185.0 km	integr= 6.47e+07 m2
+  tectload:	max= 22879.3 kN/m2 @x= 156.0 km	min= -7309.8 kN/m2 @x= 133.0 km	integr= 5.31e+11 N/m
+  water:	max= 76.6 m @x= 173.0 km	min= 0.0 m @x= 100.0 km	integr= 2.80e+05 m2   d   e   Rh  
+Info: Writing matrix in file 'example_E.mtrz'. 0
+Info: Writing matrix in file 'example_E.mtrz'. 1
+Info: Writing matrix in file 'example_E.mtrz'. 2
+Info: Writing matrix in file 'example_E.mtrz'. 3
+Info: Writing matrix in file 'example_E.mtrz'. 4
+Info: Writing matrix in file 'example_E.mtrz'. 4
+Info: Writing matrix in file 'example_E.mtrz'.
+Debug: Diffusive erosion will be distributed in 5000 steps, 1.0000, 0.000200
+  erosion.nosd   =  +1.78e+11 N/m  sedim.inc=  +1.19e+11 N/m  outp.seds=  +0.00e+00 N/m  
+  tWarning: seds._balance: -33.0% (>0 => sed>eros)
+  total_eros.    =     78.2 km2	total_sedtn.=     80.1 km2	vol.sediment=     79.4 km2
+  erosion_max.   =  11907.9 m  	@x= 130.0 km
+  sediment.max.  =   1754.0 m  	@x= 170.0 km
+  max.altit.sed. =   2057.3 m  	@x= 158.0 km
+T= 14.0000 My
+  topogr.:	max= 2021.0 m @x= 155.0 km	min= -0.0 m @x= 186.0 km	integr= 6.69e+07 m2
+  tectload:	max= 22746.9 kN/m2 @x= 169.0 km	min= -5070.6 kN/m2 @x= 134.0 km	integr= 5.25e+11 N/m
+  water:	max= 74.4 m @x= 175.0 km	min= 0.0 m @x= 100.0 km	integr= 2.76e+05 m2   d   e   Rh  
+Info: Writing matrix in file 'example_E.mtrz'. 0
+Info: Writing matrix in file 'example_E.mtrz'. 1
+Info: Writing matrix in file 'example_E.mtrz'. 2
+Info: Writing matrix in file 'example_E.mtrz'. 3
+Info: Writing matrix in file 'example_E.mtrz'. 4
+Info: Writing matrix in file 'example_E.mtrz'. 5
+Info: Writing matrix in file 'example_E.mtrz'. 6
+Info: Writing matrix in file 'example_E.mtrz'. 7
+Info: Writing matrix in file 'example_E.mtrz'. 8
+Info: Writing matrix in file 'example_E.mtrz'. 8
+Info: Writing matrix in file 'example_E.mtrz'.
+Debug: Diffusive erosion will be distributed in 5000 steps, 1.0000, 0.000200
+  erosion.nosd   =  +1.89e+11 N/m  sedim.inc=  +1.18e+11 N/m  outp.seds=  +0.00e+00 N/m  
+  tWarning: seds._balance: -37.4% (>0 => sed>eros)
+  total_eros.    =     85.1 km2	total_sedtn.=     87.1 km2	vol.sediment=     85.7 km2
+  erosion_max.   =  11934.9 m  	@x= 130.0 km
+  sediment.max.  =   1875.2 m  	@x= 172.0 km
+  max.altit.sed. =   2094.5 m  	@x= 155.0 km
+T= 15.0000 My
+  topogr.:	max= 2328.2 m @x= 155.0 km	min= -0.0 m @x= 180.0 km	integr= 6.91e+07 m2
+  tectload:	max= 22447.7 kN/m2 @x= 171.0 km	min= -4031.3 kN/m2 @x= 131.0 km	integr= 5.18e+11 N/m
+  water:	max= 73.2 m @x= 177.0 km	min= 0.0 m @x= 100.0 km	integr= 2.77e+05 m2   d   e   Rh  
+Info: Writing matrix in file 'example_E.mtrz'. 0
+Info: Writing matrix in file 'example_E.mtrz'. 1
+Info: Writing matrix in file 'example_E.mtrz'. 2
+Info: Writing matrix in file 'example_E.mtrz'. 3
+Info: Writing matrix in file 'example_E.mtrz'. 3
+Info: Writing matrix in file 'example_E.mtrz'.   u
+Debug: Diffusive erosion will be distributed in 5000 steps, 1.0000, 0.000200
+  erosion.nosd   =  +2.35e+11 N/m  sedim.inc=  +1.52e+11 N/m  outp.seds=  +0.00e+00 N/m  
+  tWarning: seds._balance: -35.3% (>0 => sed>eros)
+  total_eros.    =     91.5 km2	total_sedtn.=     94.2 km2	vol.sediment=     94.0 km2
+  erosion_max.   =  11941.8 m  	@x= 130.0 km
+  sediment.max.  =   1986.8 m  	@x= 174.0 km
+  max.altit.sed. =   1885.6 m  	@x= 165.0 km
+T= 16.0000 My
+  topogr.:	max= 2523.8 m @x= 155.0 km	min= -0.0 m @x= 185.0 km	integr= 7.19e+07 m2
+  tectload:	max= 22166.6 kN/m2 @x= 173.0 km	min= -3526.9 kN/m2 @x= 132.0 km	integr= 5.14e+11 N/m
+  water:	max= 72.8 m @x= 179.0 km	min= 0.0 m @x= 100.0 km	integr= 2.97e+05 m2   d   e   Rh  
+Info: Writing matrix in file 'example_E.mtrz'. 0
+Info: Writing matrix in file 'example_E.mtrz'. 1
+Info: Writing matrix in file 'example_E.mtrz'. 2
+Info: Writing matrix in file 'example_E.mtrz'. 3
+Info: Writing matrix in file 'example_E.mtrz'. 4
+Info: Writing matrix in file 'example_E.mtrz'. 5
+Info: Writing matrix in file 'example_E.mtrz'. 6
+Info: Writing matrix in file 'example_E.mtrz'. 7
+Info: Writing matrix in file 'example_E.mtrz'. 8
+Info: Writing matrix in file 'example_E.mtrz'. 9
+Info: Writing matrix in file 'example_E.mtrz'.10
+Info: Writing matrix in file 'example_E.mtrz'.11
+Info: Writing matrix in file 'example_E.mtrz'.11
+Info: Writing matrix in file 'example_E.mtrz'.
+Debug: Diffusive erosion will be distributed in 5000 steps, 1.0000, 0.000200
+  erosion.nosd   =  +2.42e+11 N/m  sedim.inc=  +1.49e+11 N/m  outp.seds=  +0.00e+00 N/m  
+  tWarning: seds._balance: -38.4% (>0 => sed>eros)
+  total_eros.    =     97.9 km2	total_sedtn.=    101.8 km2	vol.sediment=    102.3 km2
+  erosion_max.   =  11934.4 m  	@x= 130.0 km
+  sediment.max.  =   2092.4 m  	@x= 176.0 km
+  max.altit.sed. =   1986.2 m  	@x= 166.0 km
+T= 17.0000 My
+  topogr.:	max= 2682.0 m @x= 155.0 km	min= -0.0 m @x= 185.0 km	integr= 7.45e+07 m2
+  tectload:	max= 21951.5 kN/m2 @x= 175.0 km	min= -3253.8 kN/m2 @x= 134.0 km	integr= 5.05e+11 N/m
+  water:	max= 73.7 m @x= 181.0 km	min= 0.0 m @x= 102.0 km	integr= 3.75e+05 m2   d   e   Rh  
+Info: Writing matrix in file 'example_E.mtrz'. 0
+Info: Writing matrix in file 'example_E.mtrz'. 1
+Info: Writing matrix in file 'example_E.mtrz'. 2
+Info: Writing matrix in file 'example_E.mtrz'. 3
+Info: Writing matrix in file 'example_E.mtrz'. 3
+Info: Writing matrix in file 'example_E.mtrz'.
+Debug: Diffusive erosion will be distributed in 5000 steps, 1.0000, 0.000200
+  erosion.nosd   =  +2.43e+11 N/m  sedim.inc=  +1.41e+11 N/m  outp.seds=  +0.00e+00 N/m  
+  tWarning: seds._balance: -42.2% (>0 => sed>eros)
+  total_eros.    =    103.9 km2	total_sedtn.=    109.3 km2	vol.sediment=    110.1 km2
+  erosion_max.   =  11904.5 m  	@x= 130.0 km
+  sediment.max.  =   2193.5 m  	@x= 178.0 km
+  max.altit.sed. =   2214.5 m  	@x= 166.0 km
+T= 18.0000 My
+  topogr.:	max= 2778.7 m @x= 155.0 km	min= -0.0 m @x= 188.0 km	integr= 7.70e+07 m2
+  tectload:	max= 21787.0 kN/m2 @x= 177.0 km	min= -3266.7 kN/m2 @x= 135.0 km	integr= 4.96e+11 N/m
+  water:	max= 72.4 m @x= 183.0 km	min= 0.0 m @x= 104.0 km	integr= 4.81e+05 m2   d   e   Rh  
+Info: Writing matrix in file 'example_E.mtrz'. 0
+Info: Writing matrix in file 'example_E.mtrz'. 1
+Info: Writing matrix in file 'example_E.mtrz'. 2
+Info: Writing matrix in file 'example_E.mtrz'. 3
+Info: Writing matrix in file 'example_E.mtrz'. 3
+Info: Writing matrix in file 'example_E.mtrz'.
+Debug: Diffusive erosion will be distributed in 5000 steps, 1.0000, 0.000200
+  erosion.nosd   =  +2.42e+11 N/m  sedim.inc=  +1.30e+11 N/m  outp.seds=  +0.00e+00 N/m  
+  tWarning: seds._balance: -46.1% (>0 => sed>eros)
+  total_eros.    =    109.3 km2	total_sedtn.=    116.7 km2	vol.sediment=    117.5 km2
+  erosion_max.   =  11864.5 m  	@x= 130.0 km
+  sediment.max.  =   2289.6 m  	@x= 180.0 km
+  max.altit.sed. =   2083.9 m  	@x= 168.0 km
+T= 19.0000 My
+  topogr.:	max= 2885.5 m @x= 164.0 km	min= -0.0 m @x= 188.0 km	integr= 7.95e+07 m2
+  tectload:	max= 21635.1 kN/m2 @x= 179.0 km	min= -2569.8 kN/m2 @x= 137.0 km	integr= 4.87e+11 N/m
+  water:	max= 69.0 m @x= 185.0 km	min= 0.0 m @x= 106.0 km	integr= 5.83e+05 m2   d   e   Rh  
+Info: Writing matrix in file 'example_E.mtrz'. 0
+Info: Writing matrix in file 'example_E.mtrz'. 1
+Info: Writing matrix in file 'example_E.mtrz'. 2
+Info: Writing matrix in file 'example_E.mtrz'. 3
+Info: Writing matrix in file 'example_E.mtrz'. 4
+Info: Writing matrix in file 'example_E.mtrz'. 4
+Info: Writing matrix in file 'example_E.mtrz'.
+Debug: Diffusive erosion will be distributed in 5000 steps, 1.0000, 0.000200
+  erosion.nosd   =  +2.43e+11 N/m  sedim.inc=  +1.22e+11 N/m  outp.seds=  +0.00e+00 N/m  
+  tWarning: seds._balance: -49.8% (>0 => sed>eros)
+  total_eros.    =    114.0 km2	total_sedtn.=    123.8 km2	vol.sediment=    124.4 km2
+  erosion_max.   =  11803.0 m  	@x= 130.0 km
+  sediment.max.  =   2380.2 m  	@x= 182.0 km
+  max.altit.sed. =   2089.9 m  	@x= 169.0 km
+T= 20.0000 My
+Info: Writing file 'example_E.temp'.
+
+Final statistics:
+	Total_load_weight =  8.703e+12 N/m
+	Total_rest._force =  8.681e+12 N/m
+	Total_units_mass  =  4.446e+12 kg/m
+	Total_sedim_mass  =  2.977e+11 kg/m (2.56e+11 kg/m of grain)
+
+8 units:
+No.	Density	Age 	Volume 	Vel   	Shift 	From x	To x 	Stop	type	Erodabil.
+   	(kg/m3)	(My)	(km2) 	(km/My)	(km)  	(km)  	(km) 	 (My)	(-)	         
+ 7:	2200 	15.0	44.3	0.0	0.0	55.0	289.0	9999.0	S 	6.00e+04
+ 6:	2200 	10.0	43.7	0.0	0.0	49.0	279.0	9999.0	S 	6.00e+04
+ 5:	2200 	5.0	11.2	2.0	20.0	49.0	182.0	9999.0	S 	6.00e+04
+ 4:	2200 	0.0	4.0	2.0	20.0	49.0	180.0	9999.0	S 	6.00e+04
+ 3:	2850 	0.0	1204.3	2.0	40.0	0.0	162.0	9999.0	- 	1.20e+05
+ 2:	2850 	10.0	251.2	2.0	20.0	0.0	180.0	9999.0	- 	1.20e+05
+ 1:	2200 	5.0	22.1	0.0	0.0	160.0	254.0	9999.0	- 	1.20e+05
+ 0:	2200 	0.0	10.0	0.0	0.0	159.0	228.0	9999.0	- 	1.20e+05
+ -:	2850	0.0	-	0	-	-	-	-		basement
+
+Info: Writing file 'example_E.all'.
+Info: Writing file 'example_E.xzt'.
+Info: Writing file 'example_E.pfl'.
+Info: Writing file 'example_E.eros'.
+Info: Writing file 'example_E.eet'.
+Info: Writing file 'example_E.strs'.
+Info: Writing file 'example_E.yse'.
+Postscript file 'example_E.ps' is going to be produced with command:
+tao.gmt.job example_E 100.00 300.00 -6000.00 4000.00 1 1
+1, 1
+mechthick=33.50 km
+region = 100.00/300.00/-6000.00/4000.00
+uplift = 4500
+
+

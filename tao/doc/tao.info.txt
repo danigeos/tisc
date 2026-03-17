@@ -1,0 +1,779 @@
+*************         tAo DOCUMENTATION (file tao.info.txt)        ****************
+
+	INDEX
+1.- Syntax and use of tAo
+2.- Introduction
+3.- Program structure and compilation
+4.- Inputs
+5.- Outputs
+6.- Graphic output
+7.- The conceptual model
+8.- Algorithms and numerical methods
+9.- Improvements in successive versions
+10.- Version history
+11.- Model limitations
+12.- FAQ - Frequently Asked Questions
+13.- Glossary
+14.- Authorship, Credits
+15.- Acknowledgements
+16.- Disclaimer
+17.- References
+
+
+1.- SYNTAX AND USE of tAo
+
+  tao  project  -A[1|2] -B<bound_type> -D[x0/xf] -d<dx> -F[file] -f[2] 
+	-h[i|u|p]
+	-M<lih_type>[t] -m<app_mom> -N<Nx> -o -P[c[geom]] -p<tec_force>
+	-q<param=value> -Q<file>  -r<a|c|i|m|a><density> -S<b>/<n> 
+	-s<app_force> -T<eet> -t<i|f|d|v|r><time> -V[<level>] 
+	-v[<num>/<vel>]
+
+  Options:
+	'project' is the root name for the project files (i.e., if
+		project=test then the parameters file should be test.PRM and
+		the first load test1.UNIT.
+	'-A' Switches gravity calculations on (1 for Bouguer; 2 for Free Air).
+ 	'-B' Sets boundary conditions type (0 to 5, see template.PRM
+ 		file).
+	'-D' Set the model region (domain: left and right coordinates) [m].
+		Modifies parameters x0,xf,xmin,xmax.
+	'-d' Sets the x increment used for finite differences method.
+	'-F' To continue (resume) a previous model reading <file>. <file> is a
+		binary file written by tAo as 'project.all' (default file is
+		'project.all'). Put this option always *after* the project
+		name in the command.
+	'-f' Reformats the parameters file 'project.PRM' according to the
+		present version (using 'template.PRM'). Writes to stnd. output.
+		Add '2' to shorten.
+	'-h' To show this information file. Append 'p' to print the default
+		parameters file in stdout; 'c' to print a clean version of it.
+		'u' to print an example of load file; 'i' (default) to print
+		this help file.
+	'-M' Sets the plate model. (0 to 6, see isost_model parameter
+		template.PRM). Add 't' to supress accounting for stress
+		history.
+	'-m' Sets the boundary moment applied at left boundary. >0 means
+		clockwise.
+ 	'-N' Sets the number of lateral gridding points (Nx).
+ 	'-o' Redirects standard output to file projectname.out.
+	'-P' To produce a postscript graphic display using GMT. Append c to
+		make it every time step and convert the PS files into GIF
+		(uses the ImageMagick 'convert utility'). Append PS geometry
+		(default is: -Pc"-trim -density 180", which crops the
+		rectangle used and then saves it into GIF format with 120dpi.
+ 	'-p' Sets the tectonic horizontal force in the plate.
+ 		>0 means compressive.
+	'-q' Sets a value for any parameter listed in the parameter file
+		'*.PRM'. Internal tAo units are expected (usually IS), rather
+		than those units used in the PRM.
+	'-Q' Quick flexural calculation. With this option tAo will just
+		calculate the elastic  deflection in response to <file> (2
+		columns:  x[m],pressure[Pa]). Will write deflection to  the
+		standard output and exit the program. With this option, tAo
+		doesn't need a projectname, since no  other files are read nor
+		written.
+	'-r' Sets density of enviroment (e), crust (c), infill (i), mantle
+		(m), or asthenosphere (a).
+	'-S' Move block number <b> by <n> positions (use with '-F').
+	'-s' Sets the applied vertical shear force at left boundary. >0 means
+		upwards.
+	'-T' Sets elastic thickness to <eet_value>. For the case of
+		multilayered rheology plate, eet_value=-1 indicates that the
+		initial Te must not be constant or read from the '*.EET' file,
+		but from the '*.eeth' file.
+	'-t' Sets initial (i), final (f), increment (d), viscous relaxation
+		(v) or sediment-block-record (r) times. Time is in My and goes
+		from negative to positive values (Timeini<Timefinal).
+	'-V' Means verbose mode with additional run-time prints. Add '<level>'
+		for additional i/o information. See doc/template.PRM file for
+		level specification.
+	'-v' Changes velocity to <vel> for block number <num> or, if 
+		<num><0, to all blocks with density=-<num> (use with '-F').
+
+
+  Examples:
+	  For examples see ./tao/demo/ and subdirectories therein.
+
+  Other important sources of information on the use and characteristics of tAo
+  are found in the default parameter file ./tao/doc/template.PRM
+
+  Signals meaning during execution:
+  	  a: Gravity anomaly is being calculated
+  	  c: External load (types: F,H,I,M,R,S,T, see 'Inputs' section)
+  	  d: Load was defined
+  	  e: Elastic flexure
+  	  Rh:Depth-dependent (multilayered) plate moment-curvature
+  		  iteration. The two criteria of convergence (defined in
+  		  'tao.h') are 1) small variations in the mean Te and 2)
+  		  small variations in Maximum Te.
+  		  If '!' is written then convergence was not achieved:
+  		  '!(M)' means that the mean Te variation criteria failed;
+  		  '!(m)' means the maximum Te variation criteria failed;
+  		  '!(B)' means both criteria failed.
+ 
+	  b: New Block recorded (uT means the Block corresponds to the infill of
+		  a topographic load).
+  	  v: Viscoelastic relaxation
+
+
+2.- INTRODUCTION
+    The program 'tAo' is designed to calculate the interaction between
+  lithospheric flexure , tectonic loading [e.g., by thrusting], and surface
+  transport [erosion/deposition]. The code puts a particular enphasis on the
+  formation of foreland basin systems.
+    tAo can be used as a 2D lithospheric flexure numerical model, that is, a 
+  program to simulate the mechanical behavior of the lithosphere when  forces
+  act on it. tAo allows to apply different rheological behaviours for the 
+  lithospheric plate:
+  	  .Pure Elastic.
+  	  .Viscoelastic.
+  	  .Depth&temperaure-dependent elastic-plastic rheology.
+
+    tAo can calculate the deflection due to multiple loads along the time using
+  elastic, viscoelastic or elasto-plastic deformation models. Sedimentation and
+  erosion simple models are implemented and sea water load is considered. 
+  Sediments and loads are recorded and moved as 'Blocks'.
+    Different boundary conditions are predefined for several cases: trench,
+  foreland basin, seamount... Lateral loads related with tectonic horizontal
+  forces are also accounted for.
+    Results are displayed with GMT and written to output files.
+    Please, read Garcia-Castellanos et al. (1997) and Garcia-Castellanos (2007)
+  for more details and some explained examples of this program.
+
+    tAo also allows to apply different erosion models in combination with
+  simple approaches to the kinematics of fault deformation in the upper crust.
+
+
+  THIS PROGRAM IS PARTICULARLY DESIGNED TO:
+    .To calculate lithospheric flexure directly from the lithospheric
+    stratification and load distribution (option -Q).
+    .To model foreland basin formation and the large-scale sedimentary infill
+    geometries.
+    .To solve simple 1D flexural problems in other geological contexts such
+    as trenches, seamounts, etc.
+    .Also to be used externally (from a unix script) as a flexure calculator,
+    as part of a broader job.
+    .To calculate surface processes (erosion/sedimentation) in 1D.
+
+
+  THIS PROGRAM ASSUMES THAT:
+    .The lithosphere behaves as a thin plate with either pure elastic (Turcotte
+    & Schubert, 1982), viscoelastic (Nadai, 1963) or
+    depth-dependent-elastic-plastic (Burov & Diament, 1995) behavior.
+    .Sedimentation occurs either as a diffusive process or at a constant rate
+    in sea floor.
+    .Erosion occurs as a diffusive process or at a rate linearly-dependent on
+    height.
+    .The weight of the load at every point is either explicitly known, or it is
+    a consequence of well-known thrust kinematics. Therefore, other processes
+    posibly generating loading during orogen formation (such as lithospheric
+    mantle thickening, subduction, etc) are not calculated and must be defined
+    as 'hidden loads' when needed.
+
+
+  THIS PROGRAM ALLOWS TO:
+    .Calculate the deflection of the lithosphere due to vertical and horizontal
+    tectonic loads.
+    .Apply simple non-instantaneous erosion and sedimentation models to the
+    topography.
+    .Define multiple loads along time with different densities. .Define moving
+    loads with constant velocity to calculate the related evolution of
+    subsidence.
+    .Calculate the load directly from a fault geometry and the shortening
+    velocity.
+    .Calculate the equivalent elastic thickness (EET) as a function of the
+    crustal geometry and the thermal state using realistic depth- dependent
+    rheology (Burov & Diament, 1995).
+    .Calculate the differential stress distribution in the lithosphere
+    accounting for the depth-dependent yield stress envelope (YSE) (Lynch &
+    Morgan, 1987).
+
+  Examples and publications here: https://sites.google.com/site/daniggcc/software/tao
+
+
+3.- PROGRAM STRUCTURE AND COMPILATION
+  tAo is written in C under Linux.
+  Check the file ./tao/README for details on compilation.
+  The main source code file is src/tao.c, description of variables use 
+  in file include/tao.h. 
+  Check the FAQ section below in this document.
+  tAo requires GMT4 to generate graphic output. 
+
+
+4.- USER GUIDE - HOW TO SETUP YOUR OWN PROJECT
+  See the examples in tao/demo!
+  Experiment with the shell scripts in tao/scripts to see what plots can
+  be made from the output files.
+  tAo can be used as a quick flexural calculator using option -Q.
+  Otherwise, tAo normally reads a set of input files that form a
+  'project'. Input files start with a common project name and have an
+  uppercase extension and are explained below, in section 'INPUTS'.  The
+  main input file is the *.PRM file, which contains the main parameters
+  of the project.  
+  The program then enters a time loop. At each time step the tectonic motion,
+  hydrology, erosion, and isostasy, are calculated. 
+  Signal meaning during execution:
+	l    calculating new load.
+	b    defining new Block.
+	e/s  calculating erosion/sedimentation.
+	ft   calculating fluvial transport.
+	e    calculating elastic deflection.
+	v    calculating viscoelastic deflection.
+  By the end of the run tao invoques a shell script to produce the 
+  postscript image of the results, using the system call
+  'tao.gmt.job projectname'.
+  This script tao.gmt.job is searched in your path, so if you prefer any
+  other of the figure scripts available in tao/script,  just link it or
+  copy it to your project directory as 'tao.gmt.job'.
+
+
+5.- INPUTS
+	Input files are named with an uppercase extension. Inputs are read 
+	sequentially from: (a) parameters file 'project.PRM', (b) command line 
+	options, (c) other input files named 'project.*' (files starting with the 
+	project name with an uppercase extension), and (d) from the 'project.all' 
+	file when -F option is used.  (b) values override (a);  (c) overrides (a) and
+	(b);  (d) overrides all. Default units are I.S. 
+
+  'project.PRM' 
+	Parameters file:
+	This file is compulsory unless using the -Q option. The parameter values
+	defined  in it can be also changed with the command line options listed
+	above. 'tao/doc/template.PRM' file is an explained example containing
+	the default parameter values. The internal use of each parameter is
+	also somewhat explained in the incude file 'tao.h'.
+
+  'projectN.UNIT'
+	File modifying the geometry/architecture of the model setup (adds 
+	tectonic Blocks, vertical loads, moving blocks, faults, etc):
+	'N' is the number of this load: The first load file should be named 
+	'project1.UNIT'. The time of each UNIT ('doc/template.UNIT') must 
+	increase with 'N'. 
+	The file 'doc/template.UNIT' is an explained example.
+	Or type 'tao -hu' to get that file in the screen.
+	tAo deformation consists of moving predefined blocks of prescribed 
+	velocity and geometry by an entire number of cells at each time step. 
+	The minimum shift is either 0 or 1 cells. If your time step dt is 0.5 
+	Myr, velocity is 5 km/Myr and cell size is 10 km, the block will move 
+	only once every 4 time steps. So, depending on the grid cell size, the 
+	motion will become more or less abrupt. 
+
+  'project.ZINI'
+	Initial height (optional):		
+	Similar format.
+
+
+  Lithosphere rigidity or elastic thickness (for the isostaticcalcualtions) 
+  can be entered in 4 ways: 1) Constant EET provided in *.PRM; 2) Laterally 
+  varying EET defined in *.EET; 3) EET calculated from an input yield stress 
+  envelope in *.YSE; and 4) EET calculated from the temperature distribution
+  in the lithospheric plate and the crustal geoemtry (*.TMP, *.CRUST, *.UCRUST)
+  as in Garcia-Castellanos et al. (2002, Tectonics). 1) and 2) apply only when 
+  isost_model=1,2. 3) and 4) apply for isost_model>=3. 
+
+  'project.EET'
+	Elastic thikness file (optional, defaults to default_Te parameter, 
+      see *.PRM file). Also used as initial Te for the multilayered plate case.
+      The file format is:
+
+	x1	thickness1
+	x2	thickness2
+	x3	thickness3
+	...
+	
+	With: x3>x2>x1. 
+
+  'project.YSE'
+	YSE file (only in case isost_model>=2; overrides YSE calculations using 
+	temperature). Format (note different units relative to the output file
+	*.ysen):
+
+	z1[m]	yieldcompres1[Pa]	yieldextens1[Pa]
+	z2	yieldcompres2   	yieldextens2
+	z3	yieldcompres3   	yieldextens3
+	...	...
+
+  'project.TMP'
+	Temperature file (only in case isost_model>=2). If a YSE input file is 
+	given, then this TMP file is ignored.
+	
+	x1[m]	#this x is optional, if not present, only one geotherm will be 
+		#read 
+	z1[m]	temperature1[C]	#(z is depth, positive downwards)
+	z2	temperature2
+	z3	temperature3
+	...	...
+	x2[m]	#x location for the second geotherm
+	z1[m]	temperature1[C]
+	z2	temperature2
+	
+	If a single number is read in a line, it will be taken as the x
+	position for the z-T geotherm listed below, and then additional
+	geotherms at other  x locations can be supplied. Temperature will be
+	linearly interpolated  (laterally and in depth) in between them.
+
+  'project.CRUST'
+	Crust thickness. Used only if *.TMP is provided. If this file is not 
+	present, then the parameter 'crust' in *.PRM will be adopted (constant
+	along x).
+	Similar format.
+
+  'project.UCRUST'
+	Upper crust thickness Used only if *.TMP is provided. If this file is not 
+	present, then the parameter 'ucrust' in *.PRM will be adopted (constant
+	along x).
+	Similar format.
+
+  'project.SLV'
+	Sea and erosion/sedimentation levels along time file (optional):
+	Format:
+
+	time1	level1	[eroslevel1]
+	time2	level2
+	time3	level3	[eroslevel2]
+	...	...	[...]
+
+  'project.WINI'
+	Initial deflection file (optional):
+	Similar format. Positive deflection downwards.
+
+  'project.REC'
+	Horizon recording time file (optional, defaults to an interval of 
+	dt_record, defined in the *.PRM file):
+	Format:
+
+	time1
+	time2
+	time3
+	...
+
+  'project.CMP'
+	An x-z file to be compared with results (optional):	
+	The results with real profiles digitized in this file.
+	This file is not used by tAo but by the GMT job 'tao.gmt.job' which pro-
+	duces a postscript image of it.
+	Similar format (two columns) but x is expected in km (z in m).
+
+    All these files are interpolated (except the .CMP one) and accept comment 
+  lines to be inserted everywhere. These lines will be simply ignored when two 
+  floats cannot be read in them. Attention: x3>x2>x1. tAo will linearly 
+  interpolate between the given points.
+
+
+
+
+6.- OUTPUTS
+    Ouputs are wroten to files that start with the project name with an
+  lowercase extension. Please be careful because all these files are
+  removed when running again the same project with tAo. Note that x units
+  in the output files are in km.
+
+  'project.xzt'   An output file with the deflection and the topography at each
+		loading event is wroten.
+  'project.pfl'   A final profile of the model containing the final model
+		geometry (elevation of the top and bottom of each
+		Block, from basament to surface).
+  'project.eros'  Erosion (>0) and sedimentation (<0) at each position. Note
+		that eah value is the result of adding the thickness
+		of eros/sedim at each time step at that particular
+		location. A final  value of 1000 m of erosion) may be
+		the  result of 1000 m deposition + 2000 m erosion.
+		Besides, this is recorded where it happened, so the
+		values of eros./sedim. are not shifted with the
+		movement of the sediment or mother rock units.
+  'project.xg'    A file with the gravity anomaly.
+  'project.ps'    Some postscript graphics with results are made with GMT if
+		'switch_ps' is turned on.
+  'project.ysen'  Calculated yield stress envelope and stress distribution at
+		the maximum moment point. Only if a multilayered
+		plate was selected (isost_model>2).
+  'project.strs'  (only if isost_model>2) x-z distribution of stress,
+		temperature, and yield stress envelope.
+  'project.temp'  Temperature distribution within lithosphere (only
+		isost_model>2 and with swith_verbose=1).
+  'project.eeth'  Elastic thickness distribution resulting calculated when
+		isost_model>2. If this file is present and the
+		default Te value is a signal '-1', then this '*.eeth'
+		file is used as the initial value of the
+		moment-curvature iteration.
+  'project.all'   Binary file to be read when the model is going to be resumed
+		(continued) with option '-F'.
+
+
+
+7.- GRAPHIC OUTPUT
+  'project.ps'
+    A multipage postscript produced with GMT 4.0 software (Wessel & Smith,
+    1995, http://www.soest.hawaii.edu/soest/gmt.html) (using a unix script:
+    'tao.gmt.job'), with graphics of all the results of tAo:
+      .Distribution of loads/units/sediment and the deflected basament compared 
+      with the 'project.CMP' file if it exists.
+      .Bouguer gravity anomaly and geoid anomaly if requested.
+      .Stress distribution when rheological considerations have been requested.
+      .Yield stress envelope and stress distribution at the maximum moment
+      point.
+    The GMT and shell commands generating this image are always searched by tAo
+    in a file named tao.gmt.job in the user's path. The original is located at
+    tao/script, so put that directory in your path. If you want to change the
+    graphic output then make a copy of it in your current project directory and
+    tAo will find it first there (if '.' is placed before tao/script in your
+    path. You can also use a symbolic link to any of the other scripts in the
+    tao/script directory. Do experiment.
+
+
+8.- THE CONCEPTUAL MODEL
+    Take a look at Garcia-Castellanos et al., 1997, 2007.
+    The conceptual model assumes the classical thin plate approach (Turcotte &
+  Schubert, 1982) with either pure elastic (Turcotte & Schubert, 1982),
+  viscoelastic (Nadai, 1963) or depth-dependent-elastic- plastic rheology
+  (Burov & Diament, 1995) to calculate the lithosphere deflection by loading.
+    Loading can be either directly defined or modeled using fault propagation
+  systems produced by crustal shortening. The produced topography is then
+  eroded and the areas subsided below sea level are infilled with sediments,
+  which timing and geometry are recorded. Another possibility is to know the
+  topography but ignore the internal geometry of the thrust-loads. In this
+  situation one can assume that the topography has a constant density and stays
+  at zero level, finding the deflection (filled up with a constant density
+  'densinfill') necessary to explain that topograpgy. This is done when
+  'switch_topoestable' is turned on (signal 'T' appears in the load file); the
+  load file is then taken as the topography.
+    Appart from these well-defined loads, other forces such as tectonic
+  horizontal force, vertical force at the boundary and moment at the boundary,
+  are taken into account.
+	Three approaches to surface processes are available:
+	1. Constant rate scheme (prescribed rates of erosion/deposition).
+	2. Diffusive (surface rock flow proportional to slope) for short range 
+  scale.
+	3. Fluvial (stream power law, but limited by transport capacity). Several 
+	models implemented (see erosed _model in template.PRM) for large scale 
+	river erosion. Sea & lake sedimentation are included. Evaporationin lakes.
+
+    The surface process model includes river incision and transport allowing 
+  four different source-limited, transport -limited, an hybrid approaches. It
+  assumes that the modeling profile corresponds to the main river of the 
+  region, which basin has a width defined by the parameter riverbasinwidth. 
+  Precipitation in a node is extrapoalted to the basin width to increase discharge.
+  Evaporation in lakes is extrapoalted to riverbasinwidth to reduce discharge.
+  Erosion along the river channel is extrapolated to the entire basin width.
+  Sedimentation is extrapoalted to riverbasinwidth to reduce sed. load.
+
+
+
+9.- ALGORITHMS AND NUMERICAL METHODS
+  An explicit finite difference scheme is used to solve the spatial partial 
+  	differential equations as well as the time-dependent processes.
+  Matrices arising from the diferential equations are solved using a classical
+    band solver.
+  Gravity anomaly is calculated using Talwani et al. (1959) algorithm.
+  Geoid anomaly is calculated using Chapman (1979) algorithm (see also Ayala et
+    al, 1996).
+
+
+
+10.- VERSION HISTORY
+  v1.0 (1993) Proto-model or numerical algorithm to calculate thin plate
+    elastic and viscoelastic flexure.
+  v2.0 (1994) Inclusion of moving loads and surface processes. Gravity anomaly
+    calculations.
+  v3.0 (1995) Multilayered elastic-plastic rheology. Geoid anomaly
+    calculations.
+  v3.2 (1996) Inclusion of thrust loading and sediment deformation. Command-
+    line options.
+  v3.21(1997) Allows sea_level variations along time. Allows erosion/sedimen-
+    tation variations along time.
+  v3.3 (1998) Stress history is accounted for.
+  v3.4 (1999) Change in param. file keeping compatibility with v3.3. Parameters
+    are now read in any order and non of them is required in the '.PRM' file.
+    This will allow to keep compatibility easily in future versions. Moreover,
+    now is possible to resume a model that was stopped, which will allow more
+    freedom to change parameters during execution avoiding new input files
+    (option -F). Option 'c' in loads to cut Blocks with faults (works better
+    than 'C'.
+  v4.0 (2002) Fluvial sediment transport. Loads and faults now defined in
+    *n.UNIT input files (instead of *n.CRG) file, and the file accepts now
+    a list of parameters for the new Block. Files *.H0 and *.W0 are now
+    called *.ZINI and *.WINI, respectively.
+    (2004) Orographic precipitation implemented following a conservative
+    scheme  (runoff=precipitation-evaporation).
+    (2005) A memory bug solved in surface_transport (this was producing
+    NaN results in a quite unpredictable manner).
+  tAo_2006-11-02 Removed bugs in -Q mode, now pressure is entered instead of
+    thickness.
+  tAo_2009-12-07 Additional erosion models implemented.
+  tAo_2012-08-29
+    Change in output extensions that differ from inputs only in their case,
+    auch as '*.eet' -> '*.eeth' and '*.yse' -> '*.ysen'. This is to avoid
+    conflict in Mac computers. Successfully compiled for Mac IOS 10.7.5
+    Solved bug during -F (project resume) option.
+  tAo_2014-09-21
+    Erosion models 6 and 7.
+    Graphic scripts now distiguish old sediment in cross section.
+    Improved sediment deformation. 'deform_sed' parameter added. Sediment above 
+    moving Blocks is transported and piled in front. 
+    Change in units of precipitation and sed. load. Incorporation of 
+    riverbasinwidth
+  tAo_2017-05-19
+    Average erodibility is now calculated for the shallowest meters of bedrock.
+    Erosion boundary conditions 0 and 1 are swapped.
+    -v command line option to change velocity of Blocks based on density.
+    Changed UNIT1D and Units structure to BLOCK1D and Blocks, to avoid confusion 
+		with input files (UNITS). 
+  tAo_2019-12-06
+		Gradual sediment compaction now implemented (see new parameter compact_depth).
+		For isost_model>=3: yield stress is now written in *.strs output file. Main 
+		graphic script tao.gmt.job is now accepting a number as 2nd argument, to 
+		predefine the x coordinate for the stress distribution and envelope.  
+  tAo_2025-11-17
+  	Python graphic output available through script/tisc.plot.py 
+  
+
+11.- MODEL LIMITATIONS
+      Blocks move only an entire number of nodes at each time step. Block
+    deformation during motions follows a vertical shear approach
+    (preserving vertical thickness). Rotation of Blocks is not allowed.
+      tAo doesn't account for deformation in lower crust or mantle, and the
+    deformation in the upper crust (by shortening) is kinematically
+    introduced in the model. Subduction is not considered either. Different
+    velocities of shortening for each detachment fault are (still) not
+    implemented.
+      Gradual sediment compaction is not considered, but this shouldn't affect 
+    the sediment onlap/offlap geometry in the external side of the foreland
+    basin, but only the thickness of the Blocks.
+      Grain size or sediment facies distribution of predicted deposits are
+    not differentiated.
+
+
+12.- FAQ - Frequently Asked Questions
+  Q1. How can I manage to learn to use this code on my own?
+  A1. After download, follow instructions in tao/doc/README file in order to
+	compile. Then go to tao/demo and try the examples there to ensure that
+	the code is working properly. Then read carefully tao/doc/tao.info.txt
+	(this file) and  tao/doc/template.PRM and try to experiment modifying
+	the *.PRM files of the demos. Then learn how to build *.UNIT input
+	files from the examples and using the explanations in
+	tao/doc/tao.info.txt. Make sure you did all this before  contacting the
+	author!
+  Q2. I have errors in the compilation, is there a problem in the program?
+  A2. I tested tAo only in some UNIX operative systems such as Linux (Ubuntu),
+	Mac OSX 10, and Solaris (from SUN). Most probably you have a problem
+	with the  compilation options or with the libraries. Try to ask help
+	among your colleagues to succeed in the compilation.
+  Q3. I compiled the program, but I never managed to run it, and always I
+  	get 'segmentation fault' errors.
+  A3. This means you have some incompatibility between some of the functions
+	called in tAo and the ones available in the libraries of your
+	operative  system. You have to edit the code and search or those
+	problems.  You will need the help of someone around you who have
+	experience  in programing and/or in compiling C programs.
+  Q4. Can you help me to solve the problems I have to run tAo?
+  A4. In general, I try to answer the questions you send by email, but usually
+	i cannot say much more than what you just read in this file.
+	Unfortunately, I can not provide you a close technical  support on the
+	compilation process, but this has a good side: you get this program for
+	free. Because my interests are in the scientific use of tAo and its
+	application to geological scenarios, I will be pleased to help you with
+	any problem you have during the  development of a model and will be
+	pleased to stablish a scientific colaboration.
+  ON UNIT DEFINITION:
+  Q5. Is it possible to stop a fault and then reactivate it again?
+  A5. You can stop a fault at a given time by using the time_stop
+  	parameter in the *.UNIT file.  To reactivate it, repeate the
+  	same fault geometry in another *.UNIT file with the velocity you
+  	wish.  Use tao -hu to get the possible parameters in every
+  	*.UNIT file.
+
+13.- GLOSSARY
+  Hidden load
+	Flexural models in foreland basins have assumed that subsidence is due
+	only to the weight of the topographic load (i.e., load is proportional
+	to height). This assumption ignores other processes (subduction,
+	lithospheric mantle thickening, plate interaction forces, etc.) leading
+	to the need of additional loads to fit the observed deflection. These
+	are refered in the literature as hidden loads. Stockmal & Beaumont
+	(1986) suggested that one of the reasons for this could be the
+	existence of a depth bathymetry before plate colission, which would
+	produce important deflections even when topography was still not
+	produced. tAo includes the posibility of introducing initial
+	bathimetry/topography and therefore allows to avoid these source of
+	hidden loads. If you still need an extra load to explain the
+	deflection, then you have to define it as a file load with the 'hidden'
+	label ('H') so that it will not increase topography.
+
+  Project
+	Group of input files corresponding to a work project. All files must
+	begin with same single word stored in the char variable 'project'.
+
+  Switch
+	Variables names starting with 'switch_' correspond to Boolean type
+	switches with values true or false (1 or 0) and are used to turn on and
+	off options of the model.
+
+  switch_topoestable
+	This is a variable-parameter switch that strongly affects the
+	conceptual modeling. When its value is 0 the load read from file will
+	lay on the basement and will subside (deflect) with it. When its value
+	is 1 the read load will stay at zero level and the space between the
+	deflected basement and the zero will be filled up with a constant
+	density 'densinfill'. This second way is often used in the literature
+	and strongly simplifies the modeling, but it avoids to consider the
+	internal geometry of the orogen.
+
+  Topographic load
+	This is a type of load (see load input file format) that, when loaded,
+	remains on the top of the profile and neither it nor the whole profile
+	subsides: only the basement, and the space created is filled with a
+	'densinfill' density material. See 'switch_topoestable' entry.
+
+  Unit
+	Input files (*.UNIT) described above to provide the geometry of faults or
+	loads. Units are converted into internal 'Blocks' after being read.
+
+  Blocks
+	Blocks are 'bodies' written in *.hrz and listed in the screen output. 
+	They are generally more numerous than the units because they include 
+	the sedimentary blocks calculated by tAo. T
+	A Block corresponds in the code with a 2D body (a sediment Block,
+	thrusting Block, an instantaneous load or whatever), with a density, 
+	velocity, age and thickness profile associated. Internally, this is 
+	stored in a C-language structure called 'Blocks' and a summary of 
+	these Blocks is written to the standard output at the end of the run.
+
+  YSE
+	Stands for Yield Stress Envelope. Curve defining the maximum stress
+	that can occur at each depth.
+		
+
+14.- AUTHORSHIP, CREDITS
+    tAo is a freeware program (except for commercial purposes) developed
+ 	between since Sept. 1993 by Daniel Garcia-Castellanos, with small 
+ 	contributions from others, cited in the code and the GitHub repository.
+
+    Details on copyright are in tao/doc/LICENSE.txt.
+    Please, contact the author if you are interested in using the program.
+
+    When showing results of this program you, cite of of the following
+ 	references:
+
+	Garcia-Castellanos, D., M. Fernàndez & M. Torné, 1997. "Numerical modeling
+		of foreland basin formation: a program relating thrusting, flexure, 
+		sediment geometry and lithosphere rheology". Computers & Geosciences, 
+		23 (9), 993-1003.
+
+	Garcia-Castellanos, D., 2007. "The role of climate in high plateau 
+		formation. Insights from numerical experiments". EPSL, 257, 372-390, 
+		doi:10.1016/j.epsl.2007.02.039
+
+ 	Please, check also the disclaimers section.
+
+
+15.- ACKNOWLEDGEMENTS
+	The present code has been developed mainly in the Instituto de Ciencias
+	de la Tierra Jaume Almera (Barcelona) and the Vrije Universiteit
+	(Amsterdam), although stages at the Dalhousie University (Halifax,
+	Canada) and Australia National University (Canberra) have also been
+	helpful. Most funding has come from public research institutions. 
+	Feedback with users have been key and special mention must be made 
+	to:  
+	J.M. Gaspar-Escribano, Brian Shiro, Erica Emri.
+
+16.- DISCLAIMER 
+	tAo is a tool developed for my own research with no professional 
+	programmers involved, the code is thus not so user-friendly, and I 
+	cannot always guarantee my assistance in case of  trouble. See other 
+	warnings in the license file tao/doc/LICENSE.txt.
+
+17.- REFERENCES
+  Works and people referred in this document and the source code (incomplete):
+  (*) indicates works where tAo has been used. 
+  Airy, G.B., 1855. On the computation of the effect of the atraction of
+	  mountain masses as disturbing the apparent astronomical latitude of
+	  stations of geodetic surveys, Phil. Trans. R. Soc. 145, 101-104.
+  Beaumont, C., 1981. Foreland Basins. Geophys. J. R. Astr. Soc., 65, 291-329.
+  Bodine, J.H., M.S. Steckler, & A.B. Watts, 1981. Observations of flexure and
+	  the rheology of the oceanic lithosphere. J. Geoph. Res., 86,
+	  3695-3707.
+  Bott, M.H.P., 1982. The interior of earth: its structure, constitution and
+	  evolution. Elsevier, Amsterdam. 403 pp.
+  Burov, E.B. & M. Diament, 1992. Flexure of the continental lithosphere with
+	  multilayered rheology. Geophys. J. Int., 109, 449-468.
+  Burov, E.B. & M. Diament, 1995. The effective elastic thickness (Te) of
+	  continental lithosphere: What does it really mean? J. Geophys. Res.,
+	  100, 3905-3927.
+  (*)Carrapa, B. & D. Garcia-Castellanos, 2005. Western Alpine back-thrusting
+  	  as subsidence mechanism in the Western Po Basin. Tectonophysics,
+  	  406, 197- 212. doi:10.1016/j.tecto.2005.05.021
+  (*)Garcia-Castellanos, D., M. Fernandez & M. Torne, 1997.
+  	  Computers & Geosciences, 23 (9), 993-1003.
+  (*)Garcia-Castellanos et al., 2000. Slab pull effects from a flexural
+  	  analysis of the Tonga and Kermadec trenches (Pacific Plate).
+  	  Geophys. J. Intern., 141, 479-484.
+  (*)Garcia-Castellanos et al., 2002. Tectonics. "(...) Guadalquivir Basin".
+  (*)Garcia-Castellanos, D., 2007. "The role of climate in high plateau
+  	  formation. Insights from numerical experiments". EPSL, 257,
+  	  372-390, doi:10.1016/j.epsl.2007.02.039
+  (*)Gaspar-Escribano, J.M., D. Garcia-Castellanos, E. Roca & S.
+  	  Cloetingh, 2004. Cenozoic vertical motions of the Catalan
+  	  Coastal Ranges (NE Spain): The role of tectonics, isostasy,
+  	  and surface transport. Tectonics, 23, doi:10.1029/2003TC001511
+  Chapman, 1979. Techniques for interpretation of geoid anomalies. J. Geophys.
+	  Res., 84, 3793-3801.
+  Goetze, C. & B. Evans, 1979. Stress and temperature in the bending
+	  lithosphere as constrained by experimental rock mechanics. Geoph. J.
+	  R. astr. Soc. 59, 463-478.
+  Hinojosa, J.H. & K.L. Mickus, 1993. Foreland Basin, A FORTRAN program to
+	  model the formation of foreland basins resulting from the flexural
+	  deflection of the lithosphere caused by time-varying distributed
+	  load. Computers & Geoscienes, 19, 1321-1332.
+  Lachencruch, A.H. & J.H. Sass, 1978. Models of extending lithosphere and heat
+	  flow in the Basin and Range Province. In: Cenozoic tectonics and
+	  regional geophysics of the Western Cordillera, pp. 209-250. Geol.
+	  Soc. Am. Mem. 152, Boulder, Colorado.
+  Lynch, H.D. & P. Morgan, 1987. The tensile strength of the lithosphere and
+	  the localization of extension. In: Continental Extension Tectonics,
+	  M.P. Coward, J.F. Dewey and P.L. Hanock (eds.). Geol. Soc., Spec.
+	  Publ., 28, 53-65.
+  McNutt, M K. & H.W. Menard, 1982. Constraints on yield strength in the
+	  oceanic lithosphere derived from observations of flexure. Geophys. J.
+	  R. astr. Soc., 71, 363-394.
+  McNutt, M.K., 1984. Lithospheric flexure and thermal anomalies. J. Geophys.
+	  Res., 89, 11180-11194.
+  Mueller, S., L. C. George & W Spence, 1996. Inelastic models of lithospheric
+	  stress. I. theory and application to outer-rise deformation. Geophys.
+	  J Int., 125, 39-53.
+  Mueller, S., W Spence & L. C. George, 1996. Inelastic models of lithospheric
+	  stress. II. Implications for outer-rise seismicity and dynamics.
+	  Geophys. J Int., 125, 54-72.
+  Nadai, A., 1963. Theory of flow and fracture of solids, vol 2, 705 pp.,
+	  McGraw-Hill, New York.
+  Pratt, J.H., 1855. On the attraction of the Himalaya Mountains, and of the
+	  elevated regions beyond them, upon the plumb line in india. Phil.
+	  Trans. R. Soc. 145, 53-100.
+  Ranalli, G., 1987. Rheology of the earth. Allen & Unwin, 366p. Boston, 1987.
+  Stockmal, G.S., C. Beaumont & R. Boutilier, 1986. Geodynamic models of
+	  convergent margin tectonics: transition from rifted margin to
+	  overthrust belt and consequences for foreland-basin development. AAPG
+	  Bulletin, 70, 181-190.
+  Talwani, M., J.L. Worzel & M. Landisman, 1959. Rapid Gravity computations for
+	  two-dimensional bodies with application to the Mendocino Submarine
+	  Fracture zone. J. geophys. Res. 64, 49-59.
+  Toth, J., N.J. Kusznir & S.S. Flint, 1996. A flexural isostatic model of
+	  lithospheric shortening and foreland basin formation: Aplication to
+	  the Eastern Cordillera and Subandean belt of NW Argentina. Tectonics,
+	  15, 213-223.
+  Turcotte, D.L. & G. Schubert, 1982. Geodynamics. John Wiley, 450 pp., New
+	  York, 1982.
+  Watts, A. B., 1992. The effective thickness of the lithosphere and the
+	  evolution of foreland basins. Basin Research, 4, 169-178.
+  Wessel, P., & W. H. F. Smith, 1995. New version of the Generic Mapping Tools
+	  released. EOS Trans. Amer. Geophys. U., 76, pp. 329.
+  Willett, 2010. Erosion on a line. Tectonophysics.
+
+
+ 	      "What Nature imparts to man  is called  human
+ 	     nature.  To follow our nature is called the Tao.
+ 	     Cultivating   the  Tao  is  called   education."
+	     	     Doctrine of the Mean (Chapter 1)
+
+
+END OF tAo INFORMATION FILE

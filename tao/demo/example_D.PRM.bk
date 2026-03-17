@@ -1,0 +1,63 @@
+
+            	
+        ****	tAo:
+    Version:	tAo_2018-08-07
+  Parameters	at
+          x0	-9999
+          xf	-9999
+        xmin	1.3e+05
+        xmax	3.5e+05
+        zmin	-8000
+        zmax	3000
+          Nx	801
+          Nz	201
+       crust	3.2e+04
+      ucrust	1.1e+04
+        zini	0
+ random_topo	0
+  densasthen	3200
+  densmantle	3250
+   denscrust	2950
+  densinfill	2800
+   denssedim	2200
+     densenv	0
+sed_porosity	0.3
+compact_depth	3000
+     Timeini	0
+   Timefinal	20
+          dt	1
+     dt_eros	0.001
+   dt_record	2
+ isost_model	1
+          Te	2e+04
+         tau	5
+boundary_conds	1
+      moment	-0
+      moment	-0
+  horz_force	0
+  vert_force	-0
+      moment	-0
+ hydro_model	0
+        rain	500
+riverbasinwidth	1e+04
+       Krain	0
+    relhumid	1
+      CXrain	0
+ evaporation	0
+   lost_rate	0
+temp_sea_level	8
+erosed_model	1
+    Keroseol	0.1
+      Ksedim	100
+    Kerosdif	1
+ K_river_cap	60
+ erodibility	1.2e+05
+erodibility_sed	6e+04
+l_fluv_sedim	2.5e+04
+  deform_sed	1
+eros_bound_cond	1
+  water_load	1
+   grav_anom	0
+verbose_level	0
+switch_files	1
+   switch_ps	1

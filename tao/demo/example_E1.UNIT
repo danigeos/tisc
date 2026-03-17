@@ -1,0 +1,19 @@
+file containing the fault 
+geometry of the first fault in 
+Example_E:
+
+time	0
+fault	1
+vel	2
+
+
+#x	height
+
+-10e3	8600
+30e3	8400
+60e3	8000
+82e3	7300
+103e3	6300
+117e3	5000
+125e3	3000
+130e3	-200

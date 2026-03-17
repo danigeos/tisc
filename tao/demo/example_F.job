@@ -1,0 +1,42 @@
+#Just a test running tAo in multiple stages from a script.
+#
+
+cat <<END> example_F.PRM
+	Te		20e3
+	isost_model	1
+	x0		0
+	xf		600e3
+	xmin		0
+	xmax		400e3
+	erosed_model	1
+	switch_sea 1
+	switch_ps	0
+END
+
+cat <<END> example_F1.UNIT
+	time 0
+	
+	0	2000
+	100e3	2000
+	100e3	0
+END
+
+cat <<END> example_F.ZINI
+	250e3	0
+	300e3	1000
+END
+
+set echo
+
+
+
+tao example_F -tf5 -tr2 -Pc
+tao example_F -F -tf10 -qKerosdif=1e-6
+cp -f example_F.all example_F.t=10.all
+#Note: when using -q, units must be in IS, not the ones described in template.PRM
+tao example_F -Fexample_F.t=10.all -tf15 -qKerosdif=0 -qKeroseol=2e-14 -qKsedim=5e-12
+
+
+
+rm  example_F.PRM  example_F1.UNIT  example_F.ZINI  
+rm  example_F.pfl  example_F.xzt  example_F.all

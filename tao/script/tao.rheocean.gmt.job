@@ -1,0 +1,237 @@
+#!/bin/csh
+##############################################################################
+#	Job for tao graphic output with GMT 3.0
+#	Daniel Garcia-Castellanos, 1994-1996.
+##############################################################################
+#Syntax:  tao.gmt.job <modelname> <xmin> <xmax> <ymin> <ymax> <switch_sea> <switch_rheo>
+#
+#Note that:
+# -This script uses bc unix command as a calculator. 
+# -<xmin> <xmax> must be inside x range defined in .PRM parameters file.
+#
+#This version of tao.gmt.job is specially designed for trench modelling.
+##############################################################################
+
+unalias bc
+
+#Setting up variables:
+
+set model	= $argv[1]
+set tmp 	= tao.gmt.$model
+set Lx 		= `echo $3 - $2 | bc -l`
+set xmin	= $2
+set xmax	= $3
+set ymin	= $4
+set ymax	= $5
+set yminkm	= `echo $ymin \/ 1000 | bc -l`
+set ymaxkm	= `echo $ymax \/ 1000 | bc -l`
+set maxdepth	= 80
+set ztxt	= `echo $maxdepth - 7 | bc -l`
+set switch_sea	= $6
+set switch_rheo	= $7
+set numcols 	= `awk '(NR==4) {print NF; exit;}' $model.pfl`
+set ps   	= $model.ps
+set numhorizs 	= `echo $numcols - 1 | bc -l` 
+set yminbasam 	= $ymin
+set mechthick	= `awk '(NR>2 && $1>5 && $3<10) {print $1; exit;}' $model.ysen`
+set numpoints	= `awk 'END{print NR-1;}' $model.xzt`
+set alt0	= `awk '{if (NR==numpoints-3) print -$2/1000;}' numpoints=$numpoints $model.pfl`
+set maglimit	= 1
+set earthqsc	= .04
+set color_sea 	= 100/150/255
+set region	= $xmin/$xmax/$ymin/$ymax
+set color_basament = 40/100/100
+set d_red 	= `echo 140 / $numhorizs  | bc ` 
+set d_green 	= `echo 140 / $numhorizs  | bc ` 
+set d_blue	= `echo 60 / $numhorizs   | bc ` 
+
+set graph_width = 16
+
+cat <<END >  $tmp.paleta.strs.tmp
+	-1000	250	0	0	-100	255	160	80	B
+	-100	255	160	80	0	255	255	255	B
+	0	255	255	255	100	80	160	255	B
+	100	80	160	255	600	0	0	255	B
+F	0	0	255	
+B	250	0	0	
+END
+cat <<END> $tmp.paleta.temp.tmp
+	0	70	70	255	600	170	0	170	B
+	600	170	0	170	1200	255	0	0	B
+END
+cat <<END> $tmp.contours.strs.tmp
+	-1000
+	-300	
+	-100	A
+	-30	
+	-10	A
+	-3	
+	-1	
+	1	
+	3	
+	10	A
+	30	
+	100	A
+	300	
+	1000	
+END
+
+#stress clip file:
+awk '{if (substr($0,1,1) != "#") print $1, $(NF-1)/1000+alt0}' alt0=$alt0 $model.xzt 	> $tmp.stress.clip.tmp
+echo $xmax  80	>> $tmp.stress.clip.tmp
+echo $xmin  80	>> $tmp.stress.clip.tmp
+
+
+#echo $d_red $d_green $d_blue
+
+#Intermidiate files:
+
+echo  $xmax $yminbasam > $tmp.basament.xz.tmp
+echo  $xmin $yminbasam >> $tmp.basament.xz.tmp
+cp -f $tmp.basament.xz.tmp $tmp.pru4.tmp
+awk   '{print $1, $2}' $model.pfl >> $tmp.basament.xz.tmp
+invertfile $model.pfl > $tmp.pru2.tmp
+echo  $xmin 0 >> $tmp.pru4.tmp
+echo  $xmax 0 >> $tmp.pru4.tmp
+
+
+
+#TEMP-CRUST  ---------------------------------------------------------------------------
+set vert_exagg = 1
+set graph_height = ` echo $graph_width "* " $vert_exagg " * " $maxdepth " / ("$xmax - $xmin\) | bc -l`
+set vert_shift   = ` echo $graph_height +.5 | bc -l`
+if (-r $model.temp) then
+	echo "Plotting temperatures..."
+	rm -f $model.temp.grd
+	awk '{print $1, -$2, $3}' $model.temp | \
+		surface -G$model.temp.grd -I2 -R$xmin/$xmax/0/$maxdepth -H2 
+	if (-r $model.temp.grd) rm -f $model.temp
+endif
+psbasemap -JX$graph_width/-$graph_height -R$xmin/$xmax/0/$maxdepth \
+	-B:.$model" inputs and results":a50:"Distance (km)":/20f10:"depth (km)":NseW \
+	-X2.5 -Y17.5 -K -G$color_sea -P	> $ps
+psclip	$tmp.stress.clip.tmp -JX -R -O -K 								>> $ps
+grdimage	$model.temp.grd -C$tmp.paleta.temp.tmp -JX -R -O -K  	>> $ps
+grdcontour	$model.temp.grd -JX -R -C200 -A200f12 -W3/255 -K -O 				>> $ps
+if (-r $model.CRUST)  awk '{if (substr($1,1,1)!="#") print $1/1000, $2/1000}' $model.CRUST \
+					| psxy  -JX -R -W15/0 -N -O -K				>> $ps
+if (-r $model.UCRUST) awk '{if (substr($1,1,1)!="#") print $1/1000, $2/1000}' $model.UCRUST \
+					| psxy  -JX -R -W15/0 -N -O -K 				>> $ps
+psclip -C -JX -R -O -K 									>> $ps
+#psxy	$tmp.stress.clip.tmp -JX -R -O -W10 -K 							>> $ps
+psbasemap -JX -R -B -O -K									>> $ps
+
+awk '{if (substr($0,1,1) != "#") print $1, $(NF-1)/1000+alt0}' alt0=$alt0 $model.xzt    | psxy -JX -R -O -K -W10/0 	>> $ps
+awk '{if (substr($0,1,1) != "#") print $1, $(NF-1)/1000+mechthick+alt0}' alt0=$alt0 mechthick=$mechthick $model.xzt | psxy -JX -R -O -K -W10/0 	>> $ps
+
+#psscale -C$tmp.paleta.temp.tmp -B:"Temperature (@+o@+C)": -D2.2/-.13/4/.2h -O -K			>> $ps
+
+#STRESS ENVELOPE
+awk '{print($1+alt0,$2)}' alt0=$alt0 $model.ysen | psxy  -JX2/-$graph_height -R-1.6e3/1.6e3/0/$maxdepth -W10/0 -N -O -K  -Bn -X4.5 -:	>> $ps
+awk '{print($1+alt0,$3)}' alt0=$alt0 $model.ysen | psxy  -JX -R -W10/0 -O -K -:  				>> $ps
+
+pstext	-JX	-R  -O 	-K -X-4.5								<< END	>> $ps
+#	0	25000	13  0   1  1	Espesor Elastico Equivalente
+#	-30	48000	11  0   1  2	espesor mecanico
+END
+
+
+
+
+#DEFLECTION:  ---------------------------------------------------------------------------
+set vert_exagg = 15
+set graph_height = ` echo $graph_width "* " $vert_exagg " * (-" $yminbasam "+" $ymax ") / 1000 / ("$xmax - $xmin\) | bc -l`
+set vert_shift   = ` echo $graph_height +.5 | bc -l`
+echo  $xmax $yminbasam > $tmp.basament.xz.tmp
+echo  $xmin $yminbasam >> $tmp.basament.xz.tmp
+awk   '{print $1, $2}' $model.pfl >> $tmp.basament.xz.tmp
+
+psbasemap -JX$graph_width/$graph_height -R$xmin/$xmax/$yminkm/$ymaxkm \
+	-Ba50f10/2f1:"depth (km)":NseW -G$color_sea \
+	-K -Y-$vert_shift -O  >> $ps
+psbasemap -JX$graph_width/$graph_height -R$xmin/$xmax/$ymin/$ymax -B100000 -K -O  >> $ps
+#Draws Sea:
+#psxy $tmp.pru4.tmp -JX -R -O -K -L -G$color_sea >> $ps
+
+
+#Draws basament:
+psxy $tmp.basament.xz.tmp -JX -R -O -K -L -W0 -G$color_basament 						>> $ps
+
+set col 	=  3
+while ($col <= $numcols)
+	echo $col | \
+		cat - $model.pfl | \
+		awk '{if (NR==1) colawk=$1; else print $1, $colawk}' > $tmp.pru.tmp
+	set colant = `echo $col - 1 | bc`
+	echo $colant | \
+		cat - $tmp.pru2.tmp | \
+		awk '{if (NR==1) colawk=$1; else print $1, $colawk}' >> $tmp.pru.tmp
+
+	set Rcolor = `echo \($col - 2\) \* $d_red   + 120 | bc -l`
+	set Gcolor = `echo \($col - 2\) \* $d_green + 105 | bc -l`
+	set Bcolor = `echo \($col - 2\) \* $d_blue  + 30  | bc -l`
+	psxy $tmp.pru.tmp -JX -R -O -K -M -L -G$Rcolor/$Gcolor/$Bcolor 				>> $ps
+	rm -f $tmp.pru.tmp
+	set col = `echo $col + 1 | bc`
+end
+if (-r $model.CMP) awk '{print ($1,$2)}' $model.CMP |    psxy -JX -R -O -K -W12/255/80/80	>> $ps
+if (-r $model.FIT) awk '{print ($1,$2)}' $model.FIT |    psxy -JX -R -O -K -Sc.05 -G255 -W1/0	>> $ps
+if (-r $model.FIT) awk '{print ($1,$2,$4)}' $model.FIT | psxy -JX -R -Ey.05/3 -O -K 		>> $ps 
+
+
+
+
+#STRESS-EET:  ---------------------------------------------------------------------------
+set vert_exagg = 1
+set graph_height = ` echo $graph_width "* " $vert_exagg " * " $maxdepth " / ("$xmax - $xmin\) | bc -l`
+set vert_shift   = ` echo $graph_height +1 | bc -l`
+if (-r $model.strs) then
+	rm -f $model.strs.grd
+	surface	$model.strs -G$model.strs.grd -I2 -R$xmin/$xmax/0/$maxdepth -H2 
+	if (-r $model.strs.grd) rm -f $model.strs
+endif
+psbasemap -JX$graph_width/-$graph_height -R$xmin/$xmax/0/$maxdepth -Ba50f10/20f10:"depth (km)":nSeW \
+	-Y-$vert_shift -K -O -G$color_sea									>> $ps
+psclip	$tmp.stress.clip.tmp -JX -R -O -K 								>> $ps
+grdimage	$model.strs.grd -C$tmp.paleta.strs.tmp -JX -R -O -K 	>> $ps
+grdcontour	$model.strs.grd -JX -R -C$tmp.contours.strs.tmp -A10f12/255 -W3/255 -K -O 		>> $ps
+psclip -C -JX -R -O -K 									>> $ps
+psxy	$tmp.stress.clip.tmp -JX -R -O -W10/0 -K 							>> $ps
+
+#EET represented with z measured from the top of the plate:
+awk '{if (substr($0,1,1) != "#") print $1, $(NF-1)/1000}' $model.xzt > $tmp.eet1.tmp
+awk '{if (substr($0,1,1) != "#") print $1, $2/1000     }' $model.eeth > $tmp.eet2.tmp
+paste $tmp.eet1.tmp $tmp.eet2.tmp | awk '{print ($1, $2+$4)}' > $tmp.eet.tmp
+psxy $tmp.eet.tmp -JX -R -O -W12/0/255/0 -K -H1 		>> $ps
+
+#FOCAL MECHANISMS:
+awk '{if ($4=="C" && $2!=15)  print $0}' $model.EFM > $tmp.EFM.comp.tmp
+#gawk '{print ($1, $2, ($10-14)/24 )}' $tmp.EFM.comp.tmp | psxy  -JX -R -Sc -G0 -W5/255 -O -K 	>> $ps
+awk '{if ($3>maglimit) print $1, $2, $3*earthqsc }' earthqsc=$earthqsc maglimit=$maglimit \
+	$tmp.EFM.comp.tmp | psxy  -JX -R -Sc -G0   -W2/255 -O -K >> $ps
+awk '{if ($4=="E" && $2!=15)  print $0}' $model.EFM > $tmp.EFM.tens.tmp
+#gawk '{print ($1, $2, ($10-14)/24 )}' $tmp.EFM.tens.tmp | psxy  -JX -R -Sc -G255 -W5/0 -O -K 	>> $ps
+awk '{if ($3>maglimit) print $1, $2, $3*earthqsc }' earthqsc=$earthqsc maglimit=$maglimit \
+	$tmp.EFM.tens.tmp | psxy  -JX -R -Sc -G255 -W2/0 -O -K >> $ps
+
+#pscoupe ../FOCAL_MECHS/$model.mechs -R -JX -Sc0.5 -W1 -L -G0 \
+#	-Aa186.1/-21.9/-170/-23/90/50/0/150 -V -O -K >> $ps
+
+psbasemap -JX -R -B -K -O 										>> $ps
+awk '{if (substr($0,1,1) != "#") print $1, $(NF-1)/1000+alt0}' alt0=$alt0 $model.xzt |\
+	psxy -JX -R -O -K -M -W10/0 	>> $ps
+awk '{if (substr($0,1,1) != "#") print $1, $(NF-1)/1000+mechthick+alt0}' alt0=$alt0 mechthick=$mechthick $model.xzt |\
+	psxy -JX -R -O -K -M -W10/0 	>> $ps
+
+#psscale -C$tmp.paleta.strs.tmp -B:"Stress (MPa)": -D2.2/-.5/5/.2h -O					>> $ps
+pstext -JX -R -O -K										<<END>> $ps
+	218 $ztxt 	16 0 1 5	$model
+	55  $ztxt    	14 0 0 5	M@-w@-=3
+	95  $ztxt    	14 0 0 5	M@-w@-=4
+	135 $ztxt   	14 0 0 5	M@-w@-=5
+END
+awk -v ztxt=$ztxt -v earthqsc=$earthqsc 'BEGIN{print 50,ztxt,4*earthqsc; print 90,ztxt,5*earthqsc; print 130,ztxt,6*earthqsc}' $model.xzt |\
+	psxy -JX -R -Sc -G255 -W2/0 -O >> $ps
+
+
+rm -f    $tmp.*.tmp 

@@ -1,0 +1,28 @@
+Original author: 1993-2013 Daniel Garcia-Castellanos. 
+
+    This file is part of 'tAo'.
+
+    tAo is free open-source software; you can redistribute it and/or 
+    modify it under a GNU GPL v3 license. For non-code contents use a Creative
+    Commons 3.0 BY-SA license  (you  must cite the  original authorship and
+    share your versions alike). 
+    The scientific citation is:
+
+	Garcia-Castellanos, D., M. Fernandez & M. Torne, 2002. Modelling the 
+	evolution of the Guadalquivir foreland basin (South Spain). 
+	Tectonics 21(3), doi:10.1029/2001TC001339 [pdf]
+
+    This means approximately (but look at the GNU-GPL license) that you could
+    use/add/modify the code, but the resulting code you produce must:
+    1) be open (public domain) and follow the present copyleft-method rule.
+    2) contain references to the original authorship and to the copyleft rule
+    at the beginning of each file containing copyleft material. 
+    3) In particular, commercial use of part of the present code must be
+    previously authorised by the author(s) of the code parts under copyleft
+    rule. 
+
+    This software is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+

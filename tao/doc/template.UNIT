@@ -1,0 +1,74 @@
+###  Sample *.UNIT file for tAo  ###
+#UNIT files are used to define new Blocks in TISC and tAo (loads, faults, ...). 
+#First UNIT is read from file 'project1.UNIT', 2nd 'project2'.UNIT, etc.
+#The unit parameters and thickness contained in these *.UNIT files 
+#is read from the routine 'read_file_unit()' in tao.c. 
+#Have a look at that one to better understand how this input works.
+
+#PARAMETER	VALUE	UNITS
+#----------------------------
+time		0	[Ma]	Time when this load/unit must be applied. Note  that
+					'time' in each unit file must be  larger than in the
+					previous unit file  (projectname'N-1'.UNIT).
+vel		0	[km/My]	Velocity (positive means rightwards, towards positive x).
+time_stop	9999	[My]	Time to stop the load/unit.
+density		2800	[kg/m3]	Density of this load/unit.
+erodibility	100e3	[m]	Erodability of the unit.
+
+
+#Unit properties [0=NO, 1=YES]:
+gradual 	0	[0/1]	To distribute loading until the next load time.
+hidden		0	[0/1]	To hide the load (won't be plot and won't contribute to 
+					topography, will just add the corresponding load). Not
+					available for 'gradual' blocks.
+move		0	[0/1]	To move the load with 'vel_x,vel_y' (km/Ma)  till
+					'Time_stop' (Ma). 
+fault		0	[0/1]	Means that x-y points refer to the base of a  fault
+					moving at a constant velocity  vel_x,vel_y (km/Ma) until
+					'Time_stop'.  'thickness' is here the depth of the  fault in
+					absence of isostatic  movements (depth the fault would have 
+					at the initial time).
+ride		0	[0/1]	To let the previous overlaying Blocks be dragged  by the
+					present one.
+cut_Blocks	0	[0/1]	Means that previously defined Blocks should be cut by
+					this new fault.
+cut_Block	0		If nonzero, this number minus 1 will be the  Block to cut by
+					this fault. You are required to add 1  to the Block number
+					so that you can cut the lowermost  Block (number 0). Block
+					number as in the internal registry shown at the end of
+					each   run, not the order of the user-specified units. If
+					negative, it will take the  absolute value as a density and
+					cut  the largest Block with that density.  
+cut_all 	0	[0/1]	Means that all Blocks should be cut by this new fault.
+cut_seds	0	[0/1]	Means that all sediment Blocks will be cut by this new
+					fault.
+thin_sheet	0	[0/1]	Calculate the deformation of this Block with a  thin
+					viscous sheet (Bird, 1991).  Assumes local isostasy.
+insert		0	[0/1]	Do not put this load on the top of the Blocks,  but
+					insert it as the lowest load
+top		0	[0/1]	Put this load on the top of the Blocks, but as  the highest
+					load.
+topoest		0	[0/1]	To define a topographic load, i.e., the final  (real)
+					topography is given in the UNIT file and the  subsidence
+					required to compensate it is calculated  (the space between
+					0 and the deflection is filled  with a Block of 'densinfill'
+					density). This is  equivalent to  switch_topoest=1 in the
+					parameters file. Doesn't make  sense using this for moving
+					or thrust  loads.
+#fill_up_to	0	[m]	If present, tAo fills with constant density up  to the given
+					height [m]. Distribution  will not be read.
+
+z_default	0	[m]	Default thickness in the nodes where it is not  specified.
+add_random	0	[z-units] Add random number to z between +- that value.
+z_absol		0	[0/1]	For faults, 0 means z values are relative to initial
+				zero (current deflection will be added to z values);  1 means
+				they will be used as absolute values.
+
+#Thickness or faut-depth distribution:
+x1      z1
+x2      z2
+x3      z3
+#...
+#Attention: x3>x2>x1. tAo will linearly interpolate between the given points.
+#z1, z2, z3 can represent load thickness (>0) or fault depth in case of a fault 
+#type of unit (then positive downwards, measured from the z=0 datum)

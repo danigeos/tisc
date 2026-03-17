@@ -1,0 +1,213 @@
+#!/bin/csh
+##############################################################################
+#	Job for tao graphic output with GMT 3.0
+#	Daniel Garcia-Castellanos, 1994-1996.
+#
+#Syntax:  tao.gmt.job <modelname> <xmin> <xmax> <ymin> <ymax> 
+#
+#Note that:
+# -This script uses bc unix command as a calculator. 
+# -<xmin> <xmax> must be inside x range defined in .PRM parameters file.
+#
+#Output contents:
+# From top to bottom: Temperature & crust geometry; Model section; Basin blow
+# up; Stress and Te.
+##############################################################################
+
+#Setting up variables:
+
+set model	= $argv[1]
+
+set numcols 	= `gawk '(NR==4) {print NF; exit;}' $model.pfl`
+set ps   	= $model.ps
+set numhorizs 	= `echo $numcols - 1 | bc -l` 
+set switch_sea = $6
+set switch_rheo = $7
+set color_sea = 100/150/255
+
+set color_basement = 70/170/50
+set color_sediment = 255/255/100
+set d_red 	= `echo 140 / $numhorizs  | bc ` 
+set d_green 	= `echo 140 / $numhorizs  | bc ` 
+set d_blue	= `echo  60 / $numhorizs   | bc ` 
+
+set dens 	= `gawk '(NR==2) {print $0; exit;}' $model.pfl`
+
+
+#
+#TRUE scale PROFILE:
+
+set graph_width = 15
+set vert_exagg = 70
+set xmin	= $2
+set xmax	= $3
+set ymin	= $4
+set ymax 	= $5
+set yminbasam 	= $4
+set yminkm 	= `echo $yminbasam /1000 | bc -l` 
+set ymaxkm 	= `echo $ymax /1000 | bc -l` 
+set graph_height = ` echo $graph_width "* " $vert_exagg " * (-" $yminbasam "+" $ymax ") / 1000 / ("$xmax - $xmin\) | bc -l`
+echo  $xmax $yminbasam > $model.basement.xz.tmp
+echo  $xmin $yminbasam >> $model.basement.xz.tmp
+gawk   '{print $1, $2}' $model.pfl >> $model.basement.xz.tmp
+
+
+echo  $xmax $yminbasam > $model.basement.xz.tmp
+echo  $xmin $yminbasam >> $model.basement.xz.tmp
+cp $model.basement.xz.tmp $model.pru4.tmp
+gawk   '{print $1, $2}' $model.pfl >> $model.basement.xz.tmp
+invertfile $model.pfl > $model.pru2.tmp
+echo  $xmin 0 >> $model.pru4.tmp
+echo  $xmax 0 >> $model.pru4.tmp
+
+
+psbasemap -JX$graph_width/$graph_height -R$xmin/$xmax/$yminkm/$ymaxkm \
+	-Ba50f10:"distance (km)":/.2f.2g.2:"alt. (km)":nSeW \
+	-K -X3 -Y10 -P -K > $ps
+psxy  -JX -R$xmin/$xmax/$yminbasam/$ymax -K -O 	<<END>> $ps
+END
+
+#Draws Sea:
+#psxy $model.pru4.tmp -JX -R -W -O -K -L -G$color_sea >> $ps
+
+#Draws basement:
+psxy $model.basement.xz.tmp -JX -R -W -O -K -L -G$color_basement 					>> $ps
+
+
+set col =  3
+while ($col <= $numcols)
+	echo $col | \
+		cat - $model.pfl | \
+		gawk '{if (NR==1) colawk=$1; else print $1, $colawk}' > $model.pru.tmp
+	set colant = `echo $col - 1 | bc`
+	echo $colant | \
+		cat - $model.pru2.tmp | \
+		gawk '{if (NR==1) colawk=$1; else print $1, $colawk}' >> $model.pru.tmp
+
+	set Rcolor = `echo \($col - 2\) \* $d_red   + 120 | bc -l`
+	set Gcolor = `echo \($col - 2\) \* $d_green + 105 | bc -l`
+	set Bcolor = `echo \($col - 2\) \* $d_blue  + 30  | bc -l`
+	set color = $Rcolor/$Gcolor/$Bcolor
+	set width = 1
+	if ($dens[$col] > 2500) then
+		set color = $color_basement
+	else
+		set color = $color_sediment
+	endif
+	psxy $model.pru.tmp -JX -R -O -K -M -L -G$color  -W$width/0			>> $ps
+	rm -f $model.pru.tmp
+	set col = `echo $col + 1 | bc`
+end
+if (-r $model.CMP) gawk '{print ($1,$2)}' $model.CMP | psxy -JX -R -K -O -M -W4/230/50/50 	>> $ps
+pstext	-JX	-R  -O 	-K -W0	-G255							<< END	>> $ps
+#	$xmax	-14000	16  0   1  3	b) 
+END
+psbasemap -JX -R -Bnsew -K -O 			>> $ps
+
+
+
+#Gravity Anomaly graphic:
+if (-r $model.xg) then 
+	gawk '{if (NR>=3) print $1, $NF}' $model.xg \
+		| psxy -JX$graph_width/3 -R$xmin/$xmax/-300/300 -W4 -Y2.7 -O -K \
+		-B:.$model\:a50f25g25:"(km)":/100f50g50:"Gravity Anomaly (mGal)":\
+		>> $ps
+endif
+
+
+
+
+if ($switch_rheo == 0) then
+	psbasemap -B -JX -R -O >> $ps
+	rm -f   $model.*.tmp 
+	exit
+endif
+
+set mechthick	= `gawk '(NR>2 && $1>35 && $3<10) {print $1; exit;}' $model.yse`
+
+cat <<END> $model.paleta.tmp
+	-100	250	0	0		-30	255	160	80	B
+	-30	255	160	80		-0	255	255	255	B
+	0	255	255	255		30	80	160	255	B
+	30	80	160	255		100	0	0	255	B
+END
+
+cat <<END> $model.paleta.temp.tmp
+	0	0	0	255	600	255	60	30	B
+	600	255	60	30	1100	255	255	50	B	>> $model.paleta.temp.tmp
+END
+
+cat <<END> $model.contours1.z.tmp
+	-1000	
+	-300	
+	-100	A
+	-30	
+	-10	A
+	-3	
+	-1	
+	1	
+	3	
+	10	A
+	30	
+	100	A
+	300	
+	1000	
+END
+
+#stress clip file:
+gawk '{if (substr($0,1,1) != "#") print $1, $(NF-1)/1000}' $model.xzt 	> $model.stress.clip.tmp
+gawk '{if (substr($0,1,1) != "#") print $1, ($(NF-1))/1000+mechthick}' mechthick=$mechthick $model.xzt > $model.aux.tmp
+invertfile $model.aux.tmp 			>> $model.stress.clip.tmp
+
+
+#STRESS-EET:
+if (-r $model.strs) then
+	surface	$model.strs -G$model.strs.grd -I2/1 -R$xmin/$xmax/-2/50 -H2 
+	rm -f $model.strs
+endif
+psbasemap -JX$graph_width/-4 -R$xmin/$xmax/-2/50 \
+	-Ba50f10:"distance (km)":/20f10:"depth (km)":nSeW \
+	-Y-6.5 -K -O						>> $ps
+psclip	$model.stress.clip.tmp -JX -R -O -K 			>> $ps
+grdimage	$model.strs.grd -C$model.paleta.tmp -JX -R -O -K  	>> $ps
+grdcontour	$model.strs.grd -JX -R -C$model.contours1.z.tmp -A10f10/255 -G6/10 -W3/255 -K -O >> $ps
+if (-r $model.CRUST)  gawk '{if (substr($1,1,1)!="#") print $1/1000, $2/1000}' $model.CRUST \
+	| psxy -JX -R -W15/0 -N -O -K >> $ps
+psclip -C -JX -R -O -K 							>> $ps
+pstext	-JX	-R  -O 	-K -W0	-G255				<< END	>> $ps
+#	$xmax	59	16  0   1  3	d) 
+END
+psxy	$model.stress.clip.tmp -JX -R -O -W8 -K 			>> $ps
+psxy $model.eet -JX -R$xmin/$xmax/-2000/60000 -O -W10/0t15_15:0 -K -H1 	>> $ps
+psbasemap -JX -R$xmin/$xmax/-2/60 -Bnsew -K -O 				>> $ps
+
+psscale -C$model.paleta.tmp -B:"Stress (MPa)": -D2.2/-.5/4/.2h -O -K	>> $ps
+
+
+
+#TEMP-CRUST
+if (-r $model.temp) then
+	surface	$model.temp -G$model.temp.grd -I2/1 -R$xmin/$xmax/-60/5 -H2 
+	rm -f $model.temp
+endif
+psbasemap -JX$graph_width/4 -R$xmin/$xmax/-50/0 \
+	-Ba50:"x (km)":/20f10:"depth (km)":NseW -Y12 -O -K >> $ps
+#psclip	$model.stress.clip.tmp -JX -R -O -K 							>> $ps
+grdimage	$model.temp.grd -C$model.paleta.temp.tmp -JX -R -O -K  				>> $ps
+grdcontour	$model.temp.grd -JX -R -C200 -A200f10 -W3/255 -K -O 				>> $ps
+if (-r $model.CRUST)  gawk '{if (substr($1,1,1)!="#") print $1/1000, $2}' $model.CRUST \
+					| psxy  -JX$graph_width/-4 -R$xmin/$xmax/0/50000 -W15/0 -N -O -K	>> $ps
+if (-r $model.UCRUST) gawk '{if (substr($1,1,1)!="#") print $1/1000, $2}' $model.UCRUST \
+					| psxy  -JX -R -W15/0 -N -O -K 				>> $ps
+#psclip -C -JX -R -O -K 									>> $ps
+pstext	-JX	-R  -O 	-K -W0	-G255							<< END	>> $ps
+#	$xmax	49000	16  0   1  3	a) 
+END
+psxy	$model.stress.clip.tmp -JX -R -O -W10 -K 						>> $ps
+psbasemap -JX$graph_width/-4 -R$xmin/$xmax/0/50 -Bnsew -O 					>> $ps
+
+#psscale -C$model.paleta.temp.tmp -B:"Temperature (@+o@+C)": -D2.2/-.13/4/.2h -O		>> $ps
+
+
+rm -f   $model.*.tmp 
+

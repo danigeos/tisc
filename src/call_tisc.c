@@ -9,7 +9,7 @@
 
 #include "tisclib.h"
 #include "tiscio.h"
-#include "../lib/libreria.h"
+#include "libreria.h"
 
 
 /*

@@ -1,0 +1,8 @@
+#This is the load profile used in 'example_B'
+#x (m)	pressure (Pa)
+
+400e3	0
+500e3	40e6
+550e3	100e6
+580e3	20e6
+600e3	0

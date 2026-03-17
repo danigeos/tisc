@@ -1,0 +1,7 @@
+#Moho geometry.
+#x and depth of the moho (m):
+0	7000
+120e3	19000
+160e3	30000
+170e3	34000
+700e3	34000

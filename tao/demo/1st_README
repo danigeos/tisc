@@ -1,0 +1,95 @@
+This file contains instructions to run some examples of tAo. The aim of these
+examples is to check that your installation of tAo is actually working and to 
+show that tAo is able to address a diversity of geological problems 
+and contexts. The examples are sorted from  the most general and simple
+problems (example_A) to the most detailed and  specific about foreland basin
+formation (example_E).
+All Postscripts in these directories are the result of the tao.gmt.job GMT
+commands script, which is automatically invoqued when the parameter switch_ps =
+1.
+
+EXAMPLES: 
+You can check and modify the inputs (files with an upppercase name extension).
+
+*example_A:
+	Suppose you need to calculate the deflection of a 20-km-thick 
+elastic plate under a point load of 1e12 N/m on its left edge (x=0), where 
+no moment is supported. The next command solves this problem using 31 points 
+of discretization in the finite differences method:
+	Command:	tao -Q -V -N31 -s1e12 -B1 -D0/300e3 -T20e3
+	Note that in this example you don't use any input-output file. 
+Output is printed in the standar output in 3 columns: x(km), deflection(m), 
+load_pressure(Pa).
+
+
+*example_B:
+	Suppose you know the density and the lateral variation of the thickness
+of a body laying on the lithosphere (the load of a volcanic seamount, for 
+example). You have these data in the file example_B_load and you want to know 
+the deflection along x produced in the region ranging from x=0 to x=1000 km 
+assuming that the boundaries of the domain are far enough from the load so that 
+they are not deflected. Moreover, a compressive tectonic horizontal force 
+of 1e12 N·m is acting.
+	Command:	tao -Qexample_B_load -N51 -B2 -p1e12 -D0/1000e3
+	Note that in this example you don't get any output file, deflection is
+just flushed to the standar output as in example_A. The maximum load resulting 
+from the input load is 88e6 Pa at x=540 km.
+
+
+*example_C:
+	Let's call this project 'example_C'; this will be the begining of all
+the input and output file names. I this example, two triangular shaped  loads
+are loaded gradually from t=0 to t=10 Ma, producing a time dependent  evolution
+of the deflection as given in the output file 'example_C.xzt'.  This case would
+be similar to a volcano formation in the middle of an  oceanic plate. Gravity
+(Bouguer) and geoid anomalies are also calculated,  written to 'example_C.xg'
+and displayed in 'example_C.ps'. 
+	Command:	tao example_C
+	Note that you could also change the parameter densenv=1000 (density of 
+water), so the effective bouyancy contrast density would be 3300-1000 rather 
+than 3300 (density of mantle). This would indicate that we were assuming an
+oceanic environment in this example, and then you should turn off the sea 
+switch (switch_sea=0), since sea is no longer accounted for explicitly as a 
+load.
+	Use this example to understand the topoest parameter by running: 
+	Command:	tao example_C -qswitch_topoest=0 -tf5
+	Command:	tao example_C -qswitch_topoest=1 -tf5
+
+
+*example_D:
+	This example corresponds to example 1 of the paper in Computers & 
+Geosciences (1997, v. 23, 9, pp. 993-1003). The geometry of the sedimentary 
+infill produced during a  foreland basin formation is studied. 
+	Command:	tao example_D
+
+
+*example_E:
+	This example corresponds to example 2 of the paper in Computers & 
+Geosciences (1997). Similar to example_D but an elastic-plastic model is
+assumed  which allows to predict a more realistic stress distribution in the 
+lithosphere. It incorporates rheological stratification and lateral and depth 
+dependency of the yield stress. 
+	Command:	tao example_E
+
+
+*example_F:
+	This consists of a job that runs a tao model in several stages (using 
+the -F option) changing some parameters during the run. Edit the job for 
+details.
+	Command:	example_F.job
+
+
+*example_G:
+	Simple setup to play with the compaction of sediment 
+	tao example_G -qsed_porosity=.5 -qcompact_depth=2000 -T5e3 
+
+
+*Example run incorporating surface transport:
+	Go into doc/surface_transport directory and run:
+	Command:	tao margin
+
+
+*Tonga: The run publlished in Geophys. J Intl., 2000, on the Tonga and Kermadec 
+Trenches:
+	Go into doc/Tonga directory and run:
+	Command:	tao Tonga

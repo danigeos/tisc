@@ -1,0 +1,329 @@
+#!/bin/csh -f
+##############################################################################
+#	Shell script to produce tAo graphic output using GMT 4
+#	Daniel Garcia-Castellanos
+##############################################################################
+
+if ($#argv < 1) then
+	echo "Sorry, but you entered too few parameters"
+	echo "Syntax:" 
+	echo $0 "tAo_projectname [<x_YS> || <xmin> <xmax> <zmin> <zmax> [<switch_sea> [<switch_rheo>]]]"
+	exit
+endif
+
+
+#Setting up variables:
+source $tao_dir/script/tao.common.gmt.job
+
+#1st PAGE of Postscript:
+#
+#MAIN GRAPHIC VERTICALLY EXAGGERATED:
+set vertical_exag = 15
+set graph_width = 15
+#set zmincropkm = -17
+#set zmincrop 	= `echo $zmincropkm \* 1000 | bc -l` 
+set txt = $prj
+set graph_height = `echo $vertical_exag \* $graph_width \* \($zmaxkm \- $zminkm\)\/\($xmax \- $xmin\) | bc -l` 
+psbasemap -JX$graph_width/$graph_height -R$xmin/$xmax/$zminkm/$zmaxkm \
+	-B$ticklabels\:"distance (km)":/$zticklabels\:"elevation (km)":nSeW \
+	-P -K -X3.5 -Y3 -U"tAo graphic output. Project: "$txt >! $ps
+psbasemap -JX -R$xmin/$xmax/$zmin/$zmax -K -O -B:: >> $ps
+
+#Draws Sea:
+if ($switch_sea == 1) psxy $tmp.sea.xz.tmp -JX -R -O -K -L -G$color_sea >> $ps
+
+#Draws basement:
+psxy $tmp.basement.xz.tmp -JX -R -O -K -L -G$color_heavy_basement >> $ps
+
+#set uplift = `awk -v tn=$Timenow 'BEGIN{u=(tn+40)*3000/40; if (0) u=30*3000/40; print u; exit;}'`
+#echo uplift = $uplift
+#psxy -JX -R -W4ta -O -K << END >> $ps
+#	-50	0
+#	-50	$uplift
+#	50	$uplift
+#	50	0
+#END
+
+set col = 3
+while ($col <= $numcols)
+	awk '{print $1, $col}' col=$col $prj.pfl > $tmp.0.tmp
+	awk '{print $1, $(col-1)}' col=$col $tmp.invert_pfl.tmp >> $tmp.0.tmp
+
+	if ($dens[$col] > 2895) then
+		set color = $color_heavy_basement
+	else
+		if ($dens[$col] > 2550) then
+			set color = $color_basement
+		else
+			if ($dens[$col] > 2400) then
+				set color = $color_heavy_sediment
+			else
+				if ($dens[$col] > 1100) then
+					set colant = `echo $col - 1 | bc`
+					set age_cond = `awk -v a=$age[$colant] -v agelimit=$sedim_age_limit 'BEGIN{age=a*1.0; agelimit*=1.; if (age>=agelimit) print 1; else print 0.0}' `
+					if ($age_cond) then
+						set color = $color_sediment
+					else
+						set cond = `awk -v a=$age[$colant] -v ageini=$Timeini 'BEGIN{age=a*1.0; ageini*=1.; if (age==ageini) print 0; else print 1}' `
+						if ($cond) then
+							set color = $color_old_sediment
+						else
+							set color = $color_oldest_sediment
+						endif
+					endif
+				else
+					if ($dens[$col] > 970) then
+						set color = $color_sea
+					else
+						set color = $color_ice
+					endif
+				endif
+			endif
+		endif
+	endif
+
+	psxy $tmp.0.tmp -JX -R -O -K -L -M -W1 -G$color >> $ps
+	set col = `echo $col + 1 | bc`
+end
+
+#if (-r $prj.CMP)  psxy $prj.CMP -JX -R -O -M -W10/255 -K >> $ps
+if (-r $prj.CMP)  psxy $prj.CMP -JX -R -O -M -W4ta/150/0/0 -K >> $ps
+if (-r $prj.FIT)  psxy $prj.FIT -JX -R -O -Ey -W1/255/150/150 -K >> $ps
+pstext	-JX -R -N -O -K << END >> $ps
+	$xmin	$zmax	15 0 0 LT 	\ t=$Timenow My
+END
+psbasemap -JX -R -B:: -O -K >> $ps
+
+
+#
+#TRUE SCALE GRAPHIC:
+set vertshift = `echo $graph_height + 1.0 | bc -l`
+set vertical_exag = 1
+set graph_height = `echo $vertical_exag \* $graph_width \* \($zmaxkm \- $zminkm\)\/\($xmax \- $xmin\) | bc -l` 
+psbasemap -JX$graph_width/$graph_height -R$xmin/$xmax/$zminkm/$zmaxkm \
+	-B$ticklabels\:"distance (km)":/$zticklabels\:"elevation (km)":nseW \
+	-O -K -Y$vertshift 		>> $ps
+psbasemap -JX -R$xmin/$xmax/$zmin/$zmax -K -O -B:: >> $ps
+
+#Draws Sea:
+if ($switch_sea == 1) psxy $tmp.sea.xz.tmp -JX -R -O -K -L -G$color_sea	>> $ps
+
+#Draws base of Blocks:
+psxy $tmp.basement.xz.tmp -JX -R -O -K -L -G$color_heavy_basement >> $ps
+
+set col = 3
+while ($col <= $numcols)
+	awk '{print $1, $col}' col=$col $prj.pfl > $tmp.0.tmp
+	awk '{print $1, $(col-1)}' col=$col $tmp.invert_pfl.tmp >> $tmp.0.tmp
+	if ($dens[$col] > 2895) then
+		set color = $color_heavy_basement
+	else
+		if ($dens[$col] > 2550) then
+			set color = $color_basement
+		else
+			if ($dens[$col] > 2400) then
+				set color = $color_heavy_sediment
+			else
+				if ($dens[$col] > 1100) then
+					set colant = `echo $col - 1 | bc`
+					set age_cond = `awk -v a=$age[$colant] -v agelimit=$sedim_age_limit 'BEGIN{age=a*1.0; agelimit*=1.; if (age>agelimit) print 1; else print 0.0}' `
+					if ($age_cond) then
+						set color = $color_sediment
+					else
+						set cond = `awk -v a=$age[$colant] -v ageini=$Timeini 'BEGIN{age=a*1.0; ageini*=1.; if (age==ageini) print 0; else print 1}' `
+						if ($cond) then
+							set color = $color_old_sediment
+						else
+							set color = $color_oldest_sediment
+						endif
+					endif
+				else
+					if ($dens[$col] > 970) then
+						set color = $color_sea
+					else
+						set color = $color_ice
+					endif
+				endif
+			endif
+		endif
+	endif
+
+	psxy $tmp.0.tmp -JX -R -O -K -L -M -W1 -G$color >> $ps
+	set col = `echo $col + 1 | bc`
+end
+
+#if (-r $prj.CMP)  psxy $prj.CMP -JX -R -O -M -W10/255 -K >> $ps
+if (-r $prj.CMP)  psxy $prj.CMP -JX -R -O -M -W4ta/150/0/0 -K	>> $ps
+if (-r $prj.FIT)  psxy $prj.FIT -JX -R -O -Ey -W1/255/150/150 -K  >> $ps
+psbasemap -JX -R -B:: -O -K >> $ps
+
+
+
+#
+#PARAMETER PROFILES:
+set vertshift = `echo $graph_height + .5 | bc -l`
+set graph_height = 2.5
+if (-r $prj.eros) then
+
+awk '{	if (NR==2) for (i=3;i<=NF;i++) {dens[i]=$i;}\
+	if (NR>2){ thick=0;\
+		   for (i=3;i<=NF;i++) if (dens[i]>2400) thick+=($i-$(i-1)); \
+		   print $1, thick;\
+		  }\
+}' $prj.pfl > $tmp.basement_thick.tmp
+
+awk '{	if (NR==2) for (i=3;i<=NF;i++) {dens[i]=$i;}\
+	if (NR>2){ thick=0;\
+		   for (i=3;i<=NF;i++) {if (dens[i]<=2400 && dens[i]>1100) thick+=($i-$(i-1)); } \
+		   print $1, thick/1e3;\
+		  }\
+}' $prj.pfl > $tmp.sed_thick.tmp
+
+awk '{print $1, $2/1e3}'     $prj.eros | \
+	psxy -JX$graph_width/$graph_height -R$xmin/$xmax/-10/25 -W4/150/100/0 \
+		-B$ticklabels\:"":/10f2g10:"erosion(km)":nseW -K -Y$vertshift -O >> $ps
+#paste $prj.basam_thick_ref $tmp.basament_thick.tmp | awk '{print $1,$4-$2}' | \
+#	psxy -JX -R -O -K -W3/255/0/0 >> $ps 
+#psxy $$tmp.sed_thick.tmp -JX -R -O -K -W3/200/170/0 >> $ps 
+set vertshift = `echo $graph_height + .5 | bc -l`
+
+gmtset BASEMAP_FRAME_RGB +0/0/0
+psbasemap -JX$graph_width/$graph_height -R$xmin/$xmax/-10/10 -B$ticklabels\:"":/ns -Y$vertshift -O -K >> $ps
+gmtset BASEMAP_FRAME_RGB +180/0/0
+awk '{print $1, $3/1e3}' $prj.eros | \
+	psxy -JX -R$xmin/$xmax/-3/3 -W4/180/0/0 -O -K -B/a1f1g100:"erosion(mm/yr)":W >> $ps
+gmtset BASEMAP_FRAME_RGB +150/100/0
+awk '{print $1, $6}'     $prj.eros | \
+	psxy -JX -R$xmin/$xmax/0/300 -W4/150/100/0 -O -K -B/50:"sed.load(kg/s)":E >> $ps
+gmtset BASEMAP_FRAME_RGB +0/0/0; 
+set total_rain = `awk '(NR>3){total+=$8}END{printf("%.0f", total)}' $prj.eros`
+if ($hydro_model) then 
+psbasemap -JX$graph_width/$graph_height -R$xmin/$xmax/-10/10 -B$ticklabels\:"":/ns -Y$vertshift -O -K >> $ps
+gmtset BASEMAP_FRAME_RGB +0/0/255
+awk '{print $1, $5}' $prj.eros | \
+	psxy -JX -R$xmin/$xmax/0/1000 -W4/0/0/255 -O -K -B/200:"water disch.(m@+3@+/s)":E >> $ps
+gmtset BASEMAP_FRAME_RGB +0/150/255
+awk '{print $1, $8/1e3}' $prj.eros | \
+	psxy -JX -R$xmin/$xmax/0/4 -W4/0/150/255 -O -K -B/a2f1:"P,E (m/yr)":W >> $ps
+gmtset BASEMAP_FRAME_RGB +100/180/255
+awk '{print $1, $9/1e3}' $prj.eros | \
+	psxy -JX -R$xmin/$xmax/0/4 -W6/100/180/255ta -O -K >> $ps
+gmtset BASEMAP_FRAME_RGB +0/0/0; 
+endif
+endif
+
+if (-r $prj.xzt) then
+set vertshift = `echo $graph_height + .5 | bc -l`
+gmtset BASEMAP_FRAME_RGB +0/0/0;   
+psbasemap -JX$graph_width/$graph_height -R$xmin/$xmax/-25/5 -B/Ns -Y$vertshift -O -K >> $ps
+gmtset BASEMAP_FRAME_RGB +0/0/0;       awk '{print $1, -$(NF-1)/1e3}' $prj.xzt | \
+	psxy -JX -R -W4/0/0/0 -O -K -B/5:"isostasy(km)":W >> $ps
+endif
+
+psbasemap -JX -R -O -Bnsew >> $ps
+
+
+
+
+
+
+
+
+#2nd PAGE of Postscript: _______________________________________________________
+
+#Gravity Anomaly graphic:
+if (-r $prj.xg) then 
+	awk '{if (NR>=3) print $1, $2}' $prj.xg \
+		| psxy -JX$graph_width/10 -R$xmin/$xmax/-200/200 -W4/155/0/0 -Y2.7 -X3 -K \
+		-B:.$prj\:a50f5g25:"distance (km)":/100f10g50:"Gravity Anomaly (mGal)":nSeW >> $ps
+	awk '{if (NR>=3) print $1, $3}' $prj.xg \
+		| psxy -JX -R$xmin/$xmax/-20/20 -W4/0/155/0 -O \
+		-B/10f1:"Geoid Height (m)":E >> $ps
+	if (-r $prj.xg.CMP) then 
+		awk '{print $1, $2}' $prj.xg.CMP \
+			| psxy -JX -R -W4/155/0/0 -St.1 -O -K >> $ps
+		awk '{print $1, $3}' $prj.xg.CMP \
+			| psxy -JX -R -W4/155/0/0 -St.1 -O -K >> $ps
+	endif
+endif
+
+
+if ($switch_rheo == 0) then 
+	rm -f  $tmp.*.tmp
+	exit
+endif
+
+
+
+#STRESS DISTRIBUTION
+if (-r $prj.strs) then
+	#awk '{print $1,$2,$4}' $prj.temp | surface -G$tmp.temp.grd.tmp -I2/1 -R$xmin/$xmax/-5/70 -H2 
+	awk '{print $1,$2,$3}' $prj.strs | surface -G$tmp.strs.grd.tmp -I$dx/$dz -R$xmin/$xmax/$zminlith/$zmaxlith -H2 
+	awk '{if ($3==$5) print $1,$2,1; else print $1,$2,0}' $prj.strs | surface -G$tmp.compr_deform.grd.tmp -I$dx/$dz -R$xmin/$xmax/$zminlith/$zmaxlith -H2 
+	awk '{print $1,$2,$5}' $prj.strs | surface -G$tmp.yieldcomp.grd.tmp -I$dx/$dz -R$xmin/$xmax/$zminlith/$zmaxlith -H2
+	awk '{print $1,$2,$6}' $prj.strs | surface -G$tmp.yieldextn.grd.tmp -I$dx/$dz -R$xmin/$xmax/$zminlith/$zmaxlith -H2
+endif
+psbasemap -JX$graph_width/-5 -R$xmin/$xmax/-2/70 -B$ticklabels\:"distance (km)":/20f10:"Depth (km)":nSeW \
+	-X2.5 -Y3 -K -P	>> $ps
+psclip $tmp.stress_clip.xz.tmp -JX -R -O -K >> $ps
+grdimage	$tmp.strs.grd.tmp -C$tmp.stress_cpt.tmp -JX -R -O -K >> $ps
+grdcontour	$tmp.strs.grd.tmp -JX -R -C$tmp.zcontours.tmp -A10f10 -W1/255 -K -O >> $ps
+psclip -C -O -K >> $ps
+psxy $tmp.stress_clip.xz.tmp -JX -R -O -K -W3ta >> $ps
+psbasemap -JX -R -Bnsew -O -K >> $ps
+
+psscale -C$tmp.stress_cpt.tmp -B:."stress (MPa)": -D7.5/-1.6/7/.2h -O -K >> $ps
+
+
+#DEFLECTION and CRUST
+if (-r $prj.xzt) awk '{print($1,-$(NF-1)/1e3)}' $prj.xzt | \
+	psxy -JX$graph_width/3.75 -R$xmin/$xmax/$zminkm/$zmaxkm -B$ticklabels/$zticklabels\:"deflection (km)":neW \
+		-W7 -H2 -Y5.5 -O -K >> $ps
+
+psbasemap -JX$graph_width/-2 -R$xmin/$xmax/0/70 -B:.$prj\:$ticklabels\/20f10:"thickness (km)":NeW \
+	-Y4.5 -O -K >> $ps
+if (-r $prj.CRUST)  awk -v xmax=$xmax '{if (NR==1) {print xmax,0; print $1/1000,0;} print $1/1000, $2/1e3}' $prj.CRUST |\
+	psxy -JX -R -W10/60 -G170 -O -K >> $ps
+if (-r $prj.UCRUST) awk -v xmax=$xmax '{if (NR==1) {print xmax,0; print $1/1000,0;} print $1/1000, $2/1e3}' $prj.UCRUST |\
+	psxy -JX -R -O -K -G200 -W10/130 >> $ps
+psxy $prj.eeth -JX -R$xmin/$xmax/0/60000 -O -W10 -K -H1 >> $ps
+
+
+
+#YSE AND STRESS AT ONE LOCATION (MAXIMUM MOMENT POINT):
+if (-r $prj.ysen) then
+psbasemap -JX6/-9 -R-1e3/1e3/0/90 -K -O -P -Y6 \
+	-B:."":a400f100:"Stress (MPa)":/a20f10:"Depth (km)":NseW >> $ps
+if ($#argv < 4 && $#argv > 1) then
+	#Predefined point
+	awk -v xYSE=$2 '{if (x && $1!=x) exit; if ($1>=xYSE && NR>2) x=$1; if (x) print $5,$2;}' $prj.strs | \
+		psxy -JX -R -W6 -O -K >> $ps
+	awk -v xYSE=$2 '{if (x && $1!=x) exit; if ($1>=xYSE && NR>2) x=$1; if (x) print $6,$2;}' $prj.strs | \
+		psxy -JX -R -W6 -O -K >> $ps
+	awk -v xYSE=$2 '{if (x && $1!=x) exit; if ($1>=xYSE && NR>2) x=$1; if (x) print $3,$2;}' $prj.strs | \
+		psxy -JX -R -W4 -O -K -G220 >> $ps
+	awk -v xYSE=$2 '{if (x && $1!=x) exit; if ($1>=xYSE && NR>2) x=$1; if (x) print $4,$2;}' $prj.strs | \
+		psxy -JX -R -W8to -B400f100:"Temperature (C)":nSew -O -K >> $ps
+	pstext	-JX -R -N -O -K << END >> $ps
+		-700	70	12 0 0 LT 	\ x=$2 km
+END
+else
+	#Maximum moment point
+	set MMPX = `awk '(NR==1){print($2);exit}' $prj.ysen`
+	echo Plotting at maximum momentum point x = $MMPX
+	awk '{print($1,$2)}' $prj.ysen | psxy -JX -R -W6 -O -K -: >> $ps
+	awk '{print($1,$3)}' $prj.ysen | psxy -JX -R -W6 -O -K -: >> $ps
+	awk '{print($1,$5)}' $prj.ysen | psxy -JX -R -W4/140 -H1 -M -O -K -: -G220 >> $ps
+	awk '{print($1,$4)}' $prj.ysen | psxy -JX -R -W8to -B400f100:"Temperature (C)":nSew -O -K -: >> $ps
+	pstext	-JX -R -N -O -K << END >> $ps
+		-700	70	12 0 0 LT 	\ x=$MMPX
+END
+endif
+endif
+
+pstext	-JX	-R  -O << END >> $ps
+#	0	25000	13  0   1  1	Te
+#	-30	48000	11  0   1  2	H
+END
+
+rm -f  $tmp.*.tmp

@@ -1,0 +1,29 @@
+First compilation of tao in cuba by danielgc
+/home/danielgc/software/tao/src
+Thu Feb 21 11:56:35 CET 2008
+
+Login: danielgc       			Name: Daniel Garcia-Castellanos
+Directory: /home/danielgc           	Shell: /bin/csh
+On since Mon Feb 11 19:27 (CET) on tty7 from :0
+    3 seconds idle
+On since Mon Feb 11 19:28 (CET) on pts/0 from :0.0
+   2 days idle
+On since Tue Feb 12 13:16 (CET) on pts/1 from :0.0
+   9 minutes 50 seconds idle
+On since Tue Feb 12 13:27 (CET) on pts/2 from :0.0
+   16 hours 26 minutes idle
+On since Tue Feb 12 13:44 (CET) on pts/3 from :0.0
+   8 days 17 hours idle
+On since Tue Feb 12 16:05 (CET) on pts/4 from :0.0
+   8 days 17 hours idle
+On since Tue Feb 12 17:41 (CET) on pts/5 from :0.0
+   8 days 18 hours idle
+On since Tue Feb 12 18:08 (CET) on pts/6 from :0.0
+   20 hours 50 minutes idle
+On since Thu Feb 14 11:46 (CET) on pts/7 from :0.0
+   3 seconds idle
+On since Thu Feb 14 11:48 (CET) on pts/8 from :0.0
+   20 hours 25 minutes idle
+New mail received Sun Feb 17 17:06 2008 (CET)
+     Unread since Tue Feb 12 17:23 2008 (CET)
+No Plan.

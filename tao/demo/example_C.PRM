@@ -1,0 +1,47 @@
+#See a documented example in tisc/doc/template.PRM
+     version	tAo_2018-08-07
+          x0	-9999
+          xf	-9999
+        xmin	2e+05
+        xmax	8e+05
+        zmin	-1e+04
+        zmax	1000
+          Nx	101
+          Nz	201
+       crust	3.2e+04
+      ucrust	1.5e+04
+        zini	-4000
+ random_topo	0
+  densasthen	3200
+  densmantle	3250
+   denscrust	2850
+  densinfill	2800
+   denssedim	2300
+     densenv	0
+sed_porosity	0.3
+compact_depth	3000
+     Timeini	0
+   Timefinal	10
+          dt	1
+     dt_eros	0.01
+   dt_record	1
+ isost_model	1
+          Te	2e+04
+         tau	5
+boundary_conds	1
+     topoest 	1
+erosed_model	1
+    Keroseol	0
+      Ksedim	0
+    Kerosdif	100
+ K_river_cap	60
+ erodibility	1.2e+05
+erodibility_sed	6e+04
+l_fluv_sedim	2.5e+04
+  deform_sed	1
+eros_bound_cond	1
+  water_load	1
+   grav_anom	1
+verbose_level	0
+switch_files	1
+   switch_ps	1

@@ -1,0 +1,7 @@
+#Upper crust geometry.
+#x and depth of the base of the upper crust (m):
+0	4000
+120e3	11000
+160e3	14000
+170e3	15000
+700e3	15000

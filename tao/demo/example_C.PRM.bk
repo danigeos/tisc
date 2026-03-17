@@ -1,0 +1,125 @@
+	   ***  tAo PARAMETERS FILE  ***
+	       (default units : I.S.)
+
+Comments on this project: 
+Example_C of DEMO
+This demo project will calculate the deflection
+along time due to the grouth of a volcano.
+
+LABEL or   	PARAMETER  
+VARIABLE  	VALUES    	USE
+---------  	----------	--------------------------------------------
+
+version	tAo_2006-11-02	Version will be matched when starting tao.
+
+
+Gridding:
+Nx		101 	Number of x points (distance axis).
+Nz		201	Number of z points (depth axis for elastic-plastic model).
+
+Limits of x domain:
+x0		000e3	Left
+xf		1000e3	Right
+
+Limits of the output window:
+xmin		200e3	Left
+xmax		800e3	Right
+zmin		-10000	Bottom
+zmax		1000	Top
+
+
+Lithospheric plate geometry:
+Te		20000	Default Elastic Thickness (if no .EET file). Te=0 => local isostasy.
+crust		32000	Default crustal geometry for gravity anomaly and rheological calculations when no .CRUST and .UCRUST
+ucrust		15000	Id. for upper crust.
+zini 		-4000	Altitude of the initial plate position from sea level.
+random_topo	0
+
+
+Densities:
+densmantle	3250	Density of the fluid material beneath the plate (at the compensation level: either mantle or asthenosphere). 
+denscrust	2850	Crust (just for anomaly calculation).
+densinfill	2800	Infilling material (only when switch_topoest=1).
+denssedim	2300	Sediments.
+densenv 	0	Air (or water for oceanic flexure).
+
+
+isost_model	1	To switch the thinplate model of lithosphere:
+			#0: No flexure performance.
+			#1: Pure elastic plate model.
+			#2: Visco-elastic plate model.
+			#3: Elastic-plastic oceanic lithosphere.
+			#4: Elastic-plastic continental always decoupled.
+			#5: Elastic-plastic continental never decoupled.
+			#6: Elastic-plastic continental auto. decoupling.
+
+
+Boundary Conditions Type:
+boundary_conds	1	#0: Left edge is the center of a symmetric model and the plate is not broken there. Right edge is free.
+			#1: Broken plate at left with external force 'appshearforce' and moment 'appmoment' at the left edge. Right edge is free (zero values).
+			#2: 0 dip and 0 deflection at left and right edges.
+			#3: Free edges (0 moment and 0 vertical shear stress).
+			#4: Hunging plate with fixed edges and 0 moment.
+			#5: Broken plate at right with external force 'appshearforce' and moment 'appmoment' at the right edge. Left edge is free (zero values).
+
+
+External forces:
+horz_force	0e12	Horizontal tectonic force (compressive if >0).
+vert_force	-0e12	Applied force as bound. cond. in cases 1 and 5. (downwards if <0).
+moment		-0e16	Torque as bound. cond. cases 1 and 5. (clockwise if >0).
+
+
+Erosion model parameters:
+erosed_model	1	
+Kerosdif	100	Diffusive erosion constant [m2/yr].
+Keroseol	.0	Continental background erosion rate constant meters of sediment by meters of height and My [m/(m·Ma)].
+Ksedim  	00	Water sedimentation rate [m/Ma].
+
+
+
+Time variables [Ma] (time goes from negative to positive, Timeini<Timefinal):
+Timeini		0	Initial time.
+Timefinal	10	Final time.
+tau		5	Relaxation time (used only for the viscoelastic plate model).
+dt		1	Increment time.
+dt_eros		.01	Increment time for surface processes.
+dtmemounit	1	Time elapsed between units recording. 
+			  if = 0 only file-defined load units will be recorded. 
+
+
+grav_anom	1	Gravity anomaly output type. #0: No gravity calculations; #1: Bouguer anomaly;  #2:Free-Air
+
+These are switches to turn on options of the model.
+Their possible values are 1 (yes) or 0 (no):
+switch_sea	1	For existence of sea.
+switch_topoest	0	To keep loads at its initial position, filling the deflection with densinfill material.	
+
+i/o switches:
+switch_files	1	For extra file output.
+switch_ps	1	For postscript output.
+switch_output	0	
+verbose_level	0	For more runtime information.
+
+
+
+(END OF PARAMETERS FILE)
+
+Comments:
+	This is a tAo parameter file. 
+	--tao command line options are intepreted after reading this PRM file, 
+	so they override these values.
+	--You can modify the format of this parameter files, either by adding 
+	more comment lines or changing comments in the existing lines after the 
+	values. Order in parameters is not important. 
+	--You only have to include theparameters which default value you want 
+	to change.
+	--You can run the simplest model (without any load file *.CRG) just 
+	varying the b.c. parameters 'appshearforce' & 'appmoment' and the 
+	'tecforce' external horizontal force. 
+	--Default unities: I.S.  (except indication).
+	--If  (switch_topoest != 0) then the load will rest at zero level 
+	and plate subsidence will be filled with 'densinfill' material. Do not 
+	use with erosion model.
+	--You can get more information about the meaning of each parameter in 
+	the tao.h file and tao.info file.
+

@@ -5,7 +5,7 @@ INPUT/OUTPUT  SUBROUTINES  FOR  tisc.c
 #include "tisc.h"
 #include "tiscio.h"
 #include "tisclib.h"
-#include "../lib/libreria.h"
+#include "libreria.h"
 
 extern float initial_grain_size;
 extern float distance_half_grainsize;
