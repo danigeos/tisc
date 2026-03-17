@@ -2,6 +2,19 @@
 
 This document provides a comprehensive user manual and technical documentation for the TISC (Tectonics, Isostasy, Surface Processes, and Climate) model.
 
+## Table of Contents
+* Part 1: User Manual
+  * 1. Introduction
+  * 2. Installation
+  * 3. Running TISC
+  * 4. Input Files
+  * 5. Output Files
+* Part 2: Technical Documentation
+  * 1. Code Architecture
+  * 2. Core Physical Models
+
+---
+
 # Part 1: User Manual
 
 ## 1. Introduction

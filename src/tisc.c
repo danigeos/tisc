@@ -210,14 +210,20 @@ int inputs (int argc, char **argv)
 							system(command) ;
 							break;
 						default:
-							fprintf(stderr, "\nFile ./tisc/doc/tisc.info.txt follows:\n") ;
-							sprintf(command, "more %s/doc/tisc.info.txt", TISCDIR);
+							syntax();
 							AUTHORSHIP;
-							system(command) ;
 							break;
 					}
 					fprintf(stderr, "\n") ;
 					exit(0);
+				case '-':
+					if (strcmp(argv[iarg], "--help") == 0) {
+						fprintf(stderr, "\nFile ./tisc/doc/tisc.info.txt follows:\n") ;
+						sprintf(command, "more %s/doc/tisc.info.txt", TISCDIR);
+						system(command) ;
+						exit(0);
+					}
+					break;
 				case 'Q':
 					run_type=1;
 					strcpy(load_file_name, prm);
@@ -1261,25 +1267,24 @@ int read_file_unit(ModelConfig *cfg, ModelContext *ctx)
 int syntax()
 {
 	/*
-		Displays the command line syntax of the program
+		Displays the hardcoded command line syntax of the program
 	*/
-	char 	filename[MAXLENFILE], line[MAXLENLINE], *lineptr;
-	FILE 	*file;
-	bool 	print=false;
-
-	sprintf(filename, "%s/doc/tisc.info.txt", TISCDIR);
-	if ((file = fopen(filename, "rt")) == NULL) {
-		PRINT_WARNING("Cannot find file %s. You shouldn't have moved TISC directory after compilation...", filename);
-		return(0);
-	}
 	fprintf(stderr, "\nSyntax:\n");
-	while (1) {
-		fgets(line, MAXLENLINE-1, file);
-		if ((lineptr=strstr(line, "2.- INTRO"))) break;;
-		if (print==true) fprintf(stderr, "%s", line);
-		if (strstr(line, "SYNTAX")) print=true;
-	}
-	fclose(file);
+	fprintf(stderr, "  tisc  project  -B<bound_type> -D[xmin/xmax/ymin/ymax] -d<dx>[/<dy>]\n");
+	fprintf(stderr, "        -e<Kriv>[/<Kdif>] -f[2] -F[<file>] -h[i|u|p|c] -l -M<lith_type>\n");
+	fprintf(stderr, "        -N<Nx>[/<Ny>] -o -P[c[geom]|p] -p<rain>[/<Krain>][/<evap>] -Q<file>\n");
+	fprintf(stderr, "        -q<param>=<value> -R<random_topo>[/<seed>] -r<e|c|i|m|a><dens>\n");
+	fprintf(stderr, "        -s<solver> -T<eet> -t<i|f|d|e|v|r><time> -V[<level>] \n");
+	fprintf(stderr, "        -v<num>/<vx>/<vy>\n\n");
+	fprintf(stderr, "  Options:\n");
+	fprintf(stderr, "    'project'\tRoot name for all files (e.g. 'test' looks for 'test.PRM')\n");
+	fprintf(stderr, "    -F\t\tResume a previous run from a .all file\n");
+	fprintf(stderr, "    -P\t\tProduce graphic output (-Pp for Python, -Pc for GMT)\n");
+	fprintf(stderr, "    -q\t\tOverride any parameter in the PRM file (-qparam=value)\n");
+	fprintf(stderr, "    -Q\t\tDirect elastic deflection mode for a given load file\n");
+	fprintf(stderr, "    -h\t\tShow this help (or -hc for clean PRM, -hu for UNIT example)\n");
+	fprintf(stderr, "    --help\tOpen the full documentation file\n\n");
+	fprintf(stderr, "For full documentation, please read doc/TISC_Documentation.md\n");
 	return (1);
 }
 

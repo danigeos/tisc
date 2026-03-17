@@ -602,7 +602,7 @@ No. Density Age Volume Surf.  Vel_x Vel_y Shft_x Shft_y erosL
 				301x301 -> 60s
 				401x401 -> 209s
 				751x501 -> 11m
-  2019-11	OSX10.14  MacBook Intel Core i7	4k€			4.0 GHz	32GB
+  2019-11	OSX10.14  MacBook Intel Core i7	4kï¿½			4.0 GHz	32GB
 				141x141 -> 1.8s
 				301x301 -> 41s
 				401x401 -> 130s
@@ -846,7 +846,7 @@ No. Density Age Volume Surf.  Vel_x Vel_y Shft_x Shft_y erosL
   
 	Garcia-Castellanos, D., 2002. Interplay between lithospheric flexure and river transport in foreland basins. Basin Res. 14, 89-104.
 
-	Garcia-Castellanos, D., Jiménez-Munt, I., 2015. Topographic evolution and  climate aridification during continental collision: insights from computer simulations. PLOS ONE, doi:10.1371/journal.pone.0132252
+	Garcia-Castellanos, D., Jimï¿½nez-Munt, I., 2015. Topographic evolution and  climate aridification during continental collision: insights from computer simulations. PLOS ONE, doi:10.1371/journal.pone.0132252
  
  	Please, check also the disclaimer section.
 
@@ -869,11 +869,11 @@ No. Density Age Volume Surf.  Vel_x Vel_y Shft_x Shft_y erosL
 	  time scales: a new method based on irregular spatial discretization.
 	  Basin Research, 9, 27-52.
   (*)Cloetingh, S., P.A. Ziegler, F. Beekman, P.A.M. Andriessen, L. Matenco, G.
-	  Bada, D. Garcia-Castellanos, N. Hardebol, P. Dèzes & D. Sokoutis,
+	  Bada, D. Garcia-Castellanos, N. Hardebol, P. Dï¿½zes & D. Sokoutis,
 	  2005. Lithospheric memory, state of stress and rheology: Neo-Tectonic
 	  controls on Europe's intraplate continental topography. Quaternary Sc.
 	  Rev., 24, 241-304. doi:10.1016/j.quascirev.2004.06.015
-  (**)Garcia-Castellanos, D., Jiménez-Munt, I., 2015. Topographic evolution and
+  (**)Garcia-Castellanos, D., Jimï¿½nez-Munt, I., 2015. Topographic evolution and
 	  climate aridification during continental collision: insights from computer
 	  simulations. PLOSONE, doi:10.1371/journal.pone.0132252 [pdf] [pdf]
   (*)Garcia-Castellanos, D., 2002. Interplay between lithospheric flexure and
@@ -886,7 +886,7 @@ No. Density Age Volume Surf.  Vel_x Vel_y Shft_x Shft_y erosL
 	  Gravitational and tectonic forces controlling the post-collisional
 	  deformation and present-day stress of the Alps. Insights from
 	  numerical modelling. Tectonics, 24, doi:10.1029/2004TC001754
-  (*)Jimenez-Munt, I., D. Garcia-Castellanos and M. Fernàndez, 2005, Thin sheet
+  (*)Jimenez-Munt, I., D. Garcia-Castellanos and M. Fernï¿½ndez, 2005, Thin sheet
 	  numerical modelling of continental collision. Tectonophysics, 407,
 	  239-255. doi:10.1016/j.tecto.2005.08.015
   Kooi, H. & C. Beaumont, 1996. Large-scale geomorphology; classical concepts

@@ -15,3 +15,30 @@ more_on_TISC/
 # === Ignored Untracked Files ===
 src/.tags
 src/tags
+
+# === TISC Temporary Files ===
+*.tmp
+*.mtrz
+
+# === TISC Output Files ===
+*.out
+*.all
+*.hrz
+*.xyzt
+*.xyw
+*.lak
+*.st
+*.bas
+*.eeth
+*.vel
+*.pfl
+*.grainsize
+*.thicksalt
+*.surftransp
+*.ice
+
+# === Graphic Output ===
+*.ps
+*.jpg
+*.png
+*.svg
