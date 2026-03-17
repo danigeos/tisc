@@ -9,8 +9,8 @@ tao_DIR = $(abspath ..)
 HOME_DIR = $(HOME)
 OS 	= $(shell uname -s)
 ARCH 	= $(shell uname -m)
-BIN	= ../bin
-OBJ	= ../build
+BIN	= ../../bin
+OBJ	= ../../build
 LIB	= ../lib
 INCL	= ../include 
 
