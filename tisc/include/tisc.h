@@ -71,7 +71,7 @@ extern float total_precip_gypsum_rate, total_precip_halite_rate;
 extern float total_accum_gypsum, total_accum_halite;
 
 /*functions at libreria.c*/
-#include "../lib/libreria.h"
+#include "libreria.h"
 
 /*functions at surf_proc.c*/
 int Add_Node_To_Lake (int row, int col, int i_lake);

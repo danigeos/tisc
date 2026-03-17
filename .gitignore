@@ -1,28 +1,31 @@
 # === User Specified Ignores ===
 older_version_backups/
 runs/
+more_on_tAo/
 more_on_TISC/
 
 # === General Ignores ===
-/bin/*
-!/bin/.empty_needed_for_git
+bin/*
+!bin/.empty_needed_for_git
 *.o
 *.a
 *.so
+*.d
 *.dSYM/
 build/
-*.d
 .DS_Store
 
 # === Ignored Untracked Files ===
 src/.tags
 src/tags
+tags
 
-# === TISC Temporary Files ===
+# === Temporary Files ===
 *.tmp
 *.mtrz
+*.mtrx
 
-# === TISC Output Files ===
+# === Output Files ===
 *.out
 *.all
 *.hrz
@@ -38,6 +41,11 @@ src/tags
 *.thicksalt
 *.surftransp
 *.ice
+*.ysen
+*.temp
+*.tempini
+*.strs
+*.xg
 
 # === Graphic Output ===
 *.ps
