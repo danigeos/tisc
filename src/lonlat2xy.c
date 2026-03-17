@@ -4,7 +4,7 @@
 */
 
 
-#include "geomodel.h"
+#include "tisc.h"
 
 int outin(
 	float x, 		/* x coordinate of the point to be inspected	*/
@@ -166,6 +166,7 @@ int main(int argc, char **argv)
 			fprintf(stdout, "%s", linea);
 		}
 	}
+	return 0;
 }
 
 
@@ -183,4 +184,5 @@ int syntax(int argc, char **argv)
 			"\ndefault) will have the same converted x value.");
 	fprintf(stderr, "\n-k for input/output in km instead of m.\n");
 	fprintf(stderr, "\n");
+	return 0;
 }

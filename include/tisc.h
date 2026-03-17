@@ -3,7 +3,6 @@ INCLUDE FILE FOR tisc.c
 */
 
 //#include <stdio.h>
-#include "param_config.h" // For ParameterEntry struct
 #include "geomodel.h"		/*General definitions and types for geophysical models*/
 
 #define AUTHORSHIP		{ fprintf(stderr, "\n\t\t\t1995-2018, Daniel Garcia-Castellanos\n");}

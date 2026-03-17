@@ -7,6 +7,7 @@
 #include "tiscio.h"
 
 int 	read_file_output_Blocks ();
+int syntax(int argc, char **argv);
 
 
 int main(int argc, char **argv)
@@ -68,4 +69,5 @@ int syntax (int argc, char **argv)
 		AUTHORSHIP
 		exit (1);
 	}
+	return (0);
 }

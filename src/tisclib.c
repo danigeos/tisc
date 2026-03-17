@@ -5,7 +5,6 @@ Daniel Garcia-Castellanos
 
 #include "tisc.h"
 #include "tisclib.h"
-#include "param_config.h" // Include the new parameter config header
 #include "../lib/libreria.h"
 
 

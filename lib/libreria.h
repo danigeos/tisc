@@ -1,3 +1,5 @@
+/* Declaration of functions of libreria.c */
+#include "geomodel.h"
 /*Declaration of functions of libreria.c */
 float 	*alloc_array		(int num_fil);
 double	*alloc_array_dbl	(int num_fil);
@@ -15,6 +17,7 @@ float dist(
 	float y0, 		/* y coordinate of first point of segment	*/
 	float x1, 		/* x coordinate of ending point of segment	*/
 	float y1);		/* y coordinate of ending point of segment	*/
+float dist_2D(float x0, float y0, float x1, float y1);
 float dist_xy_segment		(float x, float y, float X0, float Y0, float X1, float Y1);
 float distVincenty(float lat1, float lon1, float lat2, float lon2);
 int interpol2D (

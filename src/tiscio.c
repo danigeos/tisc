@@ -5,7 +5,6 @@ INPUT/OUTPUT  SUBROUTINES  FOR  tisc.c
 #include "tisc.h"
 #include "tiscio.h"
 #include "tisclib.h"
-#include "param_config.h" // Include the new parameter config header
 #include "../lib/libreria.h"
 
 extern float initial_grain_size;

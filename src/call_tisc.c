@@ -110,6 +110,7 @@ int init_tisc_ (
 	if (verbose_level>=3) fprintf(stdout, "\n\train=%.2f l/m2/a ; Krain=%.2f l/m2/a/km", rain/(1e6/Matosec/1e3), Krain);
 	if (verbose_level>=3) fprintf(stdout, "\n\tCXrain, CYrain = %.2e, %.2e m", CXrain, CYrain);
 	fflush(stdout);
+	return 1;
 }
 
 
@@ -180,6 +181,7 @@ int call_surf_proc_ (
 	}
 
 	fflush (stdout);
+	return 1;
 }
 
 
@@ -225,4 +227,5 @@ int call_flexure_ (
 		deflection_array[i*Nx+j]=w[i][j]; 
 	}
 	fflush (stdout);
+	return 1;
 }

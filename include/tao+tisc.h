@@ -1,3 +1,27 @@
+#ifndef TAO_TISC_H
+#define TAO_TISC_H
+
+/*
+	Common definitions for tAo and TISC
+*/
+
+// Enum for parameter types
+typedef enum {
+    PARAM_TYPE_INT,
+    PARAM_TYPE_FLOAT,
+    PARAM_TYPE_STRING, // For char arrays
+    PARAM_TYPE_BOOL    // For bool variables
+} ParamType;
+
+// Structure to hold parameter metadata
+typedef struct {
+    const char *name;
+    ParamType type;
+    void *ptr; // Pointer to the actual variable
+    size_t size; // Size for string types (MAXLENLINE, etc.)
+    bool is_old_version; // Flag to indicate if this is an old/deprecated parameter name
+} ParameterEntry;
+
 /*
 	Common definitions for tAo and TISC
 */
@@ -37,12 +61,12 @@
 #define Match_Param_flt_old(x, y)  if (!strcasecmp(str1, x)) {y=atof(str2);;  nparams=1; PRINT_INFO("Old-fashioned parameter: "x"\t%f", y);}
 #define Match_Param_char_old(x, y) if (!strcasecmp(str1, x)) {strcpy(y,str2); nparams=1; PRINT_INFO("Old-fashioned parameter: "x"\t%s", y);}
 #define Write_Open_Filename_Return(ext,type,retcond) {\
-	char name[MAXLENFILE]; sprintf(name, "%s"ext, projectname); remove(name); if (retcond) return (0); \
+	char name[MAXLENFILE]; snprintf(name, sizeof(name), "%s"ext, projectname); remove(name); if (retcond) return (0); \
 	if ((file=fopen(name,type))==NULL) {PRINT_WARNING("Could not open output file '%s'.",name);return 0;}\
 	PRINT_INFO("Writing file '%s'.",name);};
 #define Read_Open_Filename_Return(ext,type,txt) {\
 	char name[MAXLENFILE];\
-	sprintf(name, "%s"ext, projectname);\
+	snprintf(name, sizeof(name), "%s"ext, projectname);\
 	if ((file = fopen(name,type)) == NULL) {PRINT_INFO("Cannot read "txt" input file '%s'.", name); return 0;}\
 	PRINT_INFO("Reading "txt" at '%s'", name);};
 #define Read_Header_File(file) {\
@@ -76,6 +100,115 @@ extern float **var_sea_level, **var_eros_level, **var_insolation, *horiz_record_
 extern bool switch_file_out, switch_gradual, switch_topoest, switch_write_file_Blocks, deform_sed;
 
 
+/* ===================================================================== */
+/* DATA STRUCTURES                                                       */
+/* ===================================================================== */
+
+struct BLOCK { 		/*for TISC*/
+	float	**thick;		/*Present thickness at each x point*/
+	float	**detr_ratio;		/*Only used for sediment Blocks: % of detrital sediment (non carbonatic)*/
+	float	**detr_grsize;		/*Only used for sediment Blocks: grain size of the detrital sediment*/
+	float	**thickgypsum;		/*Only used for sediment Blocks: gypsum thickness*/
+	float	**thickhalite;		/*Only used for sediment Blocks: halite thickness*/
+	float	age;			/*Age of initial file reading*/
+	float	density;		/*Density*/
+	float	erodibility;		/*erosion parameter*/
+	float	last_shift_x;		/*Previous x shift of Block*/
+	float	last_shift_y;		/*Previous y shift of Block*/
+	float	last_vel_time; 		/*Last time in which velocity changed*/
+	float	shift_x;		/*Total x shift of Block*/
+	float	shift_y;		/*Total y shift of Block*/
+	float	time_stop;		/*Time to stop*/
+	char 	type;			/*'T' means thin_sheet*/
+	float	**vel_x;		/*Velocity in x direction*/
+	float	**vel_y;		/*Velocity in y direction*/
+	float	**visc;			/*Viscosity (only for thin sheet calculations)*/
+	float	**viscTer;		/*Viscosity thermal term (only used for thin sheet calculations, in the first step)*/
+};
+
+struct BLOCK_1D {	/*for tAo*/
+	float	*thick;			/*Present thickness at each x point*/
+	float	*detr_ratio;		/*Only used for sediment Blocks: % of detrital sediment (non carbonatic)*/
+	float	*detr_grsize;		/*Only used for sediment Blocks: grain size of the detrital sediment*/
+	float	*thickgypsum;		/*Only used for sediment Blocks: gypsum thickness*/
+	float	*thickhalite;		/*Only used for sediment Blocks: halite thickness*/
+	float	age;			/*Age of initial file read*/
+	float	density;		/*Density*/
+	float	erodibility;		/*erosion parameter*/
+	float	last_shift;		/*Espected shift (not affected by finite differences discretization)*/
+	float	last_vel_time; 		/*Last time in which velocity changed*/
+	float	shift;			/*Total horizontal shift of Block*/
+	float	time_stop;		/*Time in wich Block will stop*/
+	char 	type;			/*'T' means thin_sheet*/
+	float	vel;			/*Velocity at wich Block moves*/
+};
+
+struct GRIDNODE {
+	int row;
+	int col;
+};
+
+struct DRAINAGE {
+	int dr_row;		/*row of the node to where drains*/
+	int dr_col;		/*column of the node to where drains*/
+	float discharge;	/*water flow through the node [m3/s]*/
+	float masstr;		/*sediment load: mass exiting the cell [kg/s]*/
+	float grainsize;	/*average grain size of the sedload[m]*/
+	float C_Ca;			/*concentration of Ca [kg/m3]*/
+	float C_SO4;		/*concentration of SO4 [kg/m3]*/
+	float C_Na;			/*concentration of Na [kg/m3]*/
+	float C_Cl;			/*concentration of Cl [kg/m3]*/
+	char type;		/*type (lake, river, sea, etc)*/
+	int lake;		/*number of the lake: > 0 means is well defined; < 0 means is not still defined; 0 means it is not a lake*/
+};
+
+struct LAKE_INFO {		/*For lakes*/
+	int n;			/*number of nodes INCLUDING SADDLES*/
+	int *row;
+	int *col;
+	int n_sd;		/*number of saddles and transferring nodes*/
+	int *row_sd;
+	int *col_sd;
+	float alt;		/*Altitude of the lake water level*/
+	float vol;		/*Volume of the lake water body*/
+	float mass_Ca;		/*dissolved mass of Ca in lake [kg]*/
+	float mass_SO4;		/*dissolved mass of SO4 in lake [kg]*/
+	float mass_Na;		/*dissolved mass of Na in lake [kg]*/
+	float mass_Cl;		/*dissolved mass of Cl in lake [kg]*/
+};
+
+struct CS2D {
+	float *horiz;
+	float x;
+	float y;
+	float l;
+};
+
+struct DRAINAGE_1D {
+	int dr;		/*row of the node to where drains*/
+	float discharge;	/*water flow through the node [m3/s]*/
+	float masstr;		/*sediment load: mass exiting the cell [kg/s]*/
+	float grainsize;	/*average grain size of the sedload[m]*/
+	float C_Ca;			/*concentration of Ca [kg/m3]*/
+	float C_SO4;		/*concentration of SO4 [kg/m3]*/
+	float C_Na;			/*concentration of Na [kg/m3]*/
+	float C_Cl;			/*concentration of Cl [kg/m3]*/
+	char type;		/*type (lake, river, sea, etc)*/
+	int lake;		/*number of the lake: > 0 means is well defined; < 0 means is not still defined; 0 means it is not a lake*/
+};
+
+struct LAKE_INFO_1D {		/*For lakes*/
+	int n;			/*number of nodes including saddles*/
+	int *cell;
+	int n_sd;		/*number of saddles and transferring nodes*/
+	int *sd;
+	float alt;		/*Altitude of the lake water level*/
+	float vol;		/*Volume of the lake water body*/
+	float mass_Ca;		/*dissolved mass of Ca in lake [kg]*/
+	float mass_SO4;		/*dissolved mass of SO4 in lake [kg]*/
+	float mass_Na;		/*dissolved mass of Na in lake [kg]*/
+	float mass_Cl;		/*dissolved mass of Cl in lake [kg]*/
+};
 
 /*FUNCTION DECLARATIONS:*/
 float 	*alloc_array		(int num_fil);
@@ -88,3 +221,5 @@ int 	TriangularizeAlmostDiagonalEquationSystem (double **A, double *b, int num_r
 float compaction(float phi0, float comp_depth, float z1, float z2);
 
 char 	*replace_word(char *s,  char *old,  char *new);
+
+#endif /* TAO_TISC_H */

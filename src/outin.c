@@ -4,7 +4,7 @@
 */
 
 
-#include "geomodel.h"		/*Most general definitions and types*/
+#include "tisc.h"
 
 
 int syntax (); 
@@ -121,6 +121,7 @@ int main(int argc, char **argv)
 			fprintf (stdout, "%s", linea);
 		}
 	}
+	return 0;
 }
 
 
@@ -135,4 +136,5 @@ int syntax ()
 	fprintf(stderr, "\n-V3 as -V2 but adds the lines not parsed, unchanged.\n");
 	fprintf(stderr, "\n-a prints the lines not parsed, unchanged.\n");
 	AUTHORSHIP;
+	return 0;
 }

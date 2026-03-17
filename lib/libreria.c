@@ -5,7 +5,7 @@
 */
 
 
-#include "types_n_defs.h"
+#include "geomodel.h"
 #include "libreria.h"
 
 extern float 	
@@ -59,12 +59,12 @@ float **alloc_matrix (int n_fil, int n_col)
 	if (!n_fil || !n_col) return (NULL);
 	if ((new_matrix = (float **) calloc(n_fil , sizeof(float *))) == NULL) {
 		printf("\nERROR: alloc_matrix: There isn't memory enough for a net of %dx%d knots of 16 bits.\n", n_col, n_fil);
-		exit(0);
+		exit(EXIT_FAILURE);
 	}
 	float *data_block = (float *) calloc(n_fil * n_col, sizeof(float));
 	if (data_block == NULL) {
 		printf("\nERROR: alloc_matrix: There isn't memory enough for the data block.\n");
-		exit(0);
+		exit(EXIT_FAILURE);
 	}
 	for (int i=0; i<n_fil; i++) {
 		new_matrix[i] = data_block + i * n_col;
@@ -81,12 +81,12 @@ double **alloc_matrix_dbl (int n_fil, int n_col)
 	if (!n_fil || !n_col) return (NULL);
 	if ((new_matrix = (double **) calloc(n_fil , sizeof(double *))) == NULL) {
 		printf("\nERROR: alloc_matrix_dbl: There isn't memory enough for a net of %dx%d knots of 32 bits.\n", n_col, n_fil);
-		exit(0);
+		exit(EXIT_FAILURE);
 	}
 	double *data_block = (double *) calloc(n_fil * n_col, sizeof(double));
 	if (data_block == NULL) {
 		printf("\nERROR: alloc_matrix_dbl: There isn't memory enough for the data block.\n");
-		exit(0);
+		exit(EXIT_FAILURE);
 	}
 	for (int i=0; i<n_fil; i++) {
 		new_matrix[i] = data_block + i * n_col;
@@ -104,12 +104,12 @@ int **alloc_matrix_int (int n_fil, int n_col)
 	if (!n_fil || !n_col) return (NULL);
 	if ((new_matrix = (int **) calloc(n_fil , sizeof(int *))) == NULL) {
 		printf("\nERROR: alloc_matrix_int: There isn't memory enough for a net of %dx%d knots.\n", n_col, n_fil);
-		exit(0);
+		exit(EXIT_FAILURE);
 	}
 	int *data_block = (int *) calloc(n_fil * n_col, sizeof(int));
 	if (data_block == NULL) {
 		printf("\nERROR: alloc_matrix_int: There isn't memory enough for the data block.\n");
-		exit(0);
+		exit(EXIT_FAILURE);
 	}
 	for (int i=0; i<n_fil; i++) {
 		new_matrix[i] = data_block + i * n_col;

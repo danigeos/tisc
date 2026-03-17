@@ -1,53 +1,8 @@
 /*******************************************************************************
 *****                              TISC                                    *****
 ********************************************************************************
-	For compilation and installation check the file tisc/README
-	Main author: Daniel Garcia-Castellanos, d.g.c@csic.es 
-	Copyright details and other information in tisc/doc/ 
-********************************************************************************
-
-Memory debugging with: 
-/usr/local/Cellar/valgrind/3.13.0/bin/valgrind --dsymutil=yes --track-origins=yes --tool=memcheck --leak-check=full tisc linear_range -tf0
-
-	COMMENTS (programmer's agenda)
-	-Edit here.
-	-Track sediment composition (carbonates, salt, and detrital grain size) in another class in structure Blocks. This to calculate grain size distribution in basin, and as a first step for sed-size dependent erosion, once transitory flow is implemented. 
-		Prompt: For grain_size implementation, the idea is that the sediment incorporated to a river segment has a predefined initial grain_size at source (add this param to the template PRM, default is 1 m, and read/write it as other params), changing the grain size of the river sediment load masstr (a new member of drainage.grainsize must be defined, similar to drainage.masstr but containing its average grainsize at that segment. Then, when the sediment load masstr is transferred from one cell to another, the grain size must be averaged with other tributaries and reduced by a factor distance/distance_half_grainsize (the distance that would reduce grainze by a factor 2, default is 5 km, add to PRM). Then, when sediment is deposited to a sedeimntary block unit, the river grainsize will modify the average block grainsize iin that point proportionally to the sediment added relative to the sediement already present in the block at that cell. Therefore, a new member Blocks.grainsize must be defined similar to Blocks.thick but containing the grainsize at each cell. Then grainsize must be saved to a file of extension .grainsize. See if I miss anything
-	-Track salt:
-		Prompt: Next challenge: implement salt deposition in endorheic lakes. Specifically, two salts: gypsum and halite. We will calculate the precipitation rate by tracking the concentration in rivers and lakes, including the seas that initially have a higher marine ion concentration that will be provided as a set of parameters in the PRM file. Treat ion flow using concentrations at each river or lake, not with flow variables. Since water discharge is in m3/s, the produc will give us mass precipitation rates. River ion flow are tracked with a fixed concentration of 4 ions (Ca, SO4, Na, Cl) dissolved by rain water and transferred along the river network (each cell gets the average concentration of its tributaries and the local rainwater). Closed lakes increase the salinity, since evaporation removes pure water and leaves the salt until a saturation concentration is reached for either. Salt content above saturation for either gypsum or halite is precipitated using the density of halite and gypsum rock, and adding the precipitating lake salt as thickness to the top sedimentary unit, and also tracked independently in a new member of the Block struct: Blocks.thicksalt. A new output file of extension *.thicksalt will contain this salt thickness in a format similar to *.hrz but only for sediment units (written only if hydro_model and evaporation are not zero). Use these variables and values as initial and saturation concentrations, and add them to the template.PRM, to be read from there : 
-# MESSINIAN OCEAN CHEMISTRY OVERRIDES (Approximate ~6 Ma)
-# --------------------------------------------------------
-C_Ca_SEA = 0.048	#these two imply initial
-C_SO4_SEA = 2.04 	#gypsum conc = 2.062 kg/m3
-C_Na_SEA = 10.70
-C_Cl_SEA = 19.30
-
-# River Inputs (Continental Runoff)
-# Rivers are typically Ca-rich (carbonate weathering) relative to SO4
-C_Ca_RIV = 0.06
-C_SO4_RIV = 0.01
-C_Na_RIV = 0.05
-C_Cl_RIV = 0.05
-
-# Precipitation Thresholds (kg/m3)
-# Used to calculate the effective Ksp for the model
-GYPSUM_PRECIP_CN = 5.25
-HALITE_PRECIP_CN = 272.1
-
-How confident are you about implementing all this safely? 
-
-
-	-La flexion no es estable con cambios bruscos de Te (Mayo 2001).
-	-DONE by M. Berry. Implement sediment load effects on transport and erosion (Sklar). 
-	-Implement transitory water flow. Interesting for acceleration of erosion during lake overtopping.
-	-DONE. Filter part of the surface water to the lowest surrounding node at 2-cell distance (16 candidates), to simulate underground that accelerates capture. -Alternative: smooth out the discharge grid to simulate underground flow.
-	-DONE. Solve bug in erosed_model 6.
-	-DONE. Implement sediment compaction (in calculate_topo and when writting the hrz/pfl files).
-	-DONE. Add the water layer to the pfl profile, as in tAo.
-	-DONE. Find water divides: the maximum swimming distance with the neigbouring cells. In write_file_drainage.
-	-DONE. It should take a mean erodibility when eroding.
-	-DONE, works if hydro_model!=0. Water load of lakes does not work properly. 
-*/
+	For compilation and installation check the file tisc/README.md
+*******************************************************************************/
 
 
 #include "tisc.h"
@@ -259,7 +214,7 @@ int inputs (int argc, char **argv)
 	if (!run_type) {
 		syntax();
 		fprintf(stdout, "\nType %s -h for further information.\n", argv[0]);
-		exit(0);
+		exit(EXIT_FAILURE);
 	}
 
 	nloads=0; n_image=0; nlakes=0;
@@ -289,7 +244,7 @@ int inputs (int argc, char **argv)
 				if (!success_def_prm) {
 					PRINT_ERROR("\aDefault parameters file './tisc/doc/template.PRM' could not be read.\n"); 
 				}
-				exit(0);
+				exit(EXIT_FAILURE);
 			}
 			interpr_command_line_opts(argc, argv);
 			if (reformat) {

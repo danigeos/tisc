@@ -24,7 +24,7 @@ MACOSX_DEPLOYMENT_TARGET = 10.9
 #Other things:
 BACKUPS	= $(HOME_DIR)/var/backups
 ifneq ($(findstring THIN_SHEET,$(DEFS)),) 
-	TS_LIBS = $(LIB)/thin_sheet.o $(LIB)/sistbanda.o 
+	TS_LIBS = $(OBJ)/thin_sheet.o $(OBJ)/sistbanda.o 
 	LC = $(FC)
 else
 	LC = $(CC)
@@ -34,10 +34,22 @@ ifneq ($(findstring SURFACE_TRANSPORT,$(DEFS)),)
 	SP_LIBS = $(OBJ)/surf_proc.o 
 endif
 
-.PHONY: all backup clean libreria thin_sheet notify help
+# --- Fancy output & verbosity control ---
+V ?= 0
+ifeq ($(V),0)
+  Q = @
+else
+  Q =
+endif
+
+BLUE  = \033[34m
+GREEN = \033[32m
+RESET = \033[0m
+
+.PHONY: all backup clean notify help
 
 all: ## Compile all binaries
-	$(MAKE) tisc cuthrz lonlat2xy outin blockxyz $(OBJ)/call_tisc.o
+	@$(MAKE) tisc cuthrz lonlat2xy outin blockxyz $(OBJ)/call_tisc.o
 
 backup: ## Copy source files to backup directory
 	$(CP) -f tisc* $(BACKUPS)
@@ -54,57 +66,70 @@ $(OBJ):
 	mkdir -p $(OBJ)
 
 $(OBJ)/%.o: %.c | $(OBJ)
-	$(CC) $(CFLAGS) -D'VERSION="$(VERSION)"' -D'TISCDIR="$(tisc_DIR)"' -c $< -o $@
+	@printf "$(BLUE)[CC]$(RESET) $<\n"
+	$(Q)$(CC) $(CFLAGS) -D'VERSION="$(VERSION)"' -D'TISCDIR="$(tisc_DIR)"' -c $< -o $@
 
-blockxyz: $(OBJ)/blockxyz.o $(OBJ)/globals.o libreria | $(OBJ)
-	$(CC) $(OBJ)/blockxyz.o $(OBJ)/globals.o $(LIB)/libreria.o $(LIBS) -o $(BIN)/blockxyz 
-	chmod a+x $(BIN)/blockxyz
+blockxyz: $(OBJ)/blockxyz.o $(OBJ)/globals.o $(OBJ)/libreria.o | $(OBJ)
+	@printf "$(GREEN)[LD]$(RESET) $@\n"
+	$(Q)$(CC) $(OBJ)/blockxyz.o $(OBJ)/globals.o $(OBJ)/libreria.o $(LIBS) -o $(BIN)/blockxyz 
+	$(Q)chmod a+x $(BIN)/blockxyz
 
-cuthrz: $(OBJ)/cuthrz.o $(TISC_OBJS) libreria | $(OBJ)
-	$(CC) $(OBJ)/cuthrz.o $(TISC_OBJS) $(LIB)/libreria.o $(SP_LIBS) $(LIBS) -o $(BIN)/cuthrz \
+cuthrz: $(OBJ)/cuthrz.o $(TISC_OBJS) $(OBJ)/libreria.o | $(OBJ)
+	@printf "$(GREEN)[LD]$(RESET) $@\n"
+	$(Q)$(CC) $(OBJ)/cuthrz.o $(TISC_OBJS) $(OBJ)/libreria.o $(SP_LIBS) $(LIBS) -o $(BIN)/cuthrz \
 		-D'TISCDIR="$(tisc_DIR)"'
 
-outin: $(OBJ)/outin.o $(OBJ)/globals.o libreria | $(OBJ)
-	$(CC) $(OBJ)/outin.o $(OBJ)/globals.o $(LIB)/libreria.o $(LIBS) -o $(BIN)/outin 
-	chmod a+x $(BIN)/outin
+outin: $(OBJ)/outin.o $(OBJ)/globals.o $(OBJ)/libreria.o | $(OBJ)
+	@printf "$(GREEN)[LD]$(RESET) $@\n"
+	$(Q)$(CC) $(OBJ)/outin.o $(OBJ)/globals.o $(OBJ)/libreria.o $(LIBS) -o $(BIN)/outin 
+	$(Q)chmod a+x $(BIN)/outin
 
-lonlat2xy: $(OBJ)/lonlat2xy.o $(OBJ)/globals.o libreria | $(OBJ)
-	$(CC) $(OBJ)/lonlat2xy.o $(OBJ)/globals.o $(LIB)/libreria.o $(LIBS) -o $(BIN)/lonlat2xy
+lonlat2xy: $(OBJ)/lonlat2xy.o $(OBJ)/globals.o $(OBJ)/libreria.o | $(OBJ)
+	@printf "$(GREEN)[LD]$(RESET) $@\n"
+	$(Q)$(CC) $(OBJ)/lonlat2xy.o $(OBJ)/globals.o $(OBJ)/libreria.o $(LIBS) -o $(BIN)/lonlat2xy
 
 projbanda:
-	if [ $(findstring THIN_SHEET,$(DEFS)) ]; then \
+	@if [ $(findstring THIN_SHEET,$(DEFS)) ]; then \
+		printf "$(GREEN)[FC]$(RESET) $@\n"; \
 		$(FC) projbanda.f -o $(BIN)/projbanda -O3 -I$(INCL) -L../lib/ ; \
 		chmod  a+x  $(BIN)/$@
 	fi
 
 $(OBJ)/surf_proc.o : surf_proc.c | $(OBJ)
-	$(CC) -c -o $@ $(CFLAGS) surf_proc.c
+	@printf "$(BLUE)[CC]$(RESET) $<\n"
+	$(Q)$(CC) -c -o $@ $(CFLAGS) surf_proc.c
 
-tisc:	$(OBJ)/tisc.o $(TISC_OBJS) libreria $(SP_LIBS) thin_sheet notify
-	$(LC)  $(OBJ)/tisc.o $(TISC_OBJS) $(LIB)/libreria.o $(SP_LIBS)  \
+tisc:	$(OBJ)/tisc.o $(TISC_OBJS) $(OBJ)/libreria.o $(SP_LIBS) $(TS_LIBS) notify
+	@printf "$(GREEN)[LD]$(RESET) $@\n"
+	$(Q)$(LC)  $(OBJ)/tisc.o $(TISC_OBJS) $(OBJ)/libreria.o $(SP_LIBS)  \
 		$(TS_LIBS) $(LIBS) -o $(BIN)/tisc
-	chmod a+x $(BIN)/tisc
+	$(Q)chmod a+x $(BIN)/tisc
 
 $(OBJ)/tisc.o: tisc.c | $(OBJ)
-	@printf "\ntisc HOME DIRECTORY: $(tisc_DIR)\nARCH=$(ARCH)\nOP. SYSTEM=$(OS)\nUser home: $(HOME_DIR)\nYou are currently $(shell whoami) using the shell $(SHELL)\n\n"
-	$(CC) $(CFLAGS) -o $@ -D'VERSION="$(VERSION)"' -D'TISCDIR="$(tisc_DIR)"' -c tisc.c
-	@if [ -x /usr/local/bin/ctags ]; then \
+	@printf "$(BLUE)[CC]$(RESET) $<\n"
+	$(Q)$(CC) $(CFLAGS) -o $@ -D'VERSION="$(VERSION)"' -D'TISCDIR="$(tisc_DIR)"' -c tisc.c
+	$(Q)if [ -x /usr/local/bin/ctags ]; then \
 		/usr/local/bin/ctags *.c ../lib/thin_sheet.f ../lib/libreria.c ../include/*.h 2>/dev/null;\
 		echo tags file produced.;\
 	fi
 
 $(OBJ)/call_tisc.o : call_tisc.c | $(OBJ)
-	if [ $(findstring SURFACE_TRANSPORT,$(DEFS)) ]; then \
-		$(CC) -c -o $@ $(CFLAGS) -DSURFACE_TRANSPORT call_tisc.c ;\
+	@if [ $(findstring SURFACE_TRANSPORT,$(DEFS)) ]; then \
+		printf "$(BLUE)[CC]$(RESET) $<\n"; \
+		$(CC) -c -o $@ $(CFLAGS) -DSURFACE_TRANSPORT call_tisc.c ; \
 	fi
 
-libreria :
-	$(CC) -c -o $(LIB)/libreria.o $(CFLAGS) $(LIB)/libreria.c
+$(OBJ)/libreria.o : ../lib/libreria.c | $(OBJ)
+	@printf "$(BLUE)[CC]$(RESET) $<\n"
+	$(Q)$(CC) $(CFLAGS) -c $< -o $@
 
-thin_sheet :
-	if [ $(findstring THIN_SHEET,$(DEFS)) ]; then \
-		$(MAKE) -C $(LIB) thin_sheet; \
-	fi
+$(OBJ)/thin_sheet.o : ../lib/thin_sheet.f | $(OBJ)
+	@printf "$(GREEN)[FC]$(RESET) $<\n"
+	$(Q)$(FC) -O3 -c $< -o $@
+
+$(OBJ)/sistbanda.o : ../lib/sistbanda.f | $(OBJ)
+	@printf "$(GREEN)[FC]$(RESET) $<\n"
+	$(Q)$(FC) -O3 -c $< -o $@
 
 notify :
 	@if [ -f ../doc/.first_compilation.txt ]; \

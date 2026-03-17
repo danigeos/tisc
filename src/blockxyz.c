@@ -135,6 +135,7 @@ int main(int argc, char **argv)
 	fclose(file);
 
 	if (verbose_level>=3) fprintf(stderr, "\nUsed %d xyz points from input.\n", n_input_points);
+	return 0;
 }
 
 
@@ -150,4 +151,5 @@ int syntax(int argc, char **argv)
 		"\n<radius> is the distance along x & y axis to compute those (in input x,y units; but default is one cell)."
 		"\n<empty_val> is the initial value set for the interpolated cells (default is 0).\n"
 	);
+	return 0;
 }

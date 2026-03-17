@@ -1,5 +1,4 @@
 #include "tisc.h"
-/* From universal.h */
 float g = 9.81;
 float pi = 3.14159265;
 float sqrt2 = 1.4142136;

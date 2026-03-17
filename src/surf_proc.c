@@ -601,7 +601,7 @@ int Calculate_Discharge (struct GRIDNODE *sortcell, ModelConfig *cfg, ModelConte
 		lake_evap *= dx*dy;
 		/*Check: open-lake input discharge should be >= evaporation*surface, except perhaps for the Sea*/
 		if (Lake[il].n_sd) {
-		if (diff=(lake_evap - Lake_Input_Discharge(cfg, il))<0) {
+		if ((diff = (lake_evap - Lake_Input_Discharge(cfg, il))) < 0) {
 			bool its_sea=false;
 			IF_LAKE_IS_SEA(il) its_sea=true;
 			if (!its_sea) 
@@ -801,7 +801,8 @@ int Define_Drainage_Net (struct GRIDNODE *sortcell, ModelConfig *cfg, ModelConte
 		co[0]=j,   co[1]=j+1, co[2]=j,   co[3]=j-1, co[4]=j+1, co[5]=j+1, co[6]=j-1, co[7]=j-1;
 
 		/*Calculate derivates and look for undefined lakes in all directions: */
-/*!!*/		for (int l=undef_lake_adj=0; l<NDERS; l++) {
+		undef_lake_adj=0;
+/*!!*/		for (int l=0; l<NDERS; l++) {
 			float dist, deriv;
 			switch (l) {
 				case 0: case 2: dist=cfg->dy;  break;   /*N,S*/
@@ -975,8 +976,8 @@ int Define_Drainage_Net (struct GRIDNODE *sortcell, ModelConfig *cfg, ModelConte
 	  Add transferring and other information to 'drainage'.
 	*/
 	for (int l=1; l<=nlakes; l++) {
-		register float 	dist2, mindist2, distx, disty, dxdivdy=dx/dy;
-		register int 	imindist2=-1, lrow, lcol;
+		float 	dist2, mindist2, distx, disty, dxdivdy=dx/dy;
+		int 	imindist2=-1, lrow, lcol;
 		/*Outlets*/
 		for (int m=0; m<Lake[l].n_sd; m++) {
 			lrow = Lake[l].row_sd[m];
@@ -1085,8 +1086,8 @@ int Define_Drainage_Net (struct GRIDNODE *sortcell, ModelConfig *cfg, ModelConte
 	}
 	/*Check: All nodes transfer either to SIGNAL,SIGNAL or to a real node.*/
 	for (int i=0; i<cfg->Ny; i++)  for (int j=0; j<cfg->Nx; j++) {
-		if (drainage[i][j].dr_row < 0 && drainage[i][j].dr_row != SIGNAL || 
-			drainage[i][j].dr_col < 0 && drainage[i][j].dr_col != SIGNAL) 
+		if ((drainage[i][j].dr_row < 0 && drainage[i][j].dr_row != SIGNAL) || 
+			(drainage[i][j].dr_col < 0 && drainage[i][j].dr_col != SIGNAL)) 
 			PRINT_ERROR("[%d][%d] -->>  [%d][%d] \t'%c'", i,j,drainage[i][j].dr_row,drainage[i][j].dr_col, drainage[i][j].type);
 	}
 	/*Check: all outlets should have the same elevation (except for the sea)*/
@@ -1966,7 +1967,7 @@ int Lake_Fill (
 	for (;;) {
 		int n_prop=1, n_to_do=0; 
 		/*Count the n_to_do untreated lake nodes that are next to the n_done already treated lake nodes*/
-		n_prop; n_to_do; total_weight_distr=0;
+		total_weight_distr=0;
 		for (int m=0; m<n_done; m++) {
 			int i=done[m].row, j=done[m].col;
 		ro[0]=i-1, ro[1]=i,   ro[2]=i+1, ro[3]=i,   ro[4]=i-1, ro[5]=i+1, ro[6]=i+1, ro[7]=i-1;
@@ -2559,7 +2560,7 @@ int Divide_Lake (ModelConfig *cfg, ModelContext *ctx, int row, int col /*lake no
 	  the only connection between two or more parts of the lake.
 	*/
 
-	register int 	i, j, k, il, i_node, i_outlet, 
+	int 	i, j, k, il, i_node, i_outlet, 
 		*new_lake_num, 
 		imaxderneg, 
 		local_num_lakes, 
@@ -3034,8 +3035,7 @@ int Calculate_Precipitation_Evaporation (ModelConfig *cfg, ModelContext *ctx)
  			}
  			else {
 	 			altitude = ctx->topo[row][col];
-	 			il=drainage[row][col].lake;
-	 			if (il) {
+	 			if ((il = drainage[row][col].lake)) {
 	 				altitude = ctx->topo[Lake[il].row[Lake[il].n-1]][Lake[il].col[Lake[il].n-1]];
 	 				/*Sea*/
 	 				IF_LAKE_IS_SEA(il) altitude = ctx->sea_level;
@@ -3166,7 +3166,7 @@ float Orographic_Precipitation_with_local_slope (ModelConfig *cfg, ModelContext 
 
 	/*Calculate the maximum between topogrpahy and water surface:*/
 	topoC = ctx->topo[i][j];   
-	if (il=drainage[i][j].lake) {
+	if ((il = drainage[i][j].lake)) {
 		/*Lake[il].alt doesn't work here, it's calculated later in the main loop!*/
 		topoC = ctx->topo[Lake[il].row[Lake[il].n-1]][Lake[il].col[Lake[il].n-1]];
 		/*Except for the sea*/
@@ -3334,7 +3334,7 @@ float max_water_in_air_colum (ModelConfig *cfg, ModelContext *ctx, int i, int j)
 
 	/*Calculate the maximum between topogrpahy and water surface:*/
 	topoC = ctx->topo[i][j];   
-	if (il=drainage[i][j].lake) {
+	if ((il = drainage[i][j].lake)) {
 		/*Lake[il].alt doesn't work here, it's calculated later in the main loop!*/
 		topoC = ctx->topo[Lake[il].row[Lake[il].n-1]][Lake[il].col[Lake[il].n-1]];
 		/*Except for the sea*/
