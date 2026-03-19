@@ -12,8 +12,10 @@ bin/*
 *.so
 *.d
 *.dSYM/
+tisc.code-workspace
 tao+tisc_commons/build/
 .DS_Store
+.gmt_bb_info
 
 # === Ignored Untracked Files ===
 src/.tags

@@ -1635,21 +1635,21 @@ int SolveAlmostDiagonalTriangularEquationSystem (
 {
 	/* RESUELVE UN SISTEMA DE ECUACIONES CASI DIAGONAL Y TRIANGULARIZADO:  A�x = b */
 
-	register int i, j;
 
-	for (i=num_ecs-1; i>=0; i--)
+	for (int i=num_ecs-1; i>=0; i--)
 	{
 		double *row_i = A[i];
-		double sum = b[i];
+		double sum = 0.0;
 		int j_end = NDire + NDsre + 1;
 		int max_j = num_ecs - i + NDire;
 		if (j_end > max_j) j_end = max_j;
 
-		for (j = NDire + 1; j < j_end; j++)
+		#pragma omp simd reduction(+:sum)
+		for (int j = NDire + 1; j < j_end; j++)
 		{
-			sum -= row_i[j] * x[i + j - NDire];
+			sum += row_i[j] * x[i + j - NDire];
 		}
-		x[i] = sum / row_i[NDire];
+		x[i] = (b[i] - sum) / row_i[NDire];
 	}
 	return(1);
 }
@@ -1770,55 +1770,68 @@ int TriangularizeAlmostDiagonalEquationSystem(
 	   la matriz sin las NDire diagonales inferiores.
 	   Optimized for branchless innermost loops and pointer hoisting. */
 
-	register int i, j, k, ndiagonales = NDire + NDsre + 1;
-	register double aux, fac;
+	int ndiagonales = NDire + NDsre + 1;
+	int error = 0;
 
-	for (i=0 ;  i< num_rows-1 ; i++)
+	#pragma omp parallel if (NDire > 32)
 	{
-		if (!A[i][NDire])	/* si el de la diagonal principal es 0 */
-		{			        /* cambiar esa linea por otra */
-			for (j = i + 1; j < i + 1 + NDire && j < num_rows; j++) {
-				int offset = j - i;
-				if (A[j][NDire - offset]) {
-					int k_end = ndiagonales - offset;
-					double *row_j = A[j];
-					double *row_i = A[i];
-					for (k = NDire - offset; k < k_end; k++) {
-						aux = row_j[k];
-						row_j[k] = row_i[k + offset];
-						row_i[k + offset] = aux;
+		for (int i=0 ;  i< num_rows-1 ; i++)
+		{
+			#pragma omp single
+			{
+				if (!A[i][NDire])	/* si el de la diagonal principal es 0 */
+				{			        /* cambiar esa linea por otra */
+					int j;
+					for (j = i + 1; j < i + 1 + NDire && j < num_rows; j++) {
+						int offset = j - i;
+						if (A[j][NDire - offset]) {
+							int k_end = ndiagonales - offset;
+							double *row_j = A[j];
+							double *row_i = A[i];
+							for (int k = NDire - offset; k < k_end; k++) {
+								double aux = row_j[k];
+								row_j[k] = row_i[k + offset];
+								row_i[k + offset] = aux;
+							}
+							for (int k = k_end; k < ndiagonales; k++) {
+								row_j[k] = 0;
+							}
+							/* Fix: You must also swap the RHS independent term! */
+							double aux = b[j];
+							b[j] = b[i];
+							b[i] = aux;
+							break ;
+						}
 					}
-					for (k = k_end; k < ndiagonales; k++) {
-						row_j[k] = 0;
-					}
-					/* Fix: You must also swap the RHS independent term! */
-					aux = b[j];
-					b[j] = b[i];
-					b[i] = aux;
-					break ;
+					if (j == (i + 1 + NDire) || j == num_rows) error = 1;	/* sist. indeterminado */
 				}
 			}
-			if (j == (i + 1 + NDire) || j == num_rows) return 1;	/* sist. indeterminado */
-		}
+			if (error) break;
 		
-		double pivot = A[i][NDire];
-		double *row_i = A[i];
+			double pivot = A[i][NDire];
+			double *row_i = A[i];
+			int max_j = i + 1 + NDire;
+			if (max_j > num_rows) max_j = num_rows;
 		
-		for (j = i + 1; j < i + 1 + NDire && j < num_rows; j++) {
-			int offset = j - i;
-			double *row_j = A[j];
-			fac = row_j[NDire - offset] / pivot;
+			#pragma omp for schedule(static)
+			for (int j = i + 1; j < max_j; j++) {
+				int offset = j - i;
+				double *row_j = A[j];
+				double fac = row_j[NDire - offset] / pivot;
 			
-			/* Skip if fac is 0, avoiding an entire inner loop of doing nothing */
-			if (fac != 0.0) {
-				int k_end = ndiagonales - offset;
-				for (k = NDire - offset; k < k_end; k++) {
-					row_j[k] -= row_i[k + offset] * fac;
+				/* Skip if fac is 0, avoiding an entire inner loop of doing nothing */
+				if (fac != 0.0) {
+					int k_end = ndiagonales - offset;
+					#pragma omp simd
+					for (int k = NDire - offset; k < k_end; k++) {
+						row_j[k] -= row_i[k + offset] * fac;
+					}
+					b[j] -= b[i] * fac;
 				}
-				b[j] -= b[i] * fac;
 			}
 		}
 	}
+	if (error) return 1;
 	return 0;
 }
 

@@ -235,7 +235,6 @@ int inputs (int argc, char **argv)
 			read_file_resume(resume_filename);
 			interpr_command_line_opts(argc, argv);
 			if (verbose_level>=1) fprintf(stdout, "\nResuming project '%s'. Timefinal=%.1f My", projectname, Timefinal/Matosec);
-			if (switch_ps>=2) n_image--; /*Don't produce 2 jpg's of the same stage of restart*/
 			return(1);
 		case 10:
 			if (!read_file_parameters(verbose_level>=1, 0)) {
@@ -945,7 +944,7 @@ int read_file_unit(ModelConfig *cfg, ModelContext *ctx)
 	{
 		int nlines=0, nread, show, replace=0;
 		char str1[MAXLENLINE], str2[MAXLENLINE], line[MAXLENLINE+200], *lineptr;
-		show=(cfg->verbose_level>=3)? 1 : 0;
+		show=(cfg->verbose_level>=4)? 1 : 0;
 		rewind(file);
 		while ((lineptr=fgets(line, MAXLENLINE+200-1, file)) != NULL && nlines<NMAXHEADERLINES) {
 			nlines++; nread=sscanf(lineptr, "%s %s", str1, str2);

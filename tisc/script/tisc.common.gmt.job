@@ -6,7 +6,7 @@ set name = $prj
 
 #Setting up variables:
 set ps  	= $prj.ps
-set tmp 	= tmp.tisc.gmt.$prj
+set tmp 	= .tmp.tisc.gmt.$prj
 
 if ($prj == "") then 
 	echo NEED TO KNOW THE PROJECT NAME!

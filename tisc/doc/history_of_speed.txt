@@ -1,0 +1,60 @@
+9.- THE ALGORITHMS AND NUMERICAL METHODS
+    Finite differences are used to solve the spatial partial differential
+  equations as well as the time-dependent processes. The grid is fixed and
+  rectangular.
+    LES matrices arising from the flexural diferential equations are solved
+  using a classical band solver (matrix triangularisation).
+    Memory use: The largest array (used for the flexulra calculation) needs 
+    this ammount of memory = Nx*Ny*(4*Ny+1)*8 [bits].
+
+  Orientative execution time of a one-step elastic flexure:
+
+  PURCHASE      OS PLATFORM     [GRID-RUNTIME] PRICE  ADDRESS CLOCKSPEED
+  -----------------------------------------------------------------
+  1995		PC pentium III + Linux 		nikolai.ija
+  				81x81 ->  23s
+  				141x141-> 270s
+  1996		RISC6000 			africa.ija
+  				21x21 ->   3s
+				41x41 ->  30s
+				81x81 -> 375s
+  1996		RISC6000 optimised compilation
+				121x61 ->  40s	1996
+  1996		              "         " and genspd
+				121x61 ->   4s
+  1997		SUN OS	SUN Ultra 5		drift.geo.vu
+				141x141-> 300s
+  1997		SUN OS	SUN Ultra 10		coral.geo.vu
+				141x141-> 120s
+  1999		SUN OS	SUN Ultra2SparcCreator 	magma.ija
+				 81x81 ->  32s       
+				141x141-> 252s
+  2002-02	SUN OS	SUN Sparc3	26.4kEur erebus.geo.vu	750 MHz
+				141x141->  60s
+  2003-09	Linux 			1.5kEur	cuba.ija	
+				 81x81 ->    2s
+			    141x141->   23s
+				301x301->  440s
+  2007-06	Linux	Dell Precision	3.5kEur	cuba.ija	3.2 GHz
+				141x141 ->   4s
+				301x301 -> 116s
+				401x401 -> 585s
+  2009-03	Linux	Dell Precision	6.3kEur	ausangate.ictja	2.6 GHz	
+				141x141 ->   4s
+				301x301 ->  72s
+				401x401 -> 481s
+  2012-10	OSX10	MacBook Core i7	3kEur			2.5 GHz	
+				141x141 -> 2.8s
+				301x301 -> 60s
+				401x401 -> 209s
+				751x501 -> 11m
+  2019-11	OSX10.14  MacBook Intel Core i7	4k�			4.0 GHz	32GB
+				141x141 -> 1.8s
+				301x301 -> 41s
+				401x401 -> 130s
+				751x501 -> 510s = 8m30s
+	2023-11	OSX13.5  Mac Mini chip: M2 Pro
+				141x141 -> 1.8s
+				301x301 -> 28.2s
+				401x401 -> 83s
+				751x501 -> 281s = 4m41s

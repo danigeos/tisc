@@ -660,15 +660,19 @@ int read_file_resume(char *filename)
 
 	if (hydro_model) {
 		fread(sortcell, sizeof(struct GRIDNODE), Nx*Ny, file);
-		if (fread(drainage[0], sizeof(struct DRAINAGE), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read drainage array."); goto error_read_resume; }
-		if (fread(lake_former_step[0], sizeof(int), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read lake_former_step array."); goto error_read_resume; }
+		for (i=0; i<Ny; i++) {
+			if (fread(drainage[i], sizeof(struct DRAINAGE), Nx, file) != (size_t)Nx) { PRINT_ERROR("Failed to read drainage array."); goto error_read_resume; }
+		}
+		for (i=0; i<Ny; i++) {
+			if (fread(lake_former_step[i], sizeof(int), Nx, file) != (size_t)Nx) { PRINT_ERROR("Failed to read lake_former_step array."); goto error_read_resume; }
+		}
 		if (K_ice_eros) {
-			if (fread(ice_thickness[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read ice_thickness array."); goto error_read_resume; }
-			if (fread(ice_sedm_load[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read ice_sedm_load array."); goto error_read_resume; }
-			if (fread(ice_velx_sl[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read ice_velx_sl array."); goto error_read_resume; }
-			if (fread(ice_vely_sl[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read ice_vely_sl array."); goto error_read_resume; }
-			if (fread(ice_velx_df[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read ice_velx_df array."); goto error_read_resume; }
-			if (fread(ice_vely_df[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read ice_vely_df array."); goto error_read_resume; }
+			for (i=0; i<Ny; i++) if (fread(ice_thickness[i], sizeof(float), Nx, file) != (size_t)Nx) { PRINT_ERROR("Failed to read ice_thickness array."); goto error_read_resume; }
+			for (i=0; i<Ny; i++) if (fread(ice_sedm_load[i], sizeof(float), Nx, file) != (size_t)Nx) { PRINT_ERROR("Failed to read ice_sedm_load array."); goto error_read_resume; }
+			for (i=0; i<Ny; i++) if (fread(ice_velx_sl[i], sizeof(float), Nx, file) != (size_t)Nx) { PRINT_ERROR("Failed to read ice_velx_sl array."); goto error_read_resume; }
+			for (i=0; i<Ny; i++) if (fread(ice_vely_sl[i], sizeof(float), Nx, file) != (size_t)Nx) { PRINT_ERROR("Failed to read ice_vely_sl array."); goto error_read_resume; }
+			for (i=0; i<Ny; i++) if (fread(ice_velx_df[i], sizeof(float), Nx, file) != (size_t)Nx) { PRINT_ERROR("Failed to read ice_velx_df array."); goto error_read_resume; }
+			for (i=0; i<Ny; i++) if (fread(ice_vely_df[i], sizeof(float), Nx, file) != (size_t)Nx) { PRINT_ERROR("Failed to read ice_vely_df array."); goto error_read_resume; }
 		}
 	}
 
@@ -693,7 +697,7 @@ int read_file_resume(char *filename)
 	if (numBlocks_aux != numBlocks) PRINT_ERROR("%d Blocks?!", numBlocks_aux);
 	i_Block_insert=i_Block_insert_aux;
 	for (j=0; j<numBlocks; j++) {
-		if (fread(Blocks[j].thick[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read Blocks[%d].thick array.", j); goto error_read_resume; } // Check return value
+		for (i=0; i<Ny; i++) if (fread(Blocks[j].thick[i], sizeof(float), Nx, file) != (size_t)Nx) { PRINT_ERROR("Failed to read Blocks[%d].thick array.", j); goto error_read_resume; }
 	}
 	for (j=0; j<numBlocks; j++) {
 	    if (Blocks[j].type == 'V') {
@@ -705,10 +709,12 @@ int read_file_resume(char *filename)
 		Blocks[j].vel_y = alloc_matrix(Ny, Nx);
 		Blocks[j].visc  = alloc_matrix(Ny, Nx);
 		Blocks[j].viscTer = alloc_matrix(Ny, Nx);
-		if (fread(Blocks[j].vel_x[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read Blocks[%d].vel_x array.", j); goto error_read_resume; } // Check return value
-		if (fread(Blocks[j].vel_y[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read Blocks[%d].vel_y array.", j); goto error_read_resume; } // Check return value
-		if (fread(Blocks[j].visc[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read Blocks[%d].visc array.", j); goto error_read_resume; } // Check return value
-		if (fread(Blocks[j].viscTer[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read Blocks[%d].viscTer array.", j); goto error_read_resume; } // Check return value
+		for (i=0; i<Ny; i++) {
+			if (fread(Blocks[j].vel_x[i], sizeof(float), Nx, file) != (size_t)Nx) { PRINT_ERROR("Failed to read Blocks[%d].vel_x array.", j); goto error_read_resume; }
+			if (fread(Blocks[j].vel_y[i], sizeof(float), Nx, file) != (size_t)Nx) { PRINT_ERROR("Failed to read Blocks[%d].vel_y array.", j); goto error_read_resume; }
+			if (fread(Blocks[j].visc[i], sizeof(float), Nx, file) != (size_t)Nx) { PRINT_ERROR("Failed to read Blocks[%d].visc array.", j); goto error_read_resume; }
+			if (fread(Blocks[j].viscTer[i], sizeof(float), Nx, file) != (size_t)Nx) { PRINT_ERROR("Failed to read Blocks[%d].viscTer array.", j); goto error_read_resume; }
+		}
 	    }
 	    else {
 		if (fread(&Blocks[j].vel_x[0][0], sizeof(float), 1, file) != 1) { PRINT_ERROR("Failed to read Blocks[%d].vel_x[0][0].", j); goto error_read_resume; } // Check return value
@@ -719,22 +725,24 @@ int read_file_resume(char *filename)
 		Blocks[j].detr_grsize = alloc_matrix(Ny, Nx);
 		Blocks[j].thickgypsum = alloc_matrix(Ny, Nx);
 		Blocks[j].thickhalite = alloc_matrix(Ny, Nx);
-		if (fread(Blocks[j].detr_ratio[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read Blocks[%d].detr_ratio array.", j); goto error_read_resume; } // Check return value
-		if (fread(Blocks[j].detr_grsize[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read Blocks[%d].detr_grsize array.", j); goto error_read_resume; } // Check return value
-		if (fread(Blocks[j].thickgypsum[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read Blocks[%d].thickgypsum array.", j); goto error_read_resume; } // Check return value
-		if (fread(Blocks[j].thickhalite[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read Blocks[%d].thickhalite array.", j); goto error_read_resume; } // Check return value
+		for (i=0; i<Ny; i++) {
+			if (fread(Blocks[j].detr_ratio[i], sizeof(float), Nx, file) != (size_t)Nx) { PRINT_ERROR("Failed to read Blocks[%d].detr_ratio array.", j); goto error_read_resume; }
+			if (fread(Blocks[j].detr_grsize[i], sizeof(float), Nx, file) != (size_t)Nx) { PRINT_ERROR("Failed to read Blocks[%d].detr_grsize array.", j); goto error_read_resume; }
+			if (fread(Blocks[j].thickgypsum[i], sizeof(float), Nx, file) != (size_t)Nx) { PRINT_ERROR("Failed to read Blocks[%d].thickgypsum array.", j); goto error_read_resume; }
+			if (fread(Blocks[j].thickhalite[i], sizeof(float), Nx, file) != (size_t)Nx) { PRINT_ERROR("Failed to read Blocks[%d].thickhalite array.", j); goto error_read_resume; }
+		}
 	    }
 	}
 
 	if (erosed_model) {
-		if (fread(eros_now[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read eros_now array."); goto error_read_resume; } // Check return value
-		if (fread(accumul_erosion[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read accumul_erosion array."); goto error_read_resume; } // Check return value
+		for (i=0; i<Ny; i++) if (fread(eros_now[i], sizeof(float), Nx, file) != (size_t)Nx) { PRINT_ERROR("Failed to read eros_now array."); goto error_read_resume; }
+		for (i=0; i<Ny; i++) if (fread(accumul_erosion[i], sizeof(float), Nx, file) != (size_t)Nx) { PRINT_ERROR("Failed to read accumul_erosion array."); goto error_read_resume; }
 	}
 	if (hydro_model) {
-		if (fread(evaporation[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read evaporation array."); goto error_read_resume; } // Check return value
-		if (fread(precipitation[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read precipitation array."); goto error_read_resume; } // Check return value
-		if (fread(precipitation_snow[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read precipitation_snow array."); goto error_read_resume; } // Check return value
-		if (fread(precipitation_file[0], sizeof(float), Nx * Ny, file) != (size_t)(Nx * Ny)) { PRINT_ERROR("Failed to read precipitation_file array."); goto error_read_resume; } // Check return value
+		for (i=0; i<Ny; i++) if (fread(evaporation[i], sizeof(float), Nx, file) != (size_t)Nx) { PRINT_ERROR("Failed to read evaporation array."); goto error_read_resume; }
+		for (i=0; i<Ny; i++) if (fread(precipitation[i], sizeof(float), Nx, file) != (size_t)Nx) { PRINT_ERROR("Failed to read precipitation array."); goto error_read_resume; }
+		for (i=0; i<Ny; i++) if (fread(precipitation_snow[i], sizeof(float), Nx, file) != (size_t)Nx) { PRINT_ERROR("Failed to read precipitation_snow array."); goto error_read_resume; }
+		for (i=0; i<Ny; i++) if (fread(precipitation_file[i], sizeof(float), Nx, file) != (size_t)Nx) { PRINT_ERROR("Failed to read precipitation_file array."); goto error_read_resume; }
 		Lake = calloc (nlakes+1, sizeof(struct LAKE_INFO));
 		fread(Lake, sizeof(struct LAKE_INFO), nlakes+1, file);
 		for (j=1; j<=nlakes; j++) {
@@ -936,7 +944,7 @@ int read_file_node_defs(ModelConfig *cfg, ModelContext *ctx, float dt_st)
 			}
 
 			drainage[i][j].discharge += value;
-			ctx->total_rain += value;
+			total_rain += value;
 			drainage[i][j].C_Ca += value * C_Ca_RIV;
 			drainage[i][j].C_SO4 += value * C_SO4_RIV;
 			drainage[i][j].C_Na += value * C_Na_RIV;
@@ -1702,10 +1710,11 @@ int write_file_lakes (ModelConfig *cfg, ModelContext *ctx)
 	fprintf(file, "#TISC output: \n#Lakes: %d", ctx->nlakes);
 	for (i=1; i<=ctx->nlakes; i++) {
 		float vol, height_lake, lake_evaporation;
-		for (j=0, height_lake=-1e6; j<Lake[i].n; j++) //!!
-		    height_lake = MAX_2(height_lake, ctx->topo[Lake[i].row[j]][Lake[i].col[j]]);
-		for (j=0, vol=0; j<Lake[i].n; j++)
-		    vol += height_lake - ctx->topo[Lake[i].row[j]][Lake[i].col[j]];
+		height_lake = Lake[i].alt; // Use the properly calculated water level
+		for (j=0, vol=0; j<Lake[i].n; j++) {
+		    if (height_lake > ctx->topo[Lake[i].row[j]][Lake[i].col[j]])
+		        vol += height_lake - ctx->topo[Lake[i].row[j]][Lake[i].col[j]];
+		}
 		vol *= cfg->dx*cfg->dy;
 		lake_evaporation = Lake[i].n * cfg->dx*cfg->dy * evaporation_ct;
 		fprintf(file, "\n>Lake %d:  %d nodes", i, Lake[i].n);

@@ -58,21 +58,33 @@ def main():
     river_lines = []
     river_widths = []
     lake_grid = None
+    precip_grid = None
     if os.path.exists(f_xyw):
         print(f"Reading {f_xyw}...")
-        xyw_num = np.loadtxt(f_xyw, comments='#', usecols=(0, 1, 2, 6, 7))
+        try:
+            xyw_num = np.loadtxt(f_xyw, comments='#', usecols=(0, 1, 2, 6, 7, 9))
+            x_from, y_from, water_flux, x_to, y_to, precip = xyw_num.T
+        except Exception:
+            # Fallback if the precipitation column is missing
+            xyw_num = np.loadtxt(f_xyw, comments='#', usecols=(0, 1, 2, 6, 7))
+            x_from, y_from, water_flux, x_to, y_to = xyw_num.T
+            precip = np.zeros_like(water_flux)
+            
         xyw_str = np.loadtxt(f_xyw, comments='#', usecols=(4,), dtype=str)
-        
-        x_from, y_from, water_flux, x_to, y_to = xyw_num.T
         
         # Lakes (Types 'L' for Lake, 'E' for Exit/Outlet, 'S' for Sea)
         lake_mask = (xyw_str == 'L') | (xyw_str == 'E') | (xyw_str == 'S')
         
         # Create a 2D bitmap for lakes based on the linear mask
         lake_grid = np.zeros(Ny * Nx)
+        precip_grid = np.zeros(Ny * Nx)
+        
         min_len = min(len(lake_grid), len(lake_mask))
         lake_grid[:min_len] = lake_mask[:min_len]
         lake_grid = lake_grid.reshape(Ny, Nx)
+        
+        precip_grid[:min_len] = precip[:min_len]
+        precip_grid = precip_grid.reshape(Ny, Nx)
         
         # Rivers (draw segments for cells with significant water, exclude internal lake segments)
         r_mask = (water_flux > 0.1) & (xyw_str != 'L') & (xyw_str != 'S')
@@ -111,11 +123,34 @@ def main():
     axs = axs.flatten()
 
     # ---- Panel 0: Topography + Drainage ----
-    im0 = axs[0].pcolormesh(x, y, topo, cmap='terrain', shading='nearest')
+    topo_vmin = np.nanmin(topo)
+    topo_vmax = np.nanmax(topo)
+    if topo_vmin >= 0:
+        topo_vmin = -1.0
+    if topo_vmax <= 0:
+        topo_vmax = 1.0
+
+    bath_cmap = plt.get_cmap("Blues_r")(np.linspace(0.2, 1.0, 128))
+    land_cmap = plt.get_cmap("terrain")(np.linspace(0.25, 1.0, 128))
+    bathy_land_cmap = mcolors.ListedColormap(np.vstack((bath_cmap, land_cmap)))
+    topo_norm = mcolors.TwoSlopeNorm(vmin=topo_vmin, vcenter=0.0, vmax=topo_vmax)
+    
+    im0 = axs[0].pcolormesh(x, y, topo, cmap=bathy_land_cmap, norm=topo_norm, shading='nearest')
     div0 = make_axes_locatable(axs[0])
     cax0 = div0.append_axes("right", size="5%", pad=0.1)
     fig.colorbar(im0, cax=cax0, label='Topography (m)')
     
+    # Overlay rain shade (top 10%)
+    if precip_grid is not None and np.nanmax(precip_grid) > np.nanmin(precip_grid):
+        p90 = np.nanpercentile(precip_grid, 90)
+        pmax = np.nanmax(precip_grid)
+        if pmax > p90:
+            # Use contourf to create a smooth, gradient cloud
+            levels = np.linspace(p90, pmax, 15)
+            axs[0].contourf(x, y, precip_grid, levels=levels, cmap='Blues', alpha=0.6, extend='max')
+            # Draw a contour line around the edge for better visibility
+            axs[0].contour(x, y, precip_grid, levels=[p90], colors='dodgerblue', linewidths=1.2, alpha=0.8)
+
     # Overlay lakes as a bitmap
     if lake_grid is not None and np.any(lake_grid):
         lake_masked = np.ma.masked_where(lake_grid == 0, lake_grid)
@@ -125,7 +160,7 @@ def main():
     if len(river_lines) > 0:
         lc = LineCollection(river_lines, linewidths=river_widths, colors='blue', alpha=0.7)
         axs[0].add_collection(lc)
-    axs[0].set_title('Topography & River Network')
+    axs[0].set_title('Topography, Drainage & High Rain (Top 10%)')
 
     # ---- Panel 1: Erosion / Sedimentation Rate ----
     # Use a centered norm to force white at 0 (Red=Erosion, Blue=Sedimentation)

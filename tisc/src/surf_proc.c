@@ -285,6 +285,23 @@ int Surface_Transport (ModelConfig *cfg, ModelContext *ctx, float **topo_ant, in
 			PRINT_WARNING("seds._balance: %.1f%% (>0 => sed>eros)", error);
 	}
 
+	/* Update lake elevations one last time to perfectly match final topography for output files */
+	for (int il=1; il<=nlakes; il++) {
+		if (Lake[il].n_sd) {
+			if (ctx->topo[Lake[il].row_sd[0]][Lake[il].col_sd[0]] < ctx->sea_level && AT_BORDER(Lake[il].row_sd[0], Lake[il].col_sd[0])) {
+				Lake[il].alt = ctx->sea_level;
+			}
+			else {
+				Lake[il].alt = ctx->topo[Lake[il].row_sd[0]][Lake[il].col_sd[0]];
+			}
+		}
+		else {
+			float max_elev = -1e9;
+			for (int i=0; i<Lake[il].n; i++) max_elev = MAX_2(ctx->topo[Lake[il].row[i]][Lake[il].col[i]], max_elev);
+			Lake[il].alt = max_elev;
+		}
+	}
+
 	free_matrix(Dtopo, cfg->Ny);
 	free_matrix(topoini, cfg->Ny);
 	return (1);
@@ -313,6 +330,10 @@ int Calculate_Discharge (struct GRIDNODE *sortcell, ModelConfig *cfg, ModelConte
 	  descends node by node transferring water to 
 	  the destiny cells defined in Define_Drainage_Net()
 	*/
+
+	float **gypsum_flux_grid = alloc_matrix(cfg->Ny, cfg->Nx);
+	float **halite_flux_grid = alloc_matrix(cfg->Ny, cfg->Nx);
+
 	for (int isort=0; isort < Nx*Ny; isort++) {
 			row  = sortcell[isort].row;
 			col  = sortcell[isort].col;
@@ -417,8 +438,8 @@ int Calculate_Discharge (struct GRIDNODE *sortcell, ModelConfig *cfg, ModelConte
 					j_end=col-ru;
 					j_inc=-1;
 				}
-				for (int i=i_ini; i>=i_ini && i<=i_end && drainage[row][col].discharge>0; i+=i_inc) 
-					for (int j=j_ini; j>=j_ini && j<=j_end && drainage[row][col].discharge>0; j+=j_inc) 
+				for (int i=i_ini; (i_inc > 0 ? i<=i_end : i>=i_end) && drainage[row][col].discharge>0; i+=i_inc) 
+					for (int j=j_ini; (j_inc > 0 ? j<=j_end : j>=j_end) && drainage[row][col].discharge>0; j+=j_inc) 
 						if (IN_DOMAIN(i, j)) if (i!=row || j!=col) {
 							float dist, underground_water_flow;
 							dist=sqrt((i-row)*(i-row)*dy*dy+(j-col)*(j-col)*dx*dx);
@@ -497,21 +518,13 @@ int Calculate_Discharge (struct GRIDNODE *sortcell, ModelConfig *cfg, ModelConte
 				float dh_gypsum = vol_rate_gypsum * dt_st / (cfg->dx * cfg->dy);
 				float dh_halite = vol_rate_halite * dt_st / (cfg->dx * cfg->dy);
 				float dh_salt = dh_gypsum + dh_halite;
-				if (dh_salt > 0) {
+				if (precip_Gypsum_flux > 0 || precip_Halite_flux > 0) {
+					gypsum_flux_grid[row][col] += precip_Gypsum_flux;
+					halite_flux_grid[row][col] += precip_Halite_flux;
 					ctx->total_precip_gypsum_rate += precip_Gypsum_flux;
 					ctx->total_precip_halite_rate += precip_Halite_flux;
 					ctx->total_accum_gypsum += precip_Gypsum_flux * dt_st;
 					ctx->total_accum_halite += precip_Halite_flux * dt_st;
-					if (ctx->numBlocks > 0) {
-						if (Blocks[ctx->numBlocks-1].type == 'S') {
-							Blocks[ctx->numBlocks-1].thickgypsum[row][col] += dh_gypsum;
-							Blocks[ctx->numBlocks-1].thickhalite[row][col] += dh_halite;
-						}
-						Blocks[ctx->numBlocks-1].thick[row][col] += dh_salt;
-					}
-					ctx->topo[row][col] += dh_salt;
-					float avg_dens = (precip_Gypsum_flux + precip_Halite_flux) / (vol_rate_gypsum + vol_rate_halite);
-					Dq[row][col] += dh_salt * g * (avg_dens - cfg->densenv);
 				}
 			}
 
@@ -575,6 +588,79 @@ int Calculate_Discharge (struct GRIDNODE *sortcell, ModelConfig *cfg, ModelConte
 			drainage[row][col].C_Cl = final_C_Cl;
 	}
 	
+	/* Distribute salt deposition */
+	float *lake_gypsum_flux = calloc(nlakes + 1, sizeof(float));
+	float *lake_halite_flux = calloc(nlakes + 1, sizeof(float));
+
+	for (int r = 0; r < cfg->Ny; r++) {
+		for (int c = 0; c < cfg->Nx; c++) {
+			if (gypsum_flux_grid[r][c] > 0 || halite_flux_grid[r][c] > 0) {
+				int il_dep = drainage[r][c].lake;
+				if (il_dep > 0) {
+					lake_gypsum_flux[il_dep] += gypsum_flux_grid[r][c];
+					lake_halite_flux[il_dep] += halite_flux_grid[r][c];
+				} else {
+					float vol_rate_gypsum = gypsum_flux_grid[r][c] / 2300.0;
+					float vol_rate_halite = halite_flux_grid[r][c] / 2160.0;
+					float dh_gypsum = vol_rate_gypsum * dt_st / (cfg->dx * cfg->dy);
+					float dh_halite = vol_rate_halite * dt_st / (cfg->dx * cfg->dy);
+					float dh_salt = dh_gypsum + dh_halite;
+					if (ctx->numBlocks > 0) {
+						if (Blocks[ctx->numBlocks-1].type == 'S') {
+							Blocks[ctx->numBlocks-1].thickgypsum[r][c] += dh_gypsum;
+							Blocks[ctx->numBlocks-1].thickhalite[r][c] += dh_halite;
+						}
+						Blocks[ctx->numBlocks-1].thick[r][c] += dh_salt;
+					}
+					ctx->topo[r][c] += dh_salt;
+					float avg_dens = 2200.0;
+					if (vol_rate_gypsum + vol_rate_halite > 0) {
+						avg_dens = (gypsum_flux_grid[r][c] + halite_flux_grid[r][c]) / (vol_rate_gypsum + vol_rate_halite);
+					}
+					Dq[r][c] += dh_salt * g * (avg_dens - cfg->densenv);
+				}
+			}
+		}
+	}
+
+	for (int i = 1; i <= nlakes; i++) {
+		if (lake_gypsum_flux[i] > 0 || lake_halite_flux[i] > 0) {
+			int n_dep_nodes = Lake[i].n - Lake[i].n_sd;
+			if (n_dep_nodes <= 0) n_dep_nodes = Lake[i].n;
+			if (n_dep_nodes > 0) {
+				float per_node_gypsum_flux = lake_gypsum_flux[i] / n_dep_nodes;
+				float per_node_halite_flux = lake_halite_flux[i] / n_dep_nodes;
+				float vol_rate_gypsum = per_node_gypsum_flux / 2300.0;
+				float vol_rate_halite = per_node_halite_flux / 2160.0;
+				float dh_gypsum = vol_rate_gypsum * dt_st / (cfg->dx * cfg->dy);
+				float dh_halite = vol_rate_halite * dt_st / (cfg->dx * cfg->dy);
+				float dh_salt = dh_gypsum + dh_halite;
+				float avg_dens = 2200.0;
+				if (vol_rate_gypsum + vol_rate_halite > 0) {
+					avg_dens = (per_node_gypsum_flux + per_node_halite_flux) / (vol_rate_gypsum + vol_rate_halite);
+				}
+				for (int k = 0; k < Lake[i].n; k++) {
+					int r = Lake[i].row[k];
+					int c = Lake[i].col[k];
+					if (drainage[r][c].type == 'E' && Lake[i].n > Lake[i].n_sd) continue;
+					if (ctx->numBlocks > 0) {
+						if (Blocks[ctx->numBlocks-1].type == 'S') {
+							Blocks[ctx->numBlocks-1].thickgypsum[r][c] += dh_gypsum;
+							Blocks[ctx->numBlocks-1].thickhalite[r][c] += dh_halite;
+						}
+						Blocks[ctx->numBlocks-1].thick[r][c] += dh_salt;
+					}
+					ctx->topo[r][c] += dh_salt;
+					Dq[r][c] += dh_salt * g * (avg_dens - cfg->densenv);
+				}
+			}
+		}
+	}
+	free(lake_gypsum_flux);
+	free(lake_halite_flux);
+	free_matrix(gypsum_flux_grid, cfg->Ny);
+	free_matrix(halite_flux_grid, cfg->Ny);
+
 	/*Calculate lake elevation and volume*/
 	/*LAKES HAVE CHANGED HERE, IN Calculate_Discharge, BY EVAPORATION!*/
 	for (int il=1; il<=nlakes; il++) {
@@ -587,10 +673,15 @@ int Calculate_Discharge (struct GRIDNODE *sortcell, ModelConfig *cfg, ModelConte
 				Lake[il].alt = topo[Lake[il].row_sd[0]][Lake[il].col_sd[0]];
 			}
 		else {
-			Lake[il].alt = topo[Lake[il].row[Lake[il].n-1]][Lake[il].col[Lake[il].n-1]];
+			float max_elev = -1e9;
+			for (int i=0; i<Lake[il].n; i++) max_elev = MAX_2(topo[Lake[il].row[i]][Lake[il].col[i]], max_elev);
+			Lake[il].alt = max_elev;
 		}
 		Lake[il].vol = 0;
-		for (int i=0; i<Lake[il].n; i++)  Lake[il].vol +=  (Lake[il].alt - topo[Lake[il].row[i]][Lake[il].col[i]]);
+		for (int i=0; i<Lake[il].n; i++) {
+			if (Lake[il].alt > topo[Lake[il].row[i]][Lake[il].col[i]])
+				Lake[il].vol +=  (Lake[il].alt - topo[Lake[il].row[i]][Lake[il].col[i]]);
+		}
 		Lake[il].vol *= dx*dy;
 	}
 
@@ -612,15 +703,6 @@ int Calculate_Discharge (struct GRIDNODE *sortcell, ModelConfig *cfg, ModelConte
 		if (!Lake[il].n_sd && (fabs(lake_evap-Lake_Input_Discharge(cfg, il)) > 1.1*max_evap*dx*dy || verbose_level>=4)) {
 		PRINT_WARNING("Calculate_Discharge: Endorh. lake %d (%d nodes) at [%d][%d] evaporates different %.2f m3/s than inputs %.2f m3/s.", 
 				il, Lake[il].n, Lake[il].row[0], Lake[il].col[0], lake_evap, Lake_Input_Discharge(cfg, il) );
-		}
-		/*Check: the lake's registered altitude should be the same as the one of the last node (except in the sea)*/
-		if (Lake[il].alt != topo[Lake[il].row[Lake[il].n-1]][Lake[il].col[Lake[il].n-1]]) {
-			bool its_sea=false;
-			IF_LAKE_IS_SEA(il) its_sea=true;
-			if (!its_sea) {
-				PRINT_ERROR("\aLake %d (not sea) should have the altitude of lake's last node %.2f m instead of %.2f m.", il, topo[Lake[il].row[Lake[il].n-1]][Lake[il].col[Lake[il].n-1]], Lake[il].alt);
-			for (int i=0; i<Lake[il].n; i++) PRINT_WARNING("[%d][%d] elevation: %.2f", Lake[il].row[i], Lake[il].col[i], topo[Lake[il].row[i]][Lake[il].col[i]]);
-			}
 		}
 		/*Check: the lake's registered elevation should be the maximum among lake nodes (except for the sea)*/
 		{
@@ -1017,30 +1099,78 @@ int Define_Drainage_Net (struct GRIDNODE *sortcell, ModelConfig *cfg, ModelConte
 		}
 	}
 
-	/*For the same altitude, put the outlets first in sortcell*/
-	for (int isort=0; isort<cfg->Nx*cfg->Ny-1; isort++) {
-		if (drainage[sortcell[isort].row][sortcell[isort].col].type != 'E') {
-		float topoisort;
-		topoisort = ctx->topo[sortcell[isort].row][sortcell[isort].col];
-		for (int j=isort+1; j<cfg->Nx*cfg->Ny; j++) {
-			float topoj;
-			topoj = ctx->topo[sortcell[j].row][sortcell[j].col];
-			if (topoj == topoisort) {
-			if (drainage[sortcell[j].row][sortcell[j].col].type == 'E') {
-					int auxrow, auxcol;
-				auxrow=sortcell[j].row;
-				auxcol=sortcell[j].col;
-				sortcell[j].row=sortcell[isort].row;
-				sortcell[j].col=sortcell[isort].col;
-				sortcell[isort].row=auxrow;
-				sortcell[isort].col=auxcol;
-				break;
+	/* Topologically sort nodes of the SAME altitude using flow direction (Kahn's algorithm).
+	   This guarantees that lakes/outlets are processed AFTER the rivers/lakes that drain into them. */
+	int **block_idx = (int **) malloc(cfg->Ny * sizeof(int *));
+	for (int r = 0; r < cfg->Ny; r++) {
+		block_idx[r] = (int *) malloc(cfg->Nx * sizeof(int));
+		for (int c = 0; c < cfg->Nx; c++) block_idx[r][c] = -1;
+	}
+
+	for (int i = 0; i < cfg->Nx*cfg->Ny; ) {
+		int j = i + 1;
+		float topo_i = ctx->topo[sortcell[i].row][sortcell[i].col];
+		while (j < cfg->Nx*cfg->Ny && ctx->topo[sortcell[j].row][sortcell[j].col] == topo_i) {
+			j++;
+		}
+		int block_size = j - i;
+		if (block_size > 1) {
+			struct GRIDNODE *temp = malloc(block_size * sizeof(struct GRIDNODE));
+			int *in_degree = calloc(block_size, sizeof(int));
+			for (int k = i; k < j; k++) {
+				block_idx[sortcell[k].row][sortcell[k].col] = k - i;
+			}
+			for (int k = i; k < j; k++) {
+				int r = sortcell[k].row;
+				int c = sortcell[k].col;
+				int dr = drainage[r][c].dr_row;
+				int dc = drainage[r][c].dr_col;
+				if (IN_DOMAIN(dr, dc)) {
+					int target_idx = block_idx[dr][dc];
+					if (target_idx >= 0) {
+						in_degree[target_idx]++;
+					}
 				}
 			}
-			else break;
+			int *queue = malloc(block_size * sizeof(int));
+			int head = 0, tail = 0;
+			for (int k = 0; k < block_size; k++) {
+				if (in_degree[k] == 0) queue[tail++] = k;
+			}
+			int sorted_count = 0;
+			while (head < tail) {
+				int curr = queue[head++];
+				temp[sorted_count++] = sortcell[i + curr];
+				int r = sortcell[i + curr].row;
+				int c = sortcell[i + curr].col;
+				int dr = drainage[r][c].dr_row;
+				int dc = drainage[r][c].dr_col;
+				if (IN_DOMAIN(dr, dc)) {
+					int target_idx = block_idx[dr][dc];
+					if (target_idx >= 0) {
+						in_degree[target_idx]--;
+						if (in_degree[target_idx] == 0) queue[tail++] = target_idx;
+					}
+				}
+			}
+			/* Handle cycles just in case */
+			if (sorted_count < block_size) {
+				for (int k = 0; k < block_size; k++) {
+					if (in_degree[k] > 0) temp[sorted_count++] = sortcell[i + k];
+				}
+			}
+			for (int k = 0; k < block_size; k++) {
+				sortcell[i + k] = temp[k];
+				block_idx[temp[k].row][temp[k].col] = -1;
+			}
+			free(queue);
+			free(in_degree);
+			free(temp);
 		}
-		}
+		i = j;
 	}
+	for (int r = 0; r < cfg->Ny; r++) free(block_idx[r]);
+	free(block_idx);
 
 	/*CHECK RESULTS*/
 	/*Check: Lake nodes 'defined' in 'drainage' should be as many as the total lake nodes.*/
@@ -1528,7 +1658,7 @@ int Fluvial_Transport(struct GRIDNODE *sortcell, ModelConfig *cfg, ModelContext 
 			transferred_grainsize = drainage[row][col].grainsize;
 		}
 
-		/*Transfers suspended solid mass.*/
+		/*Transfer suspended solid mass.*/
 		if (IN_DOMAIN(drow,dcol)) {
 		int ild = drainage[drow][dcol].lake;
 		float hl;
@@ -1558,7 +1688,7 @@ int Fluvial_Transport(struct GRIDNODE *sortcell, ModelConfig *cfg, ModelContext 
 					}
 					drainage[drainage[drow][dcol].dr_row][drainage[drow][dcol].dr_col].masstr += drainage[drow][dcol].masstr;
 				} else {
-					*total_lost_sed_mass += drainage[row][col].masstr * dt_st;
+					*total_lost_sed_mass += drainage[drow][dcol].masstr * dt_st;
 				}
 			}
 			/*If draining to an CLOSED (endorheic) lake:*/
@@ -1979,7 +2109,7 @@ int Lake_Fill (
 		for (int k=0; k<NDERS; k++) {
 			/*if it's in the lake but not treated*/
 			if (IN_DOMAIN(ro[k],co[k])) {
-			if (drainage[ro[k]][co[k]].lake == il) {
+			if (drainage[ro[k]][co[k]].lake == il && drainage[ro[k]][co[k]].type != 'E') {
 				if (!done_grid[ro[k]][co[k]]) {
 				to_do[n_to_do].row = ro[k];
 				to_do[n_to_do].col = co[k];
@@ -2036,7 +2166,7 @@ int Lake_Fill (
 			Sediment (cfg, ctx, -d_mass/Lake[il].n, Lake[il].row[i], Lake[il].col[i], grainsize);
 		}
 		Dhsed = -MASS2SEDTHICK(cfg, d_mass) / Lake[il].n;
-		if (cfg->verbose_level>=3 || (drainage[row][col].masstr>1 && Dhsed>10))
+		if ((cfg->verbose_level>=3 && Dhsed>0.5) || (drainage[row][col].masstr>1 && Dhsed>10))
 			PRINT_WARNING("filling endorh. lake %d (%d nds, %.1f m3/s), at %.2f,%.2f km in rough way: %.1f m.", 
 				il, Lake[il].n, Lake_Input_Discharge(cfg, il), (col*cfg->dx+cfg->xmin)/1e3, (cfg->ymax-row*cfg->dy)/1e3, Dhsed);
 		drainage[row][col].masstr = 0;
@@ -2583,20 +2713,81 @@ int Divide_Lake (ModelConfig *cfg, ModelContext *ctx, int row, int col /*lake no
 	if (i_node<0) PRINT_ERROR("[%d][%d] should be a lake node!", row,col);
 
 	/*Find the number of local lakes resulting from removing row,col from Lake*/
+	static int *head = NULL;
+	static int *next = NULL;
+	static int head_size = 0;
+	static int next_size = 0;
+	if (head_size < cfg->Nx * cfg->Ny) {
+		free(head);
+		head_size = cfg->Nx * cfg->Ny;
+		head = malloc(head_size * sizeof(int));
+	}
+	if (next_size < Lake[il].n) {
+		free(next);
+		next_size = Lake[il].n;
+		next = malloc(next_size * sizeof(int));
+	}
+	for (i = 0; i < Lake[il].n; i++) {
+		int r = Lake[il].row[i];
+		int c = Lake[il].col[i];
+		for (int dr = -1; dr <= 1; dr++) {
+			for (int dc = -1; dc <= 1; dc++) {
+				int nr = r + dr;
+				int nc = c + dc;
+				if (nr >= 0 && nr < cfg->Ny && nc >= 0 && nc < cfg->Nx) {
+					head[nr * cfg->Nx + nc] = -1;
+				}
+			}
+		}
+	}
+	for (i = 0; i < Lake[il].n; i++) {
+		int cell = Lake[il].row[i] * cfg->Nx + Lake[il].col[i];
+		next[i] = head[cell];
+		head[cell] = i;
+	}
+
 	/*Put a seed for the new lake numbering in a node different from row,col*/
 	if (i_node==0)	new_lake_num[1]=1;
 	else 		new_lake_num[0]=1;
 	local_num_lakes=1;
+	
+	int *valid_j = malloc(Lake[il].n * sizeof(int));
 	/*Check by pairs excluding row,col*/
 	for (i=0; i<Lake[il].n; i++)  if (i!=i_node) {
-		for (j=0; j<i; j++)  if (j!=i_node) {
-		if (NEIGHBOURS(Lake[il].row[i],Lake[il].col[i], Lake[il].row[j],Lake[il].col[j])) {
+		int r = Lake[il].row[i];
+		int c = Lake[il].col[i];
+		int num_j = 0;
+		for (int dr = -1; dr <= 1; dr++) {
+			for (int dc = -1; dc <= 1; dc++) {
+				int nr = r + dr;
+				int nc = c + dc;
+				if (nr >= 0 && nr < cfg->Ny && nc >= 0 && nc < cfg->Nx) {
+					j = head[nr * cfg->Nx + nc];
+					while (j != -1) {
+						if (j < i && j != i_node) {
+							valid_j[num_j++] = j;
+						}
+						j = next[j];
+					}
+				}
+			}
+		}
+		for (int a = 0; a < num_j; a++) {
+			for (int b = a + 1; b < num_j; b++) {
+				if (valid_j[a] > valid_j[b]) {
+					int tmp = valid_j[a];
+					valid_j[a] = valid_j[b];
+					valid_j[b] = tmp;
+				}
+			}
+		}
+		for (int a = 0; a < num_j; a++) {
+			j = valid_j[a];
 			if (!new_lake_num[i]) new_lake_num[i] = new_lake_num[j];
 			else if (new_lake_num[i] != new_lake_num[j]) {
 				/*Unify two local lakes by removing new_lake_num[i]:*/
 				int dying_lake_num=new_lake_num[i];
 				int surviving_lake_num=new_lake_num[j];
-				//if (surviving_lake_num>dying_lake_num) surviving_lake_num--;
 				for (k=0; k<=i; k++) {
 					if (new_lake_num[k]==dying_lake_num)
 						new_lake_num[k]=surviving_lake_num;
@@ -2606,12 +2797,12 @@ int Divide_Lake (ModelConfig *cfg, ModelContext *ctx, int row, int col /*lake no
 				local_num_lakes --;
 			}
 		}
-		}
 		if (!new_lake_num[i]) {
 			local_num_lakes ++;
 			new_lake_num[i] = local_num_lakes;
 		}
 	}
+	free(valid_j);
 
 	/*If the lake remains fully connected, then exit the routine*/
 	if (local_num_lakes==1) {

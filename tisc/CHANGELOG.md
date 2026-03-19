@@ -1,7 +1,8 @@
 # TISC Changelog
 
 ## TISC_2026-03-14_factorized
-* Full refactorisation of the code using Gemini. Optimisation and slight parallelisation. 
+* Full refactorisation of the code using Gemini. Optimisation and 
+slight parallelisation. Complex endorheic-lake systems now solved about 20 times faster.
 * Grain size tracking implementation (one average value). 
 * Evaporite (Gypsum and Halite) salt precipitation implementation.
 

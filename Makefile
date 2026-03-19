@@ -28,8 +28,9 @@ all: info dirs tao tisc ## Compile both tAo and TISC
 	@echo ""
 	@echo "======================================================================="
 	@echo "To run the executables, add the following to your shell profile (e.g., .bashrc or .zshrc):"
-	@echo "  export tisc_dir=\"$(CURDIR)\""
-	@echo "  export PATH=\"\$$PATH:$(BIN)\""
+	@echo "  export tisc_dir=\"$(CURDIR)/tisc/\""
+	@echo "  export tao_dir =\"$(CURDIR)/tao/\""
+	@echo "  export PATH=\"\$$PATH:$(BIN):$(CURDIR)/tisc/script/:$(CURDIR)/tao/script/:\""
 	@echo "======================================================================="
 
 info:

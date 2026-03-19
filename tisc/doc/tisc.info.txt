@@ -1,24 +1,5 @@
 ****************  TISC DOCUMENTATION (file tisc.info.txt)   *******************
 
-INDEX
-1.- Syntax and use of TISC
-2.- Introduction
-3.- Program structure and compilation
-4.- User Guide - How to setup your own project
-5.- Inputs
-6.- Outputs
-7.- Graphic output
-8.- Conceptual model
-9.- The algorithms and numerical methods
-10.- Version history
-11.- Model limitations
-12.- FAQ - Frequently Asked Questions
-13.- Glossary
-14.- Authorship, Credits
-15.- Acknowledgements
-16.- Disclaimer
-17.- References
-
 
 1.- SYNTAX AND USE OF TISC
   tisc  project  -B<bound_type> -D[xmin/xmax/ymin/ymax] -d<dx>[/<dy>]
@@ -504,6 +485,10 @@ No. Density Age Volume Surf.  Vel_x Vel_y Shft_x Shft_y erosL
   path. You can also use a symbolic link to any of the other scripts in the
   tisc/script directory. Experiment.
 
+  'project.svg'
+  Made by python script script/tisc.plot.py, using matplotlib
+
+
 
 8.- CONCEPTUAL MODEL
   TISC assumes that a thin lithospheric plate floating on the asthenosphere 
@@ -552,226 +537,12 @@ No. Density Age Volume Surf.  Vel_x Vel_y Shft_x Shft_y erosL
   (dependent on elevation, latitude, longitude) or via an orographic 
   precipitation model (check the 'hydro_model' parameter in template.PRM).
 
-9.- THE ALGORITHMS AND NUMERICAL METHODS
-    Finite differences are used to solve the spatial partial differential
-  equations as well as the time-dependent processes. The grid is fixed and
-  rectangular.
-    LES matrices arising from the flexural diferential equations are solved
-  using a classical band solver (matrix triangularisation).
-    Memory use: The largest array (used for the flexulra calculation) needs 
-    this ammount of memory = Nx*Ny*(4*Ny+1)*8 [bits].
-
-  Orientative execution time of a one-step elastic flexure:
-
-  PURCHASE      OS PLATFORM     [GRID-RUNTIME] PRICE  ADDRESS CLOCKSPEED
-  -----------------------------------------------------------------
-  1995		PC pentium III + Linux 		nikolai.ija
-  				81x81 ->  23s
-  				141x141-> 270s
-  1996		RISC6000 			africa.ija
-  				21x21 ->   3s
-				41x41 ->  30s
-				81x81 -> 375s
-  1996		RISC6000 optimised compilation
-				121x61 ->  40s	1996
-  1996		              "         " and genspd
-				121x61 ->   4s
-  1997		SUN OS	SUN Ultra 5		drift.geo.vu
-				141x141-> 300s
-  1997		SUN OS	SUN Ultra 10		coral.geo.vu
-				141x141-> 120s
-  1999		SUN OS	SUN Ultra2SparcCreator 	magma.ija
-				 81x81 ->  32s       
-				141x141-> 252s
-  2002-02	SUN OS	SUN Sparc3	26.4kEur erebus.geo.vu	750 MHz
-				141x141->  60s
-  2003-09	Linux 			1.5kEur	cuba.ija	
-				 81x81 ->    2s
-			    141x141->   23s
-				301x301->  440s
-  2007-06	Linux	Dell Precision	3.5kEur	cuba.ija	3.2 GHz
-				141x141 ->   4s
-				301x301 -> 116s
-				401x401 -> 585s
-  2009-03	Linux	Dell Precision	6.3kEur	ausangate.ictja	2.6 GHz	
-				141x141 ->   4s
-				301x301 ->  72s
-				401x401 -> 481s
-  2012-10	OSX10	MacBook Core i7	3kEur			2.5 GHz	
-				141x141 -> 2.8s
-				301x301 -> 60s
-				401x401 -> 209s
-				751x501 -> 11m
-  2019-11	OSX10.14  MacBook Intel Core i7	4k�			4.0 GHz	32GB
-				141x141 -> 1.8s
-				301x301 -> 41s
-				401x401 -> 130s
-				751x501 -> 510s = 8m30s
-	2023-11	OSX13.5  Mac Mini chip: M2 Pro
-				141x141 -> 1.8s
-				301x301 -> 28.2s
-				401x401 -> 83s
-				751x501 -> 281s = 4m41s
 
 
     At low resolution (Nx<150), the slowest component is the flexural 
   calculation. The CPU consumed for surface processes increases also with N^3, 
   but when random_topo is added or lakes become endorheic that computing time 
   grows faster with (Nx^4?).
-
-
-10.- VERSION HISTORY:
-  v1.0 (1994) Numerical algorithm to calculate thin plate elastic and 
-    viscoelastic flexure in 3D.
-  v2.0 (1995) Moving tectonic loads implemented.
-  v3.0 (1995) Thrust loading, surface processes and sediment deformation
-    implemented.
-  v3.1 (1996,97) Improvement on surface transport accounting for lakes and
-    river power law. Arbitrary cross sections of model are now possible.
-    Comments allowed in  files interpolated with modes other than 4.
-  v3.2 (Sept.1999) Completely trustful river transport including lake
-    deposition. '*.RIV' input file is now read to  determine the rivers that
-    are required to exit at initial time  (initial topo is changed to fit to
-    this rivers). Change in param. file keeping compatibility with 3.1.
-    Parameters are now read in any order and non of them is required in the
-    '.PRM'  file. This will allow to keep compatibility easily in future
-    versions. Moreover, now is possible to resume a model that was stopped,
-    which  will allow more freedom to change parameters during execution
-    avoiding new input files (option -F);
-  v3.3 (Feb.2000) Inclusion of evaporation in lakes and occurrence of
-    underburden (non overflown) lakes. New output files for lake '*.lak'
-    and river basin information '*.bas'.
-  v4.0 (Jul.2000) Time dependence of sea level (*.SLV) and  definition of the
-    horizons to be marked (*.REC). Change in load input files
-    (*.CRG-->*.LOAD-->*.UNIT): Faults  cut sediments; Each unit can  have
-    different erodibility. Drainage  including lake evaporation WORKS!!! Thin
-    sheet units with dynamic  deformation.  Different BCs available for
-    erosion. (Jan.2002) A constant porosity P is assumed for  the sediments, so
-    that denssedim is the total mean density: densedim =
-    P*1020+(1-P)*bulkdensity (water contributes as load, but not as detritic
-    mass). Tracking of new users.
-  v4.1 (Sept. 2002) Node edition through file  '*.NDEF'. Isostatic effect of
-    the weight of lake water. Landsliding. Willgoose's fluvial incision model.
-    Files *.H0 and *.W0 are now called *.ZINI and *.WINI, respectively.
-    Orographic precipitation following Roe et al. 2003. (Feb. 2004) Glaciar ice
-    flow and glaciar erosion and transport (Knap et al., ; Braun et al., 2001).
-  v4.2 (Nov.2004) Change of name to TISC (the executable is now 'tisc').
-  TISC_2007-07-24 Change in version nomenclature. Debug of drainage network
-    calculation, now very robust even with evaporation. Parameters
-    switch_debug and switch_verbose now joint into verbose_level.
-  TISC_2012-08-29
-    Corrected bug in file tisc.c, line 108, it now reads
-  	dy=(ymax-ymin)/(Ny-1).
-    More river incision models added. River channel width explicitly accounted.
-    Change in output extensions that differ from inputs only in case size,
-    auch as '*.eet' -> '*.eeth' and '*.PFL' -> '*.PRFL'. This is to avoid
-    conflict in Mac computers. Successfully compiled for Mac IOS 10.7.5
-    (2013) Orographic precipitation implemented following a conservative
-    scheme  (runoff=precipitation-evaporation).
-  TISC_2014-03-25
-    Erosion boundary conditions 0 and 1 are swapped.
-    Erosion model #6 now smoothly transits through eq_transport_capacity=0.
-  TISC_2014-05-24
-    Corrected bug in calculation of lake-water weight. 
-    Corrected bug in lake splitting during evaporation.
-    Corrected bug in smoothing orographic precipitation.
-    Graphic scripts now distinguish old sediment in cross section.
-    Constant-rate scheme for erosion/sedimentation (see Ksedim & Keroseol 
-    in '*PRM').
-    Improved sediment deformation. 'deform_sed' parameter added.
-  TISC_2014-06-13
-    cuthrz accepts now hrz files with up to 120 horizons.
-  TISC_2016-08-30
-    An average erodibility is now calculated for the shallowest meters of 
-    bedrock.
-    River Chi (scaled length) is written in column 8 of *.bas. A script is 
-    available to plot chi. 
-    GitHub used for version upload. GitHub wiki. The symbolic links under 
-    tisc/ are now hard links to allow proper git synchronization. 
-    Water divides: TISC now writes the swimming distance between neighboring 
-    cells in column #14 of drainage file *.xyw.
-  TISC_2017-05-19
-	Changed UNIT1D and Units structure to BLOCK1D and Blocks, to avoid 
-	confusion with input files (*.UNIT). 
-  TISC_2018-07-13
-	Gradual sediment compaction now implemented (see new parameter 
-	compact_depth). Bug solved for erosed_model 6 (surf_proc.c around line 
-	1120), erosion was overestimated (or erodability underestimated) by about a 
-	factor 2.
-  TISC_2019-05-03
-  	Underground water flow now implemented (see new parameter 'permeability').
-  	Sklar & Dietrich's (1994) erosion dependence on sediment load added by 
-  	Michael Berry (UNM, Socorro), new erosed_model #8. Critical stress for 
-  	sediment mobilisation.
-  TISC_2023-08-31
-  	Debugged in tisclib.c line 863: Initial water column was loaded as initial 
-  	isostatic load, by Hanneke Heida. Added input parameters for harmonic 
-  	changes in precipitation: rain_amp, rain_per. Repared bug in the screen 
-  	output on lake properties. 
-  TISC_2025-11-06
-  	Precipitation proportional to insolation file in *.INS.
-  	Python graphic output available through script/tisc.plot.py 
-  TISC_2026-03-14_factorized 
-  	Full refactorisation of the code using Gemini. Optimisation and slight 
-  	parallelisation.
-
-
-11.- MODEL LIMITATIONS
-  Blocks move only an entire number of nodes at each time step. Block deformation
-    during motion follows a vertical shear approach (preserving vertical
-    thickness). Rotation of Blocks is not allowed.
-  TISC doesn't account for deformation in lower crust or mantle, and the
-    deformation in the upper crust (by shortening) is kinematically introduced
-    in the model. Subduction is not considered either. Different velocities of
-    shortening for each detachment fault are (still) not implemented.
-  Gradual sediment compaction is not considered, but this shouldn't affect the 
-    sediment onlap/offlap geometry in the external side of the foreland basin,
-    but only the thickness of the Blocks.
-  Grain size or sediment facies distribution of the deposits are not
-    differentiated.
-  Sharp changes of EET produce numerical instabilities that can be detected by
-    increasing the number of discretisation nodes in the model (Nx,Ny) (no
-    significant differences in the predicted deflection should then be
-    introduced). Similarly, making EET changes more gradual should not change
-    significantly the results.
-
-
-12.- FAQ - Frequently Asked Questions
-  Q1. How can I learn to use this code on my own?
-  A1. After download, follow instructions in tisc/doc/README file in order to
-	compile. Then go to tisc/demo and try the examples there to ensure
-	that the code is working properly. Then read carefully
-	tisc/doc/tisc.info.txt (this file) and tisc/doc/template.PRM and try
-	to experiment modifying the *.PRM files of the demos. Then learn how
-	to build *.UNIT input files from the examples and using the
-	explanations in tisc/doc/tisc.info.txt. Make sure you did all this
-	before contacting the author!
-  Q2. I have compilation errors, is there a problem in the program?
-  A2. I tested TISC only in some UNIX operative systems such as Linux (Ubuntu),
-	Mac OSX 10, and Solaris (from SUN). Most probably you have a problem
-	with the  compilation options or with the libraries. Try to ask help
-	among your colleagues to succeed in the compilation.
-  Q3. I compiled the program, but I never managed to run it, and  I
-  	always get 'segmentation fault' errors.
-  A3. This probably means you have some incompatibility between some of the
-	functions called in TISC and the ones available in the libraries of
-	your operative  system. You have to edit the code and search for those
-	problems. You will need the help of someone around you who has
-	experience in programing or compiling C programs.
-  Q4. Can you help me to solve the problems I have to run TISC?
-  A4. In general, I try to answer the questions you post on GitHUb, but often
-	i cannot say much more than what you just read in this file. Technical
-	support on the compilation process is not provided. Because my
-	interests are in the scientific use of TISC and its application to
-	geological scenarios, I will be pleased to help you
-	with any problem you have during the  development of a model and will
-	be pleased to establish a scientific collaboration.
-  ON THE DEFINITION OF TECTONIC UNITS:
-  Q5. Is it possible to stop a fault and then reactivate it again?
-  A5. You can stop a fault at a given time by using the time_stop parameter in
-	the *.UNIT file.  To reactivate it, repeat the same fault geometry in
-	another *.UNIT file with the velocity you wish. See doc/template.UNIT
-	to get the possible parameters in every *.UNIT file.
 
 
 
@@ -882,6 +653,9 @@ No. Density Age Volume Surf.  Vel_x Vel_y Shft_x Shft_y erosL
 	  2003. Interplay between tectonics, climate and fluvial transport
 	  during the Cenozoic evolution of the Ebro Basin (NE Iberia). J.
 	  Geophys. Res., 108 (B7), 2347, 10.1029/2002JB002073.
+	Gailleton, B., Malatesta, L. C., Cordonnier, G., and Braun, J. (2024). 
+    CHONK 1.0: landscape evolution framework: cellular automata meets graph theory. 
+    Geoscientific Model Development, 17(1), 71–90. https://doi.org/10.5194/gmd-17-71-2024
   (*)Jimenez-Munt, I., D. Garcia-Castellanos, A. Negredo & J. Platt, 2005,
 	  Gravitational and tectonic forces controlling the post-collisional
 	  deformation and present-day stress of the Alps. Insights from

@@ -29,7 +29,7 @@ sed_porosity	.3	Mean porosity of sediments (pores are assumed to be filled by wa
 #TIME VARIABLES [My] (time goes from negative to positive: Timeini<Timefinal):
 Timeini		0	Initial time
 Timefinal	10	Final time
-dt 		.01	Time step (time increment interval) for flexure and deformation (must be >0).
+dt 		.1	Time step (time increment interval) for flexure and deformation (must be >0).
 dt_eros		.001	Approximate dt for surface processes (will be adjusted to the closest entire fraction of dt). To avoid artifact knickpoints in rivers requires about 0.0001. 
 dt_record	5	Time lag between records of sedimentary horizons (time lines) and deflection evolution (written in '*.xyzt'). If =0, will be recorded only at the times of *.UNIT files, and at those times specified in the '*.REC' file. (>0)
 

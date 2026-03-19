@@ -32,7 +32,7 @@ from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
 PRM_FIELD_REGEX = r'(?im)^\s*{name}\s+([+\-]?\d+(?:\.\d+)?(?:e[+\-]?\d+)?)'
 
 def parse_prm(prm_path: Path):
-    txt = prm_path.read_text()
+    txt = prm_path.read_text(errors='ignore')
     def get(name, required=True):
         m = re.search(PRM_FIELD_REGEX.format(name=re.escape(name)), txt)
         if not m:
