@@ -26,6 +26,7 @@ tags
 *.tmp
 *.mtrz
 *.mtrx
+*.grd
 
 # === Output Files ===
 *.out
