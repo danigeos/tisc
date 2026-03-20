@@ -231,7 +231,7 @@ int read_file_resume(char *filename)
 	fread(version_input,	sizeof(char),		LENGTHVERS, 	file);
 
 	fread(&switch_geograph_coor, sizeof(bool),	1, 	file);
-	fread(&switch_ps, 	sizeof(bool),		1, 	file);
+	fread(&plotting_mode, 	sizeof(int),		1, 	file);
 	fread(&switch_write_file, sizeof(bool),		1, 	file);
 
 
@@ -976,7 +976,7 @@ int write_file_resume(ModelConfig *cfg, ModelContext *ctx)
 	fwrite(version_input,	sizeof(char),		LENGTHVERS, 	file);
 
 	fwrite(&switch_geograph_coor, sizeof(bool),	1, 	file);
-	fwrite(&switch_ps, 	sizeof(bool),		1, 	file);
+	fwrite(&plotting_mode, 	sizeof(int),		1, 	file);
 	fwrite(&switch_write_file, sizeof(bool),		1, 	file);
 
 

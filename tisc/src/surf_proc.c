@@ -1132,14 +1132,29 @@ int Define_Drainage_Net (struct GRIDNODE *sortcell, ModelConfig *cfg, ModelConte
 					}
 				}
 			}
-			int *queue = malloc(block_size * sizeof(int));
-			int head = 0, tail = 0;
+			int *queue_R = malloc(block_size * sizeof(int));
+			int *queue_L = malloc(block_size * sizeof(int));
+			int *queue_E = malloc(block_size * sizeof(int));
+			int *queue_O = malloc(block_size * sizeof(int));
+			int head_R = 0, tail_R = 0, head_L = 0, tail_L = 0;
+			int head_E = 0, tail_E = 0, head_O = 0, tail_O = 0;
 			for (int k = 0; k < block_size; k++) {
-				if (in_degree[k] == 0) queue[tail++] = k;
+				if (in_degree[k] == 0) {
+					char t = drainage[sortcell[i + k].row][sortcell[i + k].col].type;
+					if (t == 'R') queue_R[tail_R++] = k;
+					else if (t == 'L') queue_L[tail_L++] = k;
+					else if (t == 'E') queue_E[tail_E++] = k;
+					else queue_O[tail_O++] = k;
+				}
 			}
 			int sorted_count = 0;
-			while (head < tail) {
-				int curr = queue[head++];
+			while (head_R < tail_R || head_L < tail_L || head_E < tail_E || head_O < tail_O) {
+				int curr;
+				if (head_R < tail_R) curr = queue_R[head_R++];
+				else if (head_L < tail_L) curr = queue_L[head_L++];
+				else if (head_E < tail_E) curr = queue_E[head_E++];
+				else curr = queue_O[head_O++];
+
 				temp[sorted_count++] = sortcell[i + curr];
 				int r = sortcell[i + curr].row;
 				int c = sortcell[i + curr].col;
@@ -1149,7 +1164,13 @@ int Define_Drainage_Net (struct GRIDNODE *sortcell, ModelConfig *cfg, ModelConte
 					int target_idx = block_idx[dr][dc];
 					if (target_idx >= 0) {
 						in_degree[target_idx]--;
-						if (in_degree[target_idx] == 0) queue[tail++] = target_idx;
+						if (in_degree[target_idx] == 0) {
+							char t = drainage[dr][dc].type;
+							if (t == 'R') queue_R[tail_R++] = target_idx;
+							else if (t == 'L') queue_L[tail_L++] = target_idx;
+							else if (t == 'E') queue_E[tail_E++] = target_idx;
+							else queue_O[tail_O++] = target_idx;
+						}
 					}
 				}
 			}
@@ -1163,7 +1184,10 @@ int Define_Drainage_Net (struct GRIDNODE *sortcell, ModelConfig *cfg, ModelConte
 				sortcell[i + k] = temp[k];
 				block_idx[temp[k].row][temp[k].col] = -1;
 			}
-			free(queue);
+			free(queue_R);
+			free(queue_L);
+			free(queue_E);
+			free(queue_O);
 			free(in_degree);
 			free(temp);
 		}

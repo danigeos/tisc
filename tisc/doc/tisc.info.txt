@@ -4,7 +4,7 @@
 1.- SYNTAX AND USE OF TISC
   tisc  project  -B<bound_type> -D[xmin/xmax/ymin/ymax] -d<dx>[/<dy>]
 	-e<Kriv>[/<Kdif>] -f[2] -F[<file>] -h[i|u|p|c] -l -M<lith_type>
-	-N<Nx>[/<Ny>] -o -P[c[geom]|p] -p<rain>[/<Krain>][/<evap>] -Q<file>
+	-N<Nx>[/<Ny>] -o -P[0|1|2|3][geom] -p<rain>[/<Krain>][/<evap>] -Q<file>
 	-q<param>=<value> -R<random_topo>[/<seed>] -r<e|c|i|m|a><dens>
 	-s<solver> -T<eet> -t<i|f|d|e|v|r><time> -V[<level>] 
 	-v<num>/<vx>/<vy>
@@ -37,12 +37,13 @@
 		(following Nadai , 1963).
 	'-N' To set Nx and Ny of gridding. Ny<Nx optimises computation time.
 	'-o' Redirects standard output to file projectname.out.
-	'-P' To produce a postscript graphic display using GMT. Append c to
-		make it every time step and convert the PS files into GIF (uses
-		the ImageMagick 'convert utility'). Append PS geometry (default
-		is: -Pc"-trim -density 120", which crops the rectangle used and
-		then saves it into GIF format with 120dpi. Alternatively, use -Pp 
-		to use the python graphic script tisc.plot.py instead.
+	'-P' Sets the plotting mode:
+		-P0 (default) no plotting.
+		-P1 produce a postscript graphic display using GMT (tisc.gmt.job) at the end of the run.
+		-P2 make it every time step and convert the PS files into JPG using ImageMagick. 
+		    Append geometry (default is: -P2"-trim -density 120", which crops the rectangle used and
+		    then saves it into JPG format with 120dpi).
+		-P3 use the python graphic script tisc.plot.py instead at every time step.
 	'-p' Sets the amount of runoff [l/m2/a]=[mm/a], its proportionality
 		with height [mm/a/km], and lake evaporation. -p0 suppresses the
 		hydrological calculations.

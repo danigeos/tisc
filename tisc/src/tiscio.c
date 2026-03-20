@@ -493,7 +493,7 @@ int read_file_resume(char *filename)
 	if (strcmp(version, version_aux)) PRINT_WARNING("version in resume file '%s' does not match present TISC version '%s'.", version_aux, version);
 	fread(version_input,	sizeof(char),		LENGTHVERS, 	file);
 
-	fread(&switch_ps, 	sizeof(bool),		1, 	file);
+	fread(&plotting_mode, 	sizeof(int),		1, 	file);
 	fread(&switch_write_file, sizeof(bool),		1, 	file);
 
 
@@ -1006,7 +1006,7 @@ int read_file_Te()
 	/*Writes Te output file*/
 	sprintf(filename, "%s.eeth", projectname); 
 	remove(filename);
-	if (switch_EET_file && switch_ps && switch_write_file_Blocks) {
+	if (switch_EET_file && plotting_mode && switch_write_file_Blocks) {
 		Write_Open_Filename_Return (".eeth", "wt", 0);
 		for (i=0; i<Ny; i++) {
 			for (j=0; j<Nx; j++) {
@@ -1801,7 +1801,7 @@ int write_file_resume(ModelConfig *cfg, ModelContext *ctx)
 	fwrite(version, 	sizeof(char),		LENGTHVERS, 	file);
 	fwrite(version_input,	sizeof(char),		LENGTHVERS, 	file);
 
-	fwrite(&switch_ps, 	sizeof(bool),		1, 	file);
+	fwrite(&plotting_mode, 	sizeof(int),		1, 	file);
 	fwrite(&switch_write_file, sizeof(bool),		1, 	file);
 
 

@@ -72,6 +72,22 @@ float calculate_topo(ModelConfig *cfg, ModelContext *ctx, float *topo_new)
 }
 
 
+void calculate_compaction(ModelConfig *cfg, ModelContext *ctx, float *comp)
+{
+	for (int i=0; i<cfg->Nx; i++) {
+		float thickness_above = 0;
+		comp[i] = 0;
+		for (int i_Block=0; i_Block<ctx->numBlocks; i_Block++) 
+			thickness_above += Blocks[i_Block].thick[i];
+		for (int i_Block=0; i_Block<ctx->numBlocks; i_Block++) {
+			thickness_above -= Blocks[i_Block].thick[i];
+			if (Blocks[i_Block].density==cfg->denssedim) {
+				comp[i] += compaction(cfg->sed_porosity, compact_depth, thickness_above, thickness_above+Blocks[i_Block].thick[i]);
+			}
+		}
+	}
+}
+
 
 int Delete_Block(ModelContext *ctx, int i_Block)
 {
@@ -334,7 +350,7 @@ int LES_matrix (ModelConfig *cfg, ModelContext *ctx,
 	for (i=2; i<cfg->Nx-2; i++)
 	{
 		/*Krest is the bouyancy or restitution force constant*/
-		GET_KREST(Krest, Dq, i)
+		GET_KREST(Krest, q, i)
 
 		/*Matrix definition. A[i][3] are the elements of the diagonal.*/
 		/*DON'T take out the (double) conversions!*/

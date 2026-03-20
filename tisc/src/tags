@@ -151,6 +151,7 @@ alloc_matrix_dbl	../../tao+tisc_commons/src/libreria.c	/^double **alloc_matrix_d
 alloc_matrix_int	../../tao+tisc_commons/src/libreria.c	/^int **alloc_matrix_int (int n_fil, int n_col)$/;"	f
 anombloq	../../tao+tisc_commons/src/libreria.c	/^float anombloq(register float x1, register float x2, float z1, float z2, float contrdens)$/;"	f
 boundary_conds	globals.c	/^char boundary_conds[5], eros_bound_cond[5], solver_type, gif_geom[MAXLENLINE];$/;"	v
+calculate_compaction	tisclib.c	/^void calculate_compaction(ModelConfig *cfg, ModelContext *ctx, float **comp)$/;"	f
 calculate_sea_level	tisclib.c	/^float calculate_sea_level(float current_time)$/;"	f
 calculate_topo	tisclib.c	/^float calculate_topo(ModelConfig *cfg, ModelContext *ctx, float **topo_new)$/;"	f
 calculate_water_load	tisclib.c	/^int calculate_water_load(ModelConfig *cfg, ModelContext *ctx)$/;"	f
@@ -275,6 +276,7 @@ outin	../../tao+tisc_commons/src/libreria.c	/^int outin($/;"	f
 param_table	globals.c	/^ParameterEntry param_table[] = {$/;"	v
 permeability	globals.c	/^float spl_m, spl_n, l_fluv_sedim, lost_rate, permeability, rain, Krain, relative_humidity, CXrain;$/;"	v
 pi	globals.c	/^float pi = 3.14159265;$/;"	v
+plotting_mode	globals.c	/^int plotting_mode, verbose_level;$/;"	v
 polygon_area	../../tao+tisc_commons/src/libreria.c	/^float polygon_area($/;"	f
 precipitation	globals.c	/^float **ice_velx_sl, **ice_vely_sl, **ice_velx_df, **ice_vely_df, **q, **evaporation, **precipitation;$/;"	v
 precipitation_file	globals.c	/^float **precipitation_snow, **precipitation_file, **topo, **accumul_erosion, **Blocks_base, **w;$/;"	v
@@ -324,7 +326,6 @@ switch_debug	globals.c	/^bool switch_debug = false;$/;"	v
 switch_file_out	globals.c	/^bool switch_file_out = false, switch_gradual, switch_topoest, switch_write_file_Blocks, deform_sed;$/;"	v
 switch_geograph_coor	globals.c	/^bool switch_geograph_coor, switch_write_file;$/;"	v
 switch_gradual	globals.c	/^bool switch_file_out = false, switch_gradual, switch_topoest, switch_write_file_Blocks, deform_sed;$/;"	v
-switch_ps	globals.c	/^int switch_ps, verbose_level;$/;"	v
 switch_topoest	globals.c	/^bool switch_file_out = false, switch_gradual, switch_topoest, switch_write_file_Blocks, deform_sed;$/;"	v
 switch_write_file	globals.c	/^bool switch_geograph_coor, switch_write_file;$/;"	v
 switch_write_file_Blocks	globals.c	/^bool switch_file_out = false, switch_gradual, switch_topoest, switch_write_file_Blocks, deform_sed;$/;"	v
@@ -361,7 +362,7 @@ var_insolation	globals.c	/^float **var_sea_level, **var_eros_level, **var_insola
 var_sea_level	globals.c	/^float **var_sea_level, **var_eros_level, **var_insolation, *horiz_record_time;$/;"	v
 velocity_field	../lib/thin_sheet.f	/^      SUBROUTINE velocity_field /;"	s
 verbose_level	../include/tisc.h	/^	int verbose_level;$/;"	m	struct:__anon1
-verbose_level	globals.c	/^int switch_ps, verbose_level;$/;"	v
+verbose_level	globals.c	/^int plotting_mode, verbose_level;$/;"	v
 version	globals.c	/^char version[LENGTHVERS], version_input[LENGTHVERS];$/;"	v
 version_input	globals.c	/^char version[LENGTHVERS], version_input[LENGTHVERS];$/;"	v
 vertical_strain_rate	../lib/thin_sheet.f	/^      SUBROUTINE vertical_strain_rate /;"	s

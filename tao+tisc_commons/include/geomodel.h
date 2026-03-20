@@ -99,7 +99,7 @@ extern float nu;
 extern float Rearth;
 extern float viscwater;
 
-extern int Nx, Ny, Nz, switch_ps, verbose_level;
+extern int Nx, Ny, Nz, plotting_mode, verbose_level;
 
 extern float dx, dy, dz, dxy;
 

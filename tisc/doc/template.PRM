@@ -288,9 +288,9 @@ switch_files	1	For extra file output: see files *.bas *.all *.lakes in
 				doc/tisc.info.txt.
 mode_interp	4	Default interpolation mode for input files. See
 				doc/template.UNIT.
-switch_ps	2	0 for no putput; 1 for postscript graphic output (uses GMT4 
-				shell scripts as tisc.gmt.job); 2 for output every time 
-				step (dt).
+plotting_mode	2	0 for no output; 1 for postscript graphic output at the end 
+				(uses GMT4 shell scripts as tisc.gmt.job); 2 for GMT output 
+				every time step (dt); 3 for python graphic output every time step.
 
 _______________________________________________________________________________
 #Comments:

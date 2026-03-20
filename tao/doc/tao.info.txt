@@ -24,7 +24,7 @@
 
   tao  project  -A[1|2] -B<bound_type> -D[x0/xf] -d<dx> -F[file] -f[2] 
 	-h[i|u|p]
-	-M<lih_type>[t] -m<app_mom> -N<Nx> -o -P[c[geom]] -p<tec_force>
+	-M<lih_type>[t] -m<app_mom> -N<Nx> -o -P[0|1|2|3][geom] -p<tec_force>
 	-q<param=value> -Q<file>  -r<a|c|i|m|a><density> -S<b>/<n> 
 	-s<app_force> -T<eet> -t<i|f|d|v|r><time> -V[<level>] 
 	-v[<num>/<vel>]
@@ -57,11 +57,13 @@
 		clockwise.
  	'-N' Sets the number of lateral gridding points (Nx).
  	'-o' Redirects standard output to file projectname.out.
-	'-P' To produce a postscript graphic display using GMT. Append c to
-		make it every time step and convert the PS files into GIF
-		(uses the ImageMagick 'convert utility'). Append PS geometry
-		(default is: -Pc"-trim -density 180", which crops the
-		rectangle used and then saves it into GIF format with 120dpi.
+	'-P' Sets the plotting mode:
+		-P0 (default) no plotting.
+		-P1 produce a postscript graphic display using GMT (tao.gmt.job) at the end of the run.
+		-P2 make it every time step and convert the PS files into JPG using ImageMagick. 
+		    Append geometry (default is: -P2"-trim -density 120", which crops the rectangle used and
+		    then saves it into JPG format with 120dpi).
+		-P3 use the python graphic script tao.plot.py instead at every time step.
  	'-p' Sets the tectonic horizontal force in the plate.
  		>0 means compressive.
 	'-q' Sets a value for any parameter listed in the parameter file
@@ -655,7 +657,7 @@
     When showing results of this program you, cite of of the following
  	references:
 
-	Garcia-Castellanos, D., M. Fernàndez & M. Torné, 1997. "Numerical modeling
+	Garcia-Castellanos, D., M. Fernï¿½ndez & M. Tornï¿½, 1997. "Numerical modeling
 		of foreland basin formation: a program relating thrusting, flexure, 
 		sediment geometry and lithosphere rheology". Computers & Geosciences, 
 		23 (9), 993-1003.

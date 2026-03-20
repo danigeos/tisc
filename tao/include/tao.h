@@ -49,10 +49,10 @@ typedef struct {
 /*convert between sediment thickness and sediment grain mass*/
 #define MASS2SEDTHICK_1D(cfg, mass)	((mass) /(cfg->denssedim-cfg->sed_porosity*cfg->denswater)/cfg->dx/cfg->riverbasinwidth)	/*converts sediment mass into sediment thickness*/
 #define THICK2SEDMASS_1D(cfg, thick)	((thick)*(cfg->denssedim-cfg->sed_porosity*cfg->denswater)*cfg->dx*cfg->riverbasinwidth)	/*converts sediment thickness into sediment mass*/
-#define GET_KREST(Krest, q, i) { /*Define the restoring force value.*/\
+#define GET_KREST(Krest, q_array, i) { /*Define the restoring force value.*/\
 	    if (switch_topoest) {\
 		/*If the current i knot is below the load then the compensation density is densinfill.*/\
-		if (q[i])   Krest = (densasthen-densinfill)*g;\
+		if (q_array[i] != 0 || Dq[i] != 0)   Krest = (densasthen-densinfill)*g;\
 		/*Otherwise use the sediment density.*/\
 		else	    Krest = (densasthen-denssedim)*g;\
 	    } else    Krest = (densasthen-densenv)*g;}
@@ -73,6 +73,7 @@ extern int	erosed_model,
 	nbasins, 
 	nlakes, 		/*number of lakes >= 0 */
 	boundary_conds,
+	plotting_mode,
 	n_image;
 
 extern float 	evaporation_ct, 		/*[m3/s/m2].*/
@@ -240,6 +241,7 @@ float gravanompolyg(
 float ReSort_Array (float *array, int *orden, int Nx);
 float calculate_topo(ModelConfig *cfg, ModelContext *ctx, float *topo_new);
 float calculate_sea_level(float current_time);
+void calculate_compaction(ModelConfig *cfg, ModelContext *ctx, float *comp);
 int read_file_YSE(ModelConfig *cfg);
 int calculate_water_load(ModelConfig *cfg, ModelContext *ctx);
 float Orographic_Precipitation (ModelConfig *cfg, ModelContext *ctx, int i, float windvel);

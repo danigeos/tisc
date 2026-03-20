@@ -48,7 +48,10 @@ int main(int argc, char **argv)
 	ctx.total_precip_gypsum_rate = total_precip_gypsum_rate;
 	ctx.total_precip_halite_rate = total_precip_halite_rate;
 
-	if (switch_ps>=2) {calculate_topo(&cfg, &ctx, topo); Write_Ouput(&cfg, &ctx);}
+	float **compaction_prev = alloc_matrix(cfg.Ny, cfg.Nx);
+	calculate_compaction(&cfg, &ctx, compaction_prev);
+
+	if (plotting_mode>=2) {calculate_topo(&cfg, &ctx, topo); Write_Ouput(&cfg, &ctx);}
 
 	/*MAIN LOOP: In this loop time increments from Timeini to Timefinal*/
 	do {
@@ -63,6 +66,17 @@ int main(int argc, char **argv)
 
 		/*Calculates water column load*/
 		calculate_water_load(&cfg, &ctx);
+
+		/* Adjust Dq for compaction water loss */
+		float **compaction_now = alloc_matrix(cfg.Ny, cfg.Nx);
+		calculate_compaction(&cfg, &ctx, compaction_now);
+		for (int i=0; i<cfg.Ny; i++) {
+			for (int j=0; j<cfg.Nx; j++) {
+				Dq[i][j] -= (compaction_now[i][j] - compaction_prev[i][j]) * cfg.denswater * g;
+				compaction_prev[i][j] = compaction_now[i][j];
+			}
+		}
+		free_matrix(compaction_now, cfg.Ny);
 
 		/*Define & solve elastic flexure equation*/
 		Elastic_Deflection(&cfg, &ctx);
@@ -88,12 +102,13 @@ int main(int argc, char **argv)
 		ctx.Time = Time;
 		fprintf(stdout, "\nT= %.4f My", Time/Matosec);
 
-		if (switch_ps>=2) Write_Ouput(&cfg, &ctx);
+		if (plotting_mode>=2) Write_Ouput(&cfg, &ctx);
 	} while (Time < Timefinal-dt/10);
 
 	The_End(&cfg, &ctx);
 
 	free_matrix (topo_ant, Ny);
+	free_matrix (compaction_prev, Ny);
 
 	return(1);
 }
@@ -315,7 +330,7 @@ int inputs (int argc, char **argv)
 	if (evaporation_ct && evaporation_ct<rain)	{ 			PRINT_WARNING("Evaporation should exceed the rain to produce endorheic lakes.") ; }
 	if (K_ice_eros && !hydro_model)		{ K_ice_eros=0; 	PRINT_WARNING("No ice flow if hydro_model==0; K_ice_eros turned off.") ; }
 	if (switch_topoest && !densinfill) 	{ 					PRINT_WARNING("Infill density has 0 value while topography has been selected to remain at initial level.") ; }
-	if (switch_ps && !switch_write_file){	 				PRINT_WARNING("switch_write_file should be turned on. Postscript may not be produced.") ; }
+	if (plotting_mode && !switch_write_file){	 				PRINT_WARNING("switch_write_file should be turned on. Postscript may not be produced.") ; }
 	if (tau<=0 && isost_model==2)  		{ isost_model=1; 	PRINT_WARNING("Negative tau will be ignored: elastic plate is assumed.");}
 	if (Nx<6 || Ny<6)					{					PRINT_WARNING("Too coarse %dx%d gridding.", Nx, Ny); }
 
@@ -411,18 +426,23 @@ int interpr_command_line_opts(int argc, char **argv)
 					switch_file_out=true;
 					break;
 				case 'P':
-					switch_ps=(strlen(prm)>0)?(int)value:1; /*default is 1 to keep old command line syntax with -Pc*/
+					plotting_mode=(strlen(prm)>0)?(int)value:1; /*default is 1 to keep old command line syntax*/
 					switch_write_file_Blocks=true;
 					if (argv[iarg][2] == 'c') {
-						switch_ps=2;
-						gif_geom[0] = '\0'; // Clear gif_geom
-						if (strlen(prm2)>0) { // Check if prm2 is not empty
-							strncpy(gif_geom, prm2, sizeof(gif_geom) - 1); // Use strncpy for safety
-							gif_geom[sizeof(gif_geom) - 1] = '\0'; // Ensure null termination
+						plotting_mode = 2;
+						gif_geom[0] = '\0';
+						if (strlen(prm2)>0) {
+							strncpy(gif_geom, prm2, sizeof(gif_geom) - 1);
+							gif_geom[sizeof(gif_geom) - 1] = '\0';
 						}
-					}
-					if (argv[iarg][2] == 'p') {
-						switch_ps=3;
+					} else if (argv[iarg][2] == 'p' || argv[iarg][2] == '3') {
+						plotting_mode = 3;
+						gif_geom[0] = '\0';
+						if (strlen(prm2)>0) {
+							strncpy(gif_geom, prm2, sizeof(gif_geom) - 1);
+							gif_geom[sizeof(gif_geom) - 1] = '\0';
+						}
+					} else if (plotting_mode >= 2) {
 						gif_geom[0] = '\0'; // Clear gif_geom
 						if (strlen(prm2)>0) { // Check if prm2 is not empty
 							strncpy(gif_geom, prm2, sizeof(gif_geom) - 1); // Use strncpy for safety
@@ -1301,7 +1321,7 @@ int syntax()
 	fprintf(stderr, "\nSyntax:\n");
 	fprintf(stderr, "  tisc  project  -B<bound_type> -D[xmin/xmax/ymin/ymax] -d<dx>[/<dy>]\n");
 	fprintf(stderr, "        -e<Kriv>[/<Kdif>] -f[2] -F[<file>] -h[i|u|p|c] -l -M<lith_type>\n");
-	fprintf(stderr, "        -N<Nx>[/<Ny>] -o -P[c[geom]|p] -p<rain>[/<Krain>][/<evap>] -Q<file>\n");
+	fprintf(stderr, "        -N<Nx>[/<Ny>] -o -P[0|1|2|3][geom] -p<rain>[/<Krain>][/<evap>] -Q<file>\n");
 	fprintf(stderr, "        -q<param>=<value> -R<random_topo>[/<seed>] -r<e|c|i|m|a><dens>\n");
 	fprintf(stderr, "        -s<solver> -T<eet> -t<i|f|d|e|v|r><time> -V[<level>] \n");
 	fprintf(stderr, "        -v<num>/<vx>/<vy>\n\n");
@@ -1454,7 +1474,7 @@ int The_End(ModelConfig *cfg, ModelContext *ctx)
 	fprintf(stdout, "-  basement\n");
 	fprintf(stdout, "\nFinal total sediment volume: %.2f 1e3 km3\n", total_vol_seds/1e12);
 
-	if (switch_ps<2) Write_Ouput(cfg, ctx);
+	if (plotting_mode<2) Write_Ouput(cfg, ctx);
 
 	if (cfg->verbose_level>=1) {time_t ltime; time(&ltime); fprintf(stdout, "\nTime end: %s", ctime(&ltime));}
 
@@ -1547,9 +1567,9 @@ int Write_Ouput(ModelConfig *cfg, ModelContext *ctx)
 	write_file_resume(cfg, ctx);
 
 	/*Make GMT Postscript*/
-	if (switch_ps) {
+	if (plotting_mode) {
 		char 	command[300];
-		if (switch_ps<=2) {
+		if (plotting_mode<=2) {
 			sprintf(command, "tisc.gmt.job %s", projectname);
 			if (cfg->verbose_level>=3) 
 				fprintf(stdout, "\nPostscript file '%s.ps' is going to be produced with command:\n%s\n", projectname, command) ;
@@ -1563,7 +1583,7 @@ int Write_Ouput(ModelConfig *cfg, ModelContext *ctx)
 			system(command);
 			n_image++;
 		}
-		if (switch_ps==2) {
+		if (plotting_mode==2) {
 			/*crop by default to the border*/
 			if (strlen(gif_geom)<2) sprintf(gif_geom, "-trim -background Khaki -label 'TISC software: %s' -gravity South -append", projectname);
 			sprintf(command, "magick -density 300 %s.ps %s -interlace NONE  %s%03d.jpg", /*-fill \"#ffff99\" -draw \"rectangle 8,8 90,25\" -fill \"#000055\" -font helvetica -draw \"text 12,20 t_%+3.2f_My \" */

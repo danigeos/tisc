@@ -74,7 +74,7 @@ set height_CS = 3.5
 set vert_shift_CS = `echo -$height_CS \- 2.5 | bc -l`
 set horz_shift_CS = `echo  -$width - $separation  | bc -l`
 set dmax   	= `awk '{dmax=$3;} END{print dmax}' $prj.pfl`
-psbasemap -JX$width_CS/$height_CS -R0/$dmax/$zmin/$zmax \
+psbasemap -JX$width_CS/$height_CS -R0/$dmax/$zminkm/$zmaxkm \
 	-B$ticklabels\:"distance (km)":/$zticklabels\:"z (km)":SeW \
 	-O -K -X$horz_shift_CS -Y$vert_shift_CS >> $ps
 source $tisc_dir/script/tisc.common.cross_section.gmt.job
@@ -107,4 +107,3 @@ endif
 
 
 rm -f  $tmp.*.tmp
-

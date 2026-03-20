@@ -60,7 +60,7 @@ load.
 	This example corresponds to example 1 of the paper in Computers & 
 Geosciences (1997, v. 23, 9, pp. 993-1003). The geometry of the sedimentary 
 infill produced during a  foreland basin formation is studied. 
-	Command:	tao example_D
+	Command:	tao example_D -P2
 
 
 *example_E:

@@ -27,6 +27,7 @@ int main(int argc, char **argv)
 	cfg.densenv = densenv; cfg.denssedim = denssedim;
 	cfg.denscrust = denscrust; cfg.denswater = denswater; 
 	cfg.densasthen = densasthen; cfg.densmantle = densmantle;
+	cfg.densinfill = densinfill;
 	cfg.riverbasinwidth = riverbasinwidth;
 	cfg.sed_porosity = sed_porosity;
 
@@ -39,7 +40,10 @@ int main(int argc, char **argv)
 	ctx.sea_level = sea_level;
 	ctx.nlakes = nlakes;
 
-	if (switch_ps>=2) {calculate_topo(&cfg, &ctx, topo); Write_Ouput(&cfg, &ctx);}
+	float *compaction_prev = calloc(cfg.Nx, sizeof(float));
+	calculate_compaction(&cfg, &ctx, compaction_prev);
+
+	if (plotting_mode>=2) {calculate_topo(&cfg, &ctx, topo); Write_Ouput(&cfg, &ctx);}
 
 	/*MAIN LOOP: In this loop time increases from Timeini to Timefinal*/
 	do { 
@@ -51,6 +55,18 @@ int main(int argc, char **argv)
 
 		/*Sea level variations*/
 		ctx.sea_level = calculate_sea_level(ctx.Time);
+
+		/*Calculates water column load*/
+		calculate_water_load(&cfg, &ctx);
+
+		/* Adjust Dq for compaction water loss */
+		float *compaction_now = calloc(cfg.Nx, sizeof(float));
+		calculate_compaction(&cfg, &ctx, compaction_now);
+		for (int i=0; i<cfg.Nx; i++) {
+			Dq[i] -= (compaction_now[i] - compaction_prev[i]) * cfg.denswater * g;
+			compaction_prev[i] = compaction_now[i];
+		}
+		free(compaction_now);
 
 		/*Define & solve elastic equation*/
 		Elastoplastic_Deflection(&cfg, &ctx);
@@ -72,10 +88,12 @@ int main(int argc, char **argv)
 		ctx.Time = Time;
 		fprintf(stdout, "\nT= %.4f My", Time/Matosec);
 
-		if (switch_ps>=2) Write_Ouput(&cfg, &ctx);
+		if (plotting_mode>=2) Write_Ouput(&cfg, &ctx);
 	} while (Time < Timefinal-dt/10);
 
 	The_End(&cfg, &ctx);
+
+	free(compaction_prev);
 
 	return(1);
 }
@@ -215,7 +233,7 @@ int inputs(ModelConfig *cfg, ModelContext *ctx, int argc, char **argv)
 			read_file_resume(resume_filename);
 			interpr_command_line_opts(argc, argv);
 			if (verbose_level>=1) fprintf(stdout, "\nResuming project '%s'. Timefinal=%.1f My", projectname, Timefinal/Matosec);
-			if (switch_ps>=2) n_image--; /*Don't produce 2 jpg's of the same stage of restart*/
+			if (plotting_mode>=2) n_image--; /*Don't produce 2 jpg's of the same stage of restart*/
 			return(1);
 		case 10:
 			if (!read_file_parameters(verbose_level>=1, 0)) {
@@ -296,7 +314,7 @@ int inputs(ModelConfig *cfg, ModelContext *ctx, int argc, char **argv)
 	if (!water_load && Ksedim)		{ Ksedim=0;			PRINT_WARNING("Warning: Sea presence isn't switched, Ksedim has no effect.");}
 	if (!erosed_model)  			{ Ksedim=Kerosdif=Keroseol=0 ; }
 	if (!hydro_model && erosed_model>1)  	{ erosed_model=1 ; PRINT_WARNING("Warning: hydro_model is 0; erosed_model is switched to 1 accordingly.") ; }
-	if (switch_ps && !switch_write_file)	{ if (verbose_level>=3)	PRINT_WARNING("Warning: switch_write_file needed to make a postscript. Postscript may not be done.") ; }
+	if (plotting_mode && !switch_write_file)	{ if (verbose_level>=3)	PRINT_WARNING("Warning: switch_write_file needed to make a postscript. Postscript may not be done.") ; }
 	if (isost_model!=2)  			{ tau=0; }
 	if (tau<=0 && isost_model==2)  		{ isost_model=1; }
 	if (boundary_conds == 0)		{ appmoment = 0; }
@@ -401,20 +419,25 @@ int interpr_command_line_opts(int argc, char **argv)
 					switch_file_out=true;
 					break;
 				case 'P':
-					switch_ps=(strlen(prm)>0)?value:1; /*default is 1 to keep old command line syntax with -Pc*/
+					plotting_mode=(strlen(prm)>0)?(int)value:1; /*default is 1 to keep old command line syntax*/
 					switch_write_file_Blocks=true;
 					if (argv[iarg][2] == 'c') {
-						switch_ps=2;
+						plotting_mode = 2;
 						gif_geom[0] = '\0';
 						if (strlen(prm2)>0) {
 							strncpy(gif_geom, prm2, sizeof(gif_geom) - 1);
 							gif_geom[sizeof(gif_geom) - 1] = '\0';
 						}
-					}
-					if (argv[iarg][2] == 'p') {
-						switch_ps=3;
+					} else if (argv[iarg][2] == 'p' || argv[iarg][2] == '3') {
+						plotting_mode = 3;
 						gif_geom[0] = '\0';
 						if (strlen(prm2)>0) {
+							strncpy(gif_geom, prm2, sizeof(gif_geom) - 1);
+							gif_geom[sizeof(gif_geom) - 1] = '\0';
+						}
+					} else if (plotting_mode >= 2) {
+						gif_geom[0] = '\0'; 
+						if (strlen(prm2)>0) { 
 							strncpy(gif_geom, prm2, sizeof(gif_geom) - 1);
 							gif_geom[sizeof(gif_geom) - 1] = '\0';
 						}
@@ -557,11 +580,11 @@ int tectload(ModelConfig *cfg, ModelContext *ctx)
 
 	PRINT_ARRAY_INFO_1D(topo, "topogr.", "m", "m2") 
 
-	/*Reads external load from file(s)*/
-	while (read_file_unit(cfg, ctx));
-
 	/*Moves Blocks*/
 	move_Blocks(cfg, ctx);
+
+	/*Reads external load from file(s)*/
+	while (read_file_unit(cfg, ctx));
 
 	/*Interpolates loads through time*/
 	gradual_Block(cfg, ctx);
@@ -1437,7 +1460,7 @@ int The_End(ModelConfig *cfg, ModelContext *ctx)
 	fprintf(stdout, "\n -:\t%.0f\t%.1f\t-\t0\t-\t-\t-\t-\tbasement\n", denscrust, Timeini/Matosec);
 
 	if (switch_write_file_Blocks) write_file_resume(cfg, ctx);
-	if (switch_ps<2) Write_Ouput(cfg, ctx);
+	if (plotting_mode<2) Write_Ouput(cfg, ctx);
 
 	sprintf(command, "rm -f %s*.tao.tmp", projectname);
 	system(command);
@@ -1529,9 +1552,9 @@ int Write_Ouput(ModelConfig *cfg, ModelContext *ctx)
 	if (isost_model>=3) write_file_maxmompoint(cfg, ctx);
 
 	/*Make GMT Postscript*/
-	if (switch_ps) {
+	if (plotting_mode) {
 		char 	command[300];
-		if (switch_ps<=2) {
+		if (plotting_mode<=2) {
 			sprintf(command, "tao.gmt.job %s %.2f %.2f %.2f %.2f %d %d", 
 				projectname, xmin/1000, xmax/1000, zmin, zmax, water_load, (isost_model<3)? 0:1);
 			if (verbose_level>=3) 
@@ -1539,13 +1562,13 @@ int Write_Ouput(ModelConfig *cfg, ModelContext *ctx)
 			system(command);
 		}
 		else {
-			sprintf(command, "tao.plot.py %s; mv -f %s.png %s%03d.png", projectname, projectname, projectname, n_image);
+			sprintf(command, "tao.plot.py %s %s; mv -f %s.png %s%03d.png", projectname, gif_geom, projectname, projectname, n_image);
 			if (verbose_level>=3) 
-				fprintf(stdout, "\nPlot files '%s.xvg' and %s%03d.png to be produced with command:\n%s\n", projectname, projectname, n_image, command) ;
+				fprintf(stdout, "\nPlot files '%s.svg' and %s%03d.png to be produced with command:\n%s\n", projectname, projectname, n_image, command) ;
 			system(command);
 			n_image++;
 		}
-		if (switch_ps==2) {
+		if (plotting_mode==2) {
 			/*crop by default to the border*/
 			if (strlen(gif_geom)<2) sprintf(gif_geom, "-trim -background Khaki -label 'tAo software: %s' -gravity South -append", projectname);
 			sprintf(command, "magick -density 200 %s.ps %s -interlace NONE  %s%03d.jpg", /*-fill \"#ffffff\" -draw \"rectangle 70,10 130,25\" -fill \"#000000\" -font helvetica -draw \"text 74,22 t_%+3.2f_My \" */

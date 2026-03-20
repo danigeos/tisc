@@ -7,6 +7,7 @@ struct BLOCK;
 int Allocate_Memory_for_external_use();
 int Allocate_Memory();
 float calculate_topo(ModelConfig *cfg, ModelContext *ctx, float **topo_new);
+void calculate_compaction(ModelConfig *cfg, ModelContext *ctx, float **comp);
 int Delete_Block(int i_Block);
 int insert_new_Block(int num_new_Block);
 int gradual_Block(ModelConfig *cfg, ModelContext *ctx);

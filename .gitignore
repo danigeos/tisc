@@ -48,6 +48,7 @@ tags
 *.tempini
 *.strs
 *.xg
+*.grv_mod
 
 # === Graphic Output ===
 *.ps

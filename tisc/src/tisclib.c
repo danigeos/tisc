@@ -106,6 +106,24 @@ float calculate_topo(ModelConfig *cfg, ModelContext *ctx, float **topo_new)
 }
 
 
+void calculate_compaction(ModelConfig *cfg, ModelContext *ctx, float **comp)
+{
+	#pragma omp parallel for
+	for (int i=0; i<cfg->Ny; i++) { 
+		for (int j=0; j<cfg->Nx; j++) {
+			float thickness_above = 0;
+			comp[i][j] = 0;
+			for (int i_Block=0; i_Block<ctx->numBlocks; i_Block++) 
+				thickness_above += Blocks[i_Block].thick[i][j];
+			for (int i_Block=0; i_Block<ctx->numBlocks; i_Block++) {
+				thickness_above -= Blocks[i_Block].thick[i][j];
+				if (Blocks[i_Block].density==cfg->denssedim) {
+					comp[i][j] += compaction(sed_porosity, compact_depth, thickness_above, thickness_above+Blocks[i_Block].thick[i][j]);
+				}
+			}
+		}
+	}
+}
 
 
 int Delete_Block(int i_Block)
@@ -263,7 +281,7 @@ int defineLESalmostdiagonalmatrix (ModelConfig *cfg, double **A, double *b, floa
 		nodo = j*cfg->Ny + i; /*Starting with node (0,0) y siguiendo con (1,0). 			*/
 				 /*Corresponde tambien a la fila de A[][] en curso			*/
 		/*Define the restoring force value.*/
-		GET_KREST(Krest, Dq, i,j)
+		GET_KREST(Krest, q, i, j)
 
 		D0 = 	D[i][j];						/*			*/
 		Dx = 	D[i][j+1] - D[i][j-1];					/*			*/

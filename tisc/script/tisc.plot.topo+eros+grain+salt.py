@@ -10,11 +10,14 @@ Usage: python3 tisc.plot.topo+eros+grain+salt.py <projectname>
 import sys
 import os
 import re
+import warnings
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 from matplotlib.collections import LineCollection
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+
+warnings.filterwarnings("ignore", message="Input line.*contained no data")
 
 def main():
     if len(sys.argv) < 2:

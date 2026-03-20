@@ -38,10 +38,10 @@ typedef struct {
 	float **topo;
 } ModelContext;
 
-#define GET_KREST(Krest, q, i, j) { /*Define the restoring force value.*/\
+#define GET_KREST(Krest, q_array, i, j) { /*Define the restoring force value.*/\
 	    if (switch_topoest) {\
 		/*If the current i,j knot is below the load then the compensation density is densinfill.*/\
-		if (q[i][j])   Krest = (densasthen-densinfill)*g;\
+		if (q_array[i][j] != 0 || Dq[i][j] != 0)   Krest = (densasthen-densinfill)*g;\
 		/*Otherwise use the sediment density.*/\
 		else	    Krest = (densasthen-denssedim)*g;\
 	    } else    Krest = (densasthen-densenv)*g;}

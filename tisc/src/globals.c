@@ -12,7 +12,7 @@ float Rearth = 6378e3;
 float viscwater = 8.9e-4;
 
 int Nx, Ny, Nz;
-int switch_ps, verbose_level;
+int plotting_mode, verbose_level;
 float dx, dy, dz, dxy;
 char version[LENGTHVERS], version_input[LENGTHVERS];
 bool switch_geograph_coor, switch_write_file;
@@ -134,7 +134,7 @@ ParameterEntry param_table[] = {
     {"water_load", PARAM_TYPE_INT, &water_load, 0, false},
     {"switch_topoest", PARAM_TYPE_BOOL, &switch_topoest, 0, false},
     {"switch_files", PARAM_TYPE_BOOL, &switch_write_file, 0, false},
-    {"switch_ps", PARAM_TYPE_INT, &switch_ps, 0, false},
+    {"plotting_mode", PARAM_TYPE_INT, &plotting_mode, 0, false},
     {"verbose_level", PARAM_TYPE_INT, &verbose_level, 0, false},
 
     // Salt and Ions
@@ -150,6 +150,7 @@ ParameterEntry param_table[] = {
     {"HALITE_PRECIP_CN", PARAM_TYPE_FLOAT, &HALITE_PRECIP_CN, 0, false},
 
     // Old versions
+    {"switch_ps", PARAM_TYPE_INT, &plotting_mode, 0, true},
     {"erodability", PARAM_TYPE_FLOAT, &erodibility, 0, true},
     {"erodability_sed", PARAM_TYPE_FLOAT, &erodibility_sed, 0, true},
     {"switch_verbose", PARAM_TYPE_INT, &verbose_level, 0, true},

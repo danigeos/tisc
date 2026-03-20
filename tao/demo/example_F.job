@@ -10,7 +10,8 @@ cat <<END> example_F.PRM
 	xmax		400e3
 	erosed_model	1
 	switch_sea 1
-	switch_ps	0
+	switch_ps	2
+	verbose_level 3
 END
 
 cat <<END> example_F1.UNIT
@@ -30,7 +31,7 @@ set echo
 
 
 
-tao example_F -tf5 -tr2 -Pc
+tao example_F -tf5 -tr2 -P2
 tao example_F -F -tf10 -qKerosdif=1e-6
 cp -f example_F.all example_F.t=10.all
 #Note: when using -q, units must be in IS, not the ones described in template.PRM
