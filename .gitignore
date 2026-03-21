@@ -16,6 +16,7 @@ tisc.code-workspace
 tao+tisc_commons/build/
 .DS_Store
 .gmt_bb_info
+.gmtcommands4
 
 # === Ignored Untracked Files ===
 src/.tags

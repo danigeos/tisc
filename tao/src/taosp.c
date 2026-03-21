@@ -108,7 +108,18 @@ int Calculate_Discharge (int *sortcell, ModelConfig *cfg, ModelContext *ctx)
 	    	float lake_evaporation=0;
 		for (i=0; i<Lake[il].n; i++) lake_evaporation += evaporation[Lake[il].cell[i]] * cfg->riverbasinwidth * cfg->dx;
 	    	if (Lake_Input_Discharge(cfg, il) < lake_evaporation && Lake[il].n > 1) {
+			int old_type = drainage[ind].type;
+			int old_dind = drainage[ind].dr;
+			int old_il   = il;
+
 			Attempt_Delete_Node_From_Lake (cfg, ctx, ind);
+			
+			if (old_type == 'L' && (drainage[ind].type != 'L' || drainage[ind].lake != old_il)) {
+				if (IN_DOMAIN_1D(old_dind)) {
+					drainage[old_dind].discharge -= drainage[ind].discharge;
+				}
+			}
+
 			dind = drainage[ind].dr;
     			il = drainage[ind].lake;
 	    	}
