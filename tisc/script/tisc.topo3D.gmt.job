@@ -13,7 +13,7 @@ set prj 	= $1
 
 set width = 12
 
-source $tisc_dir/script/tisc.common.gmt.job
+source $tisc_dir/tisc/script/tisc.common.gmt.job
 
 
 #3D TOPOGRAPHY:

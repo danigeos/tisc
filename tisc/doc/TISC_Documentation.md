@@ -34,7 +34,9 @@ These tools are standard on most Linux and macOS systems.
 
 ### 2.2. Compilation
 
-To compile the code, simply run the `make` command in the root directory of the project:
+TISC and tAo share a unified build system and a common codebase (`tao+tisc_commons`). 
+To compile the code, simply run the `make` command in the root directory of the project. 
+You can configure compilers and optimization flags in the `config.mk` file:
 
 ```sh
 make
@@ -78,65 +80,205 @@ Where `project_name` is the base name for your project's input files (without ex
 
 ### 3.2. Command-Line Options
 
-TISC accepts several command-line options to control its behavior:
+```text
+tisc  project  -B<bound_type> -D[xmin/xmax/ymin/ymax] -d<dx>[/<dy>]
+      -e<Kriv>[/<Kdif>] -f[2] -F[<file>] -h[i|u|p|c] -l -M<lith_type>
+      -N<Nx>[/<Ny>] -o -P[0|1|2|3][geom] -p<rain>[/<Krain>][/<evap>] -Q<file>
+      -q<param>=<value> -R<random_topo>[/<seed>] -r<e|c|i|m|a><dens>
+      -s<solver> -T<eet> -t<i|f|d|e|v|r><time> -V[<level>] 
+      -v<num>/<vx>/<vy>
+```
 
-*   `-h`: Display help and information.
-    *   `-hp`: Display the content of the default `template.PRM` file.
-    *   `-hc`: Display the cleaned (without comments) `template.PRM` file.
-    *   `-hu`: Display the `template.UNIT` file.
-*   `-V[level]`: Set the verbose level (0-5). Higher levels print more information.
-*   `-f[reformat]`: Reformat the `.PRM` file.
-*   `-F[resume_filename]`: Resume a previous run from a `.all` file.
-*   `-Q load_file_name`: Direct mode. Solves flexure for a given load file.
-*   `-q parameter=value`: Override a parameter from the `.PRM` file.
+**Options:**
+*   `project` is the root name for all files (i.e., if modelname='test' then the parameters file will be 'test.PRM' and the first load/fault 'test1.UNIT'). 
+*   `-B` Sets boundary conditions (see doc/template.PRM file).
+*   `-D` Set the model region (domain) [m].
+*   `-d` To set dx and dy grid cell dimensions.
+*   `-e` To set the constants of fluvial transport capacity [kg/m3] and diffusive transport [m2/a]. `-e0` suppresses surface transport calculations.
+*   `-F` To continue (resume) a previous run by reading `<file>`. Default file_name is 'project.all'. If specified, `<file>` must be a binary file originally written by TISC in 'project.all' after completing a run. Put this option always *after* the project name in the command.
+*   `-f` Reformats the parameters file 'project.PRM' according to the present version (using 'template.PRM'). Writes to stnd. output. Add '2' to shorten. Use '-f' after the projectname. 
+*   `-h` To show this information file. Append 'p' to print the default parameters file in stdout; 'c' to print a clean version of it; 'u' to print an example of load file; 'i' (default) to print this help file.
+*   `-l` To artificially fill with sediment all lakes except sea.
+*   `-M` Sets the plate model (isost_model): 0 means no isostasy; 1 elastic plate (with `-T0` produces local isostasy); 2 for viscoelastic plate (following Nadai , 1963).
+*   `-N` To set Nx and Ny of gridding. Ny<Nx optimises computation time.
+*   `-o` Redirects standard output to file projectname.out.
+*   `-P` Sets the plotting mode:
+    *   `-P0` (default) no plotting.
+    *   `-P1` produce a postscript graphic display using GMT (tisc.gmt.job) at the end of the run.
+    *   `-P2` make it every time step and convert the PS files into JPG using ImageMagick. Append geometry (default is: `-P2"-trim -density 120"`, which crops the rectangle used and then saves it into JPG format with 120dpi).
+    *   `-P3` use the python graphic script tisc.plot.py instead at every time step.
+*   `-p` Sets the amount of runoff [l/m2/a]=[mm/a], its proportionality with height [mm/a/km], and lake evaporation. `-p0` suppresses the hydrological calculations.
+*   `-Q` With this option TISC will just calculate the elastic deflection of `<file>` (3 columns: x[m],y[m],pressure[Pa]). Will write deflection to the standard output and exit the program.
+*   `-q` Sets any other parameter value listed in `./tisc/doc/template.PRM` file. Note: `<value>` must be given in internal program units (usually IS).
+*   `-R` Add random noise to the initial topography between -random_topo/2 and +random_topo/2. seed is an integer.
+*   `-r` Sets density of environment (e), crust (c), infill (i), mantle (m) or asthenosphere (a).
+*   `-S` Move block number `<b>` by `<n>` positions (use with `-F`).
+*   `-s` Add 'm' to use 'mathlib' to solve the flexural equations.
+*   `-T` Sets elastic thickness to `<eet_value>`. 0 means local isostasy (faster calculation).
+*   `-t` Sets initial (i), final (f), increment (d), surface processes (e), viscous relaxation (v) or sediment-Block-record (r) times.
+*   `-V` Means verbose mode with additional run-time prints. Add `<level>` for additional i/o information. See doc/template.PRM file for level specification.
+*   `-v` Changes velocity to `<vx>,<vy>` [km/Myr] for block number `<num>` or, if num<0, to all blocks with density=-<num> (use with `-F`).
 
 ### 3.3. Direct Mode (`-Q`)
 
-This mode is for solving the flexural response to a single load without running a full time-dependent simulation. It's useful for quick tests of isostatic models.
+With this option TISC will just calculate the elastic deflection of `<file>` (3 columns: x[m],y[m],pressure[Pa]). Will write deflection to the standard output and exit the program. This mode is for solving the flexural response to a single load without running a full time-dependent simulation. It's useful for quick tests of isostatic models.
 
 ### 3.4. Resuming a Run (`-F`)
 
-You can resume a run that was previously stopped. TISC periodically saves its state in a `project_name.all` file. To resume, use the `-F` flag:
+You can resume a run that was previously stopped. TISC periodically saves its state in a `project.all` binary file. To resume, use the `-F` flag:
 
 ```sh
-tisc -F project_name.all
+tisc -F project.all
 ```
 
 ## 4. Input Files
 
-TISC uses a set of input files to define a simulation.
+Input parameter values are taken from: (a) parameters file `project.PRM`, (b) command line options, (c) other input files named `project.*` (with an uppercase extension), and (d) from the `project.all` file if `-F` option is used. (b) values override (a); (c) overrides (a) and (b); (d) overrides (a) and (c). Default units are I.S. 
 
-### 4.1. `*.PRM` (Parameters file)
+All the following input files accept comment lines to be inserted everywhere. These lines will simply be ignored if a parameter name and a numerical value cannot be read at the beginning.
+All input files are read in the beginning of the execution, at the initial time, except for `*.UNIT` (which are read at their respective specified times) and for `*.NDEF` (read at every time step dt_eros). 
 
-This is the main configuration file for a project. It defines the model domain, grid, densities, time stepping, and parameters for the physical models. The file `doc/template.PRM` contains all available parameters with explanations.
+*   **`project.PRM`**: Parameters file. This file is compulsory unless using the `-Q` option. The parameter values defined in it can be also changed with the command line options listed above. `tisc/doc/template.PRM` file is an explained example containing the default parameter values. The internal use of each parameter is also somewhat explained in the include file `tisc.h`. xmin, xmax, ymin, ymax give the coordinates of the center of the boundary cells or pixels (i.e., the location of their associated nodes). Equivalent to node-registration mode in GMT or NETCDF. The conceptual limit of the model is at xmin-dx/2, ymax+dx/2, ... For example, if the resolution of a model is needed to be reduced to dx/2,dy/2 keeping the same domain parameters, then the new Nx,Ny should not be Nx*2,Ny*2, but (Nx-1)*2+1,(Ny-1)*2+1. If (topoest != 0) then the load will rest at zero level and plate subsidence will be filled with 'densinfill' material. Do not combine it with erosion.
+*   **`projectN.UNIT`**: File modifying the geometry/architecture of the model (i.e, introducing new bodies, moving blocks, or faults). `N` is the number of this load; first load file should be: `project1.UNIT`; `doc/template.UNIT` file is an explained example. Or type `tisc -hu` to get that file in the screen. `N` must be sorted consistent with the UNIT parameter 'time', so that the time in UNIT number N must be smaller than the time in UNIT N+1. TISC deformation consists of moving predefined blocks of prescribed velocity and geometry by an entire number of cells at each time step. The minimum shift is either 0 or 1 cells. If your time step dt is 0.5 Myr, velocity is 5 km/Myr and cell size is 10 km, the block will move only once every 4 time steps. So, depending on the grid cell size, the motion will become more or less abrupt. 
+*   **`project.EET`**: Equivalent Elastic Thickness file (optional, if not present EET will be taken from the `*.PRM` file). Note that abrupt EET lateral changes can lead to instabilities in the calculation of flexural deflection. The file format is:
+    ```text
+    [z_default <value>]      #Default value of the elastic thickness.
+    [mode_interp  <value>]   #See explanation in doc/template.UNIT.
+    x1  y1  thickness1
+    x2  y2  thickness2
+    x3  y3  thickness3
+    ...
+    Or:
+    [mode_interp  4]
+    thickness1
+    x1  y1
+    x2  y2
+    x3  y3
+    thickness2
+    x2  y2
+    x1  y1
+    ...
+    ```
+*   **`project.PRFL`**: This file (optional) defines a x-y polygon corresponding to the cross section that will be written in a `*.pfl` file. Default is no cross section.
+*   **`project.ZINI`**: Initial topography (optional). Similar format to `project.EET`.
+*   **`project.WINI`**: Initial deflection file (optional). Similar format to `project.EET`. Positive deflection downwards.
+*   **`project.RAIN`**: Runoff distribution (optional). Similar format to `project.EET`. Units: mm/a. Negative values and undefined cells are interpreted as no-data and substituted by the automatic calculation from the parameters in `*.PRM`. The values in `*.RAIN` are kept constant through the entire model evolution.
+*   **`project.NDEF`**: Allows to change properties of specific nodes. The closest node to x,y will be changed: 'param' determines what parameter is changed at that node: 1: to add water discharge at x,y (m3/s, max. is Amazon at 120e3). 2: to add sediment discharge (kg/s, max. is Ganges at 52e3). This file, in contrast to all others, is read not once at startup but once for every surface process iteration.
+*   **`project.SLV`**: Evolution of the sea level and the level separating erosion and sedimentation levels (optional, read only if water_load is activated in the PRM file):
+    ```text
+    time1   s_level1    [eroslevel1]
+    time2   s_level2
+    time3   s_level3    [eroslevel2]
+    ```
+*   **`project.INS`**: Evolution of the insolation (optional, use Laskar's, f.e.). Only for hydro_model=1. Adds a factor insolation/mean_insolation multiplying `<rain+Krain*z>` (see rain_amp in `*.PRM`) and also multiplying the discharges in `*.NDEFS`. Thus, absolute insolation values or their units are irrelevant. The deviations of insolation from its average value will be amplified in rain by a factor `<rain_amp>` (if not 0).
+*   **`project.REC`**: Horizon recording times file (optional, defaults to dt_record parameter, see `*.PRM` file).
+*   **`project.RIV`**: Initial river paths that must be respected by the initial topography. When introducing a Digital Elevation Model through the `*.ZINI` file, the grid may not respect the path of the rivers because of its limited resolution, which generates unrealistic barriers. This file must be introduced in order to allow the program to modify the topographic grid and fit it to the drainage network. Introduce river in x-y format starting from the highest point. Different segments can be separated by lines starting with '>'.
+*   **`projectN.VISC`**: Only required if a thin sheet unit has been defined. Contains the viscosity x,y distribution for unit `N`, but only its thermal component (~ .1e7). The total viscosity will be calculated as viscosity[Pa*s] = viscTer/str.rate. Format is equivalent to file `project.EET`. 
+*   **`project.TSBC`**: Only required if defining a thin_sheet unit. Boundary conditions of the thin sheet velocity or stress field for the units is defined to undergo a thin-sheet-like deformation.
+*   **`project.CMP`**: This file defines x-y polygons (in km) separated with a '>', used only to be plotted in the postscript image, called from graphic script like script/tao.gmt.job, just for comparison with model results. No effect on the model results.
+*   **`project.INT`**: This file defines a x-y polygon (in km) of interest where certain statistics should be calculated during the execution of graphic scripts, such as the volume of sediment. `project.INT2` `project.INT3` etc are also read. Used only during the image script (`script/tisc.gmt.job`) after tisc, just post-processing. No effect on the model results.
 
-### 4.2. `*.UNIT` (Unit files)
+### 4.1. Interpolation Modes
+Most TISC input files define 3D surfaces or 2D planform distributions of a variable. To facilitate this, TISC accepts different ways of interpolation between given points:
 
-These files define tectonic or sedimentary events that occur at specific times. They are named `project_name1.UNIT`, `project_name2.UNIT`, etc. Each file represents a load (e.g., a thrust sheet, a volcanic extrusion, an erosional event) and contains parameters like the time of the event, density of the material, and a spatial distribution of the thickness.
+*   **`0`**: 3-column file containing x,y,z in 'Nx x Ny' skyline-sorted rows. x,y are ignored (no interpolation performed). Useful to pass a surface generated externally with SURFER.
+*   **`1`**: 3-column file containing x,y,z. Inverse distance interpolation with the points supplied.
+*   **`2`**: 3-column file containing x,y,z. Inverse square distance interpolation with the points supplied.
+*   **`3`**: 3-column file containing x,y,z. The nearest given point is assigned each cell.
+*   **`4`**: Polygon interpolation mode (see format below).
+*   **`5`**: Binary (short int) skyline array of z values (no interpolation performed).
+*   **`6`**: 1-column file containing z-values in 'Nx x Ny' skyline-sorted rows (no interpolation performed).
+*   **`7`**: Same as 4, but nodes falling out of all polygons are interpolated with the distance to each polygon (no default value assigned).
+*   **`8`**: 3-column file containing x,y,z. Each cell gets a value if some point is given inside, otherwise it gets the default value. If more than one value is given then they will be averaged.
 
-### 4.3. Initial Condition Files
-
-*   `*.ZINI`: Initial topography grid.
-*   `*.WINI`: Initial deflection grid.
-*   `*.RIV`: Defines initial river paths that are carved into the initial topography.
-
-### 4.4. Time-Dependent Boundary Conditions
-
-*   `*.SLV`: Sea-level variations over time.
-*   `*.RAIN`: Spatially variable precipitation grid.
-*   `*.EET`: Spatially variable effective elastic thickness (Te).
+If `mode_interp` is set to `4` or `7`, then x-y polygons are read with an associated z-value. In this case the format is:
+```text
+mode_interp  4
+z_value_pol_1	[n|c]
+x_pol1_1      y_pol1_1
+x_pol1_2      y_pol1_2
+x_pol1_3      y_pol1_3
+...
+z_value_pol_2	[n|c]
+x_pol2_1      y_pol2_1
+x_pol2_2      y_pol2_2
+x_pol2_3      y_pol2_3
+...
+```
+For `mode_interp=4` or `7`, if `c` is specified for a polygon, the z value inside that polygon will be constant. If `n` is specified (default), the z value interpolated for all nodes falling inside that polygon but outside the next polygon will vary linearly with the distance to both polygons. So, tricky as it seems, the order of the polygons matters!
 
 ## 5. Output Files
 
-TISC generates a variety of output files in the project directory.
+The screen output while TISC runs shows a number of statistics including the balance of water, sediment and vertical force over the entire model domain. Total rain in the model must equal total evaporation plus water exiting the model through the boundaries. Except for the effect of the boundary conditions, the flexural restitutive force must equal the total load. This can be checked in the screen output at each time step, for example:
 
-*   `*.hrz`: Horizon data in a grid format. Each column represents a geological horizon.
-*   `*.pfl`: Profile data along a cross-section defined in a `*.PRFL` file.
-*   `*.xyw`: Drainage network data, including water discharge, sediment load, and topography for each cell.
-*   `*.lak`: Information about lakes, including their extent, volume, and outlets.
-*   `*.st`: Erosion and sedimentation rates for each cell.
-*   `*.all`: Binary file containing the complete state of the model, used for resuming runs.
-*   `*.ps`, `*.jpg`: Graphical outputs of the model state at different time steps.
+```text
+T= 9.5000 My
+  2D prof. :  max =     799.8 m     min =    -531.8 m
+  topogr.  :  max= 2179.1 m	min= 0.0 m	vol=1.18e+12 m3
+  load: -2.28e+17 N   restit_force: -9.68e+15 N
+  deflect. :  max= 114.8 m	min= -18800.3 m	vol=-7.25e+12 m3
+  precipit :  max= 0.3 m/yr	min= 0.1 m/yr	integr=5.40e+10 m/yr*m2
+  evaporat.:  max= 0.0 m/yr	min= 0.0 m/yr	integr=0.00e+00 m/yr*m2
+  rain_now : +2.75e+02 m3/s  evap_wat: +0.00e+00 m3/s outp_water: +2.75e+02 m3/s
+  lake 1/3 : 1.68e-04 km3 3.24e+00 km2   10 m  -22,20  1 out @ -23,20 40.5 m3/s
+  river max:    54.72 m3/s     9.46 kg/s @  -26.0,-20.8 km, 0.1 m
+  topo_diff_eros_max=    -1.10 mm/yr    sedim_max:     0.53 mm/yr
+  eros_nosd: +9.44e+15 N     sedim_inc: -2.91e+13 N   outp_seds:   +9.47e+15 N  
+  eros-sed.:  max= 1.62 mm/yr	min= -0.53 mm/yr	difference=1.67e+06 m3/yr
+  sediment vol: 4.09e+03 km3
+```
+
+At the final time step, a list of the generated Blocks is shown including their properties:  
+```text
+2 Blocks:
+No. Density Age Volume Surf.  Vel_x Vel_y Shft_x Shft_y erosL
+     kg/m3  My  1e3km3 1e3km2 km/My km/My   km     km    [m] 
+ 1:  2200   5.0    0.0   0.6   0.0   0.0    0.0    0.0 6.0e+04  S
+ 0:  2200   0.0    0.0   0.8   0.0   0.0    0.0    0.0 6.0e+04  S  1st Block
+ -:  2850   0.0    -     -     0     0      0      0   1.2e+05  -  basement
+```
+
+Output files contain the information required for graphic output, and have a lowercase extension:
+
+*   **`project.hrz`**: Final geometry of all Blocks (elevat./depth of all the horizons).
+*   **`project.xyzt`**: Isostatic (flexural) subsidence (deflection w).
+*   **`project.all`**: Binary file with all the information to resume the model (see `-F` option). Valid for checkpointing purposes.
+*   **`project.xyw`**: Drainage network. Mass transport rate. Type of node ('R'=river; 'L' for lake; 'E' for lake outlet; 'S' for sea).
+    *   Column #1 x(km) 
+    *   Column #2 y(km) 
+    *   Column #3 water(m3/s) 
+    *   Column #4 sed[kg/s] 
+    *   Column #5 type 
+    *   Column #6 topo[m] 
+    *   Column #7 x-to 
+    *   Column #8 y-to 
+    *   Column #9 topo-to 
+    *   Column #10 preciptation (runooff) [mm/y] 
+    *   Column #11 lake/sea evaporation[mm/y] 
+    *   Column #12 ice thickness[m] 
+    *   Column #13 ice sediment load[m]
+    *   Column #14 maximum swimming distance between neigbor cells [km]
+*   **`project.bas`**: Similar to the previous, but sorting the nodes hierarchically according to hydrographic (sub)basins. Within each basin, nodes are sorted downstream (every entry drains to another entry listed later in the file.
+    *   Column #1 x[km] 
+    *   Column #2 y[km]
+    *   Column #3 dischg[m3/s]
+    *   Column #4 masstr[kg/s] 
+    *   Column #5 type
+    *   Column #6 topo[m]
+    *   Column #7 length[km] Length along channel from river mouth.
+    *   Column #8 x-to
+    *   Column #9 y-to
+    *   Column #10 topo-to[m]
+    *   Column #11 length-to[km]
+    *   Column #12 eros[m/My]
+    *   Column #13 level
+    *   Column #14 nodes_above
+*   **`project.lak`**: Lake information.
+*   **`project.st`**: Total erosion/sedimentation and present rate (in equivalent meters of denscrust).
+*   **`project.eeth`**: Interpolated values for elastic thickness entered via `*.EET`.
+*   **`project.vel`**: Velocity and viscosity distribution from the thin-sheet Block.
+*   **`project.pfl`**: Cross section along path defined in `*.PRFL`.
+*   **`project.ps`**, **`project.jpg`**, **`project.svg`**: Graphical plots. A postscript produced with GMT 4.0 software (using unix scripts: `./tisc/script/tisc.*.gmt.job`), with graphics of results of TISC. The GMT and shell commands generating this image are always searched by TISC in a file named `tisc.gmt.job` in the user's path. The SVG/JPG outputs are made by the python script `script/tisc.plot.py`, using matplotlib.
 
 ---
 

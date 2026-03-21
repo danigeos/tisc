@@ -58,5 +58,5 @@ eros_bound_cond	1111
 
 switch_sea     	1
 switch_files   	1
-switch_ps      	1
+plotting_mode	2	For svg/postscript output.
 verbose_level  	1

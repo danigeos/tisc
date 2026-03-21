@@ -243,8 +243,9 @@ interpol_point_in_mesh	../../tao+tisc_commons/src/libreria.c	/^float interpol_po
 interpr_command_line_opts	tisc.c	/^int interpr_command_line_opts(int argc, char **argv) $/;"	f
 isost_model	globals.c	/^int grav_anom_type, isost_model, water_load;$/;"	v
 l_fluv_sedim	globals.c	/^float spl_m, spl_n, l_fluv_sedim, lost_rate, permeability, rain, Krain, relative_humidity, CXrain;$/;"	v
-lake_former_step	globals.c	/^int lake_instant_fill = 0, **lake_former_step;$/;"	v
-lake_instant_fill	globals.c	/^int lake_instant_fill = 0, **lake_former_step;$/;"	v
+lake_former_step	globals.c	/^int lake_instant_fill = 0, **lake_former_step, **lake_max;$/;"	v
+lake_instant_fill	globals.c	/^int lake_instant_fill = 0, **lake_former_step, **lake_max;$/;"	v
+lake_max	globals.c	/^int lake_instant_fill = 0, **lake_former_step, **lake_max;$/;"	v
 last_time_file_time	globals.c	/^float zini, dt_record, sed_porosity, compact_depth, last_time_file_time, random_topo = 0;$/;"	v
 lost_rate	globals.c	/^float spl_m, spl_n, l_fluv_sedim, lost_rate, permeability, rain, Krain, relative_humidity, CXrain;$/;"	v
 main	blockxyz.c	/^int main(int argc, char **argv)$/;"	f

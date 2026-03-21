@@ -257,26 +257,4 @@ switch_files	1	For extra file output: see files *.bas *.all
 				*.lakes in doc/tisc.info.txt.
 mode_interp	2	Default interpolation mode for input files. 
 				See doc/template.UNIT.
-switch_ps	1	For postscript graphic output (uses GMT shell scripts).
-
-
-
-#(END OF PARAMETERS FILE)
-Comments:
-	The original copy of this file contains the TISC default parameters and 
-	is located at ./tisc/doc/.  Copy it to your project directory as 
-	'projectname.PRM' and then edit to use as the parameters file for your 
-	new project. Note that:
-	--The first column is interpreted as potential parameter names; the 
-	second contains the associated values.
-	--You can modify the format of this parameter file, either by adding
-	more comment lines or changing comments in the existing lines after 
-	the values. Order in the list of parameters is irrelevant except for 
-	the version, which must be first.
-	--You can modify most of these parameters from the command line (see 
-	option -q). Command line options are intepreted after reading this PRM 
-	file, so they overwrite these values.
-	--You only need to include the parameters which default value you 
-	want to change relative to the default ones in doc/template.PRM.
-	--Default units: I.S. (except where indicated).
-	--More information about the meaning of parameters in tisc/tisc.info.txt
+plotting_mode	2	For svg/postscript output.

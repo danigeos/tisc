@@ -1,7 +1,10 @@
 # --- Root Makefile for tAo and TISC Monorepo ---
 
-BIN := $(CURDIR)/bin
-BUILD := $(CURDIR)/tao+tisc_commons/build
+tisc_DIR := $(CURDIR)
+export tisc_DIR
+
+BIN := $(tisc_DIR)/bin
+BUILD := $(tisc_DIR)/tao+tisc_commons/build
 
 OS        := $(shell uname -s)
 ARCH      := $(shell uname -m)
@@ -28,9 +31,8 @@ all: info dirs tao tisc ## Compile both tAo and TISC
 	@echo ""
 	@echo "======================================================================="
 	@echo "To run the executables, add the following to your shell profile (e.g., .bashrc or .zshrc):"
-	@echo "  export tisc_dir=\"$(CURDIR)/tisc/\""
-	@echo "  export tao_dir =\"$(CURDIR)/tao/\""
-	@echo "  export PATH=\"\$$PATH:$(BIN):$(CURDIR)/tisc/script/:$(CURDIR)/tao/script/:\""
+	@echo "  export tisc_dir=\"$(tisc_DIR)/\""
+	@echo "  export PATH=\"\$$PATH:$(BIN):$(tisc_DIR)/tisc/script/:$(tisc_DIR)/tao/script/:\""
 	@echo "======================================================================="
 
 info:

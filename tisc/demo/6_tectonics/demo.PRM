@@ -61,4 +61,4 @@ K_ice_eros	0	Constant of ice incision rate relating ice sliding velocity to
 verbose_level	1	Specify the level of runtime prints in stdout.
 switch_files	1	For extra file output: see files *.bas *.all *.lakes in
 mode_interp	4	Default interpolation mode for input files. See
-switch_ps	1	For postscript graphic output (uses GMT4 shell scripts).
+plotting_mode	2	For svg/postscript output.

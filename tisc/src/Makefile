@@ -1,39 +1,30 @@
-#---------------------------- tisc makefile ----------------------------
-#
 #Read and modify options in ../config.mk
-#
 #Type  'make'  in this directory to compile.
-#
-#------------------------------------------------------------------------
-
-include ../config.mk
-
 
 #------------------------------------------------------------------------
 #You should not modify these directories
-tisc_DIR = $(abspath ..)
-HOME_DIR = $(HOME)
-OS 	= $(shell uname -s)
-ARCH 	= $(shell uname -m)
-PROCESSOR = $(shell uname -p)
-USERNAME = $(shell whoami)
-BIN	= ../../bin
-OBJ	= ../../tao+tisc_commons/build
-LIB	= ../../tao+tisc_commons/lib
-TISC_LIB = ../lib
-INCL	= ../include 
-MACOSX_DEPLOYMENT_TARGET = 10.9
+tisc_DIR  ?= $(abspath ../..)
+include $(tisc_DIR)/config.mk
+
+OS        ?= $(shell uname -s)
+ARCH      ?= $(shell uname -m)
+PROCESSOR ?= $(shell uname -p)
+USERNAME  ?= $(shell whoami)
+BIN       ?= $(tisc_DIR)/bin
+OBJ       ?= $(tisc_DIR)/tao+tisc_commons/build
+LIB       ?= $(tisc_DIR)/tao+tisc_commons/lib
+TISC_LIB  ?= ../lib
+INCL      ?= ../include 
 
 #Other things:
-BACKUPS	= $(HOME_DIR)/var/backups
-ifneq ($(findstring THIN_SHEET,$(DEFS)),) 
+ifneq ($(findstring THIN_SHEET,$(TISC_DEFS)),) 
 	TS_LIBS = $(OBJ)/thin_sheet.o $(OBJ)/sistbanda.o 
 	LC = $(FC)
 else
 	LC = $(CC)
 endif
 
-ifneq ($(findstring SURFACE_TRANSPORT,$(DEFS)),) 
+ifneq ($(findstring SURFACE_TRANSPORT,$(TISC_DEFS)),) 
 	SP_LIBS = $(OBJ)/surf_proc.o 
 endif
 
@@ -53,19 +44,16 @@ YELLOW  := \033[33m
 MAGENTA := \033[35m
 RESET   := \033[0m
 
-.PHONY: all backup clean notify help
+.PHONY: all clean notify help
 
 all: ## Compile all binaries
 	@$(MAKE) tisc cuthrz lonlat2xy outin blockxyz $(OBJ)/call_tisc.o
-
-backup: ## Copy source files to backup directory
-	$(CP) -f tisc* $(BACKUPS)
 
 clean: ## Remove generated object files and binaries
 	$(RM) -r $(OBJ)/*.o $(OBJ)/*.d $(LIB)/*.o $(LIB)/*.a $(BIN)/.dSYM 
 
 DEPFLAGS = -MMD -MP
-CFLAGS = $(OPTS) -I$(INCL) -I../../tao+tisc_commons/include $(DEFS) $(DEPFLAGS) -Wall
+CFLAGS = $(OPTS) -I$(INCL) -I../../tao+tisc_commons/include $(TISC_DEFS) $(DEPFLAGS) -Wall
 
 TISC_OBJS = $(OBJ)/tisclib.o $(OBJ)/tiscio.o $(OBJ)/globals.o
 
@@ -77,7 +65,7 @@ $(BIN):
 
 $(OBJ)/%.o: %.c | $(OBJ)
 	@printf "$(BLUE)$(BOLD)[CC]$(RESET) $<\n"
-	$(Q)$(CC) $(CFLAGS) -D'VERSION="$(VERSION)"' -D'TISCDIR="$(tisc_DIR)"' -c $< -o $@
+	$(Q)$(CC) $(CFLAGS) -D'VERSION="$(TISC_VERSION)"' -D'TISCDIR="$(tisc_DIR)"' -c $< -o $@
 
 blockxyz: $(OBJ)/blockxyz.o $(OBJ)/globals.o $(OBJ)/libreria.o | $(OBJ) $(BIN)
 	@printf "$(GREEN)$(BOLD)[LD]$(RESET) $@\n"
@@ -99,7 +87,7 @@ lonlat2xy: $(OBJ)/lonlat2xy.o $(OBJ)/globals.o $(OBJ)/libreria.o | $(OBJ) $(BIN)
 	$(Q)$(CC) $(OBJ)/lonlat2xy.o $(OBJ)/globals.o $(OBJ)/libreria.o $(LIBS) -o $(BIN)/lonlat2xy
 
 projbanda: | $(BIN)
-	@if [ $(findstring THIN_SHEET,$(DEFS)) ]; then \
+	@if [ $(findstring THIN_SHEET,$(TISC_DEFS)) ]; then \
 		printf "$(GREEN)$(BOLD)[FC]$(RESET) $@\n"; \
 		$(FC) projbanda.f -o $(BIN)/projbanda -O3 -I$(INCL) -L$(LIB) ; \
 		chmod  a+x  $(BIN)/$@
@@ -121,14 +109,14 @@ tisc:	$(OBJ)/tisc.o $(TISC_OBJS) $(OBJ)/libreria.o $(SP_LIBS) $(TS_LIBS) notify 
 
 $(OBJ)/tisc.o: tisc.c | $(OBJ)
 	@printf "$(BLUE)$(BOLD)[CC]$(RESET) $<\n"
-	$(Q)$(CC) $(CFLAGS) -o $@ -D'VERSION="$(VERSION)"' -D'TISCDIR="$(tisc_DIR)"' -c tisc.c
+	$(Q)$(CC) $(CFLAGS) -o $@ -D'VERSION="$(TISC_VERSION)"' -D'TISCDIR="$(tisc_DIR)"' -c tisc.c
 	$(Q)if [ -x /usr/local/bin/ctags ]; then \
 		/usr/local/bin/ctags *.c $(TISC_LIB)/thin_sheet.f ../../tao+tisc_commons/src/libreria.c ../include/*.h ;\
 		echo tags file produced.;\
 	fi
 
 $(OBJ)/call_tisc.o : call_tisc.c | $(OBJ)
-	@if [ $(findstring SURFACE_TRANSPORT,$(DEFS)) ]; then \
+	@if [ $(findstring SURFACE_TRANSPORT,$(TISC_DEFS)) ]; then \
 		printf "$(BLUE)$(BOLD)[CC]$(RESET) $<\n"; \
 		$(CC) -c -o $@ $(CFLAGS) -DSURFACE_TRANSPORT call_tisc.c ; \
 	fi

@@ -76,5 +76,5 @@ l_fluv_sedim	25e3	Length scale of fluvial sedimentation [m]
 
 I/O:
 switch_files	1	For extra file output.
-switch_ps	1	For postscript output.
+plotting_mode	2	For svg/postscript output.
 switch_verbose	1	For more runtime information.

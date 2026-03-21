@@ -112,7 +112,8 @@
 
 3.- PROGRAM STRUCTURE AND COMPILATION
   TISC is written in C under Linux.
-  Check the file ./tisc/README for details on compilation.
+  TISC and tAo share a unified build system via `config.mk` in the root directory.
+  Check the doc/TISC_Documentation.md file for details on compilation.
   The main source code file is src/tisc.c, description of variables use 
   in file include/tisc.h. 
   Check the FAQ section below in this document.

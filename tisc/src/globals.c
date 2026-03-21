@@ -65,7 +65,7 @@ float **D, **Dq, **Dw, **eros_now, **EET, **h_water, **h_last_unit, **ice_thickn
 float **ice_velx_sl, **ice_vely_sl, **ice_velx_df, **ice_vely_df, **q, **evaporation, **precipitation;
 float **precipitation_snow, **precipitation_file, **topo, **accumul_erosion, **Blocks_base, **w;
 char boundary_conds[5], eros_bound_cond[5], solver_type, gif_geom[MAXLENLINE];
-int lake_instant_fill = 0, **lake_former_step;
+int lake_instant_fill = 0, **lake_former_step, **lake_max;
 
 bool switch_debug = false;
 

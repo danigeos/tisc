@@ -1450,20 +1450,12 @@ int Delete_Node_From_Lake (ModelConfig *cfg, ModelContext *ctx, int ln)
 	}
 
 	/*Determine new drainage by draining through the maximum slope*/
-	if (IN_DOMAIN_1D(drainage[ln].dr)) 
-		ild = drainage[drainage[ln].dr].lake;
-	else 	ild = 0;
-	if (maxderneg==0 && (drainage[ln].type=='E' || ild)) {
-		/*Leave it the same*/
-	}
-	else {
 		if (imaxderneg != SIGNAL) {
 			drainage[ln].dr = imaxderneg;
 		}
 		else {
 			drainage[ln].dr = SIGNAL;
 		}
-	}
 	drainage[ln].type = 'R';
 	drainage[ln].lake = 0;
 	/*Deallocates node memory*/

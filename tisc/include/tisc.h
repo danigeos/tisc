@@ -63,7 +63,7 @@ extern float **precipitation_snow, **precipitation_file, **topo, **accumul_erosi
 
 extern char boundary_conds[5], eros_bound_cond[5], solver_type, gif_geom[MAXLENLINE];
 
-extern int lake_instant_fill, **lake_former_step;
+extern int lake_instant_fill, **lake_former_step, **lake_max;
 
 
 

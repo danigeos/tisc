@@ -5,7 +5,7 @@
 ##############################################################################
 
 if ($#argv < 1) then
-	echo "Sorry, but you entered too few parameters"
+	echo "Too few parameters"
 	echo "Syntax:" 
 	echo $0 "tAo_projectname [<x_YS> || <xmin> <xmax> <zmin> <zmax> [<switch_sea> [<switch_rheo>]]]"
 	exit
@@ -13,7 +13,7 @@ endif
 
 
 #Setting up variables:
-source $tao_dir/script/tao.common.gmt.job
+source $tisc_dir/tao/script/tao.common.gmt.job
 
 #1st PAGE of Postscript:
 #

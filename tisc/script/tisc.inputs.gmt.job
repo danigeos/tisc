@@ -5,7 +5,7 @@ set prj 	= $1
 set width = 15
 set separation = .8
 
-source $tisc_dir/script/tisc.common.gmt.job
+source $tisc_dir/tisc/script/tisc.common.gmt.job
 cat <<END > $tmp.awk.tmp
 BEGIN {numeric="[-+]?([0-9]+\.?|\.[0-9])[0-9]*([eE][-+]?[0-9]+)?"}
 {

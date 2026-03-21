@@ -12,7 +12,7 @@ set width = 11
 set separation = .8
 
 set x0 = $2; set xf = $3; set y0 = $4; set yf = $5; 
-source $tisc_dir/script/tisc.common.gmt.job
+source $tisc_dir/tisc/script/tisc.common.gmt.job
 echo Region = $Region
 
 

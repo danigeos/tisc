@@ -21,8 +21,8 @@ zmax		2000	Vertical range (for graphic purposes only)
 
 #GRIDDING:
 #dx is automalically defined as (xmax-xmin)/(Nx-1)
-Nx		101	E-W direction grid points. 
-Ny		101	N-S direction grid points
+Nx		141	E-W direction grid points. 
+Ny		141	N-S direction grid points
 
 #INITIAL RELIEF:
 zini		0	Initial altitude [m] above sea level (added to the initial
@@ -242,7 +242,7 @@ switch_files	1	For extra file output: see files *.bas *.all *.lakes in
 				doc/tisc.info.txt.
 mode_interp	4	Default interpolation mode for input files. See
 				doc/template.UNIT.
-switch_ps	1	For postscript graphic output (uses GMT4 shell scripts).
+switch_ps	2	For postscript graphic output (uses GMT4 shell scripts).
 
 
 

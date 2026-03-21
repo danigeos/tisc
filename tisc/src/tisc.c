@@ -100,6 +100,7 @@ int main(int argc, char **argv)
 
 		Time += dt;
 		ctx.Time = Time;
+		if (verbose_level>=2) fprintf(stdout, "\n--------------------------------------------------------------------------");
 		fprintf(stdout, "\nT= %.4f My", Time/Matosec);
 
 		if (plotting_mode>=2) Write_Ouput(&cfg, &ctx);
@@ -142,7 +143,7 @@ int inputs (int argc, char **argv)
 	version[sizeof(version) - 1] = '\0';
 
 	/*Default parameter values are read from ./tisc/doc/template.PRM:*/
-	snprintf(projectname, sizeof(projectname), "%s/doc/template", TISCDIR);
+	snprintf(projectname, sizeof(projectname), "%s/tisc/doc/template", TISCDIR);
 	success_def_prm = read_file_parameters(0, 0);
 	projectname[0] = '\0';
 
@@ -171,19 +172,19 @@ int inputs (int argc, char **argv)
 					switch (argv[iarg][2]) {
 						case 'p':
 							fprintf(stderr, "\nFile ./tisc/doc/template.PRM (sample parameters file) follows in stdout:\n") ;
-							snprintf(command, sizeof(command), "cat %s/doc/template.PRM", TISCDIR);
+							snprintf(command, sizeof(command), "cat %s/tisc/doc/template.PRM", TISCDIR);
 							system(command) ;
 							break;
 						case 'c':
 							fprintf(stderr, "\nFile ./tisc/doc/template.PRM (sample parameters file) follows in stdout:\n") ;
 							// The cleanPRM script might not exist or be needed anymore. If it's just for display, cat is enough.
 							// If it's a real script, ensure it's in PATH. For now, assuming it's a script that processes the PRM.
-							snprintf(command, sizeof(command), "cat %s/doc/template.PRM | %s/script/cleanPRM", TISCDIR, TISCDIR);
+							snprintf(command, sizeof(command), "cat %s/tisc/doc/template.PRM | %s/tisc/script/cleanPRM", TISCDIR, TISCDIR);
 							system(command) ;
 							break;
 						case 'u':
 							fprintf(stderr, "\nFile ./tisc/doc/template.UNIT (sample unit file) follows in stdout:\n") ;
-							snprintf(command, sizeof(command), "cat %s/doc/template.UNIT", TISCDIR);
+							snprintf(command, sizeof(command), "cat %s/tisc/doc/template.UNIT", TISCDIR);
 							system(command) ;
 							break;
 						default:
@@ -196,7 +197,7 @@ int inputs (int argc, char **argv)
 				case '-':
 					if (strcmp(argv[iarg], "--help") == 0) {
 						fprintf(stderr, "\nFile ./tisc/doc/tisc.info.txt follows:\n") ;
-						snprintf(command, sizeof(command), "more %s/doc/tisc.info.txt", TISCDIR);
+						snprintf(command, sizeof(command), "more %s/tisc/doc/tisc.info.txt", TISCDIR);
 						system(command) ;
 						exit(0);
 					}
@@ -263,7 +264,7 @@ int inputs (int argc, char **argv)
 			}
 			interpr_command_line_opts(argc, argv);
 			if (reformat) {
-				snprintf(projectname, sizeof(projectname), "%s/doc/template", TISCDIR);
+				snprintf(projectname, sizeof(projectname), "%s/tisc/doc/template", TISCDIR);
 				read_file_parameters(0, reformat);
 				exit(0);
 			}

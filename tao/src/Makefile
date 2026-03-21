@@ -1,20 +1,19 @@
 #Read and modify options in ../config.mk
 #Then type  'make'  in this directory to compile.
 
--include ../config.mk
-
 #------------------------------------------------------------------------
 #You should not modify these directories
-tao_DIR = $(abspath ..)
-HOME_DIR = $(HOME)
-OS 	= $(shell uname -s)
-ARCH 	= $(shell uname -m)
-PROCESSOR = $(shell uname -p)
-USERNAME = $(shell whoami)
-BIN	= ../../bin
-OBJ	= ../../tao+tisc_commons/build
-LIB	= ../../tao+tisc_commons/lib
-INCL	= ../include 
+tisc_DIR  ?= $(abspath ../..)
+include $(tisc_DIR)/config.mk
+
+OS        ?= $(shell uname -s)
+ARCH      ?= $(shell uname -m)
+PROCESSOR ?= $(shell uname -p)
+USERNAME  ?= $(shell whoami)
+BIN       ?= $(tisc_DIR)/bin
+OBJ       ?= $(tisc_DIR)/tao+tisc_commons/build
+LIB       ?= $(tisc_DIR)/tao+tisc_commons/lib
+INCL      ?= ../include 
 
 # --- Fancy output & verbosity control ---
 V ?= 1
@@ -65,7 +64,7 @@ tao :	$(TAO_OBJS) $(OBJ)/libreria.o notify | $(BIN)
 
 $(OBJ)/tao.o : tao.c | $(OBJ)
 	@printf "$(BLUE)$(BOLD)[CC]$(RESET) $<\n"
-	$(Q)$(CC) $(CFLAGS) -c -o $@ -DVERSION=\"$(VERSION)\" -D'TAODIR="$(tao_DIR)"' tao.c
+	$(Q)$(CC) $(CFLAGS) -c -o $@ -DVERSION=\"$(TAO_VERSION)\" -D'TISCDIR="$(tisc_DIR)"' tao.c
 	$(Q)if [ -x /usr/bin/ctags ]; then \
 		ctags *.c ../../tao+tisc_commons/src/libreria.c ../include/*.h ;\
 		mv -f tags tao.tags; echo tags file produced.;\
@@ -85,7 +84,7 @@ $(OBJ)/libreria.o : ../../tao+tisc_commons/src/libreria.c | $(OBJ)
 
 taofit : $(OBJ)/libreria.o $(OBJ)/globals.o $(OBJ)/taofit.o | $(OBJ) $(BIN)
 	@printf "$(GREEN)$(BOLD)[LD]$(RESET) $@\n"
-	$(Q)$(CC) $(OBJ)/taofit.o $(OBJ)/globals.o $(OBJ)/libreria.o -lc -lm -o $(BIN)/taofit
+	$(Q)$(CC) $(OBJ)/taofit.o $(OBJ)/globals.o $(OBJ)/libreria.o $(LIBS) -o $(BIN)/taofit
 	$(Q)chmod a+x $(BIN)/taofit
 
 notify :

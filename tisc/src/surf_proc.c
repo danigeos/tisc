@@ -138,6 +138,8 @@ int Surface_Transport (ModelConfig *cfg, ModelContext *ctx, float **topo_ant, in
 
 		Define_Drainage_Net(sortcell, cfg, ctx);
 
+		for(int r=0; r<cfg->Ny; r++) for(int c=0; c<cfg->Nx; c++) lake_max[r][c] = drainage[r][c].lake;
+
 		Calculate_Precipitation_Evaporation(cfg, ctx);
 		
 		Ice_Flow(cfg, ctx, ice_velx_sl, ice_vely_sl, ice_velx_df, ice_vely_df, dt_st, &total_ice_melt, &total_ice_precip, &total_lost_water, &total_evap_water);
@@ -373,15 +375,24 @@ int Calculate_Discharge (struct GRIDNODE *sortcell, ModelConfig *cfg, ModelConte
 			}
 
 			/*Adds the rainfall water (m3/s) to the water transported to this cell: */
-			runoff = precipitation[row][col] * dx*dy;
-			/*Put the rain of open lakes and sea in their outlets. Closed lakes keep it at the recipient coastal node*/
+			float actual_rain = precipitation[row][col] * dx*dy;
+			runoff = actual_rain;
+			
+			/* Put the rain of open lakes and sea in their outlets. 
+			   Closed lakes MUST NOT add it to 'L' nodes' discharge either, 
+			   to avoid double counting in Lake_Input_Discharge! */
 			if (drainage[row][col].type == 'L') {
-				if (Lake[il].n_sd) runoff = 0; /*!! the 'if' was commented before 2024-05-18, probable cause for lower total precipitation during endorheism in Lago-Mare model*/
+				runoff = 0; 
 			}
-			drainage[row][col].C_Ca += runoff * C_Ca_RIV;
-			drainage[row][col].C_SO4 += runoff * C_SO4_RIV;
-			drainage[row][col].C_Na += runoff * C_Na_RIV;
-			drainage[row][col].C_Cl += runoff * C_Cl_RIV;
+
+			/* Add ions from local rain */
+			if (drainage[row][col].type != 'L' || (il && Lake[il].n_sd == 0)) {
+				drainage[row][col].C_Ca += actual_rain * C_Ca_RIV;
+				drainage[row][col].C_SO4 += actual_rain * C_SO4_RIV;
+				drainage[row][col].C_Na += actual_rain * C_Na_RIV;
+				drainage[row][col].C_Cl += actual_rain * C_Cl_RIV;
+			}
+
 			if (drainage[row][col].type == 'E') {
 				/*Put into this outlet the rain from lake nodes draining here.*/
 				for (int i=0; i<Lake[il].n; i++) {
@@ -395,8 +406,14 @@ int Calculate_Discharge (struct GRIDNODE *sortcell, ModelConfig *cfg, ModelConte
 					}
 				}
 			}
-			total_rain += runoff;
+			total_rain += actual_rain;
 			drainage[row][col].discharge += runoff;
+
+			/* If this is an 'L' node in a closed lake, its local rain wasn't added to its discharge 
+			   (to fix Lake_Input_Discharge double counting), but it still evaporates locally. */
+			if (drainage[row][col].type == 'L' && il && Lake[il].n_sd == 0) {
+				*total_evap_water += actual_rain;
+			}
 
 			//If this node remained as lake exit after Attempt_Delete_Node, remove evaporated lake water from this outlet
 			//(evaporation in endorheic lakes is done below)
@@ -700,8 +717,8 @@ int Calculate_Discharge (struct GRIDNODE *sortcell, ModelConfig *cfg, ModelConte
 		}
 		}
 		/*Check: lake input discharge should be ~= evaporation*surface if lake is endorheic*/
-		if (!Lake[il].n_sd && (fabs(lake_evap-Lake_Input_Discharge(cfg, il)) > 1.1*max_evap*dx*dy || verbose_level>=4)) {
-		PRINT_WARNING("Calculate_Discharge: Endorh. lake %d (%d nodes) at [%d][%d] evaporates different %.2f m3/s than inputs %.2f m3/s.", 
+		if (!Lake[il].n_sd && (fabs(lake_evap-Lake_Input_Discharge(cfg, il)) > max_evap*dx*dy*((verbose_level>=4)?1.1:2.1))) {
+		PRINT_WARNING("Endorh. lake %d (%d nodes) at [%d][%d] evaporates %.2f m3/s, different than inputs %.2f m3/s.", 
 				il, Lake[il].n, Lake[il].row[0], Lake[il].col[0], lake_evap, Lake_Input_Discharge(cfg, il) );
 		}
 		/*Check: the lake's registered elevation should be the maximum among lake nodes (except for the sea)*/
@@ -2186,11 +2203,18 @@ int Lake_Fill (
 	/*If the lake is endorheic and there is still some transported mass left, then deposit it uniformly.*/
 	if (!Lake[il].n_sd && drainage[row][col].masstr > .1) {
 		d_mass = -drainage[row][col].masstr * dt_st;
-		for (int i=0; i<Lake[il].n; i++) {
-			Sediment (cfg, ctx, -d_mass/Lake[il].n, Lake[il].row[i], Lake[il].col[i], grainsize);
+		int n_max = 0;
+		for (int r=0; r<cfg->Ny; r++) for (int c=0; c<cfg->Nx; c++) {
+			if (lake_max[r][c] == il) n_max++;
 		}
-		Dhsed = -MASS2SEDTHICK(cfg, d_mass) / Lake[il].n;
-		if ((cfg->verbose_level>=3 && Dhsed>0.5) || (drainage[row][col].masstr>1 && Dhsed>10))
+		if (n_max == 0) n_max = Lake[il].n;
+		for (int r=0; r<cfg->Ny; r++) for (int c=0; c<cfg->Nx; c++) {
+			if (lake_max[r][c] == il) {
+				Sediment (cfg, ctx, -d_mass/n_max, r, c, grainsize);
+			}
+		}
+		Dhsed = -MASS2SEDTHICK(cfg, d_mass) / n_max;
+		if ((cfg->verbose_level>=3 && Dhsed>1) || (drainage[row][col].masstr>1 && Dhsed>10))
 			PRINT_WARNING("filling endorh. lake %d (%d nds, %.1f m3/s), at %.2f,%.2f km in rough way: %.1f m.", 
 				il, Lake[il].n, Lake_Input_Discharge(cfg, il), (col*cfg->dx+cfg->xmin)/1e3, (cfg->ymax-row*cfg->dy)/1e3, Dhsed);
 		drainage[row][col].masstr = 0;
@@ -2619,7 +2643,7 @@ int Delete_Node_From_Lake (ModelConfig *cfg, ModelContext *ctx, int row, int col
 	if (IN_DOMAIN(drainage[row][col].dr_row, drainage[row][col].dr_col)) 
 		ild = drainage[drainage[row][col].dr_row][drainage[row][col].dr_col].lake;
 	else 	ild = 0;
-	if (maxderneg==0 && (drainage[row][col].type=='E' || ild)) {
+	if (maxderneg==0 && ild) {
 		/*Leave it the same*/
 	}
 	else {
@@ -3154,78 +3178,12 @@ int Unify_Lakes (ModelConfig *cfg, ModelContext *ctx, int i_lake, int i_lake_to_
 
 	PRINT_DEBUGPLUS("Unifying lakes %d (%d nodes, %d exits) and %d (%d nodes, %d exits, this lake will be deleted) out of %d.", i_lake, Lake[il].n, Lake[il].n_sd, i_lake_to_delete, Lake[ild].n, Lake[ild].n_sd, nlakes);
 
-	Lake[il].n	+= Lake[ild].n;
-	Lake[il].n_sd += Lake[ild].n_sd;
-	Lake[il].row	= realloc(Lake[il].row, Lake[il].n*sizeof(int));
-	Lake[il].col	= realloc(Lake[il].col, Lake[il].n*sizeof(int));
-	Lake[il].row_sd = realloc(Lake[il].row_sd, Lake[il].n_sd*sizeof(int));
-	Lake[il].col_sd = realloc(Lake[il].col_sd, Lake[il].n_sd*sizeof(int));
-	/*Resort nodes and saddles/exits in increasing order of altitude/elevation, it's sometimes used!*/
-	/*This algorithm assumes that both unifying lakes had already their nodes and exits sorted by elevation in the Lake structure*/
-	for (i=0; i<Lake[ild].n; i++) {
-		if (Lake[il].n!=Lake[ild].n) for (j=0; j<Lake[il].n-Lake[ild].n+i; j++) {
-		if (ctx->topo[Lake[ild].row[i]][Lake[ild].col[i]] < ctx->topo[Lake[il].row[j]][Lake[il].col[j]]) {
-			/*Shift upwards the lake nodes above this one to make romm for it*/
-			for (k=Lake[il].n-Lake[ild].n+i; k>j; k--) {
-				Lake[il].row[k] = Lake[il].row[k-1];
-			Lake[il].col[k] = Lake[il].col[k-1];
-			}
-			/*Now transfer the deleted-lake node to that place*/
-			Lake[il].row[j] = Lake[ild].row[i];
-			Lake[il].col[j] = Lake[ild].col[i];
-			break;
-		}
-		else if (j==Lake[il].n-Lake[ild].n+i-1) {
-			Lake[il].row[j+1] = Lake[ild].row[i];
-			Lake[il].col[j+1] = Lake[ild].col[i];			
-		}
-		} 
-		else {
-			Lake[il].row[i] = Lake[ild].row[i];
-			Lake[il].col[i] = Lake[ild].col[i];
-		}
-	}
-	for (i=0; i<Lake[ild].n_sd; i++) {
-		if (Lake[il].n_sd!=Lake[ild].n_sd) for (j=0; j<Lake[il].n_sd-Lake[ild].n_sd+i; j++) {
-		if (OUT_DOMAIN(Lake[il].row_sd[j], Lake[il].col_sd[j])) PRINT_DEBUG("\a$$$$$$$$$$$$$$$$$$$$ %d   %d  %d   [%d][%d]", il, j, Lake[il].n_sd, Lake[il].row_sd[j], Lake[il].col_sd[j]);
-		if (ctx->topo[Lake[ild].row_sd[i]][Lake[ild].col_sd[i]] < ctx->topo[Lake[il].row_sd[j]][Lake[il].col_sd[j]]) {
-			/*Shift upwards the lake nodes above this one to make room for it*/
-			for (k=Lake[il].n_sd-Lake[ild].n_sd+i; k>j; k--) {
-				Lake[il].row_sd[k] = Lake[il].row_sd[k-1];
-			Lake[il].col_sd[k] = Lake[il].col_sd[k-1];
-			}
-			/*Now transfer the deleted-lake node to that place*/
-			Lake[il].row_sd[j] = Lake[ild].row_sd[i];
-			Lake[il].col_sd[j] = Lake[ild].col_sd[i];
-			break;
-		}
-		else if (j==Lake[il].n_sd-Lake[ild].n_sd+i-1) {
-			Lake[il].row_sd[j+1] = Lake[ild].row_sd[i];
-			Lake[il].col_sd[j+1] = Lake[ild].col_sd[i];			
-		}
-		}
-		else {
-			Lake[il].row_sd[i] = Lake[ild].row_sd[i];
-			Lake[il].col_sd[i] = Lake[ild].col_sd[i];
-		}
-	}
-
 	/*Changes the associated drainage lake signal*/
-	for (i=0; i<Lake[ild].n; i++) drainage[Lake[ild].row[i]][Lake[ild].col[i]].lake = i_lake;
-
-	/*Check: nodes and outlets of the extended lake il should now be sorted, complete, and not repeated*/
-	for (j=0; j<Lake[il].n; j++) {
-		if (OUT_DOMAIN(Lake[il].row[j], Lake[il].col[j])) PRINT_ERROR("\a$@ lake:%d   %d/%d   [%d][%d]", il, j, Lake[il].n, Lake[il].row[j], Lake[il].col[j]);
-		if (j>0) if (ctx->topo[Lake[il].row[j]][Lake[il].col[j]] < ctx->topo[Lake[il].row[j-1]][Lake[il].col[j-1]]) PRINT_ERROR("\a$#Lake nodes not well sorted:%d   %d/%d   [%d][%d]", il, j, Lake[il].n, Lake[il].row[j], Lake[il].col[j]);
-		if (drainage[Lake[il].row[j]][Lake[il].col[j]].lake != i_lake) PRINT_ERROR("\a$$Lake drainage badly defined:%d   %d/%d   [%d][%d]", il, j, Lake[il].n, Lake[il].row[j], Lake[il].col[j]);
-		for (i=0; i<j; i++) {if (Lake[il].row[i]==Lake[il].row[j] && Lake[il].col[i]==Lake[il].col[j]) PRINT_ERROR("\a$&Lake nodes repeated:%d   %d/%d   [%d][%d]", il, j, Lake[il].n, Lake[il].row[j], Lake[il].col[j]);}
+	for (i=0; i<Lake[ild].n; i++) {
+		drainage[Lake[ild].row[i]][Lake[ild].col[i]].lake = i_lake;
+		Add_Node_To_Lake(Lake[ild].row[i], Lake[ild].col[i], i_lake);
 	}
-	for (j=0; j<Lake[il].n_sd; j++) {
-		if (OUT_DOMAIN(Lake[il].row_sd[j], Lake[il].col_sd[j])) PRINT_ERROR("\a$* lake:%d   %d/%d   [%d][%d]", il, j, Lake[il].n_sd, Lake[il].row_sd[j], Lake[il].col_sd[j]);
-		if (j>0) if (ctx->topo[Lake[il].row_sd[j]][Lake[il].col_sd[j]] < ctx->topo[Lake[il].row_sd[j-1]][Lake[il].col_sd[j-1]]) PRINT_ERROR("\a$#Lake nodes not well sorted:%d   %d/%d   [%d][%d]", il, j, Lake[il].n, Lake[il].row_sd[j], Lake[il].col_sd[j]);
-		if (drainage[Lake[il].row_sd[j]][Lake[il].col_sd[j]].lake != i_lake) PRINT_ERROR("\a$$Lake outlet drainage badly defined:%d   %d/%d   [%d][%d]", il, j, Lake[il].n, Lake[il].row_sd[j], Lake[il].col_sd[j]);
-		for (i=0; i<j; i++) {if (Lake[il].row_sd[i]==Lake[il].row_sd[j] && Lake[il].col_sd[i]==Lake[il].col_sd[j]) PRINT_ERROR("\a$&Lake outlets repeated:%d   %d/%d   [%d][%d]", il, j, Lake[il].n, Lake[il].row_sd[j], Lake[il].col_sd[j]);}
-	}
+	for (i=0; i<Lake[ild].n_sd; i++) Add_Outlet_To_Lake(Lake[ild].row_sd[i], Lake[ild].col_sd[i], drainage[Lake[ild].row_sd[i]][Lake[ild].col_sd[i]].dr_row, drainage[Lake[ild].row_sd[i]][Lake[ild].col_sd[i]].dr_col, i_lake);
 	
 	Deallocate_Lake(ild);
 

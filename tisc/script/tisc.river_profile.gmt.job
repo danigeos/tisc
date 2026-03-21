@@ -9,23 +9,23 @@ set prj 	= $1
 set width = 13
 set separation = .8
 
-source $tisc_dir/script/tisc.common.gmt.job
+source $tisc_dir/tisc/script/tisc.common.gmt.job
 
 echo "Syntax: 	$0 'prj-name' basin_number"
 echo "Syntax:   $0 'prj-name' x, y[km] (add 'i' to plot the whole basin)"
 
 
-source $tisc_dir/script/tisc.common.river_basin_chosen.gmt.job
+source $tisc_dir/tisc/script/tisc.common.river_basin_chosen.gmt.job
 
 #set lmax = 400 #`sort $tmp.chosen_basin.bas.tmp -n -k 7 | tail -n 1 | awk '{print $7}'`
 set zmin = -300
 set zmax = 300 #`echo $zmax | awk '{print $1*1e3}'`
 echo lmax= $lmax, $zmin, $zmax
-psbasemap -JX$width/6 -R000/$lmax/$zmin/$zmax \
+psbasemap -JX$width/6 -R000/$lmax/$zminkm/$zmaxkm \
 	-Ba500f100:"distance along river (km)":/a100f20g1000:"elevation, z (m)":nSeW \
 	-Y4 -X3.5 -K -P > $ps
 
-source $tisc_dir/script/tisc.common.river_profile.gmt.job
+source $tisc_dir/tisc/script/tisc.common.river_profile.gmt.job
 
 
 #Peaks: upper topography envelope profile:
@@ -83,7 +83,7 @@ set zmin = -.8
 set zmint = `echo $zmax $zmin | awk '{print ($2+($1-$2)/50)}'`
 set zmaxt = `echo $zmax $zmin | awk '{print ($1-($1-$2)/50)}'`
 set zmaxt2 = `echo $zmax $zmin | awk '{print ($1-($1-$2)/14)}'`
-psbasemap -JX$width/3.5 -R0/$lmax/$zmin/$zmax \
+psbasemap -JX$width/3.5 -R0/$lmax/$zminkm/$zmaxkm \
 	-Ba200f50/a.5f.1g50:"sedimentation/erosion rate (km/Myr)":nSeW \
 	-Y8 -O -K >> $ps
 awk '{if ($3>dl && ($5=="R" || $5=="E")) print $7, $12/1e3, $4/$3, .002+.01*log($3/dl)}' dl=$disch1 \
@@ -115,7 +115,7 @@ psbasemap -JX$size -R$Region -B:"":/:"":nsew \
 set disch1 = 100
 set disch2 = 500
 set disch3 = 2000
-#source $tisc_dir/script/tisc.common.topo+drainage.gmt.job
+#source $tisc_dir/tisc/script/tisc.common.topo+drainage.gmt.job
 
 
 #TOPOGRAPHY:

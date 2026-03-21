@@ -58,3 +58,16 @@
 				301x301 -> 28.2s
 				401x401 -> 83s
 				751x501 -> 281s = 4m41s
+				(601x301)*112*(1flex_step+1SPsteps) Lago-Mare -> 1week
+	2026-03	OSX13.5  Mac Mini chip: M2 Pro 
+				141x141 -> 2.0s
+				301x301 -> 29s
+				401x401 -> 83s
+				751x501 -> 360s = 6m #same processor, it got old...
+				(601x301)*112*(1flex_step+1SPsteps) Lago-Mare -> 1week
+	2026-03	OSX13.5  Mac Mini chip: M2 Pro 
+				141x141 -> 2.0s
+				301x301 -> 29s
+				401x401 -> 89s
+				751x501 -> 360s = 6m #same processor, it got old...
+				(601x301)*112*(1flex_step+1SPsteps) Lago-Mare -> 1week

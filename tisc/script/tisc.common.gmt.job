@@ -195,7 +195,7 @@ set x_corner[13] = `awk '{a=$1; b=$2; if (NR>1) {l += sqrt((a-aa)*(a-aa)+(b-bb)*
 endif
 
 #PALETTES:
-$tisc_dir/script/generate_topo_cpt.job $sea_level > $tmp.topo_palet.tmp
+$tisc_dir/tisc/script/generate_topo_cpt.job $sea_level > $tmp.topo_palet.tmp
 #generate_topo_cpt.job $sea_level > $tmp.topo_palet.tmp
 #makecpt -Cglobe  > $tmp.topo_palet.tmp
 

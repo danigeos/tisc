@@ -11,7 +11,7 @@
 
 set name 	= $1
 echo runnning COMMON...
-source $tisc_dir/script/tisc.common.gmt.job
+source $tisc_dir/tisc/script/tisc.common.gmt.job
 set ps		= $name.eros-sed.ps
 
 set width = 8

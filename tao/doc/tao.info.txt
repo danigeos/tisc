@@ -196,7 +196,8 @@
 
 3.- PROGRAM STRUCTURE AND COMPILATION
   tAo is written in C under Linux.
-  Check the file ./tao/README for details on compilation.
+  tAo and TISC share a unified build system via `config.mk` in the root directory.
+  Check the doc/tAo_Documentation.md file for details on compilation.
   The main source code file is src/tao.c, description of variables use 
   in file include/tao.h. 
   Check the FAQ section below in this document.
@@ -472,118 +473,6 @@
     al, 1996).
 
 
-
-10.- VERSION HISTORY
-  v1.0 (1993) Proto-model or numerical algorithm to calculate thin plate
-    elastic and viscoelastic flexure.
-  v2.0 (1994) Inclusion of moving loads and surface processes. Gravity anomaly
-    calculations.
-  v3.0 (1995) Multilayered elastic-plastic rheology. Geoid anomaly
-    calculations.
-  v3.2 (1996) Inclusion of thrust loading and sediment deformation. Command-
-    line options.
-  v3.21(1997) Allows sea_level variations along time. Allows erosion/sedimen-
-    tation variations along time.
-  v3.3 (1998) Stress history is accounted for.
-  v3.4 (1999) Change in param. file keeping compatibility with v3.3. Parameters
-    are now read in any order and non of them is required in the '.PRM' file.
-    This will allow to keep compatibility easily in future versions. Moreover,
-    now is possible to resume a model that was stopped, which will allow more
-    freedom to change parameters during execution avoiding new input files
-    (option -F). Option 'c' in loads to cut Blocks with faults (works better
-    than 'C'.
-  v4.0 (2002) Fluvial sediment transport. Loads and faults now defined in
-    *n.UNIT input files (instead of *n.CRG) file, and the file accepts now
-    a list of parameters for the new Block. Files *.H0 and *.W0 are now
-    called *.ZINI and *.WINI, respectively.
-    (2004) Orographic precipitation implemented following a conservative
-    scheme  (runoff=precipitation-evaporation).
-    (2005) A memory bug solved in surface_transport (this was producing
-    NaN results in a quite unpredictable manner).
-  tAo_2006-11-02 Removed bugs in -Q mode, now pressure is entered instead of
-    thickness.
-  tAo_2009-12-07 Additional erosion models implemented.
-  tAo_2012-08-29
-    Change in output extensions that differ from inputs only in their case,
-    auch as '*.eet' -> '*.eeth' and '*.yse' -> '*.ysen'. This is to avoid
-    conflict in Mac computers. Successfully compiled for Mac IOS 10.7.5
-    Solved bug during -F (project resume) option.
-  tAo_2014-09-21
-    Erosion models 6 and 7.
-    Graphic scripts now distiguish old sediment in cross section.
-    Improved sediment deformation. 'deform_sed' parameter added. Sediment above 
-    moving Blocks is transported and piled in front. 
-    Change in units of precipitation and sed. load. Incorporation of 
-    riverbasinwidth
-  tAo_2017-05-19
-    Average erodibility is now calculated for the shallowest meters of bedrock.
-    Erosion boundary conditions 0 and 1 are swapped.
-    -v command line option to change velocity of Blocks based on density.
-    Changed UNIT1D and Units structure to BLOCK1D and Blocks, to avoid confusion 
-		with input files (UNITS). 
-  tAo_2019-12-06
-		Gradual sediment compaction now implemented (see new parameter compact_depth).
-		For isost_model>=3: yield stress is now written in *.strs output file. Main 
-		graphic script tao.gmt.job is now accepting a number as 2nd argument, to 
-		predefine the x coordinate for the stress distribution and envelope.  
-  tAo_2025-11-17
-  	Python graphic output available through script/tisc.plot.py 
-  
-
-11.- MODEL LIMITATIONS
-      Blocks move only an entire number of nodes at each time step. Block
-    deformation during motions follows a vertical shear approach
-    (preserving vertical thickness). Rotation of Blocks is not allowed.
-      tAo doesn't account for deformation in lower crust or mantle, and the
-    deformation in the upper crust (by shortening) is kinematically
-    introduced in the model. Subduction is not considered either. Different
-    velocities of shortening for each detachment fault are (still) not
-    implemented.
-      Gradual sediment compaction is not considered, but this shouldn't affect 
-    the sediment onlap/offlap geometry in the external side of the foreland
-    basin, but only the thickness of the Blocks.
-      Grain size or sediment facies distribution of predicted deposits are
-    not differentiated.
-
-
-12.- FAQ - Frequently Asked Questions
-  Q1. How can I manage to learn to use this code on my own?
-  A1. After download, follow instructions in tao/doc/README file in order to
-	compile. Then go to tao/demo and try the examples there to ensure that
-	the code is working properly. Then read carefully tao/doc/tao.info.txt
-	(this file) and  tao/doc/template.PRM and try to experiment modifying
-	the *.PRM files of the demos. Then learn how to build *.UNIT input
-	files from the examples and using the explanations in
-	tao/doc/tao.info.txt. Make sure you did all this before  contacting the
-	author!
-  Q2. I have errors in the compilation, is there a problem in the program?
-  A2. I tested tAo only in some UNIX operative systems such as Linux (Ubuntu),
-	Mac OSX 10, and Solaris (from SUN). Most probably you have a problem
-	with the  compilation options or with the libraries. Try to ask help
-	among your colleagues to succeed in the compilation.
-  Q3. I compiled the program, but I never managed to run it, and always I
-  	get 'segmentation fault' errors.
-  A3. This means you have some incompatibility between some of the functions
-	called in tAo and the ones available in the libraries of your
-	operative  system. You have to edit the code and search or those
-	problems.  You will need the help of someone around you who have
-	experience  in programing and/or in compiling C programs.
-  Q4. Can you help me to solve the problems I have to run tAo?
-  A4. In general, I try to answer the questions you send by email, but usually
-	i cannot say much more than what you just read in this file.
-	Unfortunately, I can not provide you a close technical  support on the
-	compilation process, but this has a good side: you get this program for
-	free. Because my interests are in the scientific use of tAo and its
-	application to geological scenarios, I will be pleased to help you with
-	any problem you have during the  development of a model and will be
-	pleased to stablish a scientific colaboration.
-  ON UNIT DEFINITION:
-  Q5. Is it possible to stop a fault and then reactivate it again?
-  A5. You can stop a fault at a given time by using the time_stop
-  	parameter in the *.UNIT file.  To reactivate it, repeate the
-  	same fault geometry in another *.UNIT file with the velocity you
-  	wish.  Use tao -hu to get the possible parameters in every
-  	*.UNIT file.
 
 13.- GLOSSARY
   Hidden load

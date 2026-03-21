@@ -13,7 +13,7 @@ set prj 	= $1
 
 set width = 8
 
-source $tisc_dir/script/tisc.common.gmt.job
+source $tisc_dir/tisc/script/tisc.common.gmt.job
 
 awk '{if (($1>=zmin*1e3 && $5<=zmax*1e3) || $1=="B" || $1=="F" ) print $0 }' zmin=$zmin zmax=$zmax \
 	$tmp.topo_palet.tmp > $tmp.topo_palet2.tmp
@@ -22,7 +22,7 @@ mv $tmp.topo_palet2.tmp $tmp.topo_palet.tmp
 #TOPOGRAPHY & DRAINAGE:
 psbasemap -JX$size -R$Region -B$ticklabels\:"x (km)":/$ticklabels\:"y (km)":NseW \
 	-Y10 -X2 -K -P > $ps
-source $tisc_dir/script/tisc.common.topo+drainage.gmt.job
+source $tisc_dir/tisc/script/tisc.common.topo+drainage.gmt.job
 
 pstext	-JX -R -G0 -W255/255/255 -O -K <<END >> $ps 
 	$xtime	$ytime	13 0 1 9	$Timenow Ma
@@ -39,7 +39,7 @@ if (-r $prj.CMP.grd) grdcontour $prj.CMP.grd -JX -R -C10000 -W5/200/0/0 -O -K >>
 #EROSION/SEDIM:
 psbasemap -JX$size -R -B$ticklabels\:"x (km)":/$ticklabels\:"y (km)":Nsew \
 	-X$horz_shift -K -O >> $ps
-source $tisc_dir/script/tisc.common.erosion.gmt.job
+source $tisc_dir/tisc/script/tisc.common.erosion.gmt.job
 
 if (-r $prj.pfl) psxy $prj.pfl -JX -R -M -W$col_lin -H2 -O -K >> $ps 
 if (-r $prj.CMP) psxy $prj.CMP -JX -R -M -W4/0/0/0 -O -K >> $ps
@@ -59,11 +59,11 @@ if (-r $prj.pfl) then
 	set width_CS = `echo  2 \* $width + $separation  | bc -l`
 	set horz_shift_CS = `echo - $width - $separation  | bc -l`
 
-	psbasemap -JX$width_CS/$height_CS -R0/$dmax/$zmin/$zmax \
+	psbasemap -JX$width_CS/$height_CS -R0/$dmax/$zminkm/$zmaxkm \
 		-B$ticklabels\:"distance (km)":/$zticklabels\:"z (km)":SeW \
 		-O -K -X$horz_shift_CS -Y$vert_shift_CS >> $ps
 
-	source $tisc_dir/script/tisc.common.cross_section.gmt.job
+	source $tisc_dir/tisc/script/tisc.common.cross_section.gmt.job
 endif
 
 

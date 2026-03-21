@@ -119,7 +119,7 @@ int inputs(ModelConfig *cfg, ModelContext *ctx, int argc, char **argv)
 	switch_strs_history = true;
 	setbuf(stdout, NULL);
 
-	putenv("tao_dir=" TAODIR); 
+	putenv("tisc_dir=" TISCDIR); 
 	
 	/*Version of tAo will be matched against the parameters file *.PRM*/
 	/*¡¡ UPDATE template.PRM !!*/
@@ -127,7 +127,7 @@ int inputs(ModelConfig *cfg, ModelContext *ctx, int argc, char **argv)
 	version[sizeof(version) - 1] = '\0';
 
 	/*Default parameter values are read from ./tao/doc/template.PRM*/
-	snprintf(projectname, sizeof(projectname), "%s/doc/template", TAODIR);
+	snprintf(projectname, sizeof(projectname), "%s/tao/doc/template", TISCDIR);
 	success_def_prm = read_file_parameters(0, 0);
 	projectname[0] = '\0';
 
@@ -155,17 +155,17 @@ int inputs(ModelConfig *cfg, ModelContext *ctx, int argc, char **argv)
 					switch (argv[iarg][2]) {
 						case 'p':
 							fprintf(stderr, "\nFile ./tao/doc/template.PRM (sample parameters file) follows in stdout:\n") ;
-						snprintf(command, sizeof(command), "cat %s/doc/template.PRM", TAODIR);
+						snprintf(command, sizeof(command), "cat %s/tao/doc/template.PRM", TISCDIR);
 						system(command) ;
 						break;
 						case 'c':
 							fprintf(stderr, "\nFile ./tao/doc/template.PRM (sample parameters file) follows in stdout:\n") ;
-						snprintf(command, sizeof(command), "cat %s/doc/template.PRM | %s/script/cleanPRM", TAODIR, TAODIR);
+						snprintf(command, sizeof(command), "cat %s/tao/doc/template.PRM | %s/tao/script/cleanPRM", TISCDIR, TISCDIR);
 						system(command) ;
 						break;
 						case 'u':
 							fprintf(stderr, "\nFile ./tao/doc/template.UNIT (sample unit file) follows in stdout:\n") ;
-						snprintf(command, sizeof(command), "cat %s/doc/template.UNIT", TAODIR);
+						snprintf(command, sizeof(command), "cat %s/tao/doc/template.UNIT", TISCDIR);
 						system(command) ;
 						break;
 						default:
@@ -177,8 +177,8 @@ int inputs(ModelConfig *cfg, ModelContext *ctx, int argc, char **argv)
 					exit(0);
 				case '-':
 					if (strcmp(argv[iarg], "--help") == 0) {
-						fprintf(stderr, "\nFile ./tao/doc/tao.info.txt follows:\n") ;
-						snprintf(command, sizeof(command), "more %s/doc/tao.info.txt", TAODIR);
+						fprintf(stderr, "\nFile ./tisc/tao/doc/tao.info.txt follows:\n") ;
+						snprintf(command, sizeof(command), "more %s/tao/doc/tao.info.txt", TISCDIR);
 						system(command) ;
 						exit(0);
 					}
@@ -246,7 +246,7 @@ int inputs(ModelConfig *cfg, ModelContext *ctx, int argc, char **argv)
 				exit(EXIT_FAILURE);
 			}
 			if (reformat) {
-				snprintf(projectname, sizeof(projectname), "%s/doc/template", TAODIR);
+				snprintf(projectname, sizeof(projectname), "%s/tao/doc/template", TISCDIR);
 				read_file_parameters(0, reformat);
 				exit(0);
 			}

@@ -37,6 +37,7 @@ int Allocate_Memory_for_external_use()
 		drainage =    	(struct DRAINAGE **) calloc(Ny, sizeof(struct DRAINAGE *));
 		for (i=0; i<Ny; i++) drainage[i] = (struct DRAINAGE *) calloc(Nx, sizeof(struct DRAINAGE));
 		lake_former_step = alloc_matrix_int(Ny, Nx);
+		lake_max = alloc_matrix_int(Ny, Nx);
 	}
 	if (erosed_model) {
 		eros_now	= alloc_matrix(Ny, Nx);

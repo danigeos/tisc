@@ -33,10 +33,10 @@ sudo apt-get install gmt ksh csh tofrodos
 1. Uncompress the downloaded file into a directory named `tao/`.
 2. Check the compiling options in `tao/config.mk`.
 3. Compile by typing `make` in the main directory. This will create the executable `tao` in the `bin/` directory.
-4. Add `tao/bin/` and `tao/script/` to your system `PATH` and define the `tao_dir` variable in your environment:
+4. Add `tao/bin/` and `tao/script/` to your system `PATH` and define the `tisc_dir` variable in your environment:
    ```sh
-   export tao_dir=/path/to/tao
-   export PATH=$PATH:$tao_dir/bin:$tao_dir/script
+   export tisc_dir=/path/to/tisc
+   export PATH=$PATH:$tisc_dir/bin:$tisc_dir/tao/script
    ```
 
 ## Getting Started

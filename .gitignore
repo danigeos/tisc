@@ -44,6 +44,12 @@ tags
 *.thicksalt
 *.surftransp
 *.ice
+*.xyz
+
+#tao
+*.eros
+*.xzt
+*.mmp
 *.ysen
 *.temp
 *.tempini
@@ -56,3 +62,8 @@ tags
 *.jpg
 *.png
 *.svg
+*.xvg
+*.bk
+*.bak
+*.back
+*.log

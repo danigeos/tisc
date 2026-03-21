@@ -49,7 +49,7 @@ To compile and run tAo, you will need:
 *   (Optional) GMT 4 or Python 3 for graphical output.
 
 ### 2.2. Compilation
-Run the `make` command in the `tao` root directory:
+tAo and TISC share a unified build system. Run the `make` command in the root directory (where `config.mk` is located):
 ```sh
 make
 ```
@@ -75,28 +75,43 @@ tao [options] project_name
 ### 3.2. Command-Line Options
 Command-line options override variables initialized inside the `*.PRM` file.
 
-*   `-A[1|2]`: Switches gravity calculations on (1 for Bouguer; 2 for Free Air).
-*   `-B<bound_type>`: Sets boundary conditions type (0 to 5).
-*   `-D[x0/xf]`: Sets the model region domain bounds in meters.
-*   `-d<dx>`: Sets the `x` spatial increment used for the finite differences grid.
-*   `-F[file]`: Resumes a previous model reading from a `.all` file.
-*   `-f[2]`: Reformats the parameters file `project.PRM` to match the current version syntax. Add `2` to shorten.
-*   `-h[i|u|p|c]`: Show help menu. `p` prints the default PRM, `c` prints clean PRM, `u` prints a sample UNIT file.
-*   `-M<lith_type>[t]`: Sets the plate model (0 to 6). Add `t` to suppress accounting for stress history.
-*   `-m<app_mom>`: Boundary moment applied at the left boundary (>0 means clockwise).
-*   `-N<Nx>`: Sets the number of lateral gridding points in the 1D array.
-*   `-o`: Redirects standard output to `projectname.out`.
-*   `-P[c[geom]|p]`: Graphic output. `p` uses Python script `tao.plot.py`. `c` uses GMT.
-*   `-p<tec_force>`: Horizontal tectonic force (>0 means compressive).
-*   `-q<param=value>`: Overrides any specific parameter value listed in the PRM file.
-*   `-Q<file>`: Quick flexural calculation mode. Calculates the elastic deflection of a supplied load file and exits immediately.
-*   `-r<a|c|i|m|e><density>`: Sets density of asthenosphere (a), crust (c), infill (i), mantle (m), or environment (e).
-*   `-S<b>/<n>`: Moves block number `b` by `n` positions (used with `-F`).
-*   `-s<app_force>`: Applied vertical shear force at the left boundary (>0 means upwards).
-*   `-T<eet>`: Sets elastic thickness. `-1` means initial Te will be read from the `*.eeth` file instead.
-*   `-t<i|f|d|v|r><time>`: Sets times: initial (i), final (f), increment (d), viscous relaxation (v), or record (r).
-*   `-V[<level>]`: Sets the verbose level (0-5) for standard output prints.
-*   `-v[<num>/<vel>]`: Changes velocity for block number `<num>` (if `<num>` < 0, applies to all blocks with density = `-num`).
+```text
+tao  project  -A[1|2] -B<bound_type> -D[x0/xf] -d<dx> -F[file] -f[2] 
+      -h[i|u|p]
+      -M<lih_type>[t] -m<app_mom> -N<Nx> -o -P[0|1|2|3][geom] -p<tec_force>
+      -q<param=value> -Q<file>  -r<a|c|i|m|a><density> -S<b>/<n> 
+      -s<app_force> -T<eet> -t<i|f|d|v|r><time> -V[<level>] 
+      -v[<num>/<vel>]
+```
+
+**Options:**
+*   `project` is the root name for the project files (i.e., if project=test then the parameters file should be test.PRM and the first load test1.UNIT.
+*   `-A` Switches gravity calculations on (1 for Bouguer; 2 for Free Air).
+*   `-B` Sets boundary conditions type (0 to 5, see template.PRM file).
+*   `-D` Set the model region (domain: left and right coordinates) [m]. Modifies parameters x0,xf,xmin,xmax.
+*   `-d` Sets the x increment used for finite differences method.
+*   `-F` To continue (resume) a previous model reading `<file>`. `<file>` is a binary file written by tAo as 'project.all' (default file is 'project.all'). Put this option always *after* the project name in the command.
+*   `-f` Reformats the parameters file 'project.PRM' according to the present version (using 'template.PRM'). Writes to stnd. output. Add '2' to shorten.
+*   `-h` To show this information file. Append 'p' to print the default parameters file in stdout; 'c' to print a clean version of it; 'u' to print an example of load file; 'i' (default) to print this help file.
+*   `-M` Sets the plate model. (0 to 6, see isost_model parameter template.PRM). Add 't' to supress accounting for stress history.
+*   `-m` Sets the boundary moment applied at left boundary. >0 means clockwise.
+*   `-N` Sets the number of lateral gridding points (Nx).
+*   `-o` Redirects standard output to file projectname.out.
+*   `-P` Sets the plotting mode:
+    *   `-P0` (default) no plotting.
+    *   `-P1` produce a postscript graphic display using GMT (tao.gmt.job) at the end of the run.
+    *   `-P2` make it every time step and convert the PS files into JPG using ImageMagick. Append geometry (default is: `-P2"-trim -density 120"`, which crops the rectangle used and then saves it into JPG format with 120dpi).
+    *   `-P3` use the python graphic script tao.plot.py instead at every time step.
+*   `-p` Sets the tectonic horizontal force in the plate. >0 means compressive.
+*   `-q` Sets a value for any parameter listed in the parameter file `*.PRM`. Internal tAo units are expected (usually IS), rather than those units used in the PRM.
+*   `-Q` Quick flexural calculation. With this option tAo will just calculate the elastic deflection in response to `<file>` (2 columns: x[m],pressure[Pa]). Will write deflection to the standard output and exit the program. With this option, tAo doesn't need a projectname, since no other files are read nor written.
+*   `-r` Sets density of environment (e), crust (c), infill (i), mantle (m), or asthenosphere (a).
+*   `-S` Move block number `<b>` by `<n>` positions (use with `-F`).
+*   `-s` Sets the applied vertical shear force at left boundary. >0 means upwards.
+*   `-T` Sets elastic thickness to `<eet_value>`. For the case of multilayered rheology plate, eet_value=-1 indicates that the initial Te must not be constant or read from the `*.EET` file, but from the `*.eeth` file.
+*   `-t` Sets initial (i), final (f), increment (d), viscous relaxation (v) or sediment-block-record (r) times. Time is in My and goes from negative to positive values (Timeini<Timefinal).
+*   `-V` Means verbose mode with additional run-time prints. Add `<level>` for additional i/o information. See doc/template.PRM file for level specification.
+*   `-v` Changes velocity to `<vel>` for block number `<num>` or, if `<num><0`, to all blocks with density=-<num> (use with `-F`).
 
 ### 3.3. Runtime Signals
 When running, the program prints single-character signals indicating the current calculation loop:
@@ -110,34 +125,67 @@ When running, the program prints single-character signals indicating the current
 
 ## 4. Input Files
 
-All inputs are read sequentially from: (a) `project.PRM`, (b) command line options, (c) other files named `project.*` with an uppercase extension, and (d) from the `project.all` file when the `-F` option is used.
+Input files are named with an uppercase extension. Inputs are read sequentially from: (a) parameters file `project.PRM`, (b) command line options, (c) other input files named `project.*` (files starting with the project name with an uppercase extension), and (d) from the `project.all` file when `-F` option is used. (b) values override (a); (c) overrides (a) and (b); (d) overrides all. Default units are I.S. 
 
-*   `project.PRM`: The master parameters file.
-*   `projectN.UNIT`: Defines tectonic architecture, moving blocks, thrusts, and vertical loads. Numbered sequentially.
-*   `project.ZINI`: Defines the initial bathymetry/topography.
-*   `project.EET`: Variable Elastic Thickness spatial distribution file.
-*   `project.YSE`: Direct Yield Stress Envelope file (overrides temperature-based rheology).
-*   `project.TMP`: Temperature file containing vertical geotherms.
-*   `project.CRUST`: Variable crust thickness.
-*   `project.UCRUST`: Variable upper crust thickness.
-*   `project.SLV`: Time-series of Sea Level and erosion/sedimentation baselines.
-*   `project.WINI`: Initial baseline isostatic deflection.
-*   `project.REC`: Specific timeline horizon recording triggers.
-*   `project.CMP`: An external x-z polyline used solely to compare tAo outputs graphically against real-world observations.
+*   **`project.PRM`**: Parameters file. This file is compulsory unless using the `-Q` option. The parameter values defined in it can be also changed with the command line options listed above. `tao/doc/template.PRM` file is an explained example containing the default parameter values. The internal use of each parameter is also somewhat explained in the include file `tao.h`.
+*   **`projectN.UNIT`**: File modifying the geometry/architecture of the model setup (adds tectonic Blocks, vertical loads, moving blocks, faults, etc). `N` is the number of this load: The first load file should be named `project1.UNIT`. The time of each UNIT (`doc/template.UNIT`) must increase with `N`. tAo deformation consists of moving predefined blocks of prescribed velocity and geometry by an entire number of cells at each time step. The minimum shift is either 0 or 1 cells. If your time step dt is 0.5 Myr, velocity is 5 km/Myr and cell size is 10 km, the block will move only once every 4 time steps. So, depending on the grid cell size, the motion will become more or less abrupt. 
+*   **`project.ZINI`**: Initial height (optional).
+
+Lithosphere rigidity or elastic thickness (for the isostatic calculations) can be entered in 4 ways: 1) Constant EET provided in `*.PRM`; 2) Laterally varying EET defined in `*.EET`; 3) EET calculated from an input yield stress envelope in `*.YSE`; and 4) EET calculated from the temperature distribution in the lithospheric plate and the crustal geometry (`*.TMP`, `*.CRUST`, `*.UCRUST`). 1) and 2) apply only when isost_model=1,2. 3) and 4) apply for isost_model>=3. 
+
+*   **`project.EET`**: Elastic thickness file (optional, defaults to default_Te parameter, see `*.PRM` file). Also used as initial Te for the multilayered plate case.
+    ```text
+    x1  thickness1
+    x2  thickness2
+    x3  thickness3
+    ...
+    ```
+    With: x3>x2>x1. 
+*   **`project.YSE`**: YSE file (only in case isost_model>=2; overrides YSE calculations using temperature). Format (note different units relative to the output file `*.ysen`):
+    ```text
+    z1[m]  yieldcompres1[Pa]  yieldextens1[Pa]
+    z2     yieldcompres2      yieldextens2
+    ...
+    ```
+*   **`project.TMP`**: Temperature file (only in case isost_model>=2). If a YSE input file is given, then this TMP file is ignored.
+    ```text
+    x1[m]   #this x is optional, if not present, only one geotherm will be read 
+    z1[m]   temperature1[C] #(z is depth, positive downwards)
+    z2      temperature2
+    ...
+    x2[m]   #x location for the second geotherm
+    z1[m]   temperature1[C]
+    z2      temperature2
+    ```
+    If a single number is read in a line, it will be taken as the x position for the z-T geotherm listed below, and then additional geotherms at other x locations can be supplied. Temperature will be linearly interpolated (laterally and in depth) in between them.
+*   **`project.CRUST`**: Crust thickness. Used only if `*.TMP` is provided. If this file is not present, then the parameter 'crust' in `*.PRM` will be adopted (constant along x).
+*   **`project.UCRUST`**: Upper crust thickness Used only if `*.TMP` is provided. If this file is not present, then the parameter 'ucrust' in `*.PRM` will be adopted (constant along x).
+*   **`project.SLV`**: Sea and erosion/sedimentation levels along time file (optional):
+    ```text
+    time1   level1  [eroslevel1]
+    time2   level2
+    ...
+    ```
+*   **`project.WINI`**: Initial deflection file (optional). Positive deflection downwards.
+*   **`project.REC`**: Horizon recording time file (optional, defaults to an interval of dt_record, defined in the `*.PRM` file):
+*   **`project.CMP`**: An x-z file to be compared with results (optional). The results with real profiles digitized in this file. This file is not used by tAo but by the GMT job `tao.gmt.job` which produces a postscript image of it. Similar format (two columns) but x is expected in km (z in m).
+
+All these files are interpolated (except the `.CMP` one) and accept comment lines to be inserted everywhere. These lines will be simply ignored when two floats cannot be read in them. Attention: x3>x2>x1. tAo will linearly interpolate between the given points.
 
 ## 5. Output Files
 
-Output files are written with lowercase extensions.
-*   `project.pfl`: Final unified profile of the model containing the horizons of all blocks from basement to surface.
-*   `project.xzt`: Deflection and topography states captured at each horizon recording event.
-*   `project.eros`: Cumulative erosion (>0) and sedimentation (<0) recorded at each point. 
-*   `project.xg`: Computed gravity anomalies.
-*   `project.ps`, `project.jpg`: Graphical plots.
-*   `project.ysen`: Calculated yield stress envelope and stress distribution at the maximum moment point.
-*   `project.strs`: x-z cross-sectional grid of stress, temperature, and yield constraints.
-*   `project.temp`: Output temperature distribution.
-*   `project.eeth`: Effective elastic thickness distribution calculated dynamically when `isost_model` > 2.
-*   `project.all`: Binary snapshot of the run, used for resuming the model.
+Outputs are written to files that start with the project name with an lowercase extension. Please be careful because all these files are removed when running again the same project with tAo. Note that x units in the output files are in km.
+
+*   **`project.xzt`**: An output file with the deflection and the topography at each loading event is written.
+*   **`project.pfl`**: A final profile of the model containing the final model geometry (elevation of the top and bottom of each Block, from basament to surface).
+*   **`project.eros`**: Erosion (>0) and sedimentation (<0) at each position. Note that each value is the result of adding the thickness of eros/sedim at each time step at that particular location. A final value of 1000 m of erosion may be the result of 1000 m deposition + 2000 m erosion. Besides, this is recorded where it happened, so the values of eros./sedim. are not shifted with the movement of the sediment or mother rock units.
+*   **`project.xg`**: A file with the gravity anomaly.
+*   **`project.ps`**, **`project.jpg`**, **`project.png`**: Graphical plots. A multipage postscript produced with GMT 4.0 software (using a unix script: `tao.gmt.job`), with graphics of all the results of tAo: Distribution of loads/units/sediment and the deflected basament compared with the `project.CMP` file if it exists. Bouguer gravity anomaly and geoid anomaly if requested. Stress distribution when rheological considerations have been requested. Yield stress envelope and stress distribution at the maximum moment point. The GMT and shell commands generating this image are always searched by tAo in a file named `tao.gmt.job` in the user's path. Python graphic outputs utilize `tao.plot.py`.
+*   **`project.ysen`**: Calculated yield stress envelope and stress distribution at the maximum moment point. Only if a multilayered plate was selected (isost_model>2).
+*   **`project.strs`**: (only if isost_model>2) x-z cross-sectional grid of stress, temperature, and yield constraints.
+*   **`project.temp`**: Temperature distribution within lithosphere (only isost_model>2 and with swith_verbose=1).
+*   **`project.eeth`**: Elastic thickness distribution resulting calculated when isost_model>2. If this file is present and the default Te value is a signal `-1`, then this `*.eeth` file is used as the initial value of the moment-curvature iteration.
+*   **`project.all`**: Binary file to be read when the model is going to be resumed (continued) with option `-F`.
 
 ---
 

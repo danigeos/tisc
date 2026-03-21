@@ -8,22 +8,22 @@ set prj 	= $1
 
 set width = 8
 
-source $tisc_dir/script/tisc.common.gmt.job
+source $tisc_dir/tisc/script/tisc.common.gmt.job
 
 #TOPOGRAPHY+DRAINAGE:
 #grdgradient $tmp.top.grd.tmp -A0 -G$tmp.intensity.top.grd.tmp  -Nt1
 psbasemap -JX$size -R$Region -B$ticklabels\:"x, longitude (km)":/$ticklabels\:"y, latitude (km)":NseW \
 	-Y10 -X2.5 -K -P > $ps
 
-source $tisc_dir/script/tisc.common.topo+drainage.gmt.job
+source $tisc_dir/tisc/script/tisc.common.topo+drainage.gmt.job
 
 #PRECIPITATION
 set min_rain = 1.8
 echo min_rain = $min_rain
-source $tisc_dir/script/tisc.common.rain.gmt.job
+source $tisc_dir/tisc/script/tisc.common.rain.gmt.job
 
 #ICE
-source $tisc_dir/script/tisc.common.ice.gmt.job
+source $tisc_dir/tisc/script/tisc.common.ice.gmt.job
 
 pstext	-JX -R -G0 -W255/255/255 -O -K <<END >> $ps 
 	$xtime	$ytime	12 0 1 9	$Timenow Myr
@@ -44,18 +44,18 @@ psbasemap -JX$size -R -B$ticklabels\:"x, longitude (km)":/$ticklabels\:"y, latit
 	-X$horz_shift -K -O >> $ps
 
 #EROSION MINUS SEDIMENTATION RATE :
-source $tisc_dir/script/tisc.common.erosrate.gmt.job
+source $tisc_dir/tisc/script/tisc.common.erosrate.gmt.job
 
 #SEDIMENTATION MINUS EROSION:
-#source $tisc_dir/script/tisc.common.erosion.gmt.job
+#source $tisc_dir/tisc/script/tisc.common.erosion.gmt.job
 
 #DIVIDES:
-#source $tisc_dir/script/tisc.common.divides.gmt.job
+#source $tisc_dir/tisc/script/tisc.common.divides.gmt.job
 
 #LITHOLOGY:
-#source $tisc_dir/script/tisc.common.lithology.gmt.job
+#source $tisc_dir/tisc/script/tisc.common.lithology.gmt.job
 #SEDLOAD
-source $tisc_dir/script/tisc.common.drainage.gmt.job
+source $tisc_dir/tisc/script/tisc.common.drainage.gmt.job
 grdcontour $tmp.top.grd.tmp -JX -R -C10000 -W3/0 -O -K >> $ps
 endif
 
@@ -77,7 +77,7 @@ set dmax   	= `awk '{dmax=$3;} END{print dmax}' $prj.pfl`
 psbasemap -JX$width_CS/$height_CS -R0/$dmax/$zminkm/$zmaxkm \
 	-B$ticklabels\:"distance (km)":/$zticklabels\:"z (km)":SeW \
 	-O -K -X$horz_shift_CS -Y$vert_shift_CS >> $ps
-source $tisc_dir/script/tisc.common.cross_section.gmt.job
+source $tisc_dir/tisc/script/tisc.common.cross_section.gmt.job
 #set xscale = `echo $width_CS / 2 | bc -l`
 endif
 
