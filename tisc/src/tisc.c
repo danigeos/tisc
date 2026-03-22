@@ -1085,7 +1085,7 @@ int read_file_unit(ModelConfig *cfg, ModelContext *ctx)
 		cut_Blocks = true;
 	}
 
-	if (fault && !top) i_Block_insert = 0;
+	if (fault && !top && !cut_all) i_Block_insert = 0;
 
 	if (fault) {
 		int numBlocks0=ctx->numBlocks;
@@ -1146,19 +1146,24 @@ int read_file_unit(ModelConfig *cfg, ModelContext *ctx)
 				new_block->thickhalite = new_thickhalite;
 			}
 
-			// Deep copy contents of 2D arrays
-			memcpy(new_block->thick[0], src_block->thick[0], cfg->Nx * cfg->Ny * sizeof(float));
+			// Copy contents of 2D arrays (excluding extensive properties like thick, thickgypsum, thickhalite which receive split amounts)
 			if (src_block->type == 'S') {
-				memcpy(new_block->detr_ratio[0], src_block->detr_ratio[0], cfg->Nx * cfg->Ny * sizeof(float));
-				memcpy(new_block->detr_grsize[0], src_block->detr_grsize[0], cfg->Nx * cfg->Ny * sizeof(float));
-				memcpy(new_block->thickgypsum[0], src_block->thickgypsum[0], cfg->Nx * cfg->Ny * sizeof(float));
-				memcpy(new_block->thickhalite[0], src_block->thickhalite[0], cfg->Nx * cfg->Ny * sizeof(float));
+				for (int i = 0; i < cfg->Ny; i++) {
+					for (int j = 0; j < cfg->Nx; j++) {
+						new_block->detr_ratio[i][j] = src_block->detr_ratio[i][j];
+						new_block->detr_grsize[i][j] = src_block->detr_grsize[i][j];
+					}
+				}
 			}
 			if (src_block->type == 'V') {
-				memcpy(new_block->vel_x[0], src_block->vel_x[0], cfg->Nx * cfg->Ny * sizeof(float));
-				memcpy(new_block->vel_y[0], src_block->vel_y[0], cfg->Nx * cfg->Ny * sizeof(float));
-				memcpy(new_block->visc[0], src_block->visc[0], cfg->Nx * cfg->Ny * sizeof(float));
-				memcpy(new_block->viscTer[0], src_block->viscTer[0], cfg->Nx * cfg->Ny * sizeof(float));
+				for (int i = 0; i < cfg->Ny; i++) {
+					for (int j = 0; j < cfg->Nx; j++) {
+						new_block->vel_x[i][j] = src_block->vel_x[i][j];
+						new_block->vel_y[i][j] = src_block->vel_y[i][j];
+						new_block->visc[i][j] = src_block->visc[i][j];
+						new_block->viscTer[i][j] = src_block->viscTer[i][j];
+					}
+				}
 			} else {
 				new_block->vel_x[0][0] = src_block->vel_x[0][0];
 				new_block->vel_y[0][0] = src_block->vel_y[0][0];
@@ -1189,12 +1194,26 @@ int read_file_unit(ModelConfig *cfg, ModelContext *ctx)
 						break;
 					}
 					if (z_fault <= base_of_Block) {
+						if (Blocks[k].type == 'S') {
+							Blocks[k+numBlocks0].thickgypsum[i][j] += Blocks[k].thickgypsum[i][j];
+							Blocks[k].thickgypsum[i][j] = 0;
+							Blocks[k+numBlocks0].thickhalite[i][j] += Blocks[k].thickhalite[i][j];
+							Blocks[k].thickhalite[i][j] = 0;
+						}
 						Blocks[k+numBlocks0].thick[i][j] += Blocks[k].thick[i][j];
 						Blocks[k].thick[i][j]            = 0;
 					}
 					else {
-						Blocks[k+numBlocks0].thick[i][j] += MAX_2 (0, top_of_Block-z_fault);
-						Blocks[k].thick[i][j]           -= MAX_2 (0, top_of_Block-z_fault);
+						float moved = MAX_2 (0, top_of_Block-z_fault);
+						if (Blocks[k].type == 'S' && Blocks[k].thick[i][j] > 0) {
+							float frac = moved / Blocks[k].thick[i][j];
+							Blocks[k+numBlocks0].thickgypsum[i][j] += Blocks[k].thickgypsum[i][j] * frac;
+							Blocks[k].thickgypsum[i][j] -= Blocks[k].thickgypsum[i][j] * frac;
+							Blocks[k+numBlocks0].thickhalite[i][j] += Blocks[k].thickhalite[i][j] * frac;
+							Blocks[k].thickhalite[i][j] -= Blocks[k].thickhalite[i][j] * frac;
+						}
+						Blocks[k+numBlocks0].thick[i][j] += moved;
+						Blocks[k].thick[i][j]           -= moved;
 					}
 					base_of_Block = top_of_Block;
 				}

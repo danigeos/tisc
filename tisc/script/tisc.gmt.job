@@ -75,11 +75,10 @@ if (-r $prj.pfl) then
 	set width_CS = `echo  $width  | bc -l`
 	set horz_shift_CS = `echo  $width + $separation  | bc -l`
 
-set echo
+
 	psbasemap -JX$width_CS/$height_CS -R0/$dmax/$zminkm/$zmaxkm \
 		-B$ticklabels\:"distance (km)":/$zticklabels\:"z (km)":NsEw \
 		-O -K -X$horz_shift_CS -Y$vert_shift_CS >> $ps
-unset echo
 	source $tisc_dir/tisc/script/tisc.common.cross_section.gmt.job
 else
 if (-r $prj.eeth) then

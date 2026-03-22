@@ -339,10 +339,10 @@ END
 #Topography
 if (-r $prj.xyw) then 
 	awk -v sl=$sea_level '{topo=$6; if ($5 =="S" && topo>=sl) topo=sl-1.11; print($1,$2,topo)}' $prj.xyw |\
-		xyz2grd	-G$tmp.top.grd.tmp -I$dx/$dy -R$Region -H2
+		xyz2grd	-G$tmp.top.grd.tmp -I$dx/$dy -R$Region -H2 >& /dev/null
 else
 	awk '{print($1,$2,$NF)}' $prj.hrz |\
-		xyz2grd	-G$tmp.top.grd.tmp -I$dx/$dy -R$Region -H2
+		xyz2grd	-G$tmp.top.grd.tmp -I$dx/$dy -R$Region -H2 >& /dev/null
 endif
 
 set topomin = `grdinfo $tmp.top.grd.tmp | awk '{if ($2=="z_min:") print $3}'`
@@ -362,16 +362,16 @@ grdmath $tmp.intensity.top_all.grd.tmp $tmp.contin.grd.tmp MUL = $tmp.intensity.
 #Isostatic subsidence:
 if (-r $prj.xyzt) then
 awk '{print $1,$2,$3;}' $prj.xyzt | \
-	xyz2grd -G$tmp.subs.grd.tmp -I$dx/$dy -R$Region -H2
+	xyz2grd -G$tmp.subs.grd.tmp -I$dx/$dy -R$Region -H2 >& /dev/null
 endif
 
 #Lakes:
 if (-r $prj.lak) then 
 	awk -v sl=$sea_level '(substr($0,1,1)!="#"){if (substr($0,1,1)==">") disch=$11; else{if (disch>dl && ($3=="L" || $3=="E")) print $1,$2,1; else print $1,$2,0}}' dl=$disch1 $prj.lak | \
-		xyz2grd -G$tmp.lakes.grd.tmp -I$dx/$dy -R$Region -N0
+		xyz2grd -G$tmp.lakes.grd.tmp -I$dx/$dy -R$Region -N0 >& /dev/null
 	#grdcontour $tmp.lakes.grd.tmp -JX1 -R -C$tmp.lakes_cpt.tmp -M -D$tmp.lakes.xy.tmp -O -K >> $ps
 	awk -v sl=$sea_level '(substr($0,1,1)!="#"){if (substr($0,1,1)==">") {disch=$11; outl=$9;} else{if (disch>dl && ($3=="L" || $3=="E") && outl==0) print $1,$2,1; else print $1,$2,0}}' dl=$disch1 $prj.lak | \
-		xyz2grd -G$tmp.lakes_endorh.grd.tmp -I$dx/$dy -R$Region -N0
+		xyz2grd -G$tmp.lakes_endorh.grd.tmp -I$dx/$dy -R$Region -N0 >& /dev/null
 	#grdcontour $tmp.lakes_endorh.grd.tmp -JX1 -R -C$tmp.lakes_cpt.tmp -M -D$tmp.lakes_endorh.xy.tmp -O -K >> $ps
 endif
 
@@ -381,23 +381,24 @@ if (-r $prj.hrz) then
 	    if (NR>2) { sedthick=0; \
 		for (i=4; i<=NF; i++) {if (dens[i]<2500 && dens[i]>1500) sedthick+=($i-$(i-1)); }\
 		print($1,$2,sedthick/1e3); \
-	} }' $prj.hrz | xyz2grd -G$tmp.sed.grd.tmp -I$dx/$dy -R -H0
+	} }' $prj.hrz | xyz2grd -G$tmp.sed.grd.tmp -I$dx/$dy -R -H0 >& /dev/null
 endif
-grd2cpt $tmp.sed.grd.tmp -Ctopo > $tmp.sed_cpt.tmp
+( grd2cpt $tmp.sed.grd.tmp -Ctopo > $tmp.sed_cpt_new.tmp ) >& /dev/null
+if (-s $tmp.sed_cpt_new.tmp) mv $tmp.sed_cpt_new.tmp $tmp.sed_cpt.tmp
 
 #eros./sed.:
 if (-r $prj.st) then
-	awk '{print($1,$2, $4/1e3);}' $prj.st | xyz2grd -G$tmp.eros_cumul.grd.tmp -I$dx/$dy -R -H2
-	awk '{print($1,$2, $5/1e3);}' $prj.st | xyz2grd -G$tmp.erosrate.grd.tmp   -I$dx/$dy -R -H2
+	awk '{print($1,$2, $4/1e3);}' $prj.st | xyz2grd -G$tmp.eros_cumul.grd.tmp -I$dx/$dy -R -H2 >& /dev/null
+	awk '{print($1,$2, $5/1e3);}' $prj.st | xyz2grd -G$tmp.erosrate.grd.tmp   -I$dx/$dy -R -H2 >& /dev/null
 endif
 
 #Lithology/Geology:
 if (-r $prj.hrz) then
 	awk '{if (NR==2) for (i=3; i<=NF; i++) dens[i]=$i; if (NR>2) {for (i=NF; i>3; i--) if ($i-$(i-1)>1) break; if ($NF>=0) print $1,$2,dens[i]; else print $1,$2,1000}}' $prj.hrz > $tmp.geol.xyd.tmp
-	xyz2grd	$tmp.geol.xyd.tmp -G$tmp.geol.grd.tmp -I$dx/$dy -R$Region
+	xyz2grd	$tmp.geol.xyd.tmp -G$tmp.geol.grd.tmp -I$dx/$dy -R$Region >& /dev/null
 endif
 
 #CHI
 if (-r $prj.bas) then 
-	awk '(substr($0,1,1)!=">" && substr($0,1,1)!="#"){print $1,$2,$8;}' $prj.bas | xyz2grd -G$tmp.chi.grd.tmp -I$dx/$dy -R$Region 
+	awk '(substr($0,1,1)!=">" && substr($0,1,1)!="#"){print $1,$2,$8;}' $prj.bas | xyz2grd -G$tmp.chi.grd.tmp -I$dx/$dy -R$Region >& /dev/null
 endif

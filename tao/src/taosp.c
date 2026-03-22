@@ -1559,6 +1559,37 @@ int Divide_Lake (ModelConfig *cfg, ModelContext *ctx, int ind)
 		PRINT_ERROR("splitting node %d shouldn't be a saddle!", ind);
 	}
 
+	/* Revoke eager transfers for nodes whose outlet is the deleted node or ends up in a different sub-lake */
+	for (j=0; j<Lake[il].n; j++) {
+		if (Lake[il].cell[j] == ind) continue;
+		
+		int dind = drainage[Lake[il].cell[j]].dr;
+		if (IN_DOMAIN_1D(dind)) {
+			bool revoke = false;
+			if (dind == ind) {
+				revoke = true;
+			} else {
+				int outlet_idx = -1;
+				for (int k=0; k<Lake[il].n; k++) {
+					if (Lake[il].cell[k] == dind) {
+						outlet_idx = k;
+						break;
+					}
+				}
+				if (outlet_idx >= 0) {
+					int node_side = (Lake[il].cell[j] < ind) ? 1 : 2;
+					int out_side  = (Lake[il].cell[outlet_idx] < ind) ? 1 : 2;
+					if (node_side != out_side) {
+						revoke = true;
+					}
+				}
+			}
+			if (revoke) {
+				drainage[dind].discharge -= drainage[Lake[il].cell[j]].discharge;
+			}
+		}
+	}
+
 	/*Distribute the nodes among the 2 new lakes and delete the original lake*/
 	{
 	    int new_lake1, new_lake2;

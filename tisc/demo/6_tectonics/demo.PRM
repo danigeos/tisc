@@ -6,8 +6,8 @@ ymin		-2.5e+05	Southern model limit coordinate [m]
 ymax		2.5e+05	Northern model limit coordinate [m]
 zmin		-3000	Northern model limit coordinate [m]
 zmax		1000	Northern model limit coordinate [m]
-Nx		201	E-W direction grid points. 
-Ny		201	N-S direction grid points
+Nx		101	E-W direction grid points. 
+Ny		101	N-S direction grid points
 zini		100	Initial altitude [m] above sea level (added to the initial
 random_topo	10	Adds noise to initial topo between -random_topo/2 and 
 

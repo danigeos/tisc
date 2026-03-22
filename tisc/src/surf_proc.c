@@ -2811,18 +2811,34 @@ int Divide_Lake (ModelConfig *cfg, ModelContext *ctx, int row, int col /*lake no
 	for (i=j=0; i<Lake[il].n; i++) if (new_lake_num[i]) j++;
 	if (j!=Lake[il].n-1) PRINT_ERROR("%d new lake nodes were expected rather than %d", Lake[il].n-1, j);
 
-	/*Substract to row,col the drainage comming from the lake (only has sense for outlets)*/
-	if (i_outlet>=0) {
-		int drow, dcol;
-		for (i=0; i<Lake[il].n; i++) {
-			drow = drainage[Lake[il].row[i]][Lake[il].col[i]].dr_row;
-			dcol = drainage[Lake[il].row[i]][Lake[il].col[i]].dr_col;
-			if (drow==row && dcol==col) {
-				drainage[row][col].discharge -= drainage[Lake[il].row[i]][Lake[il].col[i]].discharge;
-				drainage[row][col].C_Ca -= drainage[Lake[il].row[i]][Lake[il].col[i]].C_Ca;
-				drainage[row][col].C_SO4 -= drainage[Lake[il].row[i]][Lake[il].col[i]].C_SO4;
-				drainage[row][col].C_Na -= drainage[Lake[il].row[i]][Lake[il].col[i]].C_Na;
-				drainage[row][col].C_Cl -= drainage[Lake[il].row[i]][Lake[il].col[i]].C_Cl;
+	/* Revoke eager transfers for nodes whose outlet is the deleted node or ends up in a different sub-lake */
+	for (i=0; i<Lake[il].n; i++) {
+		if (Lake[il].row[i] == row && Lake[il].col[i] == col) continue;
+		
+		int drow = drainage[Lake[il].row[i]][Lake[il].col[i]].dr_row;
+		int dcol = drainage[Lake[il].row[i]][Lake[il].col[i]].dr_col;
+		if (IN_DOMAIN(drow, dcol)) {
+			bool revoke = false;
+			if (drow == row && dcol == col) {
+				revoke = true;
+			} else {
+				int outlet_idx = -1;
+				for (j=0; j<Lake[il].n; j++) {
+					if (Lake[il].row[j] == drow && Lake[il].col[j] == dcol) {
+						outlet_idx = j;
+						break;
+					}
+				}
+				if (outlet_idx >= 0 && new_lake_num[i] != new_lake_num[outlet_idx]) {
+					revoke = true;
+				}
+			}
+			if (revoke) {
+				drainage[drow][dcol].discharge -= drainage[Lake[il].row[i]][Lake[il].col[i]].discharge;
+				drainage[drow][dcol].C_Ca -= drainage[Lake[il].row[i]][Lake[il].col[i]].C_Ca;
+				drainage[drow][dcol].C_SO4 -= drainage[Lake[il].row[i]][Lake[il].col[i]].C_SO4;
+				drainage[drow][dcol].C_Na -= drainage[Lake[il].row[i]][Lake[il].col[i]].C_Na;
+				drainage[drow][dcol].C_Cl -= drainage[Lake[il].row[i]][Lake[il].col[i]].C_Cl;
 			}
 		}
 	}
@@ -2851,13 +2867,6 @@ int Divide_Lake (ModelConfig *cfg, ModelContext *ctx, int row, int col /*lake no
 	for (i=nlakes-local_num_lakes+1; i<=nlakes;) {
 		float lake_evap=0;
 		Define_Lake(i);
-		/*Substract in the outlets the water that came from nodes that now are in another lake*/
-		/*for (j=0; j<Lake[i].n; j++) {
-				drow = drainage[Lake[i].row[j]][Lake[i].col[j]].dr_row;
-				dcol = drainage[Lake[i].row[j]][Lake[i].col[j]].dr_col;
-			if (drainage[drow][dcol].lake!=i && drainage[drow][dcol].type=='E') 
-				drainage[drow][dcol].discharge -= drainage[Lake[i].row[j]][Lake[i].col[j]].discharge;
-		}*/
 		for (j=0; j<Lake[i].n; j++) lake_evap += cfg->dx*cfg->dy * evaporation[Lake[i].row[j]][Lake[i].col[j]];
 		PRINT_DEBUGPLUS("Inputwater, Evap: %f,%f  lake %d: n=%d", Lake_Input_Discharge(cfg, i), lake_evap, i, Lake[i].n);
 			/*

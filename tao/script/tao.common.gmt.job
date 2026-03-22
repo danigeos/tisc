@@ -3,7 +3,7 @@
 
 set prj	= $argv[1]
 
-set tmp = tmp.tao.gmt.$prj
+set tmp = .tmp.tao.gmt.$prj
 
 set Timenow = `awk '(NR==1) {printf("%.2f", $(NF-1)); exit;}' $prj.pfl`
 
