@@ -77,4 +77,4 @@ mode_interp 	4	Default interpolation mode for input files (if not specified in t
 
 #I/O:
 switch_files	1	For extra file output.
-plotting_mode	2	For postscript output.
+plotting_mode	2	For svg/postscript output.

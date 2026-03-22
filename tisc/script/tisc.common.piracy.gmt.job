@@ -1,5 +1,5 @@
 if (-r $prj.bas) then
-echo -n plotting PIRACY INDEX...
+echo -n Plot PIRACY INDEX.
 awk '(substr($0,1,1)!=">" && substr($0,1,1)!="#"){print $1,$2,$8;}' $prj.bas | \
 	xyz2grd -G$tmp.chi.grd.tmp -I$dx/$dy -R$Region 
 grdinfo $tmp.chi.grd.tmp

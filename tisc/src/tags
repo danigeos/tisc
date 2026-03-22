@@ -233,7 +233,7 @@ ice_velx_sl	globals.c	/^float **ice_velx_sl, **ice_vely_sl, **ice_velx_df, **ice
 ice_vely_df	globals.c	/^float **ice_velx_sl, **ice_vely_sl, **ice_velx_df, **ice_vely_df, **q, **evaporation, **precipitation;$/;"	v
 ice_vely_sl	globals.c	/^float **ice_velx_sl, **ice_vely_sl, **ice_velx_df, **ice_vely_df, **q, **evaporation, **precipitation;$/;"	v
 init_tisc_	call_tisc.c	/^int init_tisc_ ($/;"	f
-initial_grain_size	globals.c	/^float initial_grain_size = 1.0;$/;"	v
+initial_grain_size	globals.c	/^float initial_grain_size = 0;$/;"	v
 inputs	tisc.c	/^int inputs (int argc, char **argv)$/;"	f
 insert_new_Block	tisclib.c	/^int insert_new_Block(int num_new_Block)$/;"	f
 insolation_mean	globals.c	/^float evaporation_ct, K_ice_eros, A_ice_rheo, A_ice_slide, dt_ice, total_rain, insolation_mean;$/;"	v
@@ -311,6 +311,7 @@ reformat_file_thin_sheet_BC	tiscio.c	/^int reformat_file_thin_sheet_BC(ModelConf
 relative_humidity	globals.c	/^float spl_m, spl_n, l_fluv_sedim, lost_rate, permeability, rain, Krain, relative_humidity, CXrain;$/;"	v
 replace_word	../../tao+tisc_commons/src/libreria.c	/^char *replace_word(char *s, char *old, char *new)$/;"	f
 run_type	globals.c	/^int i_first_Block_load, i_Block_insert, numBlocks, nwrotenfiles, run_type;$/;"	v
+salt_model	globals.c	/^int salt_model = 0;$/;"	v
 sea_level	../include/tisc.h	/^	float sea_level;$/;"	m	struct:__anon2
 sea_level	globals.c	/^float sea_level = 0, temp_sea_level;$/;"	v
 sed_porosity	globals.c	/^float zini, dt_record, sed_porosity, compact_depth, last_time_file_time, random_topo = 0;$/;"	v

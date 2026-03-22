@@ -1,3 +1,4 @@
+echo -n Plot EET.
 if (-r $prj.eeth) awk '{print($1,$2,$3/1000)}' $prj.eeth |\
 	xyz2grd  -G$tmp.eeth.grd.tmp -I$dx/$dy -R$Region
 if (-r $prj.xyg) awk '{print($1,$2,$3/1000)}' $prj.xyg |\

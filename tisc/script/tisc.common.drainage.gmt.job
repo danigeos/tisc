@@ -1,6 +1,6 @@
 #DRAINAGE:
 if (-r $prj.xyw) then 
-echo -n plotting DRAINAGE... 
+echo -n Plot DRAINAGE. 
 awk '{if ($3>=dl && $3<dh && $5!="S" && $5!="L" && NR>2) {print $1, $2; print $7, $8; print ">"}}' \
 	dl=$disch1 dh=$disch2 $prj.xyw | \
 	psxy -JX -R -M -W1/$col_river -O -K >> $ps 

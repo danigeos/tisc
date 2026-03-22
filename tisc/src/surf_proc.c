@@ -148,6 +148,53 @@ int Surface_Transport (ModelConfig *cfg, ModelContext *ctx, float **topo_ant, in
 
 		Calculate_Discharge(sortcell, cfg, ctx, &total_lost_water, &total_evap_water, &total_underground_water);
 
+		/* Re-sort topologically because lake shrinkage in Calculate_Discharge may have created new river nodes on flat areas */
+		for (int isort=0; isort<cfg->Nx*cfg->Ny-1; isort++) {
+			float topoisort = ctx->topo[sortcell[isort].row][sortcell[isort].col];
+			int k_end = isort;
+			while (k_end + 1 < cfg->Nx*cfg->Ny && ctx->topo[sortcell[k_end+1].row][sortcell[k_end+1].col] == topoisort) {
+				k_end++;
+			}
+			
+			if (k_end > isort) {
+				int max_swaps = (k_end - isort + 1) * (k_end - isort + 1);
+				int swaps = 0;
+				for (int k = isort; k < k_end && swaps < max_swaps; k++) {
+					int rk = sortcell[k].row;
+					int ck = sortcell[k].col;
+					for (int m = k + 1; m <= k_end; m++) {
+						int rm = sortcell[m].row;
+						int cm = sortcell[m].col;
+						if (drainage[rm][cm].dr_row == rk && drainage[rm][cm].dr_col == ck) {
+							struct GRIDNODE temp = sortcell[m];
+							for (int p = m; p > k; p--) {
+								sortcell[p] = sortcell[p-1];
+							}
+							sortcell[k] = temp;
+							k--;
+							swaps++;
+							break;
+						}
+					}
+				}
+				
+				int insert_pos = k_end;
+				for (int k = k_end; k >= isort; k--) {
+					int rk = sortcell[k].row;
+					int ck = sortcell[k].col;
+					if (drainage[rk][ck].type == 'E') {
+						struct GRIDNODE temp = sortcell[k];
+						for (int p = k; p < insert_pos; p++) {
+							sortcell[p] = sortcell[p+1];
+						}
+						sortcell[insert_pos] = temp;
+						insert_pos--;
+					}
+				}
+				isort = k_end;
+			}
+		}
+
 		Fluvial_Transport(sortcell, cfg, ctx, dt_st, &total_lost_sed_mass, lake_instant_fill);
 
 		Ice_EroSed(cfg, ctx, ice_velx_sl, ice_vely_sl, dt_st, &total_ice_eros, &total_ice_sedim);
@@ -165,8 +212,8 @@ int Surface_Transport (ModelConfig *cfg, ModelContext *ctx, float **topo_ant, in
 		PRINT_GRID_INFO (evaporation,   "evaporat.", "m/s");
 		PRINT_SUMLINE("rain_now : %+8.2e m3/s  evap_wat: %+8.2e m3/s outp_water: %+8.2e m3/s undergr_water: %+8.2e m3/s", total_rain, total_evap_water, total_lost_water, total_underground_water); 
 		if (total_rain) error=-(total_rain-total_evap_water-total_lost_water+total_ice_melt)/total_rain*100; else error = (total_ice_melt-total_evap_water-total_lost_water)/total_ice_melt*100;
-			if (fabs(error)>=1)
-				PRINT_WARNING("water_balance: %.1f%% (>0 => disch>rain)", error);
+			if (fabs(error)>=.5 || (fabs(error)>=.1 && verbose_level>=3))
+				PRINT_WARNING("water_balance: %.1f%% (>0 => evaporation>rain)", error);
 	}
 	if (K_ice_eros && verbose_level>=1) {
 		float 	vel_dfmax=-1e15, vel_df, vel_slmax=-1e15, vel_sl, max_ice_thick=0, newicevol=0, newicesedvol=0;		
@@ -210,9 +257,10 @@ int Surface_Transport (ModelConfig *cfg, ModelContext *ctx, float **topo_ant, in
 		}
 	}
 	if (hydro_model && verbose_level>=1) {
-		PRINT_SUMLINE("salt precip:  gypsum= %.2e kg/s  halite= %.2e kg/s   accum_gypsum= %.2e kg  accum_halite= %.2e kg", 
-			ctx->total_precip_gypsum_rate, ctx->total_precip_halite_rate, ctx->total_accum_gypsum, ctx->total_accum_halite);
-
+		if (salt_model) {
+			PRINT_SUMLINE("salt precip:  gypsum= %.2e kg/s  halite= %.2e kg/s   accum_gypsum= %.2e kg  accum_halite= %.2e kg", 
+				ctx->total_precip_gypsum_rate, ctx->total_precip_halite_rate, ctx->total_accum_gypsum, ctx->total_accum_halite);
+		}
 		{
 			int i_biggest_nosea=0, n_biggest_nosea=0;
 			for (int i=1; i<=nlakes; i++) {
@@ -281,10 +329,14 @@ int Surface_Transport (ModelConfig *cfg, ModelContext *ctx, float **topo_ant, in
 	}
 	PRINT_SUMLINE("eros_nosd: %+8.2e N	 sedim_inc: %+8.2e N   outp_seds:   %+8.2e N  ",  ctx->total_bedrock_eros_mass*g, ctx->total_sed_mass*g, total_lost_sed_mass*g);
 	{
-		float error;
-		if (ctx->total_bedrock_eros_mass) error = -(ctx->total_bedrock_eros_mass-ctx->total_sed_mass-total_lost_sed_mass)/ctx->total_bedrock_eros_mass*100; else error = (ctx->total_sed_mass-total_lost_sed_mass)/ctx->total_sed_mass*100;
-		if (fabs(error)>=1)
-			PRINT_WARNING("seds._balance: %.1f%% (>0 => sed>eros)", error);
+		float error = 0;
+		float mass_error = ctx->total_bedrock_eros_mass - ctx->total_sed_mass - total_lost_sed_mass;
+		float ref_mass = ctx->total_bedrock_eros_mass;
+		if (ref_mass == 0) ref_mass = total_lost_sed_mass;
+		if (ref_mass == 0) ref_mass = fabs(ctx->total_sed_mass);
+		if (ref_mass > 0) error = - mass_error / ref_mass * 100;
+		if (fabs(error)>=.5 || (fabs(error)>=.1 && verbose_level>=3))
+			PRINT_WARNING("sediment_balance: %.1f%% (>0 => sed>eros)", error);
 	}
 
 	/* Update lake elevations one last time to perfectly match final topography for output files */
@@ -352,23 +404,7 @@ int Calculate_Discharge (struct GRIDNODE *sortcell, ModelConfig *cfg, ModelConte
 				if (Lake_Input_Discharge(cfg, il)<lake_evap && Lake[il].n>1) {
 					PRINT_DEBUGPLUS("Deletion attempt for [%d][%d] from lake %d ; lake_inp:%f ; evap:%f ; lakenodes:%d", row,col, il, Lake_Input_Discharge(cfg, il), lake_evap, Lake[il].n);
 					
-					int old_type = drainage[row][col].type;
-					int old_drow = drainage[row][col].dr_row;
-					int old_dcol = drainage[row][col].dr_col;
-					int old_il   = il;
-					
 					Attempt_Delete_Node_From_Lake (cfg, ctx, row,col);
-					
-					/* Revoke the eager transfer from the old outlet to prevent double-counting */
-					if (old_type == 'L' && (drainage[row][col].type != 'L' || drainage[row][col].lake != old_il)) {
-						if (IN_DOMAIN(old_drow, old_dcol)) {
-							drainage[old_drow][old_dcol].discharge -= drainage[row][col].discharge;
-							drainage[old_drow][old_dcol].C_Ca      -= drainage[row][col].C_Ca;
-							drainage[old_drow][old_dcol].C_SO4     -= drainage[row][col].C_SO4;
-							drainage[old_drow][old_dcol].C_Na      -= drainage[row][col].C_Na;
-							drainage[old_drow][old_dcol].C_Cl      -= drainage[row][col].C_Cl;
-						}
-					}
 					
 					drow = drainage[row][col].dr_row;
 					dcol = drainage[row][col].dr_col;
@@ -1135,25 +1171,52 @@ int Define_Drainage_Net (struct GRIDNODE *sortcell, ModelConfig *cfg, ModelConte
 		}
 	}
 
-	/*For the same altitude, put the saddles first in sortcell*/
+	/*For the same altitude, topologically sort upstream nodes first, and put saddles last in sortcell*/
 	for (int isort=0; isort<cfg->Nx*cfg->Ny-1; isort++) {
-		int i = sortcell[isort].row;
-		int j = sortcell[isort].col;
-		if (drainage[i][j].type != 'E') {
-			float topoisort = ctx->topo[i][j];
-			for (int k=isort+1; k<cfg->Nx*cfg->Ny; k++) {
-				int kr = sortcell[k].row;
-				int kc = sortcell[k].col;
-				if (ctx->topo[kr][kc] == topoisort) {
-					if (drainage[kr][kc].type == 'E') {
-						struct GRIDNODE aux = sortcell[k];
-						sortcell[k] = sortcell[isort];
-						sortcell[isort] = aux;
+		float topoisort = ctx->topo[sortcell[isort].row][sortcell[isort].col];
+		int k_end = isort;
+		while (k_end + 1 < cfg->Nx*cfg->Ny && ctx->topo[sortcell[k_end+1].row][sortcell[k_end+1].col] == topoisort) {
+			k_end++;
+		}
+		
+		if (k_end > isort) {
+			int max_swaps = (k_end - isort + 1) * (k_end - isort + 1);
+			int swaps = 0;
+			/* 1. Topologically sort the block so upstream comes before downstream */
+			for (int k = isort; k < k_end && swaps < max_swaps; k++) {
+				int rk = sortcell[k].row;
+				int ck = sortcell[k].col;
+				for (int m = k + 1; m <= k_end; m++) {
+					int rm = sortcell[m].row;
+					int cm = sortcell[m].col;
+					if (drainage[rm][cm].dr_row == rk && drainage[rm][cm].dr_col == ck) {
+						struct GRIDNODE temp = sortcell[m];
+						for (int p = m; p > k; p--) {
+							sortcell[p] = sortcell[p-1];
+						}
+						sortcell[k] = temp;
+						k--;
+						swaps++;
 						break;
 					}
 				}
-				else break;
 			}
+			
+			/* 2. Move all 'E' (saddles) to the end while preserving relative order */
+			int insert_pos = k_end;
+			for (int k = k_end; k >= isort; k--) {
+				int rk = sortcell[k].row;
+				int ck = sortcell[k].col;
+				if (drainage[rk][ck].type == 'E') {
+					struct GRIDNODE temp = sortcell[k];
+					for (int p = k; p < insert_pos; p++) {
+						sortcell[p] = sortcell[p+1];
+					}
+					sortcell[insert_pos] = temp;
+					insert_pos--;
+				}
+			}
+			isort = k_end;
 		}
 	}
 
@@ -1244,9 +1307,7 @@ int Diffusive_Eros (ModelConfig *cfg, ModelContext *ctx, float Kerosdif)
 	/*
 	  COMPUTES THE LOAD, HEIGHT & Block-THICKNESS CHANGES DUE TO 
 	  SURFACE MASS DIFFUSION. This process approaches short scale 
-	  transport processes.
-	  Resolutions of 100x100 need dt_eros<=.01  My to converge.
-	  Resolutions of 200x200 need dt_eros<=.005 My to converge.
+	  (hill-slope) transport processes.
 	*/
 
 	if (!cfg->erosed_model || !Kerosdif) return (0);
@@ -1258,7 +1319,7 @@ int Diffusive_Eros (ModelConfig *cfg, ModelContext *ctx, float Kerosdif)
 	Dheros = alloc_matrix(cfg->Ny, cfg->Nx);
 
 	n_iters = MAX_2(floor(ctx->dt/ctx->dt_eros+.5), 1); 
-	PRINT_INFO("n_iters=%3d", n_iters);
+	PRINT_INFO("Erosion n_iters=%3d", n_iters);
 
 	for (int k=0; k<n_iters; k++) {
 	 		 diffusion_2D(ctx->topo, Dheros, cfg->Nx, cfg->Ny, Kerosdif, cfg->dx, cfg->dy, ctx->dt/n_iters);
@@ -1316,13 +1377,16 @@ int Fluvial_Transport(struct GRIDNODE *sortcell, ModelConfig *cfg, ModelContext 
 	  This bucle starts from the top point and
 	  descends transferring the eroded mass
 	*/
+	bool *processed = calloc(cfg->Nx * cfg->Ny, sizeof(bool));
 	if (cfg->erosed_model>=2) for (int isort=0; isort < cfg->Nx*cfg->Ny; isort++) {
 		float minsorr_trib, maxsorr, minsorr, main_tribut_slope, main_tribut_disch, main_tribut_alt;
 		row = sortcell[isort].row;  col = sortcell[isort].col;
+		processed[row * cfg->Nx + col] = true;
 		ro[0]=row-1, ro[1]=row,   ro[2]=row+1, ro[3]=row,	ro[4]=row-1, ro[5]=row+1, ro[6]=row+1, ro[7]=row-1;
 		co[0]=col,   co[1]=col+1, co[2]=col,   co[3]=col-1, co[4]=col+1, co[5]=col+1, co[6]=col-1, co[7]=col-1;
 		drow = drainage[row][col].dr_row;
 		dcol = drainage[row][col].dr_col;
+		drainage[row][col].discharge = MAX_2(0, drainage[row][col].discharge);
 
 		/*Calculate max and min height in the 8 sorrounding points:*/
 		maxsorr=minsorr=ctx->topo[row][col];
@@ -1643,16 +1707,26 @@ int Fluvial_Transport(struct GRIDNODE *sortcell, ModelConfig *cfg, ModelContext 
 			transferred_grainsize = drainage[row][col].grainsize;
 		}
 
+		float transfer_mass = drainage[row][col].masstr;
+		drainage[row][col].masstr = 0;
+
 		/*Transfer suspended solid mass.*/
 		if (IN_DOMAIN(drow,dcol)) {
+		if (processed[drow * cfg->Nx + dcol] && drainage[drow][dcol].type != 'L') {
+			/* Backward pointer to an already processed river/exit node => Deposit locally to preserve mass */
+			float d_mass_sink = -transfer_mass * dt_st;
+			if (d_mass_sink < 0) {
+				Sediment(cfg, ctx, -d_mass_sink, row, col, transferred_grainsize);
+			}
+		} else {
 		int ild = drainage[drow][dcol].lake;
 		float hl;
 		switch (drainage[drow][dcol].type) {
 			case 'L':
-			if (drainage[drow][dcol].masstr + drainage[row][col].masstr > 0) {
-				drainage[drow][dcol].grainsize = (drainage[drow][dcol].masstr * drainage[drow][dcol].grainsize + drainage[row][col].masstr * transferred_grainsize) / (drainage[drow][dcol].masstr + drainage[row][col].masstr);
+			if (drainage[drow][dcol].masstr + transfer_mass > 0) {
+				drainage[drow][dcol].grainsize = (drainage[drow][dcol].masstr * drainage[drow][dcol].grainsize + transfer_mass * transferred_grainsize) / (drainage[drow][dcol].masstr + transfer_mass);
 			}
-			drainage[drow][dcol].masstr += drainage[row][col].masstr;
+			drainage[drow][dcol].masstr += transfer_mass;
 			/*If draining to an OPEN lake:*/
 			if (Lake[ild].n_sd) {
 				float diff; 
@@ -1667,11 +1741,21 @@ int Fluvial_Transport(struct GRIDNODE *sortcell, ModelConfig *cfg, ModelContext 
 				hl = ctx->topo[row][col];  /*MIN_2 (Lake[ild].alt+1., ctx->topo[row][col]-1.);??*/
 				Lake_Fill (Lake, cfg, ctx, drow, dcol, hl, dt_st, lake_instant_fill);
 				if (IN_DOMAIN(drainage[drow][dcol].dr_row, drainage[drow][dcol].dr_col)) {
+					int erow = drainage[drow][dcol].dr_row;
+					int ecol = drainage[drow][dcol].dr_col;
+					if (processed[erow * cfg->Nx + ecol]) {
+						float d_mass_sink = -drainage[drow][dcol].masstr * dt_st;
+						if (d_mass_sink < 0) {
+							Sediment(cfg, ctx, -d_mass_sink, drow, dcol, drainage[drow][dcol].grainsize);
+						}
+						drainage[drow][dcol].masstr = 0;
+					} else {
 						/*Next line commented in tAo!!*/
-					if (drainage[drainage[drow][dcol].dr_row][drainage[drow][dcol].dr_col].masstr + drainage[drow][dcol].masstr > 0) {
-						drainage[drainage[drow][dcol].dr_row][drainage[drow][dcol].dr_col].grainsize = (drainage[drainage[drow][dcol].dr_row][drainage[drow][dcol].dr_col].masstr * drainage[drainage[drow][dcol].dr_row][drainage[drow][dcol].dr_col].grainsize + drainage[drow][dcol].masstr * drainage[drow][dcol].grainsize) / (drainage[drainage[drow][dcol].dr_row][drainage[drow][dcol].dr_col].masstr + drainage[drow][dcol].masstr);
+					if (drainage[erow][ecol].masstr + drainage[drow][dcol].masstr > 0) {
+						drainage[erow][ecol].grainsize = (drainage[erow][ecol].masstr * drainage[erow][ecol].grainsize + drainage[drow][dcol].masstr * drainage[drow][dcol].grainsize) / (drainage[erow][ecol].masstr + drainage[drow][dcol].masstr);
 					}
-					drainage[drainage[drow][dcol].dr_row][drainage[drow][dcol].dr_col].masstr += drainage[drow][dcol].masstr;
+					drainage[erow][ecol].masstr += drainage[drow][dcol].masstr;
+					}
 				} else {
 					*total_lost_sed_mass += drainage[drow][dcol].masstr * dt_st;
 				}
@@ -1681,7 +1765,7 @@ int Fluvial_Transport(struct GRIDNODE *sortcell, ModelConfig *cfg, ModelContext 
 				hl = ctx->topo[row][col];
 				Lake_Fill (Lake, cfg, ctx, drow, dcol, hl, dt_st, lake_instant_fill);
 				/*Check: should be no sediment left.*/
-				if (drainage[drow][dcol].masstr > .1)
+				if (drainage[drow][dcol].masstr > 1e-5)
 				PRINT_ERROR("[%d][%d] transferring to a closed lake %d in [%d][%d] returns %.1f kg/s.",
 					row, col, ild, drow, dcol, drainage[drow][dcol].masstr);
 			}
@@ -1690,18 +1774,27 @@ int Fluvial_Transport(struct GRIDNODE *sortcell, ModelConfig *cfg, ModelContext 
 			break;
 			case 'R':
 			case 'E':
-			if (drainage[drow][dcol].masstr + drainage[row][col].masstr > 0) {
-				drainage[drow][dcol].grainsize = (drainage[drow][dcol].masstr * drainage[drow][dcol].grainsize + drainage[row][col].masstr * transferred_grainsize) / (drainage[drow][dcol].masstr + drainage[row][col].masstr);
+			if (drainage[drow][dcol].masstr + transfer_mass > 0) {
+				drainage[drow][dcol].grainsize = (drainage[drow][dcol].masstr * drainage[drow][dcol].grainsize + transfer_mass * transferred_grainsize) / (drainage[drow][dcol].masstr + transfer_mass);
 			}
-			drainage[drow][dcol].masstr += drainage[row][col].masstr;
+			drainage[drow][dcol].masstr += transfer_mass;
 			break;
 		 }
 		}
+		}
 		else {
-			/*Transfers out of model.*/
-			*total_lost_sed_mass += drainage[row][col].masstr * dt_st;
+			/*Transfers out of model or deposits in internal sinks.*/
+			if (AT_BORDER(row, col)) {
+				*total_lost_sed_mass += transfer_mass * dt_st;
+			} else {
+				float d_mass_sink = -transfer_mass * dt_st;
+				if (d_mass_sink < 0) {
+					Sediment(cfg, ctx, -d_mass_sink, row, col, transferred_grainsize);
+				}
+			}
 		}
 	}
+	free(processed);
 	return(1);
 }
 
@@ -2145,19 +2238,27 @@ int Lake_Fill (
 	if (n_total_done != Lake[il].n-Lake[il].n_sd) PRINT_DEBUG("Little sediment left: %.2e; n_total_done (%d) != lakenodes-lakeoutlets (%d).", drainage[row][col].masstr, n_total_done, Lake[il].n-Lake[il].n_sd);
 
 	/*If the lake is endorheic and there is still some transported mass left, then deposit it uniformly.*/
-	if (!Lake[il].n_sd && drainage[row][col].masstr > .1) {
+	if (!Lake[il].n_sd && drainage[row][col].masstr > 1e-9) {
 		d_mass = -drainage[row][col].masstr * dt_st;
 		int n_max = 0;
 		for (int r=0; r<cfg->Ny; r++) for (int c=0; c<cfg->Nx; c++) {
 			if (lake_max[r][c] == il) n_max++;
 		}
-		if (n_max == 0) n_max = Lake[il].n;
-		for (int r=0; r<cfg->Ny; r++) for (int c=0; c<cfg->Nx; c++) {
-			if (lake_max[r][c] == il) {
-				Sediment (cfg, ctx, -d_mass/n_max, r, c, grainsize);
+		if (n_max > 0) {
+			for (int r=0; r<cfg->Ny; r++) for (int c=0; c<cfg->Nx; c++) {
+				if (lake_max[r][c] == il) {
+					Sediment (cfg, ctx, -d_mass/n_max, r, c, grainsize);
+				}
+			}
+		} else {
+			n_max = Lake[il].n;
+			if (n_max > 0) {
+				for (int i=0; i<Lake[il].n; i++) {
+					Sediment (cfg, ctx, -d_mass/n_max, Lake[il].row[i], Lake[il].col[i], grainsize);
+				}
 			}
 		}
-		Dhsed = -MASS2SEDTHICK(cfg, d_mass) / n_max;
+		Dhsed = -MASS2SEDTHICK(cfg, d_mass) / MAX_2(n_max, 1);
 		if ((cfg->verbose_level>=3 && Dhsed>2) || (drainage[row][col].masstr>1 && Dhsed>10))
 			PRINT_WARNING("filling endorh. lake %d (%d nds, %.1f m3/s), at %.2f,%.2f km in rough way: %.1f m.", 
 				il, Lake[il].n, Lake_Input_Discharge(cfg, il), (col*cfg->dx+cfg->xmin)/1e3, (cfg->ymax-row*cfg->dy)/1e3, Dhsed);
@@ -2569,6 +2670,9 @@ int Delete_Node_From_Lake (ModelConfig *cfg, ModelContext *ctx, int row, int col
 	i = row;  j = col;
 	ro[0]=i-1, ro[1]=i-1, ro[2]=i-1, ro[3]=i,   ro[4]=i,   ro[5]=i+1, ro[6]=i+1, ro[7]=i+1;
 	co[0]=j-1, co[1]=j,   co[2]=j+1, co[3]=j-1, co[4]=j+1, co[5]=j-1, co[6]=j,   co[7]=j+1;
+	int imaxderneg_flat = SIGNAL;
+	imaxderneg = SIGNAL;
+	maxderneg = 1e9;
 	for (k=0; k<NDERS; k++) {
 		float dist, deriv;
 		switch (k) {
@@ -2578,9 +2682,25 @@ int Delete_Node_From_Lake (ModelConfig *cfg, ModelContext *ctx, int row, int col
 		}
 		if (IN_DOMAIN(ro[k],co[k])) {
 			deriv = (ctx->topo[ro[k]][co[k]]-ctx->topo[i][j])/dist;
-			if ((deriv<0 && deriv<maxderneg) || (deriv==0 && deriv<=maxderneg && drainage[ro[k]][co[k]].lake)) 
-				{imaxderneg=k; maxderneg=deriv;}
+			if (deriv < 0) {
+				if (deriv < maxderneg) {
+					imaxderneg = k;
+					maxderneg = deriv;
+				}
+			} else if (deriv == 0) {
+				if (drainage[ro[k]][co[k]].lake) {
+					if (maxderneg >= 0) {
+						imaxderneg = k;
+						maxderneg = deriv;
+					}
+				} else if (imaxderneg_flat == SIGNAL) {
+					imaxderneg_flat = k;
+				}
+			}
 		}
+	}
+	if (imaxderneg == SIGNAL && imaxderneg_flat != SIGNAL) {
+		imaxderneg = imaxderneg_flat;
 	}
 
 	/*Determine new drainage by draining through the maximum slope*/
@@ -2811,38 +2931,6 @@ int Divide_Lake (ModelConfig *cfg, ModelContext *ctx, int row, int col /*lake no
 	for (i=j=0; i<Lake[il].n; i++) if (new_lake_num[i]) j++;
 	if (j!=Lake[il].n-1) PRINT_ERROR("%d new lake nodes were expected rather than %d", Lake[il].n-1, j);
 
-	/* Revoke eager transfers for nodes whose outlet is the deleted node or ends up in a different sub-lake */
-	for (i=0; i<Lake[il].n; i++) {
-		if (Lake[il].row[i] == row && Lake[il].col[i] == col) continue;
-		
-		int drow = drainage[Lake[il].row[i]][Lake[il].col[i]].dr_row;
-		int dcol = drainage[Lake[il].row[i]][Lake[il].col[i]].dr_col;
-		if (IN_DOMAIN(drow, dcol)) {
-			bool revoke = false;
-			if (drow == row && dcol == col) {
-				revoke = true;
-			} else {
-				int outlet_idx = -1;
-				for (j=0; j<Lake[il].n; j++) {
-					if (Lake[il].row[j] == drow && Lake[il].col[j] == dcol) {
-						outlet_idx = j;
-						break;
-					}
-				}
-				if (outlet_idx >= 0 && new_lake_num[i] != new_lake_num[outlet_idx]) {
-					revoke = true;
-				}
-			}
-			if (revoke) {
-				drainage[drow][dcol].discharge -= drainage[Lake[il].row[i]][Lake[il].col[i]].discharge;
-				drainage[drow][dcol].C_Ca -= drainage[Lake[il].row[i]][Lake[il].col[i]].C_Ca;
-				drainage[drow][dcol].C_SO4 -= drainage[Lake[il].row[i]][Lake[il].col[i]].C_SO4;
-				drainage[drow][dcol].C_Na -= drainage[Lake[il].row[i]][Lake[il].col[i]].C_Na;
-				drainage[drow][dcol].C_Cl -= drainage[Lake[il].row[i]][Lake[il].col[i]].C_Cl;
-			}
-		}
-	}
-
 	/*Distribute the nodes among the new lakes and delete the original lake*/
 	for (i=1, k=0; i<=local_num_lakes; i++) {
 		int new_lake;
@@ -2902,6 +2990,8 @@ int Divide_Lake (ModelConfig *cfg, ModelContext *ctx, int row, int col /*lake no
 	i = row;  j = col;   imaxderneg = new_dr_row = new_dr_col = SIGNAL;
 	ro[0]=i-1, ro[1]=i-1, ro[2]=i-1, ro[3]=i,   ro[4]=i,   ro[5]=i+1, ro[6]=i+1, ro[7]=i+1;
 	co[0]=j-1, co[1]=j,   co[2]=j+1, co[3]=j-1, co[4]=j+1, co[5]=j-1, co[6]=j,   co[7]=j+1;
+	int imaxderneg_flat = SIGNAL;
+	maxderneg = 1e9;
 	/*Calculate derivates*/
 	for (k=0; k<NDERS; k++) {
 		float dist, deriv;
@@ -2914,12 +3004,26 @@ int Divide_Lake (ModelConfig *cfg, ModelContext *ctx, int row, int col /*lake no
 			deriv = (ctx->topo[ro[k]][co[k]]-ctx->topo[i][j])/dist;
 			/*I include deriv==0 because it can happen that the removed node is in a plane and needs to drain somewhere in that plane.*/
 			if (drainage[ro[k]][co[k]].lake!=first_open) {
-				if (imaxderneg == SIGNAL || deriv < maxderneg) {
-				imaxderneg=k;
-				maxderneg=deriv;
+				if (deriv < 0) {
+					if (deriv < maxderneg) {
+						imaxderneg = k;
+						maxderneg = deriv;
+					}
+				} else if (deriv == 0) {
+					if (drainage[ro[k]][co[k]].lake) {
+						if (maxderneg >= 0) {
+							imaxderneg = k;
+							maxderneg = deriv;
+						}
+					} else if (imaxderneg_flat == SIGNAL) {
+						imaxderneg_flat = k;
+					}
 				}
 			}
 		}
+	}
+	if (imaxderneg == SIGNAL && imaxderneg_flat != SIGNAL) {
+		imaxderneg = imaxderneg_flat;
 	}
 	if (imaxderneg != SIGNAL) {
 		new_dr_row = ro[imaxderneg];

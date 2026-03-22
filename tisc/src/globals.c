@@ -29,8 +29,9 @@ char projectname[MAXLONFICH], title[MAXLONLINE];
 /* From tao+tisc.h */
 int nloads, n_sea_level_input_points, n_eros_level_input_points, n_record_times;
 int i_first_Block_load, i_Block_insert, numBlocks, nwrotenfiles, run_type;
+int salt_model = 0;
 float Kerosdif, Keroseol, Ksedim, critical_slope, K_river_cap, erodibility, erodibility_sed, critical_stress;
-float initial_grain_size = 1.0;
+float initial_grain_size = 0;
 float distance_half_grainsize = 5000.0;
 
 /* Salt & Ion parameters */
@@ -148,6 +149,7 @@ ParameterEntry param_table[] = {
     {"C_Cl_RIV", PARAM_TYPE_FLOAT, &C_Cl_RIV, 0, false},
     {"GYPSUM_PRECIP_CN", PARAM_TYPE_FLOAT, &GYPSUM_PRECIP_CN, 0, false},
     {"HALITE_PRECIP_CN", PARAM_TYPE_FLOAT, &HALITE_PRECIP_CN, 0, false},
+    {"salt_model", PARAM_TYPE_INT, &salt_model, 0, false},
 
     // Old versions
     {"switch_ps", PARAM_TYPE_INT, &plotting_mode, 0, true},

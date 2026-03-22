@@ -1,5 +1,5 @@
 if (-r $prj.xyw) then 
-echo -n plotting RAIN... 
+echo -n Plot RAIN. 
 awk '{print($1,$2,$10/1e3)}' $prj.xyw |\
 	xyz2grd	-G$tmp.rain.grd.tmp -I$dx/$dy -R -H2
 

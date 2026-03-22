@@ -1,4 +1,5 @@
 if (-r $prj.st) then
+	echo -n Plot EROSION.
 	grdimage $tmp.eros_cumul.grd.tmp -C$tmp.eros_cumul_cpt.tmp -JX -R -Q -O -K >> $ps
 	grdcontour $tmp.eros_cumul.grd.tmp -JX -R -C2 -L-14/-2 -W1 -O -K >> $ps
 	grdcontour $tmp.eros_cumul.grd.tmp -JX -R -C2 -L2/14 -W1 -O -K >> $ps

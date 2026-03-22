@@ -1,5 +1,5 @@
 if (-r $prj.xyzt) then
-echo -n plotting DEFLECTION... 
+echo -n Plot DEFLECTION. 
 grdimage $tmp.subs.grd.tmp -C$tmp.subs_cpt.tmp  -JX -R -K -O >> $ps
 
 awk '{print $1,$2,$(NF-2);}' $prj.xyzt | \

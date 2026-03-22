@@ -1,5 +1,5 @@
 if (-f $prj.pfl) then
-echo -n plotting CROSS SECTION... 
+echo -n Plot CROSS SECTION. 
 set dens 	= `awk '(NR==2) {print $0; exit;}' $prj.pfl`
 set numcols = `awk '(NR==4) {print NF; exit;}' $prj.pfl`
 set vert_shift_CS = 2.5

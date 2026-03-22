@@ -67,7 +67,7 @@ typedef struct {
 #define Read_Open_Filename_Return(ext,type,txt) {\
 	char name[MAXLENFILE];\
 	snprintf(name, sizeof(name), "%s"ext, projectname);\
-	if ((file = fopen(name,type)) == NULL) {PRINT_INFO("Cannot read "txt" input file '%s'.", name); return 0;}\
+	if ((file = fopen(name,type)) == NULL) {PRINT_INFO(""txt" input file '%s' not found.", name); return 0;}\
 	PRINT_INFO("Reading "txt" at '%s'", name);};
 #define Read_Header_File(file) {\
 	char line[MAXLENLINE+200], *lineptr, str1[MAXLENLINE], str2[MAXLENLINE]; float value; int nlines=0, nparams=0, nread; bool switch_show=(verbose_level>=3)? true:false;\
@@ -86,6 +86,7 @@ typedef struct {
 
 extern int nloads, n_sea_level_input_points, n_eros_level_input_points, n_record_times;
 extern int i_first_Block_load, i_Block_insert, numBlocks, nwrotenfiles, run_type;
+extern int salt_model;
 
 	
 extern float Kerosdif, Keroseol, Ksedim, critical_slope, K_river_cap, erodibility, erodibility_sed, critical_stress;

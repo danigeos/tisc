@@ -1388,7 +1388,7 @@ int write_file_grainsize (ModelConfig *cfg, ModelContext *ctx)
 	  WRITES A FILE WITH GRAINSIZE OF SEDIMENT BLOCKS
 	*/
 
-	Write_Open_Filename_Return (".grainsize", "wt", !switch_write_file_Blocks);
+	Write_Open_Filename_Return (".grainsize", "wt", !switch_write_file_Blocks || !initial_grain_size);
 
 	fprintf(file, "# x(km)\t\t y(km)\t\t grainsize(m)-->  \t\t(t=%.4f My)\n#    \tAge:\t", ctx->Time/Matosec) ;
 	for (int k=0; k<ctx->numBlocks; k++) {
@@ -1417,9 +1417,8 @@ int write_file_thicksalt (ModelConfig *cfg, ModelContext *ctx)
 	FILE 	*file ;
 
 	/* WRITES A FILE WITH SALT THICKNESS OF SEDIMENT BLOCKS */
-	if (!cfg->hydro_model || !evaporation_ct) return 0;
 
-	Write_Open_Filename_Return (".thicksalt", "wt", !switch_write_file_Blocks);
+	Write_Open_Filename_Return (".thicksalt", "wt", !switch_write_file_Blocks || !cfg->hydro_model || !evaporation_ct || !salt_model);
 
 	fprintf(file, "# x(km)\t\t y(km)\t\t gypsum_thickness(m)\t halite_thickness(m)\t\t(t=%.4f My)\n", ctx->Time/Matosec) ;
 	for (int i=0; i<cfg->Ny; i++)  for (int j=0; j<cfg->Nx; j++) {

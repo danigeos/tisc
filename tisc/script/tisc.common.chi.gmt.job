@@ -1,5 +1,5 @@
 if (-r $prj.bas) then
-echo -n plotting CHI...
+echo -n Plot CHI.
 grdinfo $tmp.chi.grd.tmp
 set chimax = `grdinfo $tmp.chi.grd.tmp | grep z_max | awk '{print $5}'`
 set max4cpt = `awk -v number=$Lxy 'BEGIN{number*=2.; print (int(number/10^(int(log(number)/log(10)))*10)+1)*10^(int(log(number)/log(10)))/10}'`

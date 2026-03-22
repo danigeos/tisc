@@ -1,4 +1,4 @@
-#Just a test running tAo in multiple stages from a script.
+#Just example on running tAo in multiple stages from a script.
 #
 
 cat <<END> example_F.PRM
@@ -8,10 +8,12 @@ cat <<END> example_F.PRM
 	xf		600e3
 	xmin		0
 	xmax		400e3
+	Timeini	0
+	Timefinal 2
 	erosed_model	1
 	switch_sea 1
 	switch_ps	2
-	verbose_level 3
+	verbose_level 0
 END
 
 cat <<END> example_F1.UNIT

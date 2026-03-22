@@ -29,6 +29,7 @@ char projectname[MAXLONFICH], title[MAXLONLINE];
 /* From tao+tisc.h */
 int nloads, n_sea_level_input_points, n_eros_level_input_points, n_record_times;
 int i_first_Block_load, i_Block_insert, numBlocks, nwrotenfiles, run_type;
+int salt_model = 1;
 float Kerosdif, Keroseol, Ksedim, critical_slope, K_river_cap, erodibility, erodibility_sed, critical_stress;
 float spl_m, spl_n, l_fluv_sedim, lost_rate, permeability, rain, Krain, relative_humidity, CXrain;
 float rain_per, rain_amp, total_bedrock_eros_mass, total_sed_mass;
@@ -117,6 +118,7 @@ ParameterEntry param_table[] = {
     {"switch_files", PARAM_TYPE_BOOL, &switch_write_file, 0, false},
     {"plotting_mode", PARAM_TYPE_INT, &plotting_mode, 0, false},
     {"verbose_level", PARAM_TYPE_INT, &verbose_level, 0, false},
+    {"salt_model", PARAM_TYPE_INT, &salt_model, 0, false},
 
     // Old versions (for backward compatibility)
     {"switch_ps", PARAM_TYPE_INT, &plotting_mode, 0, true},

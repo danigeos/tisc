@@ -1,5 +1,5 @@
 if (-r $prj.xyw) then 
-echo -n plotting DIVIDES...
+echo -n Plot DIVIDES.
 awk '{if ($6<0) sd=0; else sd=$14; print($1,$2,sd)}' $prj.xyw |\
 	xyz2grd	-G$tmp.swimdist.grd.tmp -I$dx/$dy -R -H2
 

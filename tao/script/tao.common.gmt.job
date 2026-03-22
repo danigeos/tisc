@@ -78,7 +78,7 @@ set color_sea = 120/190/255
 set color_ice = 190/190/240
 
 echo
-echo -n PLOTTING... region = $region 
+echo -n PLOTTING...# region = $region 
 
 #Intermidiate files:
 if (-r $prj.CRUST) then 

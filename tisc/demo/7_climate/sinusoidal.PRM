@@ -85,6 +85,8 @@ eros_bound_cond	0000	Boundary Conditions for surface processes at the N, S, E, W
 			#c: as 0 but under sea-level areas will not be connected to ocean at that boundary. 
 K_ice_eros	0	Constant of ice incission rate relating ice sliding velocity to erosion [(m/yr)/(m/yr)]. 0 means no ice computation. Observations by Boulton, 1974, (cited in Glacial Geologic Processes, David Drewry, 1987), imply [.05e-3-.2e-3]. Tomkin's thesis and Braun et al., 2001, J. Climatology, use [2.5e-3 - .1e-3].
 
+salt_model 1
+grain_size 1
 
 #INPUT/OUTPUT:
 switch_files	1	For extra file output.

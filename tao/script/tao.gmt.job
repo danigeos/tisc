@@ -11,7 +11,6 @@ if ($#argv < 1) then
 	exit
 endif
 
-
 #Setting up variables:
 source $tisc_dir/tao/script/tao.common.gmt.job
 
@@ -34,15 +33,6 @@ if ($switch_sea == 1) psxy $tmp.sea.xz.tmp -JX -R -O -K -L -G$color_sea >> $ps
 
 #Draws basement:
 psxy $tmp.basement.xz.tmp -JX -R -O -K -L -G$color_heavy_basement >> $ps
-
-#set uplift = `awk -v tn=$Timenow 'BEGIN{u=(tn+40)*3000/40; if (0) u=30*3000/40; print u; exit;}'`
-#echo uplift = $uplift
-#psxy -JX -R -W4ta -O -K << END >> $ps
-#	-50	0
-#	-50	$uplift
-#	50	$uplift
-#	50	0
-#END
 
 set col = 3
 while ($col <= $numcols)
@@ -190,23 +180,23 @@ set vertshift = `echo $graph_height + .5 | bc -l`
 gmtset BASEMAP_FRAME_RGB +0/0/0
 psbasemap -JX$graph_width/$graph_height -R$xmin/$xmax/-10/10 -B$ticklabels\:"":/ns -Y$vertshift -O -K >> $ps
 gmtset BASEMAP_FRAME_RGB +180/0/0
-awk '{print $1, $3/1e3}' $prj.eros | \
+awk '(substr($0,1,1)!="#"){print $1, $3/1e3}' $prj.eros | \
 	psxy -JX -R$xmin/$xmax/-3/3 -W4/180/0/0 -O -K -B/a1f1g100:"erosion(mm/yr)":W >> $ps
 gmtset BASEMAP_FRAME_RGB +150/100/0
-awk '{print $1, $6}'     $prj.eros | \
-	psxy -JX -R$xmin/$xmax/0/300 -W4/150/100/0 -O -K -B/50:"sed.load(kg/s)":E >> $ps
+awk '(substr($0,1,1)!="#"){if ($6!="") print $1, $6}'     $prj.eros | \
+	psxy -JX -R$xmin/$xmax/0/300 -W4/150/100/0 -O -K -B/50:"sed.load(kg/s)":E >> $ps 
 gmtset BASEMAP_FRAME_RGB +0/0/0; 
 set total_rain = `awk '(NR>3){total+=$8}END{printf("%.0f", total)}' $prj.eros`
 if ($hydro_model) then 
 psbasemap -JX$graph_width/$graph_height -R$xmin/$xmax/-10/10 -B$ticklabels\:"":/ns -Y$vertshift -O -K >> $ps
 gmtset BASEMAP_FRAME_RGB +0/0/255
-awk '{print $1, $5}' $prj.eros | \
+awk '(substr($0,1,1)!="#"){print $1, $5}' $prj.eros | \
 	psxy -JX -R$xmin/$xmax/0/1000 -W4/0/0/255 -O -K -B/200:"water disch.(m@+3@+/s)":E >> $ps
 gmtset BASEMAP_FRAME_RGB +0/150/255
-awk '{print $1, $8/1e3}' $prj.eros | \
+awk '(substr($0,1,1)!="#"){print $1, $8/1e3}' $prj.eros | \
 	psxy -JX -R$xmin/$xmax/0/4 -W4/0/150/255 -O -K -B/a2f1:"P,E (m/yr)":W >> $ps
 gmtset BASEMAP_FRAME_RGB +100/180/255
-awk '{print $1, $9/1e3}' $prj.eros | \
+awk '(substr($0,1,1)!="#"){print $1, $9/1e3}' $prj.eros | \
 	psxy -JX -R$xmin/$xmax/0/4 -W6/100/180/255ta -O -K >> $ps
 gmtset BASEMAP_FRAME_RGB +0/0/0; 
 endif
@@ -233,10 +223,10 @@ psbasemap -JX -R -O -Bnsew >> $ps
 
 #Gravity Anomaly graphic:
 if (-r $prj.xg) then 
-	awk '{if (NR>=3) print $1, $2}' $prj.xg \
+	awk '(substr($0,1,1)!="#"){if (NR>=3) print $1, $2}' $prj.xg \
 		| psxy -JX$graph_width/10 -R$xmin/$xmax/-200/200 -W4/155/0/0 -Y2.7 -X3 -K \
 		-B:.$prj\:a50f5g25:"distance (km)":/100f10g50:"Gravity Anomaly (mGal)":nSeW >> $ps
-	awk '{if (NR>=3) print $1, $3}' $prj.xg \
+	awk '(substr($0,1,1)!="#"){if (NR>=3) print $1, $3}' $prj.xg \
 		| psxy -JX -R$xmin/$xmax/-20/20 -W4/0/155/0 -O \
 		-B/10f1:"Geoid Height (m)":E >> $ps
 	if (-r $prj.xg.CMP) then 
@@ -258,10 +248,10 @@ endif
 #STRESS DISTRIBUTION
 if (-r $prj.strs) then
 	#awk '{print $1,$2,$4}' $prj.temp | surface -G$tmp.temp.grd.tmp -I2/1 -R$xmin/$xmax/-5/70 -H2 
-	awk '{print $1,$2,$3}' $prj.strs | surface -G$tmp.strs.grd.tmp -I$dx/$dz -R$xmin/$xmax/$zminlith/$zmaxlith -H2 
-	awk '{if ($3==$5) print $1,$2,1; else print $1,$2,0}' $prj.strs | surface -G$tmp.compr_deform.grd.tmp -I$dx/$dz -R$xmin/$xmax/$zminlith/$zmaxlith -H2 
-	awk '{print $1,$2,$5}' $prj.strs | surface -G$tmp.yieldcomp.grd.tmp -I$dx/$dz -R$xmin/$xmax/$zminlith/$zmaxlith -H2
-	awk '{print $1,$2,$6}' $prj.strs | surface -G$tmp.yieldextn.grd.tmp -I$dx/$dz -R$xmin/$xmax/$zminlith/$zmaxlith -H2
+	awk '(substr($0,1,1)!="#"){print $1,$2,$3}' $prj.strs | surface -G$tmp.strs.grd.tmp -I$dx/$dz -R$xmin/$xmax/$zminlith/$zmaxlith -H2 
+	awk '(substr($0,1,1)!="#"){if ($3==$5) print $1,$2,1; else print $1,$2,0}' $prj.strs | surface -G$tmp.compr_deform.grd.tmp -I$dx/$dz -R$xmin/$xmax/$zminlith/$zmaxlith -H2 
+	awk '(substr($0,1,1)!="#"){print $1,$2,$5}' $prj.strs | surface -G$tmp.yieldcomp.grd.tmp -I$dx/$dz -R$xmin/$xmax/$zminlith/$zmaxlith -H2
+	awk '(substr($0,1,1)!="#"){print $1,$2,$6}' $prj.strs | surface -G$tmp.yieldextn.grd.tmp -I$dx/$dz -R$xmin/$xmax/$zminlith/$zmaxlith -H2
 endif
 psbasemap -JX$graph_width/-5 -R$xmin/$xmax/-2/70 -B$ticklabels\:"distance (km)":/20f10:"Depth (km)":nSeW \
 	-X2.5 -Y3 -K -P	>> $ps
@@ -311,10 +301,10 @@ else
 	#Maximum moment point
 	set MMPX = `awk '(NR==1){print($2);exit}' $prj.ysen`
 	echo Plotting at maximum momentum point x = $MMPX
-	awk '{print($1,$2)}' $prj.ysen | psxy -JX -R -W6 -O -K -: >> $ps
-	awk '{print($1,$3)}' $prj.ysen | psxy -JX -R -W6 -O -K -: >> $ps
-	awk '{print($1,$5)}' $prj.ysen | psxy -JX -R -W4/140 -H1 -M -O -K -: -G220 >> $ps
-	awk '{print($1,$4)}' $prj.ysen | psxy -JX -R -W8to -B400f100:"Temperature (C)":nSew -O -K -: >> $ps
+	awk '(substr($0,1,1)!="#"){print($1,$2)}' $prj.ysen | psxy -JX -R -W6 -O -K -: >> $ps
+	awk '(substr($0,1,1)!="#"){print($1,$3)}' $prj.ysen | psxy -JX -R -W6 -O -K -: >> $ps
+	awk '(substr($0,1,1)!="#"){print($1,$5)}' $prj.ysen | psxy -JX -R -W4/140 -H1 -M -O -K -: -G220 >> $ps
+	awk '(substr($0,1,1)!="#")(substr($0,1,1)!="#"){print($1,$4)}' $prj.ysen | psxy -JX -R -W8to -B400f100:"Temperature (C)":nSew -O -K -: >> $ps
 	pstext	-JX -R -N -O -K << END >> $ps
 		-700	70	12 0 0 LT 	\ x=$MMPX
 END

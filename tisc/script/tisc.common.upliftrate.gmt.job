@@ -1,4 +1,4 @@
-echo -n plotting VERTICAL UPLIFT RATE...
+echo -n Plot UPLIFT RATE. 
 awk '{print $1,$2,($(NF-1)/1e3);}' $prj.xyzt | \
 	xyz2grd -G$tmp.subsrate.grd.tmp -I$dx/$dy -R$Region -H1
 

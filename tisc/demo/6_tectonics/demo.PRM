@@ -21,7 +21,7 @@ compact_depth 2000	Depth at which sediment porosity is reduced by a factor e,
 
 Timeini		0	Initial time.
 Timefinal	15	Final time.
-dt 		1	Time step (>0, time increment or interval) for flexure and
+dt 		.5	Time step (>0, time increment or interval) for flexure and
 dt_eros		0.05	Approximate dt for surface processes (will be adjusted to
 dt_record	5	Time lag between records of sedimentary horizons (time lines)
 
@@ -46,13 +46,13 @@ lost_rate	0	Water evapotranspirated per river unit length [%/km]
 temp_sea_level	8	If hydro_model>=2 or K_ice_eros>0: Temperature at sea level
 
 erosed_model	6	Defines the erosion/sedimentation model.
-Keroseol	0.1	Continental background erosion rate (ratio per My, [m/(m·My)]).
-Ksedim  	100	Additional sedimentation rate below sea level [m/My].
-Kerosdif   	0.2	Diffusive transport coefficient [m2/yr] (e.g., Ks in 
-critical_slope	0	Maximum surface slope (slope triggering landsliding, 
+Keroseol	0 0.01	Continental background erosion rate (ratio per My, [m/(m·My)]).
+Ksedim  	0	Additional sedimentation rate below sea level [m/My].
+Kerosdif   	0.1	Diffusive transport coefficient [m2/yr] (e.g., Ks in 
+critical_slope	.2	Maximum surface slope (slope triggering landsliding, 
 K_river_cap	60	For erosed_model>=2: Constant for river transport capacity
-erodibility	1.2e+05	This default erodibility value is ignored for units with a
-erodibility_sed	6e+04	Same as 'erodibility' but for sediments.
+erodibility	1.2e-07	This default erodibility value is ignored for units with a
+erodibility_sed	1.2e-06	Same as 'erodibility' but for sediments.
 l_fluv_sedim	2.5e+04	Sedimentation decay distance [m] (fluvial aggradation 
 deform_sed	1	0 means that sediment units will remain steady (velocity =0); 1
 eros_bound_cond	0000	Boundary Conditions for surface processes at the N, S,

@@ -243,6 +243,7 @@ replace_word	../../tao+tisc_commons/src/libreria.c	/^char *replace_word(char *s,
 riverbasinwidth	../include/tao.h	/^	float riverbasinwidth, sed_porosity;$/;"	m	struct:__anon1
 riverbasinwidth	globals.c	/^float 	evaporation_ct, riverbasinwidth, total_evap_water, total_lost_water, total_rain;$/;"	v
 run_type	globals.c	/^int i_first_Block_load, i_Block_insert, numBlocks, nwrotenfiles, run_type;$/;"	v
+salt_model	globals.c	/^int salt_model = 1;$/;"	v
 sea_level	../include/tao.h	/^	float sea_level;$/;"	m	struct:__anon2
 sea_level	globals.c	/^float sea_level = 0, temp_sea_level;$/;"	v
 sed_porosity	../include/tao.h	/^	float riverbasinwidth, sed_porosity;$/;"	m	struct:__anon1

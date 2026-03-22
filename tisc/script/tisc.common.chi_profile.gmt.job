@@ -1,5 +1,5 @@
 if (-r $prj.bas) then 
-echo -n plotting CHI PROFILE... 
+echo -n Plot CHI PROFILE. 
 awk '{if ($3>=dl && $3<dh) printf ("> -Z%f\n%.1f\t%.3f\n%.1f\t%.3f\n", $14/1e3, $8, $6/1e3, $13, $11/1e3)}' dl=$disch1 dh=$disch2 \
 	$tmp.chosen_basin.bas.tmp | psxy -JX -R -m -C$tmp.erosrate_cpt.tmp -W1 -O -K >> $ps
 awk '{if ($3>=dl && $3<dh) printf ("> -Z%f\n%.1f\t%.3f\n%.1f\t%.3f\n", $14/1e3, $8, $6/1e3, $13, $11/1e3)}' dl=$disch2 dh=$disch3 \

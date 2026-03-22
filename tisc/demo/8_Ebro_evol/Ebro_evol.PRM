@@ -11,8 +11,8 @@ tisc Ebro_evol -Pc"-page 1040x700-210-580 -density 180 -crop 1040x1000+0+0" | te
 
 version		TISC_2016-08-30
 
-Nx             	104
-Ny             	55
+Nx             	208
+Ny             	110
 
 xmin           	-48160
 xmax           	660573
@@ -23,7 +23,7 @@ Timeini        	-60
 Timefinal      	-0
 dt             	.5
 dt_record      	0
-dt_eros        	.025
+dt_eros        	.05
 
 random_topo    	5
 

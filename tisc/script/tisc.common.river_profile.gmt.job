@@ -1,5 +1,5 @@
 if (-r $prj.bas) then 
-echo -n plotting RIVER PROFILE... 
+echo -n Plot RIVER PROFILE. 
 
 #Peaks: upper topography envelope profile:
 set peakradius = 10

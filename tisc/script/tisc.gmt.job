@@ -24,7 +24,7 @@ END
 
 #PRECIPITATION
 set min_rain = .5
-echo min_rain = $min_rain
+#echo min_rain for gmt = $min_rain
 source $tisc_dir/tisc/script/tisc.common.rain.gmt.job
 #grdinfo $tmp.rain.grd.tmp 
 #cat $tmp.rain_cpt.tmp

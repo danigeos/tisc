@@ -44,7 +44,7 @@ sed_porosity .3		Mean porosity of sediment at deposition (seafloor). For
 				just to convert eroded/deposited volumes into bulk rock mass.
 compact_depth 3000	Depth at which sediment porosity is reduced by a factor e,
 				due to compaction [m]. 0 (zero) means no compaction.
-grain_size			1 	 #[m]
+grain_size			0 #1. 	 #[m]
 grain_size_decay 	15000 #[m]
 
 #TIME VARIABLES [My] (time goes from negative to positive: Timeini<Timefinal):
@@ -167,7 +167,7 @@ erosed_model	0	Defines the erosion/sedimentation model.
 				conservative. Uses only: Keroseol, Ksedim, Kerosdif, 
 				critical_slope.
 			#2: As #1 + rivers following undercapacity model (Beaumont et al.,
-				1992): qeq=K_river_cap�Q�S and dq/dl=1/erodability*(q-qeq)
+				1992): qeq=K_river_cap*Q*S and dq/dl=1/erodability*(q-qeq)
 				(reaction equation).
 			#3: As #1 + rivers following Tucker&Slingerland(1996) model.
 				Incision rate under equilibrium capacity (q<qeq):
@@ -264,6 +264,7 @@ deform_sed	1	0 means that sediment units will remain steady (velocity =0); 1
 				by the motion of underlying Blocks. 
 _______________________________________________________________________________
 #SALT DEPOSITION AND ION TRACKING PARAMETERS:
+salt_model 	0
 C_Ca_SEA		0.048	Marine initial concentration of Ca [kg/m3]
 C_SO4_SEA		2.04	Marine initial concentration of SO4 [kg/m3] (implying initial gypsum conc = 2.062 kg/m3)
 C_Na_SEA		10.70	Marine initial concentration of Na [kg/m3]

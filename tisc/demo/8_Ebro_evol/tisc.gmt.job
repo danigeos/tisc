@@ -74,11 +74,11 @@ grdview	$tmp.top.grd.tmp -JX -JZ -R$Region/$ZRegion -E$view_azimut/$view_elevati
 #Drainage:
 if (-r $prj.xyw) then 
 awk '/^[^#]/ {if ($3>1.5 && $3<=15 && $5!="S" && $5!="L") {print ">"; print $1,$2,$6; print $7,$8,$9}}' $prj.xyw | \
-	psxyz -JX -JZ -R -M -W1p,$col_river -E$view_azimut/$view_elevation -O -K >> $ps 
+	psxyz -JX -JZ -R -M -W1,$col_river -E$view_azimut/$view_elevation -O -K >> $ps 
 awk '/^[^#]/ {if ($3>15 && $3<=80 && $5!="S" && $5!="L") {print ">"; print $1,$2,$6; print $7,$8,$9}}' $prj.xyw | \
-	psxyz -JX -JZ -R -M -W4p,$col_river -E$view_azimut/$view_elevation -O -K >> $ps 
+	psxyz -JX -JZ -R -M -W3,$col_river -E$view_azimut/$view_elevation -O -K >> $ps 
 awk '/^[^#]/ {if ($3>80 && $5!="S" && $5!="L") {print ">"; print $1,$2,$6; print $7,$8,$9}}' $prj.xyw | \
-	psxyz -JX -JZ -R -M -W9p,$col_river -E$view_azimut/$view_elevation -O -K >> $ps 
+	psxyz -JX -JZ -R -M -W6,$col_river -E$view_azimut/$view_elevation -O -K >> $ps 
 
 #lakes:
 awk '{fc=substr($0,1,1); if (fc==">") {disch=1.0*$11; alt=$7; sds=$9} else {if (fc!="#" && (sds>0  && disch>2.5) && $3!="S") print $1, $2, alt;};}' $prj.lak | \
