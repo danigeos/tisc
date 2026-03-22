@@ -6,6 +6,8 @@ export tisc_DIR
 BIN := $(tisc_DIR)/bin
 BUILD := $(tisc_DIR)/tao+tisc_commons/build
 
+include config.mk
+
 OS        := $(shell uname -s)
 ARCH      := $(shell uname -m)
 PROCESSOR := $(shell uname -p)
@@ -19,11 +21,11 @@ YELLOW  := \033[33m
 MAGENTA := \033[35m
 RESET   := \033[0m
 
-.PHONY: all clean help tao tisc dirs info
+.PHONY: all clean help tao tisc dirs info update_prm_versions
 
 .DEFAULT_GOAL := all
 
-all: info dirs tao tisc ## Compile both tAo and TISC
+all: info dirs update_prm_versions tao tisc ## Compile both tAo and TISC
 	@printf "\n"
 	@printf "$(MAGENTA)$(BOLD)============================================================$(RESET)\n"
 	@printf "$(GREEN)$(BOLD)      🎉 SUCCESS! TISC and tAo are ready to use! 🎉$(RESET)\n"
@@ -46,10 +48,22 @@ info:
 	@printf "$(CYAN)  Processor:$(RESET)   $(PROCESSOR)\n"
 	@printf "$(MAGENTA)$(BOLD)============================================================$(RESET)\n\n"
 
-tao: ## Compile tAo
+update_prm_versions:
+	@if ! grep -q "^version[[:space:]]*$(TISC_VERSION)" tisc/doc/template.PRM; then \
+		echo "Updating TISC version tag in template.PRM..."; \
+		LC_ALL=C sed -i.bak -e "s/^version[[:space:]]*[^[:space:]]*/version		$(TISC_VERSION)/" tisc/doc/template.PRM; \
+		rm -f tisc/doc/template.PRM.bak; \
+	fi
+	@if ! grep -q "^version[[:space:]]*$(TAO_VERSION)" tao/doc/template.PRM; then \
+		echo "Updating tAo version tag in template.PRM..."; \
+		LC_ALL=C sed -i.bak -e "s/^version[[:space:]]*[^[:space:]]*/version		$(TAO_VERSION)/" tao/doc/template.PRM; \
+		rm -f tao/doc/template.PRM.bak; \
+	fi
+
+tao: update_prm_versions ## Compile tAo
 	@$(MAKE) -C tao/src all
 
-tisc: ## Compile TISC
+tisc: update_prm_versions ## Compile TISC
 	@$(MAKE) -C tisc/src all
 
 clean: ## Clean generated files for both projects

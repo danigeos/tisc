@@ -1,7 +1,7 @@
 ### tAo parameters file ###
 
 #tAo VERSION FOR THIS FILE:
-version		tAo_2017-05-19
+version		tAo_2026-03-22_factorized_stable
 
 #MODEL DOMAIN (if not present will take xmin,xmax):
 x0		-500e3	Left boundary. See '-D' command option. Default: xmin.
