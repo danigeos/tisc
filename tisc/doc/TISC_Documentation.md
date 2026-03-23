@@ -12,6 +12,7 @@ This document provides a comprehensive user manual and technical documentation f
 * Part 2: Technical Documentation
   * 1. Code Architecture
   * 2. Core Physical Models
+  * 3. Computational Performance and Scaling
 
 ---
 
@@ -423,3 +424,24 @@ Deposition occurs when the sediment load exceeds the transport capacity.
 *   **In Lakes (`Lake_Fill`)**: When a river enters a lake, its velocity drops, and it deposits its sediment load. The `Lake_Fill` function distributes the incoming sediment (`drainage[row][col].masstr`) within the lake basin, starting from the river mouth and propagating inwards. For endorheic lakes, if any sediment remains after the distribution process, it is deposited uniformly over the entire lake area.
 
 The deposition is handled by the `Sediment()` function, which adds thickness to the topmost sediment `Block`.
+
+## 3. Computational Performance and Scaling
+
+The computational time of TISC is heavily dependent on the grid dimensions ($N_x$ and $N_y$). If we assume a square grid where $N = N_x = N_y$, the total number of grid cells is $V = N^2$. The two most expensive operations scale as follows:
+
+### 3.1. Isostasy (Flexure Solver)
+The elastic and viscoelastic flexure equations are solved using a finite-difference band solver.
+*   **Time Complexity:** The solver processes a matrix of size $V \times V$. Because of the 2D finite difference stencil, the matrix is banded with a bandwidth $B \approx \mathcal{O}(\min(N_x, N_y))$. The time consumption for a band solver scales as $\mathcal{O}(V \cdot B^2)$. Substituting the dimensions, this yields **$\mathcal{O}(N_x N_y \cdot \min(N_x, N_y)^2)$**.
+*   For a square grid ($N_x = N_y = N$), the flexure solver time scales as **$\mathcal{O}(N^4)$**.
+*   **Optimization Tip:** Because the solver time is proportional to the square of the smallest dimension, keeping $N_y < N_x$ (or vice versa) dramatically reduces computation time while maintaining the same total number of cells (e.g., a $1000 \times 100$ grid solves exponentially faster than a $316 \times 316$ grid).
+
+### 3.2. Surface Processes
+The surface transport algorithms (`surf_proc.c`) normally scale linearly or log-linearly, but gracefully degrade into quadratic limits in complex topographies.
+*   **Base Complexity:** Sorting the grid and routing water on standard terrain takes $\mathcal{O}(V \log V)$, which translates to **$\mathcal{O}(N^2 \log N)$**.
+*   **Worst-Case Complexity:** Perfectly flat areas (such as lake beds) require topological sorting to ensure proper sediment routing, and evaporating endorheic lakes require recursive node-deletion and component checking (`Divide_Lake`). Both of these sub-algorithms feature nested loops that scale quadratically with the size of the flat area or lake ($A$). In the absolute worst-case scenario (e.g., a massive shrinking lake covering the entire grid, $A \approx V$), the time consumption degrades to $\mathcal{O}(V^2)$, which is **$\mathcal{O}(N^4)$**.
+
+### 3.3. Memory (RAM) Consumption
+The memory footprint of TISC is generally dominated by the arrays required for the flexure matrix solver.
+*   A standard band matrix requires storing $V \times B$ elements.
+*   This results in a memory complexity of **$\mathcal{O}(N_x N_y \cdot \min(N_x, N_y))$**.
+*   For a square grid ($N_x = N_y = N$), RAM usage scales as **$\mathcal{O}(N^3)$**.

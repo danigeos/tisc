@@ -6,10 +6,10 @@ ymin		-2.5e+05	Southern model limit coordinate [m]
 ymax		2.5e+05	Northern model limit coordinate [m]
 zmin		-3000	Northern model limit coordinate [m]
 zmax		1000	Northern model limit coordinate [m]
-Nx		101	E-W direction grid points. 
-Ny		101	N-S direction grid points
+Nx		401	E-W direction grid points. 
+Ny		401	N-S direction grid points
 zini		100	Initial altitude [m] above sea level (added to the initial
-random_topo	10	Adds noise to initial topo between -random_topo/2 and 
+random_topo	0	Adds noise to initial topo between -random_topo/2 and 
 
 densasthen	3250	Density beneath the lithospheric plate, at the isostatic
 denscrust	2850	Mean density of crust (used for the basement).

@@ -275,16 +275,27 @@ int Surface_Transport (ModelConfig *cfg, ModelContext *ctx, float **topo_ant, in
 			for (int i=1; i<=nlakes; i++) {
 				if (i==i_biggest_nosea || (Lake[i].n>ceil((double) Nx*Ny/500) && verbose_level>=2) || (Lake[i].n>ceil((double) Nx*Ny/2000) && verbose_level>=3)) {
 				PRINT_SUMLINE("lake %3d/%d : %7.2e km3 %7.2e km2 %4.0f m ", i, nlakes, Lake[i].vol/1e9, Lake[i].n*dx*dy/1e6, Lake[i].alt);
-				if (Lake[i].n) fprintf(stdout, "%4.0f,%-4.0f %2d out ", (Lake[i].col[0]*dx+xmin)/1e3, (ymax-Lake[i].row[0]*dy)/1e3, Lake[i].n_sd);
-				if (Lake[i].n_sd) {
-					if (NOT_AT_BORDER(Lake[i].row_sd[0], Lake[i].col_sd[0]) || topo[Lake[i].row_sd[0]][Lake[i].col_sd[0]] > sea_level) {
-						fprintf(stdout, "@	  %3.0f,%-3.0f %5.1f m3/s", (Lake[i].col_sd[0]*dx+xmin)/1e3, (ymax-Lake[i].row_sd[0]*dy)/1e3, Lake_Input_Discharge(cfg, i));
+				if (Lake[i].n) {
+					int min_r = Lake[i].row[0], min_c = Lake[i].col[0];
+					float min_z = topo[min_r][min_c];
+					for (int k = 1; k < Lake[i].n; k++) {
+						if (topo[Lake[i].row[k]][Lake[i].col[k]] < min_z) {
+							min_z = topo[Lake[i].row[k]][Lake[i].col[k]];
+							min_r = Lake[i].row[k];
+							min_c = Lake[i].col[k];
+						}
+					}
+					fprintf(stdout, "%4.0f,%-4.0f %2d out ", (min_c*dx+xmin)/1e3, (ymax-min_r*dy)/1e3, Lake[i].n_sd);
+					if (Lake[i].n_sd) {
+						if (NOT_AT_BORDER(Lake[i].row_sd[0], Lake[i].col_sd[0]) || topo[Lake[i].row_sd[0]][Lake[i].col_sd[0]] > sea_level) {
+							fprintf(stdout, "@	  %3.0f,%-3.0f %5.1f m3/s", (Lake[i].col_sd[0]*dx+xmin)/1e3, (ymax-Lake[i].row_sd[0]*dy)/1e3, Lake_Input_Discharge(cfg, i));
+						}
+						else
+							fprintf(stdout, "Sea	%3.0f,%-3.0f %5.1f m3/s", (min_c*dx+xmin)/1e3, (ymax-min_r*dy)/1e3, Lake_Input_Discharge(cfg, i));
 					}
 					else
-						fprintf(stdout, "Sea	%3.0f,%-3.0f %5.1f m3/s", (Lake[i].col[Lake[i].n-1]*dx+xmin)/1e3, (ymax-Lake[i].row[Lake[i].n-1]*dy)/1e3, Lake_Input_Discharge(cfg, i));
+						fprintf(stdout, "Endorh %3.0f,%-3.0f %5.1f m3/s", (min_c*dx+xmin)/1e3, (ymax-min_r*dy)/1e3, Lake_Input_Discharge(cfg, i));
 				}
-				else
-					fprintf(stdout, "Endorh %3.0f,%-3.0f %5.1f m3/s", (Lake[i].col[Lake[i].n-1]*dx+xmin)/1e3, (ymax-Lake[i].row[Lake[i].n-1]*dy)/1e3, Lake_Input_Discharge(cfg, i));
 				}
 			}
 		}

@@ -1,6 +1,8 @@
-# tAo & TISC: Coupled Tectonic and Surface Process Models
+# TISC & tAo: Coupled Tectonic and Surface Processes Models
 
 This repository contains the source code for two closely related scientific modeling softwares: **TISC** and **tAo**. They are managed together in this monorepo to facilitate the sharing of common libraries and ensure consistency.
+
+![Demo](./images/demo_LagoMare.gif)
 
 ---
 
