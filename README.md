@@ -2,7 +2,11 @@
 
 This repository contains the source code for two closely related scientific modeling softwares: **TISC** and **tAo**. They are managed together in this monorepo to facilitate the sharing of common libraries and ensure consistency.
 
-![Demo](./images/demo_LagoMare.gif)
+
+
+https://github.com/user-attachments/assets/1412a26a-caa1-49fe-abb4-9ca9e1096824
+
+
 
 ---
 
