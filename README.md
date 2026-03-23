@@ -21,6 +21,9 @@ TISC (Tectonics, Isostasy, Surface Processes, and Climate) is a 2D/3D planform m
 
 tAo is a 1D (pseudo-2D) model for simulating the evolution of a vertical cross-section of the lithosphere, including flexure, faulting, and surface processes. It is ideal for modeling foreland basin systems.
 
+![Zagros tAo Saura model anim](https://github.com/user-attachments/assets/61c24912-7b80-42fc-8311-56e38cbd6bc8)
+
+
 *   **Source Code:** `./tao/`
 *   **Documentation:** `./tao/doc/`
 
