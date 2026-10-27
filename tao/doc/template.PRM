@@ -1,7 +1,7 @@
 ### tAo parameters file ###
 
 #tAo VERSION FOR THIS FILE:
-version		tAo_2026-03-22_factorized_stable
+version		tAo_2026-10-27
 
 #MODEL DOMAIN (if not present will take xmin,xmax):
 x0		-500e3	Left boundary. See '-D' command option. Default: xmin.
@@ -106,6 +106,10 @@ hydro_model	0	Defines the hydrological (climate&drainage) model.
 			#2: orographic precipitation following Roer et al. (2003, JGR).
 			#3: orographic precipitation following Garcia-Castellanos (2007,
 				EPSL), water-conservative.
+riverbasinwidth	10e3	Hydrological and fluvial erosional calculations need an
+			assumption on the width of the drainage basin of the river that
+			follows the profile. 'rain' is multi- plied by this to estimate
+			discharge. 
 rain	500	Precipitation per unit area [l/m2/yr]=[mm/yr].
 			If hydro_model=1: Background precipitation (or runoff, water going
 				to the drainage system) if no *.RAIN file is given or if the
@@ -113,15 +117,13 @@ rain	500	Precipitation per unit area [l/m2/yr]=[mm/yr].
 			If hydro_model=2: Precipitation at T=0 C at plains or in absence of
 				wind.
 			If hydro_model=3: Precipitation in a saturated column (related to
-				turbulence) P = rain * Water_col / Water_sat
-riverbasinwidth	10e3	Hydrological and fluvial erosional calculations need an
-			assumption on the width of the drainage basin of the river that
-			follows the profile. 'rain' is multi- plied by this to estimate
-			discharge. 
+				turbulence) P = rain * Water_col / Water_sat. Higher values 
+				imply more water precipitates over flat regions, and less 
+				humidity arrives to orography. 
 Krain		00	If hydro_model=1: proportionality of 'rain' with elevation
 				[l/m2/yr/km]
 			If hydro_model>=2: mean wind velocity [m/s] (Krain>0 and usually
-				Krain<10).
+				Krain<10). Enhances the orographic P peak.
 relhumid	1	If hydro_model==3: humidity factor of incomming wind (0 to 1).
 CXrain		00e3	If hydro_model=1: proportionality of runoff with x 
 				(distance of duplication [m]). 0 means no variations in x; 
@@ -139,17 +141,17 @@ erosed_model	0	Sets the erosion/sedimentation model.
 				effect.
 			#1: constant rate scheme (Keroseol+Ksedim+diffusion+ landsliding).
 			#2: as #1 + rivers following Beaumont et al. (1992) model:
-				qeq=K·Q·S and dq/dl=1/erodability*(q-qeq) (reaction equation). 
+				qeq=Kï¿½Qï¿½S and dq/dl=1/erodability*(q-qeq) (reaction equation). 
 			#3: as #1 + rivers following Tucker&Slingerland(1996) model.
 				Incision rate under equilibrium capacity.
 			#6: as #1 + rivers following basal shear stress law 
 				(Garcia-Castellanos et al., 2009), accounting for channel width.
-				Equivalent to dh/dt=K'·Q^m·S^n
+				Equivalent to dh/dt=K'ï¿½Q^mï¿½S^n
 			#7: as #1 + river incision following unit stream power e=k_b*w^1;
 				w=rho*g*Q*S/W, with w in [W/m^2], e in mm/yr (Ferrier et al.,
 				2013, Nature).
 Keroseol	.0	Continental erosion rate: meters of	erosion by meters elevation
-				and My [m/(m·My)].
+				and My [m/(mï¿½My)].
 Ksedim 	0e2	Sedimentation rate below sea level [m/My].
 
 Kerosdif 	.00	Diffusive transport coefficient [m2/yr] (e.g., Ks in 

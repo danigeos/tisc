@@ -1,7 +1,7 @@
 # --- Shared Configuration for tAo and TISC ---
 
-TAO_VERSION  = tAo_2026-03-22_factorized_stable
-TISC_VERSION = TISC_2026-03-22_factorized_stable
+TAO_VERSION  = tAo_2026-10-27
+TISC_VERSION = TISC_2026-10-27
 
 # Compilers
 CC = gcc

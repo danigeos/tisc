@@ -50,7 +50,7 @@ set hydro_model	= `awk '{if ($1 == "hydro_model") {print $2; exit}}' $prj.PRM`
 set numcols 	= `awk '(NR==4) {print NF; exit;}' $prj.pfl`
 set dens 	= `awk '(NR==2) {print $0; exit;}' $prj.pfl`
 set age 	= `awk '(NR==3) {print $0; exit;}' $prj.pfl`
-set sedim_age_limit = `echo \( $Timeini + $Timefinal \) / 2 | bc -l` 
+set sedim_age_limit = `awk -v ti=$Timeini -v tf=$Timefinal 'BEGIN{print (ti+tf)/2}'` 
 set dx  	= `awk '{if (NR==4) {a=$1;} if (NR==5) {print $1-a; exit;}}' $prj.pfl`
 set dz = 0.5
 set ps   	= $prj.ps

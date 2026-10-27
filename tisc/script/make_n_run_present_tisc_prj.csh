@@ -1,8 +1,11 @@
 #!/bin/csh
+#There is a similar version of this at tisc/script/make_n_run_present_tisc_prj.csh
 
 if ($6 == "") then
+	echo
 	echo "Syntax:    $0 projectname  lonmin lonmax  latmin latmax  resolution"
 	echo "Example:   make_n_run_present_tisc_prj.csh test -10 1 36 41 10m"
+	echo
 	exit
 endif
 
@@ -39,13 +42,12 @@ echo ; echo Dimensions: $length[1] x $length[2]
 
 ###############################################################################
 echo TOPO...
-set grdfile = ~/DGC_global_data/topography/ETOPO1/ETOPO1_Bed_g.grd
+set grdfile = ~/DGC_modeling/global_data/topography/ETOPO1/ETOPO1_Bed_g.grd
 psbasemap -J$projection -R$Region_plot -Ba5nseW -X2 -Y14 -K -P > $ps
 
 grdcut $grdfile -G$tmp.topobat_cont.grd.tmp -R$Region_data
 grdmath $tmp.topobat_cont.grd.tmp 1000 DIV = $tmp.topobat_cont.grd.tmp 
-grdsample $tmp.topobat_cont.grd.tmp -G$tmp.topobat_col.grd.tmp -I$resol_model -F
-#grdinfo topobat_cont.grd.tmp
+grdsample $tmp.topobat_cont.grd.tmp -G$tmp.topobat_col.grd.tmp -R$Region_data -I$resol_model -F
 
 #makecpt -Cglobe -Tpaleta.cpt_Tfile.tmp > paleta.cpt.tmp
 #makecpt -Ctopo > paleta.cpt.tmp
@@ -77,7 +79,7 @@ psscale	 -C$tmp.paleta.cpt.tmp -D4/-.4/8/.3h -L -B:"Elevation (km)": -O -K >> $p
 
 ###############################################################################
 echo PRECIPITATION...
-set grdfile = ~/DGC_global_data/precipitation,evaporation/global_precipitation-cai_precip2.clim.grd
+set grdfile = ~/DGC_modeling/global_data/precipitation,evaporation/global_precipitation-cai_precip2.clim.grd
 
 psbasemap	-J$projection -R$Region_plot -Ba5nsew -X9 -Y0 -K -O >> $ps
 
@@ -96,9 +98,9 @@ F       255     255     255
 N       128     128     128
 END
 
-grdcut $grdfile -G$tmp.rain.grd.tmp -R$Region_data
-grdsample -fg $tmp.rain.grd.tmp -G$tmp.rain.grd.tmp -I.1
-grdmath -fg $tmp.rain.grd.tmp 1000 DIV = $tmp.rain.grd.tmp
+grdsample $grdfile -G$tmp.rain.grd.tmp -R$Region_data -I$resol_model -F
+grdmath $tmp.rain.grd.tmp 1000 DIV = $tmp.rain.grd.tmp
+grdinfo $tmp.rain.grd.tmp
 
 grdimage $tmp.rain.grd.tmp -fg -J$projection -R -C$tmp.raincpt.tmp -O -K >> $ps
 pscoast -J$projection -R -Di -W1/0 \
@@ -117,7 +119,7 @@ END
 psscale	 -C$tmp.raincpt.tmp -D4/-.4/8/.3h -B:"Precipitation (m/yr)": -L -O >> $ps
 
 
-convert $ps -trim $ps\.jpg
+magick $ps -trim $ps\.jpg
 
 
 
@@ -131,7 +133,7 @@ echo grid size: $Nx / $Ny
 echo "¡¡AUTOMATICALLY WRITTEN BY SCRIPT!!" > $tmp.prm.PRM
 tisc -hp >> $tmp.prm.PRM
 tisc $tmp.prm -M0 -N$Nx\/$Ny -D0/$length[1]/0/$length[2] \
-	-ti0 -tf1 -td.1 -te1e-3 \
+	-ti0 -tf3 -td.1 -te1e-3 \
 	-qhydro_model=1 -p300/0/4000 \
 	-qerosed_model=6 -qerodability=1e-7 -qK_river_cap=1e3 \
 	-qlost_rate=.05 \
@@ -139,32 +141,32 @@ tisc $tmp.prm -M0 -N$Nx\/$Ny -D0/$length[1]/0/$length[2] \
 rm $tmp.prm*
 #awk '{if ($1==modeisost) exit}' $tmp.PRM2.tmp >$prj.PRM
 grdsample $tmp.topobat_col.grd.tmp -G$tmp.topo.grd.tmp -I$resol_model
-#grdinfo $tmp.topo.grd.tmp
 echo "¡¡AUTOMATICALLY WRITTEN BY SCRIPT!!" > $prj.ZINI
 echo mode_interp 0 >> $prj.ZINI
+grdinfo $tmp.topo.grd.tmp
 grd2xyz $tmp.topo.grd.tmp | awk '{print $1,$2,$3*1e3}' >> $prj.ZINI
 
 grdsample $tmp.rain.grd.tmp -G$tmp.rain.grd.tmp -I$resol_model
-#grdinfo $tmp.rain.grd.tmp
 echo "¡¡AUTOMATICALLY WRITTEN BY SCRIPT!!" > $prj.RAIN
 echo mode_interp 0 >> $prj.RAIN
+grdinfo $tmp.rain.grd.tmp
 grd2xyz $tmp.rain.grd.tmp | awk '{print $1,$2,$3*1e3}' >> $prj.RAIN
 
 
 cat <<END > $prj\1.UNIT
 	mode_interp 4
-	time 1
+	time .3
 	time_stop 3
 	gradual 1
-	2200
-	950e3	390e3
-	1020e3	390e3
-	1020e3	460e3
-	950e3	460e3
+	1500
+	150e3	200e3
+	250e3	200e3
+	250e3	100e3
+	150e3	100e3
 END
 
 echo Running TISC...; echo
-tisc $prj -Pc
+tisc $prj -Pc -V2
 
 
 rm -f tmp.*.tmp

@@ -208,8 +208,8 @@ int Surface_Transport (ModelConfig *cfg, ModelContext *ctx, float **topo_ant, in
 	/*Print relevant statistics*/
 	if (verbose_level>=1) {
 		float 	error;
-		PRINT_GRID_INFO (precipitation, "precipit.", "m/s");
-		PRINT_GRID_INFO (evaporation,   "evaporat.", "m/s");
+		PRINT_GRID_INFO (secsperyr*precipitation, "precipit.", "m/yr");
+		PRINT_GRID_INFO (secsperyr*evaporation,   "evaporat.", "m/yr");
 		PRINT_SUMLINE("rain_now : %+8.2e m3/s  evap_wat: %+8.2e m3/s outp_water: %+8.2e m3/s undergr_water: %+8.2e m3/s", total_rain, total_evap_water, total_lost_water, total_underground_water); 
 		if (total_rain) error=-(total_rain-total_evap_water-total_lost_water+total_ice_melt)/total_rain*100; else error = (total_ice_melt-total_evap_water-total_lost_water)/total_ice_melt*100;
 			if (fabs(error)>=.5 || (fabs(error)>=.1 && verbose_level>=3))

@@ -1,4 +1,4 @@
- Original author: 
+Original author: 
 1995-2019 Daniel Garcia-Castellanos. 
 Other contributors are acknowledged in tisc.info.txt
 
@@ -24,8 +24,7 @@ use/add/modify the code, but the resulting code you produce must:
 2) Refer to the original authorship and to the copyleft rule at the 
 beginning of each file. 
 3) In particular, commercial use of part of the present code must be
-previously authorised by the author(s) of the code parts under copyleft
-rule. 
+previously authorised by the authors. 
 
 This software is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of

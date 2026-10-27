@@ -245,7 +245,7 @@ void calculate_compaction(ModelConfig *cfg, ModelContext *ctx, float *comp);
 int read_file_YSE(ModelConfig *cfg);
 int calculate_water_load(ModelConfig *cfg, ModelContext *ctx);
 float Orographic_Precipitation (ModelConfig *cfg, ModelContext *ctx, int i, float windvel);
-int Orographic_Precipitation_Evaporation_conservative (ModelConfig *cfg, ModelContext *ctx, float *precip_aux, float *evaporation, float windvel);
+int Orographic_Precipitation_Evaporation_conservative (ModelConfig *cfg, ModelContext *ctx, float *precip_aux, float *evaporation, float windvel, float relative_humidity);
 
 
 #include "tao+tisc.h"

@@ -1839,7 +1839,7 @@ int Calculate_Precipitation_Evaporation (ModelConfig *cfg, ModelContext *ctx)
     		float DX=CXrain, windvel=Krain /*[m/s]*/;
 		float *precip_aux;
 		precip_aux = (float *) calloc(cfg->Nx, sizeof(float));
-		Orographic_Precipitation_Evaporation_conservative(cfg, ctx, precip_aux, evaporation, windvel);
+		Orographic_Precipitation_Evaporation_conservative(cfg, ctx, precip_aux, evaporation, windvel, relative_humidity);
 		/*smooth out precipitation*/
 		for (i=0; i<cfg->Nx; i++) {
 		     if (DX>cfg->dx) {
@@ -1910,7 +1910,7 @@ float Orographic_Precipitation (ModelConfig *cfg, ModelContext *ctx, int i, floa
 
 
 
-int Orographic_Precipitation_Evaporation_conservative (ModelConfig *cfg, ModelContext *ctx, float *precip_aux, float *evaporation, float windvel)
+int Orographic_Precipitation_Evaporation_conservative (ModelConfig *cfg, ModelContext *ctx, float *precip_aux, float *evaporation, float windvel, float relative_humidity)
 {
 	/*
 	  Returns precipitation and evaporation in m/s.
@@ -1919,14 +1919,12 @@ int Orographic_Precipitation_Evaporation_conservative (ModelConfig *cfg, ModelCo
 	*/
 	float 	es0=610.78 /*Pa*/, 
 		L, Rv=461.5, /*J/kg/K*/
-		alpha0, beta=.3,  /*## !! better beta = 0.3, pero en sumision de altiplano esta con 1*/
+		beta=.3,  /*## !! better beta = 0.3, pero en sumision de altiplano esta con 1*/
 		esat, topoC;
 	int 	i, il, istart=0, incr=0;
 	float 	Wcol=0, Wmax, 	/*Water content in a column, and maximum water content*/
-		rh=.9, 		/*Relative humidity at the upwind boundary (incoming air rel. humidity)*/
 		z, dz=50, dtwind;
 	dtwind = cfg->dx/fabs(windvel); /*time spent by the air in a cell*/
-	alpha0 = rain/rh;   /*arbitrary value so that convergence=rain at plains with a saturated column*/
 	if (windvel>0)	{istart=0;    incr=+1;}
 	if (windvel<0)	{istart=cfg->Nx-1; incr=-1;}
 
@@ -1943,25 +1941,29 @@ int Orographic_Precipitation_Evaporation_conservative (ModelConfig *cfg, ModelCo
 		Wmax += esat/temp_air/Rv/cfg->denswater*dz; /*Blocks: m of water*/
 		//fprintf(stderr, "\nz: %f m  temp=%f K  Wmax=%f m", z, temp_air, Wmax);
 	    }
-	    //fprintf(stderr, "\nz: %f m  Wmax=%f m  alpha0=%.2e", z, Wmax, alpha0*secsperyr);
 	    if ((i==0 && windvel>0) || (i==cfg->Nx-1 && windvel<0)) {
 		    /*calculate water content in incomming air column*/
-		    Wcol = rh * Wmax;
+		    Wcol = relative_humidity * Wmax;
 		    PRINT_INFO("Incoming air water content: %.3f m => %.2e m2/s", Wcol, Wcol*windvel);
 	    }
- 	    /*calculate precipitation*/
- 	    precip_aux[i] = alpha0 * Wcol / Wmax;
-	    /*limit precipitation to at least 0 or the excess water and at most the available water in column*/
-	    precip_aux[i] = MAX_2(0, precip_aux[i]);
-	    precip_aux[i] = MAX_2((Wcol-Wmax)/dtwind, precip_aux[i]);
-	    precip_aux[i] = MIN_2(Wcol/dtwind, precip_aux[i]);
- 	    /*calculate change in water content in column (in m of water)*/
-	    /*fprintf(stderr, "\nprecip: %e mm/yr   %e    %e m/s  %e", precip_aux[i], Wcol/dtwind, windvel, slope);*/
-	    Wcol -= precip_aux[i] * dtwind;
-	    evaporation[i] = evaporation_ct * (1+beta*fabs(windvel)) * (Wmax-Wcol)/Wmax; 
-	    evaporation[i] = MAX_2(0, evaporation[i]); 
-	    if (drainage[i].lake) {
-	    	Wcol += evaporation[i] * dtwind;
+	    if (Wmax > 1e-5) {
+ 	    	/*calculate precipitation*/
+ 	    	precip_aux[i] = rain * Wcol / Wmax;
+	    	/*limit precipitation to at least 0 or the excess water and at most the available water in column*/
+	    	precip_aux[i] = MAX_2(0, precip_aux[i]);
+	    	precip_aux[i] = MAX_2((Wcol-Wmax)/dtwind, precip_aux[i]);
+	    	precip_aux[i] = MIN_2(Wcol/dtwind, precip_aux[i]);
+ 	    	/*calculate change in water content in column (in m of water)*/
+	    	Wcol -= precip_aux[i] * dtwind;
+	    	evaporation[i] = evaporation_ct * (1+beta*fabs(windvel)) * (Wmax-Wcol)/Wmax; 
+	    	evaporation[i] = MAX_2(0, evaporation[i]); 
+	    	if (drainage[i].lake) {
+	    		Wcol += evaporation[i] * dtwind;
+	    	}
+	    }
+	    else {
+	    	precip_aux[i] = 0;
+	    	evaporation[i] = evaporation_ct * (1+beta*fabs(windvel));
 	    }
 	    //fprintf(stderr, "\nx=%f \tP,E: %.2f , %.2f m/yr   Wcol=%.3e m  Wmax=%.3e m   w=%.2f m/s", i*dx+x0, precip_aux[i]*secsperyr, evaporation[i]*secsperyr, Wcol, Wmax, windvel);
  	}

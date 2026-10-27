@@ -21,7 +21,7 @@ YELLOW  := \033[33m
 MAGENTA := \033[35m
 RESET   := \033[0m
 
-.PHONY: all clean help tao tisc dirs info update_prm_versions
+.PHONY: all clean help tao tisc dirs info update_prm_versions upload
 
 .DEFAULT_GOAL := all
 
@@ -65,6 +65,17 @@ tao: update_prm_versions ## Compile tAo
 
 tisc: update_prm_versions ## Compile TISC
 	@$(MAKE) -C tisc/src all
+
+upload: clean update_prm_versions ## Commit tracked changes and push to GitHub (optional: MSG="your message")
+	@printf "\n$(MAGENTA)$(BOLD)============================================================$(RESET)\n"
+	@printf "$(YELLOW)$(BOLD)             🚀 UPLOADING TO GITHUB 🚀$(RESET)\n"
+	@printf "$(MAGENTA)$(BOLD)============================================================$(RESET)\n"
+	@echo "Version tAo:  $(TAO_VERSION)"
+	@echo "Version TISC: $(TISC_VERSION)"
+	@git status -s
+	git commit -a -m "$(or $(MSG),Update $(TAO_VERSION) / $(TISC_VERSION))"
+	git push origin main
+	@printf "\n$(GREEN)$(BOLD)  ✅ Upload completed successfully!$(RESET)\n\n"
 
 clean: ## Clean generated files for both projects
 	@$(MAKE) -C tao/src clean

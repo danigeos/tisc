@@ -223,19 +223,6 @@ cat - <<END>  $tmp.lakes_endorh_cpt.tmp
 	.49	$endoR	$endoG	$endoB	1	$endoR	$endoG	$endoB
 END
 
-if (! $?min_rain) set min_rain = 0
-cat - <<END>  $tmp.rain_cpt.tmp 
-#0		255	150	0	$min_rain 255	255	0
-$min_rain 	21      234     255     1     21      234     255
-1        	64      200     255     1.5       64      200     255
-1.5       	106     149     255     2     106     149     255
-2       	149     106     255     3       149     106     255
-3       	212     43      255     5       212     43      255
-B       0       0       0
-F       230     0       255
-N       128     128     190
-END
-
 cat - <<END>  $tmp.subs_cpt.tmp
 	-500	255	0	0	-50	255	80	80
 	-50	255	80	80	-5	255	170	170
@@ -305,8 +292,8 @@ cat - <<END>  $tmp.erosrate_cpt.tmp
 	-10 180	0	0	-1 180	0	0
 	-1	255	0	0	-0.1	150	190	0
 	-0.1	150	190	0	-.01	255	220	30
-	-.01	255	220	30	0	200	200	200
-	0	200	200	200	.02	0	200	255
+	-.01	255	220	30	0	255	255	255
+	0	255	255	255	.02	0	200	255
 	.02	0	200	255	.1	90	160	255
 	.1	128	127	255	1	128	127	255
 	1	212	43	255	10	212	43	255
@@ -383,8 +370,11 @@ if (-r $prj.hrz) then
 		print($1,$2,sedthick/1e3); \
 	} }' $prj.hrz | xyz2grd -G$tmp.sed.grd.tmp -I$dx/$dy -R -H0 >& /dev/null
 endif
-( grd2cpt $tmp.sed.grd.tmp -Ctopo > $tmp.sed_cpt_new.tmp ) >& /dev/null
-if (-s $tmp.sed_cpt_new.tmp) mv $tmp.sed_cpt_new.tmp $tmp.sed_cpt.tmp
+if (-f $tmp.sed.grd.tmp) then
+	set sedmax = `grdinfo -C $tmp.sed.grd.tmp | awk '{max=int($6+1); print (max>1)?max:1}'`
+	( makecpt -Chot -I -T0/$sedmax/0.5 -Z > $tmp.sed_cpt_new.tmp ) >& /dev/null
+	if (-s $tmp.sed_cpt_new.tmp) mv $tmp.sed_cpt_new.tmp $tmp.sed_cpt.tmp
+endif
 
 #eros./sed.:
 if (-r $prj.st) then
