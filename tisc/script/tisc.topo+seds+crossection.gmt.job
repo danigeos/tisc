@@ -13,7 +13,7 @@ set prj 	= $1
 
 set width = 8
 
-source $tisc_dir/tisc/script/tisc.common.gmt.job
+source \"$tisc_dir/tisc/script/tisc.common.gmt.job\"
 
 if (0) then 
   #B/W pallette
@@ -195,7 +195,7 @@ if (-r $prj.pfl) then
 		-B$ticklabels\:"distance (km)":/$zticklabels\:"z (km)":SeW \
 		-O -K -X$horz_shift_CS -Y$vert_shift_CS >> $ps
 
-	source $tisc_dir/tisc/script/tisc.common.cross_section.gmt.job
+	source \"$tisc_dir/tisc/script/tisc.common.cross_section.gmt.job\"
 endif
 
 endif

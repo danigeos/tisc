@@ -11,8 +11,18 @@ if ($#argv < 1) then
 	exit
 endif
 
+set prj = $argv[1]
+
 #Setting up variables:
-source $tisc_dir/tao/script/tao.common.gmt.job
+if ( ! $?tisc_dir ) then
+	set script_dir = `dirname "$0"`
+	set tisc_dir = `cd "$script_dir/../.." && pwd`
+else if ( ! -r "$tisc_dir/tao/script/tao.common.gmt.job" ) then
+	set script_dir = `dirname "$0"`
+	set tisc_dir = `cd "$script_dir/../.." && pwd`
+endif
+
+source "$tisc_dir/tao/script/tao.common.gmt.job"
 
 #1st PAGE of Postscript:
 #

@@ -9,13 +9,13 @@ set prj 	= $1
 set width = 13
 set separation = .8
 
-source $tisc_dir/tisc/script/tisc.common.gmt.job
+source \"$tisc_dir/tisc/script/tisc.common.gmt.job\"
 
 echo "Syntax: 	$0 'prj-name' basin_number"
 echo "Syntax:   $0 'prj-name' x, y[km] (add 'i' to plot the whole basin)"
 
 
-source $tisc_dir/tisc/script/tisc.common.river_basin_chosen.gmt.job
+source \"$tisc_dir/tisc/script/tisc.common.river_basin_chosen.gmt.job\"
 
 #set lmax = 400 #`sort $tmp.chosen_basin.bas.tmp -n -k 7 | tail -n 1 | awk '{print $7}'`
 set zmin = -300
@@ -25,7 +25,7 @@ psbasemap -JX$width/6 -R000/$lmax/$zminkm/$zmaxkm \
 	-Ba500f100:"distance along river (km)":/a100f20g1000:"elevation, z (m)":nSeW \
 	-Y4 -X3.5 -K -P > $ps
 
-source $tisc_dir/tisc/script/tisc.common.river_profile.gmt.job
+source \"$tisc_dir/tisc/script/tisc.common.river_profile.gmt.job\"
 
 
 #Peaks: upper topography envelope profile:
@@ -115,7 +115,7 @@ psbasemap -JX$size -R$Region -B:"":/:"":nsew \
 set disch1 = 100
 set disch2 = 500
 set disch3 = 2000
-#source $tisc_dir/tisc/script/tisc.common.topo+drainage.gmt.job
+#source \"$tisc_dir/tisc/script/tisc.common.topo+drainage.gmt.job\"
 
 
 #TOPOGRAPHY:
