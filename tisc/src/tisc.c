@@ -172,19 +172,19 @@ int inputs (int argc, char **argv)
 					switch (argv[iarg][2]) {
 						case 'p':
 							fprintf(stderr, "\nFile ./tisc/doc/template.PRM (sample parameters file) follows in stdout:\n") ;
-							snprintf(command, sizeof(command), "cat %s/tisc/doc/template.PRM", TISCDIR);
+							snprintf(command, sizeof(command), "cat \"%s/tisc/doc/template.PRM\"", TISCDIR);
 							system(command) ;
 							break;
 						case 'c':
 							fprintf(stderr, "\nFile ./tisc/doc/template.PRM (sample parameters file) follows in stdout:\n") ;
 							// The cleanPRM script might not exist or be needed anymore. If it's just for display, cat is enough.
 							// If it's a real script, ensure it's in PATH. For now, assuming it's a script that processes the PRM.
-							snprintf(command, sizeof(command), "cat %s/tisc/doc/template.PRM | %s/tisc/script/cleanPRM", TISCDIR, TISCDIR);
+							snprintf(command, sizeof(command), "cat \"%s/tisc/doc/template.PRM\" | \"%s/tisc/script/cleanPRM\"", TISCDIR, TISCDIR);
 							system(command) ;
 							break;
 						case 'u':
 							fprintf(stderr, "\nFile ./tisc/doc/template.UNIT (sample unit file) follows in stdout:\n") ;
-							snprintf(command, sizeof(command), "cat %s/tisc/doc/template.UNIT", TISCDIR);
+							snprintf(command, sizeof(command), "cat \"%s/tisc/doc/template.UNIT\"", TISCDIR);
 							system(command) ;
 							break;
 						default:
@@ -197,7 +197,7 @@ int inputs (int argc, char **argv)
 				case '-':
 					if (strcmp(argv[iarg], "--help") == 0) {
 						fprintf(stderr, "\nFile ./tisc/doc/tisc.info.txt follows:\n") ;
-						snprintf(command, sizeof(command), "more %s/tisc/doc/tisc.info.txt", TISCDIR);
+						snprintf(command, sizeof(command), "more \"%s/tisc/doc/tisc.info.txt\"", TISCDIR);
 						system(command) ;
 						exit(0);
 					}

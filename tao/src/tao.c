@@ -155,17 +155,17 @@ int inputs(ModelConfig *cfg, ModelContext *ctx, int argc, char **argv)
 					switch (argv[iarg][2]) {
 						case 'p':
 							fprintf(stderr, "\nFile ./tao/doc/template.PRM (sample parameters file) follows in stdout:\n") ;
-						snprintf(command, sizeof(command), "cat %s/tao/doc/template.PRM", TISCDIR);
+						snprintf(command, sizeof(command), "cat \"%s/tao/doc/template.PRM\"", TISCDIR);
 						system(command) ;
 						break;
 						case 'c':
 							fprintf(stderr, "\nFile ./tao/doc/template.PRM (sample parameters file) follows in stdout:\n") ;
-						snprintf(command, sizeof(command), "cat %s/tao/doc/template.PRM | %s/tao/script/cleanPRM", TISCDIR, TISCDIR);
+						snprintf(command, sizeof(command), "cat \"%s/tao/doc/template.PRM\" | \"%s/tao/script/cleanPRM\"", TISCDIR, TISCDIR);
 						system(command) ;
 						break;
 						case 'u':
 							fprintf(stderr, "\nFile ./tao/doc/template.UNIT (sample unit file) follows in stdout:\n") ;
-						snprintf(command, sizeof(command), "cat %s/tao/doc/template.UNIT", TISCDIR);
+						snprintf(command, sizeof(command), "cat \"%s/tao/doc/template.UNIT\"", TISCDIR);
 						system(command) ;
 						break;
 						default:
@@ -177,8 +177,8 @@ int inputs(ModelConfig *cfg, ModelContext *ctx, int argc, char **argv)
 					exit(0);
 				case '-':
 					if (strcmp(argv[iarg], "--help") == 0) {
-						fprintf(stderr, "\nFile ./tisc/tao/doc/tao.info.txt follows:\n") ;
-						snprintf(command, sizeof(command), "more %s/tao/doc/tao.info.txt", TISCDIR);
+						fprintf(stderr, "\nFile ./tao/doc/tao.info.txt follows:\n") ;
+						snprintf(command, sizeof(command), "more \"%s/tao/doc/tao.info.txt\"", TISCDIR);
 						system(command) ;
 						exit(0);
 					}
