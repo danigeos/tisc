@@ -3,8 +3,8 @@
 tisc_DIR := $(CURDIR)
 export tisc_DIR
 
-BIN := $(tisc_DIR)/bin
-BUILD := $(tisc_DIR)/tao+tisc_commons/build
+BIN := bin
+BUILD := tao+tisc_commons/build
 
 include config.mk
 
@@ -34,7 +34,7 @@ all: info dirs update_prm_versions tao tisc ## Compile both tAo and TISC
 	@echo "======================================================================="
 	@echo "To run the executables, add the following to your shell profile (e.g., .bashrc or .zshrc):"
 	@echo "  export tisc_dir=\"$(tisc_DIR)/\""
-	@echo "  export PATH=\"$(BIN):$(tisc_DIR)/tisc/script/:$(tisc_DIR)/tao/script/:\$$PATH:\""
+	@echo "  export PATH=\"$(tisc_DIR)/bin:$(tisc_DIR)/tisc/script/:$(tisc_DIR)/tao/script/:\$$PATH:\""
 	@echo "======================================================================="
 
 info:

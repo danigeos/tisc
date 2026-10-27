@@ -3,16 +3,16 @@
 
 #------------------------------------------------------------------------
 #You should not modify these directories
-tisc_DIR  ?= $(abspath ../..)
-include $(tisc_DIR)/config.mk
+tisc_DIR  ?= ../..
+include ../../config.mk
 
 OS        ?= $(shell uname -s)
 ARCH      ?= $(shell uname -m)
 PROCESSOR ?= $(shell uname -p)
 USERNAME  ?= $(shell whoami)
-BIN       ?= $(tisc_DIR)/bin
-OBJ       ?= $(tisc_DIR)/tao+tisc_commons/build
-LIB       ?= $(tisc_DIR)/tao+tisc_commons/lib
+BIN       ?= ../../bin
+OBJ       ?= ../../tao+tisc_commons/build
+LIB       ?= ../../tao+tisc_commons/lib
 INCL      ?= ../include 
 
 # --- Fancy output & verbosity control ---
