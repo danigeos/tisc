@@ -25,6 +25,7 @@ tags
 
 # === Temporary Files ===
 *.tmp
+!*.TMP
 *.mtrz
 *.mtrx
 *.grd

@@ -579,7 +579,7 @@ int read_file_Temperature(ModelConfig *cfg, ModelContext *ctx)
 
 	sprintf(filename, "%s.TMP", projectname) ;
 	if ((file = fopen(filename, "rt")) == NULL) {
-		PRINT_WARNING("Temperature file '%s' not found. Plasticity unswitched.", filename);
+		if (verbose_level>=1) fprintf(stdout, "\nWarning: Temperature file '%s' not found. Plasticity unswitched (isost_model=1).", filename);
 		isost_model = 1 ;
 		return(0);
 	}

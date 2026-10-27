@@ -262,17 +262,18 @@ if (-r $prj.strs) then
 	awk '(substr($0,1,1)!="#"){if ($3==$5) print $1,$2,1; else print $1,$2,0}' $prj.strs | surface -G$tmp.compr_deform.grd.tmp -I$dx/$dz -R$xmin/$xmax/$zminlith/$zmaxlith -H2 
 	awk '(substr($0,1,1)!="#"){print $1,$2,$5}' $prj.strs | surface -G$tmp.yieldcomp.grd.tmp -I$dx/$dz -R$xmin/$xmax/$zminlith/$zmaxlith -H2
 	awk '(substr($0,1,1)!="#"){print $1,$2,$6}' $prj.strs | surface -G$tmp.yieldextn.grd.tmp -I$dx/$dz -R$xmin/$xmax/$zminlith/$zmaxlith -H2
-endif
-psbasemap -JX$graph_width/-5 -R$xmin/$xmax/-2/70 -B$ticklabels\:"distance (km)":/20f10:"Depth (km)":nSeW \
-	-X2.5 -Y3 -K -P	>> $ps
-psclip $tmp.stress_clip.xz.tmp -JX -R -O -K >> $ps
-grdimage	$tmp.strs.grd.tmp -C$tmp.stress_cpt.tmp -JX -R -O -K >> $ps
-grdcontour	$tmp.strs.grd.tmp -JX -R -C$tmp.zcontours.tmp -A10f10 -W1/255 -K -O >> $ps
-psclip -C -O -K >> $ps
-psxy $tmp.stress_clip.xz.tmp -JX -R -O -K -W3ta >> $ps
-psbasemap -JX -R -Bnsew -O -K >> $ps
 
-psscale -C$tmp.stress_cpt.tmp -B:."stress (MPa)": -D7.5/-1.6/7/.2h -O -K >> $ps
+	psbasemap -JX$graph_width/-5 -R$xmin/$xmax/-2/70 -B$ticklabels\:"distance (km)":/20f10:"Depth (km)":nSeW \
+		-X2.5 -Y3 -K -P	>> $ps
+	if (-r $tmp.stress_clip.xz.tmp) psclip $tmp.stress_clip.xz.tmp -JX -R -O -K >> $ps
+	if (-r $tmp.strs.grd.tmp && -r $tmp.stress_cpt.tmp) grdimage	$tmp.strs.grd.tmp -C$tmp.stress_cpt.tmp -JX -R -O -K >> $ps
+	if (-r $tmp.strs.grd.tmp && -r $tmp.zcontours.tmp) grdcontour	$tmp.strs.grd.tmp -JX -R -C$tmp.zcontours.tmp -A10f10 -W1/255 -K -O >> $ps
+	if (-r $tmp.stress_clip.xz.tmp) psclip -C -O -K >> $ps
+	if (-r $tmp.stress_clip.xz.tmp) psxy $tmp.stress_clip.xz.tmp -JX -R -O -K -W3ta >> $ps
+	psbasemap -JX -R -Bnsew -O -K >> $ps
+
+	if (-r $tmp.stress_cpt.tmp) psscale -C$tmp.stress_cpt.tmp -B:."stress (MPa)": -D7.5/-1.6/7/.2h -O -K >> $ps
+endif
 
 
 #DEFLECTION and CRUST
@@ -286,7 +287,7 @@ if (-r $prj.CRUST)  awk -v xmax=$xmax '{if (NR==1) {print xmax,0; print $1/1000,
 	psxy -JX -R -W10/60 -G170 -O -K >> $ps
 if (-r $prj.UCRUST) awk -v xmax=$xmax '{if (NR==1) {print xmax,0; print $1/1000,0;} print $1/1000, $2/1e3}' $prj.UCRUST |\
 	psxy -JX -R -O -K -G200 -W10/130 >> $ps
-psxy $prj.eeth -JX -R$xmin/$xmax/0/60000 -O -W10 -K -H1 >> $ps
+if (-r $prj.eeth) psxy $prj.eeth -JX -R$xmin/$xmax/0/60000 -O -W10 -K -H1 >> $ps
 
 
 

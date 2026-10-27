@@ -1,0 +1,26 @@
+Temperature distribution. Three geothermes are given in this file:
+one at x=60km one at x=170km and the last one at 230km. 
+
+Resume this two groups of 
+lines for homogeneous case:
+60e3
+0	0
+20e3	580
+40e3	1070
+80e3	2350
+
+170e3
+0	0
+20e3	434
+40e3	760
+80e3	1390
+
+This is the righ-most geotherm
+
+230e3
+0	0
+20e3	354
+40e3	600
+80e3	1067
+120e3	1531
+

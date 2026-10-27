@@ -43,8 +43,18 @@ set dt   	= `awk '{if ($1=="dt")        {print $2; exit;}}' $prj.PRM`
 set Timeini 	= `awk '{if ($1=="Timeini")   {print $2; exit;}}' $prj.PRM`
 set Timefinal 	= `awk '{if ($1=="Timefinal") {print $2; exit;}}' $prj.PRM`
 
-set switch_sea	= `awk '{if ($1 == "switch_sea")  {if (g=="") {g=1;exit}}}END{print g}' g=$6 $prj.PRM`
-set switch_rheo	= `awk '{if ($1 == "isost_model") {if ($2<3) g=0; else g=1; exit}}END{print g}' g=$7 $prj.PRM`
+if ($#argv >= 6) then
+	set switch_sea = $6
+else
+	set switch_sea	= `awk '{if ($1 == "switch_sea") {print $2; exit}}' $prj.PRM`
+	if ("$switch_sea" == "") set switch_sea = 1
+endif
+if ($#argv >= 7) then
+	set switch_rheo = $7
+else
+	set switch_rheo	= `awk '{if ($1 == "isost_model") {if ($2<3) print 0; else print 1; exit}}' $prj.PRM`
+	if ("$switch_rheo" == "") set switch_rheo = 0
+endif
 set hydro_model	= `awk '{if ($1 == "hydro_model") {print $2; exit}}' $prj.PRM`
 
 set numcols 	= `awk '(NR==4) {print NF; exit;}' $prj.pfl`
