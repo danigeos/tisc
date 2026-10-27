@@ -21,7 +21,7 @@ YELLOW  := \033[33m
 MAGENTA := \033[35m
 RESET   := \033[0m
 
-.PHONY: all clean help tao tisc dirs info update_prm_versions upload
+.PHONY: all clean distclean help tao tisc dirs info update_prm_versions upload
 
 .DEFAULT_GOAL := all
 
@@ -77,11 +77,15 @@ upload: clean update_prm_versions ## Commit tracked changes and push to GitHub (
 	git push origin main
 	@printf "\n$(GREEN)$(BOLD)  ✅ Upload completed successfully!$(RESET)\n\n"
 
-clean: ## Clean generated files for both projects
+clean: ## Clean generated build files for both projects
 	@$(MAKE) -C tao/src clean
 	@$(MAKE) -C tisc/src clean
-	@rm -rf $(BIN) $(BUILD)
-	@echo "Cleaned both tAo and TISC."
+	@rm -rf $(BUILD)
+	@echo "Cleaned build files for both tAo and TISC."
+
+distclean: clean ## Clean everything including compiled binaries
+	@rm -rf $(BIN)
+	@echo "Cleaned binaries."
 
 dirs:
 	@mkdir -p $(BIN) $(BUILD)
