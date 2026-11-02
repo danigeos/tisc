@@ -11,8 +11,16 @@ set prj 	= $1
 set width = 11
 set separation = .8
 
-set x0 = $2; set xf = $3; set y0 = $4; set yf = $5; 
-source $tisc_dir/tisc/script/tisc.common.gmt.job
+#Setting up variables:
+if ( ! $?tisc_dir ) then
+	set script_dir = `dirname "$0"`
+	set tisc_dir = `cd "$script_dir/../../.." && pwd`
+else if ( ! -r "$tisc_dir/tisc/script/tisc.common.gmt.job" ) then
+	set script_dir = `dirname "$0"`
+	set tisc_dir = `cd "$script_dir/../../.." && pwd`
+endif
+
+source "$tisc_dir/tisc/script/tisc.common.gmt.job"
 echo Region = $Region
 
 
@@ -88,14 +96,7 @@ awk '{fc=substr($0,1,1); if (fc==">") {disch=1.0*$11; alt=$7; sds=$9} else {if (
 endif
 
 
-if (-r $prj.xyw) then 
-	awk '/^[^#]/ {print $1, $2, $10/1e3}' $prj.xyw |\
-		xyz2grd -G$tmp.rain.grd.tmp -I$dx/$dy -R
-	grdclip $tmp.rain.grd.tmp -G$tmp.rain.grd.tmp -Sb$min_rain/NaN
-	# Commenting out the rain plane as it draws a flat blue surface near Z=0 that obscures the topography
-	#grdview $tmp.rain.grd.tmp -JX -JZ -R$Region/$ZRegion -E$view_azimut/$view_elevation \
-	#	-C$tmp.rain_cpt.tmp -Qs -O -K >> $ps
-endif
+# Rain plane is disabled to avoid obscuring topography
 
 #2D CROSS SECTION:
 if (-r $prj.pfl) then
@@ -189,7 +190,7 @@ psxyz -JX -JZ -R -E$view_azimut/$view_elevation -Sv0.4c/0.5c/0.6c -N -W1p,black 
 END
 endif 
 
-psxyz -JX -JZ -R -E$view_azimut/$view_elevation -O -T >> $ps 
+psxyz -JX -JZ -R -E$view_azimut/$view_elevation -Ss -W1/$col_river -O <<END>> $ps 
 END
 
 rm -f  $tmp.*.tmp 

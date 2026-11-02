@@ -11,9 +11,16 @@
 
 set prj 	= $1
 
-set width = 12
+#Setting up variables:
+if ( ! $?tisc_dir ) then
+	set script_dir = `dirname "$0"`
+	set tisc_dir = `cd "$script_dir/../.." && pwd`
+else if ( ! -r "$tisc_dir/tisc/script/tisc.common.gmt.job" ) then
+	set script_dir = `dirname "$0"`
+	set tisc_dir = `cd "$script_dir/../.." && pwd`
+endif
 
-source \"$tisc_dir/tisc/script/tisc.common.gmt.job\"
+source "$tisc_dir/tisc/script/tisc.common.gmt.job"
 
 
 #3D TOPOGRAPHY:
@@ -102,18 +109,22 @@ END
 #2D CROSS SECTION:
 if (-r $prj.pfl) then
 set dens 	= `awk '(NR==2) {print $0; exit;}' $prj.pfl`
-set numcols 	= `awk '(NR==4) {print NF; exit;}' $prj.
-`
+set numcols 	= `awk '(NR==4) {print NF; exit;}' $prj.pfl`
 
-awk '{if (NR>2) print $0}' $prj.pfl | tail -r > $tmp.pflinv.tmp
+# Reverse lines without requiring `invertfile` or `tac` binaries
+awk '{if (NR>2) {lines[NR]=$0}} END {for(i=NR; i>2; i--) print lines[i]}' $prj.pfl > $tmp.pflinv.tmp
+
+# The cross section forms the 3D block's vertical walls. Crop them based on visibility!
+set crop_limit1 = $Ly
+set crop_limit2 = `echo $Ly $Lx | awk '{print $1 + $2}'`
 
 awk -v sl=$sea_level -v zmin=$zmin '{if (NR>2) {z=$NF; if (z>sl) z=sl; if (z<zmin) z=zmin; print x=$1, y=$2, z, $3}}' $prj.pfl > $tmp.sea.xz.tmp
 awk '{print $1,$2,sl,$3}'  sl=$sea_level $tmp.pflinv.tmp >> $tmp.sea.xz.tmp
-awk -v va=$view_azimut '{if ((va<180 && $4>500) || (va>=180 && $4<1208)) print $0}' $tmp.sea.xz.tmp > $tmp.sea_crop.xz.tmp
+awk -v va=$view_azimut -v L1=$crop_limit1 -v L2=$crop_limit2 '{if ((va<180 && $4>L1) || (va>=180 && $4<L2)) print $0}' $tmp.sea.xz.tmp > $tmp.sea_crop.xz.tmp
 
 awk -v zmin=$zmin    '{if (NR>2) {z=$4;  if (z<zmin) z=zmin; print x=$1, y=$2, z, $3}}'  $prj.pfl > $tmp.basement.xz.tmp
 awk '{print $1,$2,zmin,$3}'  zmin=$zmin    $tmp.pflinv.tmp >> $tmp.basement.xz.tmp
-awk -v va=$view_azimut '{if ((va<180 && $4>500) || (va>=180 && $4<1208)) print $0}' $tmp.basement.xz.tmp > $tmp.basement_crop.xz.tmp
+awk -v va=$view_azimut -v L1=$crop_limit1 -v L2=$crop_limit2 '{if ((va<180 && $4>L1) || (va>=180 && $4<L2)) print $0}' $tmp.basement.xz.tmp > $tmp.basement_crop.xz.tmp
 
 psxyz -JX -JZ -R -E$view_azimut/$view_elevation -O -K -M -W3/0 <<END>> $ps
 	$x0 $y0 0
@@ -137,7 +148,7 @@ set col = 4
 while ($col < $numcols)
 	awk -v col=$col -v zmin=$zmin '{if (NR>2) {z=$(col+1); if (z<zmin) z=zmin; print $1, $2, z, $3}}' $prj.pfl       >  $tmp.unit.tmp
 	awk -v col=$col -v zmin=$zmin '{          {z=$(col  ); if (z<zmin) z=zmin; print $1, $2, z, $3}}' $tmp.pflinv.tmp >> $tmp.unit.tmp
-	awk -v va=$view_azimut '{if ((va<180 && $4>500) || (va>=180 && $4<1208)) print $0}' $tmp.unit.tmp > $tmp.unit_crop.tmp
+	awk -v va=$view_azimut -v L1=$crop_limit1 -v L2=$crop_limit2 '{if ((va<180 && $4>L1) || (va>=180 && $4<L2)) print $0}' $tmp.unit.tmp > $tmp.unit_crop.tmp
 
 	if ($dens[$col] >= 2400) then
 		set color = $color_thrust
